@@ -288,7 +288,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     // (two meters, each a clock: which is the bar? Two keys: which is the key? A key's scan is no meter. The second meter's
     // rate is no tap of the first's: at 72 bpm its beat would be 96's half-note triplet, a tap, and folded in, #668)
     const two = `&a scan(1 1 1 1) step=96bpm\n&b scan(1 1 1) step=70bpm\n&x scale(major, C)\n&y scale(minor, A)\n${tune('&x')}\n&t2 over=&y step=&b 0 2`;
-    // (the second is derived from the first, decision 093, and that is all: neither is named the piece's)
+    // (the second is derived from the first, decision 095, and that is all: neither is named the piece's)
     expect(normalise(two).steps.filter((t) => /is the piece's|tempo|tonic/.test(t))).toEqual([expect.stringContaining('&b is a second meter with a tempo of its own')]);
     // (a name taken by a cell of another job)
     const taken = `&m scan(1 1 1 1) step=96bpm\n&bar s=sine loop=C2\n&tempo s=sine loop=C3\n${tune('scale(major)')}`;

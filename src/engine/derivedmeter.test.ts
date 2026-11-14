@@ -19,7 +19,7 @@ const READERS = [
   '&f step=&second:1m 5',
   '&out map=sample [&a * &lead, &b * &lead, &c * &lead, &d * &lead, &e * &lead, &f * &lead]',
 ];
-// (a second meter with a tempo of its own is the old way, decision 093: read so, to compare a derived one with it)
+// (a second meter with a tempo of its own is the old way, decision 095: read so, to compare a derived one with it)
 const OLD = { old: true };
 const piece = (march: string, second: string) => [`&march meter("4/4") ${march}`, `&second ${second}`, ...READERS].join('\n');
 

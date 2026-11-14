@@ -1,4 +1,4 @@
-# a second meter with a tempo of its own: the piece has one root, and the second is derived from it (decision 093)
+# a second meter with a tempo of its own: the piece has one root, and the second is derived from it (decision 095)
 &march meter("4/4") step=120bpm
 &waltz meter("3/4") step=pulse/2
 &low step=4n 0 7 7 5

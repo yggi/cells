@@ -1,4 +1,4 @@
-// Decisions 091 (#757) and 093 (#778): a piece has one root meter, the meter with a tempo of its own, wherever it is
+// Decisions 091 (#757) and 095 (#778): a piece has one root meter, the meter with a tempo of its own, wherever it is
 // written; a second one is an error that writes the tap it is derived by, and Migrate writes it. The clocks of the wall
 // (loop=1d) are the environment's: where a piece has several and no meter of its own, a tap names the one it reads.
 import { describe, expect, it } from 'vitest';
@@ -17,7 +17,7 @@ const MINUTE = '&minute scan(1!60) loop=1min';
 const HOUR = '&hour scan(1!60) loop=1h';
 const OLD = { old: true };
 
-describe('one root meter a piece (decision 093)', () => {
+describe('one root meter a piece (decision 095)', () => {
   it('a second meter with a tempo of its own is an error on its line, which writes its tap', () => {
     expect(errors([MARCH, WALTZ, ...REST].join('\n'))).toEqual([expect.stringContaining('&waltz is a second meter with a tempo of its own, and a piece has one (&march)')]);
     expect(errors([MARCH, WALTZ, ...REST].join('\n'))[0]).toContain('step=pulse/2');
@@ -64,7 +64,7 @@ describe('one root meter a piece (decision 093)', () => {
   });
 });
 
-describe('the clocks of the wall (decisions 091, 093)', () => {
+describe('the clocks of the wall (decisions 091, 095)', () => {
   it('a wall clock beside the root is no second meter, and the root is the main meter wherever it is written', () => {
     const day = '&day scan(1!24) loop=1d';
     for (const lines of [

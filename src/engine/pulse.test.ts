@@ -244,7 +244,7 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     // (7/8 as 3+2+2 at 90 bpm: a bar of 2 s, three beats: a parameter is one number, so `beat` is their mean, 2/3 s)
     expect(play('&bar meter("7/8") step=90bpm', 'beat').time).toBeCloseTo(2 / 3, 6);
     // (a named meter, at its own tempo)
-    // (a second meter is derived from the root, decision 093: half its pulse, a beat a second)
+    // (a second meter is derived from the root, decision 095: half its pulse, a beat a second)
     expect(play(`${four}\n&bar2 meter("3/4") step=pulse/2`, '&bar2:4n').time).toBeCloseTo(1, 6);
     // (a swing moves the steps and not their mean)
     expect(play('&bar meter("4/4") step=120bpm swing=8n:2/3'.replace('2/3', '.67'), '8n').time).toBeCloseTo(0.25, 6);

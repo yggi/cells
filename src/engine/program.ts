@@ -493,7 +493,7 @@ export interface CompileResult {
   /** Sections of an arrangement (decisions 016 and 044), each to its table: what a selector reading the table switches. */
   readonly sections?: ReadonlyMap<string, string>;
   /**
-   * The piece's root meter (decision 093): the one meter with a tempo of its own, which a tap that names none reads
+   * The piece's root meter (decision 095): the one meter with a tempo of its own, which a tap that names none reads
    * (decision 040) and a host that shows a tempo shows. With no such meter, the first clock of the wall (`loop=1d`).
    */
   readonly mainMeter?: string;

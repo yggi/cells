@@ -8,7 +8,7 @@ import type { Cells, Ctx } from './context';
 export const tapClockName = (meter: string, tap: Tap, bars: number) => `${meter}:${tap.written}${bars > 1 ? `:${bars}` : ''}`;
 
 /**
- * The tap of a root meter that steps a second meter as its own tempo does (decision 093): `pulse*n/d`, the second's beats
+ * The tap of a root meter that steps a second meter as its own tempo does (decision 095): `pulse*n/d`, the second's beats
  * a second (a meter(…)'s, as its bpm counts them; a scan's entries) over the root's pulses a second, as a fraction of
  * whole numbers; null where the two rates are in no such ratio (a denominator past 100,000).
  */
@@ -164,7 +164,7 @@ export function clockCells(
   // one there is (decision 040); with several, none is the piece's by its place in the text, and a bare tap names its
   // own (decision 091, #757). The first is still `mainMeter`, for a host that shows one tempo.
   const rooted = [...decls.values()].filter((d) => clocks.has(d.name) && cells.get(d.name)?.meter);
-  // one root meter a piece (decision 093): the meter with a tempo of its own, every other meter derived from it by a tap.
+  // one root meter a piece (decision 095): the meter with a tempo of its own, every other meter derived from it by a tap.
   // A second one is an error that writes its tap; the old way kept both, and Migrate writes it. The clocks of the wall
   // (loop=1d) are the environment's, not the piece's tempo: any number of them, each with a rate of its own.
   const roots = rooted.filter((d) => !d.step?.whole);
@@ -172,7 +172,7 @@ export function clockCells(
     const [root, c] = [cells.get(roots[0]!.name)!, cells.get(d.name)!];
     const tap = derivedTap({ meter: root.meter!, perSecond: clocks.get(root.name)!.perSecond }, { beat: c.beat, scan: !!c.scan, perSecond: clocks.get(d.name)!.perSecond });
     retired(
-      `&${d.name} is a second meter with a tempo of its own, and a piece has one (&${root.name}): a second meter is derived from it${tap ? `, step=${tap}` : ' by a tap (step=beat/2, step=pulse*5/4)'} — read as any meter is, and it follows &${root.name}'s tempo (Migrate writes it; decision 093)`,
+      `&${d.name} is a second meter with a tempo of its own, and a piece has one (&${root.name}): a second meter is derived from it${tap ? `, step=${tap}` : ' by a tap (step=beat/2, step=pulse*5/4)'} — read as any meter is, and it follows &${root.name}'s tempo (Migrate writes it; decision 095)`,
       d.step?.span ?? d.span,
     );
   }
@@ -186,7 +186,7 @@ export function clockCells(
   const meterOfTap = (st: Extract<NonNullable<CellDecl['step']>, { kind: 'tap' }>, spelled: string, broke: () => void): string | null => {
     const meter = st.meter?.name ?? mainMeter();
     // (several meters with a tempo of their own: the old way read the first in the text, and Migrate names it)
-    // (of the wall's clocks alone: a second meter of the piece's own is said once, on its line, decision 093)
+    // (of the wall's clocks alone: a second meter of the piece's own is said once, on its line, decision 095)
     if (!st.meter && meters.length > 1 && !roots.length) {
       retired(
         `${spelled} names no meter, and the piece has ${meters.length} with a tempo of their own (${meters.map((m) => '&' + m).join(', ')}): name the one it taps, ${spelled.slice(0, spelled.indexOf('=') + 1)}&${meters[0]}:${spelled.slice(spelled.indexOf('=') + 1)} (Migrate writes the first in the text, which it read; decision 091)`,

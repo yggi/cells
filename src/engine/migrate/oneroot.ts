@@ -1,5 +1,5 @@
 /**
- * Migrate (decision 093, #778): a second meter with a tempo of its own, derived from the piece's root meter, the first
+ * Migrate (decision 095, #778): a second meter with a tempo of its own, derived from the piece's root meter, the first
  * in the text: its `step=` written as the tap of the root that steps it as its tempo did (`&waltz meter("3/4")
  * step=60bpm` under a 4/4 at 120 → `step=pulse/2`). Offered where the two rates are in a ratio of whole numbers, and
  * taken where it plays the same, read the old way (a second meter with a swing of its own, or a slider, does not: its
@@ -34,7 +34,7 @@ export function oneRoot(source: string, result: Result): Rewrite<'one root'>[] {
       id: `one root:${name}`,
       tool: 'migrate',
       rule: 'one root',
-      title: `&${name} is a second meter with a tempo of its own (step=${written}): derived from &${root.name}, step=${tap} (decision 093)`,
+      title: `&${name} is a second meter with a tempo of its own (step=${written}): derived from &${root.name}, step=${tap} (decision 095)`,
       before: source.split('\n')[at]!.trim(),
       after: apply(source).split('\n')[at]!.trim(),
       apply,

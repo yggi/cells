@@ -124,7 +124,7 @@ export function clockCells(ctx, decls, given) {
     for (const d of roots.slice(1)) {
         const [root, c] = [cells.get(roots[0].name), cells.get(d.name)];
         const tap = derivedTap({ meter: root.meter, perSecond: clocks.get(root.name).perSecond }, { beat: c.beat, scan: !!c.scan, perSecond: clocks.get(d.name).perSecond });
-        retired(`&${d.name} is a second meter with a tempo of its own, and a piece has one (&${root.name}): a second meter is derived from it${tap ? `, step=${tap}` : ' by a tap (step=beat/2, step=pulse*5/4)'} — read as any meter is, and it follows &${root.name}'s tempo (Migrate writes it; decision 093)`, d.step?.span ?? d.span);
+        retired(`&${d.name} is a second meter with a tempo of its own, and a piece has one (&${root.name}): a second meter is derived from it${tap ? `, step=${tap}` : ' by a tap (step=beat/2, step=pulse*5/4)'} — read as any meter is, and it follows &${root.name}'s tempo (Migrate writes it; decision 095)`, d.step?.span ?? d.span);
     }
     const meters = (roots.length ? roots : rooted).map((d) => d.name);
     const tapped = new Map();

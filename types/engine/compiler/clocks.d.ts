@@ -6,7 +6,7 @@ import type { Cells, Ctx } from './context';
 /** A tap's clock's name: the meter's, the tap and its bars (`bar:16n`, `bar:1n:4`); no cell can be called that. */
 export declare const tapClockName: (meter: string, tap: Tap, bars: number) => string;
 /**
- * The tap of a root meter that steps a second meter as its own tempo does (decision 093): `pulse*n/d`, the second's beats
+ * The tap of a root meter that steps a second meter as its own tempo does (decision 095): `pulse*n/d`, the second's beats
  * a second (a meter(…)'s, as its bpm counts them; a scan's entries) over the root's pulses a second, as a fraction of
  * whole numbers; null where the two rates are in no such ratio (a denominator past 100,000).
  */
