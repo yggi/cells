@@ -13,7 +13,7 @@ source: seed
 ```cells
 &tick, &groove from (&claves)
 &claves from gm_kit
-&tick step=4n &claves:0:.2
+&tick role=clave step=4n &claves:0:.2
 &groove [&tick]
 ```
 
