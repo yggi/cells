@@ -258,7 +258,22 @@ export function identityText(text: string): string {
 }
 
 /** A fragment's hash: `e2:` and the hash of its text as a piece receives it (`identityText`, decision 089 §8). */
-export const fragmentHash = (text: string): string => `e2:${hash64(identityText(text))}`;
+/**
+ * Hashes already taken, by text: a hash is read each time a `from` line is expanded and each time a query tries a
+ * fragment, and `identityText` reads the text's signature and counts its runs (#788: uncached, three fitting queries
+ * took 8 s where they took 5). A text's hash never changes, so this is no state; it is emptied past `HASHES` texts.
+ */
+const hashes = new Map<string, string>();
+const HASHES = 4096;
+
+export const fragmentHash = (text: string): string => {
+  const known = hashes.get(text);
+  if (known !== undefined) return known;
+  const hash = `e2:${hash64(identityText(text))}`;
+  if (hashes.size >= HASHES) hashes.clear();
+  hashes.set(text, hash);
+  return hash;
+};
 
 /** Whether a recorded hash is a text's: an `e1:` read as `e1:` (what a lockfile wrote before decision 089), any other as `e2:`. */
 export const hashIs = (recorded: string, text: string): boolean => recorded === (recorded.startsWith('e1:') ? fragmentHashE1(text) : fragmentHash(text));

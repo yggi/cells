@@ -42,7 +42,6 @@ export declare const fragmentHashE1: (text: string) => string;
  * Normalise's respellings (E3) are a later rung: they need the fragment compiled, and a hash is read while one compiles.
  */
 export declare function identityText(text: string): string;
-/** A fragment's hash: `e2:` and the hash of its text as a piece receives it (`identityText`, decision 089 §8). */
 export declare const fragmentHash: (text: string) => string;
 /** Whether a recorded hash is a text's: an `e1:` read as `e1:` (what a lockfile wrote before decision 089), any other as `e2:`. */
 export declare const hashIs: (recorded: string, text: string) => boolean;
