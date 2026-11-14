@@ -4,13 +4,13 @@
  * (`compiler/roles.ts`), the Stats page's count (`stats.ts`). This is the one table: every cell of a compiled piece has
  * exactly one kind, the first rule that holds, read from its own line and the lines it names.
  *
- * A kind is not what reads a cell. A cell read through by another's `over=` is a table to its reader, a name a table of
- * sections declares is a section, a voice another's `fm=` names a modulator: those are relations between two cells, and
- * a cell of any kind can stand in them. Pure: the compiled piece in, a word out.
+ * A kind is not what reads a cell. A cell another reads through with `over=`, a name a table of sections declares, a
+ * performer of a band, a voice another's `fm=` names: those are relations between two cells, and a cell of any kind can
+ * stand in them. Pure: the compiled piece in, a word out.
  */
 import type { CompileResult, ResolvedCell } from './program';
 /** The kinds, in the order their rules are tried. */
-export declare const KINDS: readonly ["note", "card", "midi card", "gate", "role", "style", "scope", "law", "tape", "head", "sum", "notes", "instrument", "resonator", "voice", "kit", "band", "meter", "tempo", "grid", "envelope", "level", "sections", "selector", "number", "line", "braid"];
+export declare const KINDS: readonly ["note", "card", "midi card", "gate", "role", "style", "scope", "law", "tape", "head", "sum", "phrase", "mix", "resonator", "voice", "kit", "band", "meter", "tempo", "grid", "envelope", "ramp", "volume", "sections", "selector", "number", "line", "table", "blank", "steps"];
 export type Kind = (typeof KINDS)[number];
 /** What a rule may look at beside the cell: the piece. */
 interface Seen {

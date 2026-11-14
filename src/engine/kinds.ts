@@ -4,9 +4,9 @@
  * (`compiler/roles.ts`), the Stats page's count (`stats.ts`). This is the one table: every cell of a compiled piece has
  * exactly one kind, the first rule that holds, read from its own line and the lines it names.
  *
- * A kind is not what reads a cell. A cell read through by another's `over=` is a table to its reader, a name a table of
- * sections declares is a section, a voice another's `fm=` names a modulator: those are relations between two cells, and
- * a cell of any kind can stand in them. Pure: the compiled piece in, a word out.
+ * A kind is not what reads a cell. A cell another reads through with `over=`, a name a table of sections declares, a
+ * performer of a band, a voice another's `fm=` names: those are relations between two cells, and a cell of any kind can
+ * stand in them. Pure: the compiled piece in, a word out.
  */
 import type { CompileResult, ResolvedCell } from './program';
 
@@ -23,8 +23,8 @@ export const KINDS = [
   'tape',
   'head',
   'sum',
-  'notes',
-  'instrument',
+  'phrase',
+  'mix',
   'resonator',
   'voice',
   'kit',
@@ -33,12 +33,15 @@ export const KINDS = [
   'tempo',
   'grid',
   'envelope',
-  'level',
+  'ramp',
+  'volume',
   'sections',
   'selector',
   'number',
   'line',
-  'braid',
+  'table',
+  'blank',
+  'steps',
 ] as const;
 export type Kind = (typeof KINDS)[number];
 
@@ -147,14 +150,14 @@ export const KIND_RULES: readonly KindRule[] = [
     holds: (c) => !!c.sum,
   },
   {
-    kind: 'notes',
+    kind: 'phrase',
     is: 'A product with no voice and a pitch, named: notes with their levels (decision 087).',
     example: ['&t step=2 0 2', '&accent map=amp step=2 1 .5', '&phrase [&t * &accent]'],
     holds: (c) => isChord(c) && c.sort === 'pitch',
   },
   {
-    kind: 'instrument',
-    is: 'A mix of sounds with a name: played as one voice.',
+    kind: 'mix',
+    is: 'A mix of sounds with a name: played as one voice, an instrument.',
     example: ['&a s=saw loop=C4', '&b s=sine loop=C3', '&organ [&a, &b]'],
     holds: (c) => !!c.mix,
   },
@@ -207,10 +210,16 @@ export const KIND_RULES: readonly KindRule[] = [
     holds: (c) => c.map?.kind === 'adsr',
   },
   {
-    kind: 'level',
-    is: 'map=amp, db, lin or a table: values read as a level (or, for lin, as its operator says).',
+    kind: 'ramp',
+    is: 'map=lin: values that ramp to the next, a level in a product and a pitch in a sum.',
+    example: ['&swell map=lin loop=.25 .2 1'],
+    holds: (c) => c.map?.kind === 'lin',
+  },
+  {
+    kind: 'volume',
+    is: 'map=amp, db or a table: values read as a level.',
     example: ['&accent map=amp step=2 1 .5'],
-    holds: (c) => c.map?.kind === 'amp' || c.map?.kind === 'db' || c.map?.kind === 'lin' || c.map?.kind === 'table',
+    holds: (c) => c.map?.kind === 'amp' || c.map?.kind === 'db' || c.map?.kind === 'table',
   },
   {
     kind: 'sections',
@@ -237,9 +246,21 @@ export const KIND_RULES: readonly KindRule[] = [
     holds: (c, { result }) => !!c.step || result.clocks.has(c.name),
   },
   {
-    kind: 'braid',
-    is: 'Anything else: steps with no clock of their own, a table to read through or a phrase to splice.',
+    kind: 'table',
+    is: 'A generator with no clock (scan, scale, even, fifths, a wave): a table to read through.',
     example: ['&major scan(2 2 1 2 2 2 1)'],
+    holds: (c) => c.braid !== 'list' && c.braid !== 'blank',
+  },
+  {
+    kind: 'blank',
+    is: 'No braid and no clock: the table below it as it is, turned or set by its attributes (a key, a swing).',
+    example: ['&key shift=2'],
+    holds: (c) => c.braid === 'blank',
+  },
+  {
+    kind: 'steps',
+    is: 'Anything else: a list of steps with no clock of its own, a phrase to splice or a table to read through.',
+    example: ['&motif 0 2 4'],
     holds: () => true,
   },
 ];

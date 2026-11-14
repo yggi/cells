@@ -1,6 +1,6 @@
 # Kinds
 
-What a cell is. Every cell has exactly one **kind**, read from its own line and the lines it names: the first rule below that holds decides (`src/engine/kinds.ts`, `KIND_RULES`; [#782](https://github.com/yggi/cells/issues/782)). The table is the code's own: a test keeps the two the same.
+What a cell is. Every cell has exactly one **kind**, read from its own line and the lines it names: the first rule below that holds decides (`src/engine/kinds.ts`, `KIND_RULES`; [#782](https://github.com/yggi/cells/issues/782); law L20). The table is the code's own: a test keeps the two the same.
 
 | kind | what makes a cell one | a cell of it |
 |---|---|---|
@@ -15,8 +15,8 @@ What a cell is. Every cell has exactly one **kind**, read from its own line and 
 | `tape` | write=: it records what its write head names. | `&tape write=&t step=1 length=4` |
 | `head` | play= with no braid: a read head of a tape. | `&echo play=&tape at=1` |
 | `sum` | A mix of cells with no voice: the sum of their values (decision 079). | `&drift [&a * .7 + &b * .3]` |
-| `notes` | A product with no voice and a pitch, named: notes with their levels (decision 087). | `&phrase [&t * &accent]` |
-| `instrument` | A mix of sounds with a name: played as one voice. | `&organ [&a, &b]` |
+| `phrase` | A product with no voice and a pitch, named: notes with their levels (decision 087). | `&phrase [&t * &accent]` |
+| `mix` | A mix of sounds with a name: played as one voice, an instrument. | `&organ [&a, &b]` |
 | `resonator` | body=: a struck or driven body, its braid its exciters. | `&fork body=fork loop=A4 ring=3` |
 | `voice` | A sound parameter (s=, lpf= …), or a braid turning at an audio rate: it sounds. | `&lead s=saw loop=C4` |
 | `kit` | An unstepped braid of voices: a table of them, a number picking one. | `&kit &bd &hh` |
@@ -25,16 +25,19 @@ What a cell is. Every cell has exactly one **kind**, read from its own line and 
 | `tempo` | A rate alone, no braid: a tempo a meter reads (step=&tempo), or a clock. | `&tempo step=84bpm` |
 | `grid` | map=edo, ed(r) or ratios: how positions become frequencies. | `&edo19 map=edo(19)` |
 | `envelope` | map=adsr: a level over each note. | `&pluck map=adsr .01 .3 .5 .4` |
-| `level` | map=amp, db, lin or a table: values read as a level (or, for lin, as its operator says). | `&accent map=amp step=2 1 .5` |
+| `ramp` | map=lin: values that ramp to the next, a level in a product and a pitch in a sum. | `&swell map=lin loop=.25 .2 1` |
+| `volume` | map=amp, db or a table: values read as a level. | `&accent map=amp step=2 1 .5` |
 | `sections` | A stepped table of names: it declares the sections of an arrangement (decision 016). | `&sections step=4n &tuneBar` |
 | `selector` | over= a table of sections or a band: it switches them. | `&song over=&sections step=1m 0` |
 | `number` | One number and nothing else: named in a mix it is that number (decision 088). | `&vol .5` |
 | `line` | A braid with a clock (step=, loop= below hearing): it plays its steps in time. | `&tune step=2 0 2 4` |
-| `braid` | Anything else: steps with no clock of their own, a table to read through or a phrase to splice. | `&major scan(2 2 1 2 2 2 1)` |
+| `table` | A generator with no clock (scan, scale, even, fifths, a wave): a table to read through. | `&major scan(2 2 1 2 2 2 1)` |
+| `blank` | No braid and no clock: the table below it as it is, turned or set by its attributes (a key, a swing). | `&key shift=2` |
+| `steps` | Anything else: a list of steps with no clock of its own, a phrase to splice or a table to read through. | `&motif 0 2 4` |
 
 A kind is not what reads a cell. These are relations between two cells, and a cell of any kind can stand in them:
 
-- **a table**: a cell another reads through with `over=` ([tables.md](tables.md));
+- **read through**: a cell another reads with `over=`, its table ([tables.md](tables.md));
 - **a section**: a name a table of sections declares ([time.md](time.md));
 - **a performer**: an entry of a band ([mix.md](mix.md));
 - **a modulator**: a voice another's `fm=` names ([physics.md](physics.md)).
