@@ -17,7 +17,7 @@ import { applyBases } from './base';
 import { isNote } from '../ast';
 import { isPieceFile, readPiece } from '../piecefile';
 import type { CellDecl, Diagnostic, ParseResult, TakeLine } from '../ast';
-import { IDENT, LineError, LineScanner, stripComment } from './scanner';
+import { IDENT, LineError, LineScanner, placeIn, stripComment } from './scanner';
 import { parseBody, parseCell, SHOWS } from './cell';
 import { splitPlugins } from '../plugins';
 import { BUILTIN_PLUGINS } from '../builtinPlugins';
@@ -103,7 +103,7 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
       } else s.fail(`A line declares a cell: &name …`, start, word.length);
     } catch (e) {
       if (!(e instanceof LineError)) throw e;
-      diagnostics.push({ severity: 'error', message: e.message, span: { line: lineNo, col: e.col + 1, len: e.len } });
+      diagnostics.push({ severity: 'error', message: e.message, span: { ...placeIn(parts, e.col), len: e.len } });
       const name = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(text)?.[1];
       if (name) broken.push(name);
     }

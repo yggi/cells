@@ -20,4 +20,4 @@ Its notes come from the product that plays it, as any voice's do (`[&tune * &osc
 
 **Its signature** (decision 065): `&osc from (&pitch)`, no main parameter. `&lead from osc` takes a copy of it, named `&lead`.
 
-Associated as the facet `module` with no point: a module is no style's, so a query finds it at the same distance from every style (`ANY_DISTANCE`, #540). In a patch it is the VCO.
+Associated as the facet `module` with no point: a module is no style's, so no query finds it: a piece takes it by its name (decision 090). In a patch it is the VCO.

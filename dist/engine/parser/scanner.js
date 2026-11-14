@@ -28,6 +28,13 @@ export class LineError extends Error {
         this.len = len;
     }
 }
+export function placeIn(parts, at) {
+    let part = parts[0];
+    for (const p of parts)
+        if (p.start <= at)
+            part = p;
+    return { line: part.line, col: at - part.start + 1 };
+}
 export class LineScanner {
     text;
     line;
@@ -56,12 +63,7 @@ export class LineScanner {
         this.warnings.push({ severity: 'warning', message, span: { ...this.place(start), len } });
     }
     place(start) {
-        const at = start + this.offset;
-        let part = this.parts[0];
-        for (const p of this.parts)
-            if (p.start <= at)
-                part = p;
-        return { line: part.line, col: at - part.start + 1, len: Math.max(1, this.i - start) };
+        return { ...placeIn(this.parts, start + this.offset), len: Math.max(1, this.i - start) };
     }
     skipSpace() {
         while (this.i < this.text.length && /\s/.test(this.text[this.i]))
@@ -75,7 +77,7 @@ export class LineScanner {
         return this.text[this.i] ?? '';
     }
     span(start) {
-        return { line: this.line, col: start + 1 + this.offset, len: Math.max(1, this.i - start) };
+        return this.place(start);
     }
     fail(message, start = this.i, len = 1) {
         throw new LineError(message, start + this.offset, len);
@@ -186,7 +188,7 @@ export class LineScanner {
         if (!this.body)
             this.fail('An unnamed cell &( … ) here has no parser for its body', open - 1, 2);
         const inner = this.within(this.text.slice(open + 1, close), open + 1, this.depth + 1);
-        const decl = this.body(inner, { name, pick: null, shift: 0, span: { line: this.line, col: open + this.offset, len: close - open + 2 } });
+        const decl = this.body(inner, { name, pick: null, shift: 0, span: { ...placeIn(this.parts, open + this.offset - 1), len: close - open + 2 } });
         this.lambdas.push({ ...decl, lambda: this.text.slice(open + 1, close).trim() });
         this.i = close + 1;
         return name;

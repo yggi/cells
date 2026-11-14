@@ -220,13 +220,15 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
   });
 
   describe('a second clock folded into the main meter (#668)', () => {
+    // (the texts as written have two meters and a bare tap, read the old way: the first in the text, decision 091)
+    const OLD = { old: true };
     const voices = '&v s=sine loop=C4\n&mix [&run * &v, &low * &v]';
     it('tapClock: a clock whose ticks are a tap of the main meter, its readers on that tap, the clock gone', () => {
       const written = `&bar meter("2/2", 2) step=&tempo\n&tempo step=60bpm\n&sixteenths scan(1 1 1 1) pulse=16n step=&tempo\n&low step=beat 0 4\n&run step=&sixteenths:16n 0 2 4 2\n${voices}`;
       const { source, steps } = normalise(written);
       expect(source).toBe(written.replace('&sixteenths scan(1 1 1 1) pulse=16n step=&tempo\n', '').replace('step=&sixteenths:16n', 'step=8n'));
       expect(steps).toEqual(["&sixteenths's ticks are &bar's: &sixteenths:16n is 8n"]);
-      expect(soundsIdentical(written, source)).toBe(true);
+      expect(soundsIdentical(written, source, undefined, OLD)).toBe(true);
       // (a note about the clock keeps its line)
       const noted = written.replace('&low step', '&clockNote label="sixteenths" about=&sixteenths\n&low step');
       expect(normalise(noted).source).toContain('&sixteenths scan(1 1 1 1)');
@@ -245,7 +247,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       const { source, steps } = normalise(written);
       expect(steps).toEqual(["&slow's ticks are &bar's: &slow:1m is 1m/4"]);
       expect(source).toBe(written.replace('&slow meter("4/4") step=30bpm\n', '').replace('step=&slow:1m', 'step=1m/4'));
-      expect(soundsIdentical(written, source)).toBe(true);
+      expect(soundsIdentical(written, source, undefined, OLD)).toBe(true);
       // (and not where its ticks are no whole count of any tap's: 70 bpm's bar, 24/7 s)
       expect(normalise(written.replace('step=30bpm', 'step=70bpm')).steps.filter((s) => /ticks are/.test(s))).toEqual([]);
     });
@@ -255,7 +257,8 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       // 5940 s and 6000 s, past it. S1 hears the two as one, its notes of one length; tapClock compares 64 ticks)
       const v = '&v oneshot=1 s=sine loop=C4 env=&(map=adsr 0 .1 0 .1)\n&mix [&run * &v, &low * &v]';
       const slow = `&bar meter("4/4") step=.01bpm\n&x meter("4/4") step=.0101bpm\n&low step=4n 0\n&run step=&x:4n 0 1\n${v}`;
-      expect(soundsIdentical(slow, slow.replace('step=&x:4n', 'step=4n'))).toBe(true);
+      // (read the old way: a bare tap in a piece of two meters is the first's, decision 091)
+      expect(soundsIdentical(slow, slow.replace('step=&x:4n', 'step=4n'), undefined, { old: true })).toBe(true);
       expect(normalise(slow).steps.filter((s) => /ticks are/.test(s))).toEqual([]);
     });
 
@@ -269,7 +272,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
           .replace('step=&bar2:8n', 'step=8n'),
       );
       expect(steps).toHaveLength(1);
-      expect(soundsIdentical(written, source)).toBe(true);
+      expect(soundsIdentical(written, source, undefined, OLD)).toBe(true);
       // (two sliders never become one: a second meter with its own free() rate stays)
       const own = written
         .replace('&tempo step=100bpm', '&tempo step=free(100bpm, 60..140)')

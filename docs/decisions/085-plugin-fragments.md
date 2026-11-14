@@ -133,7 +133,7 @@ A melody's step has no gain or pan of its own, and `pan=` was not among the para
 ### 6. Runtime: WASM in workers; cells runs no foreign code and stays synchronous
 
 - **Cells stays pure.** It types the interface and never evaluates code: no `eval`, no `Function`, no `Worker` in `src/`.
-- **A built-in plugin-fragment is a module of cells,** run in-process: `fiveto12` first, answering `fill()` in TypeScript. It is a plugin only in shape, the same interface the frontends see.
+- **A built-in plugin-fragment is a fragment file like any** (`runtime: builtin`, decision 090), **its code a module of cells,** run in-process: `fiveto12` first, answering `fill()` in TypeScript. It is a plugin only in shape, the same interface the frontends see.
 - **A foreign one is WASM** (the owner's 7a): written in AssemblyScript (TypeScript-like), Rust, C or Zig, with **no imports**. Its boundary:
 
   ```text
