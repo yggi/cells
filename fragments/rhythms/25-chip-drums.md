@@ -1,18 +1,11 @@
 ---
 id: chip_drums
-association:
-  - point:
-      sync: 0.3
-      harm: 0.7
-      bite: 1
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/cells examples/korobeiniki.md @ a8de625f
 ---
 
 ```cells
-&kick, &hats, &groove from (&bd, &hh)
+&kick, &hats, &groove from (&bd, &hh) style=&(map=style sync=.3 harm=.7 bite=1)
 &bd, &hh from gm_kit
 &kick role=kick step=2n &bd:0:.6
 &hats step=8n &hh:0:.5 &hh:0:.15 &hh &hh:0:.15 &hh:0:.5 &hh:0:.15 &hh &hh:0:.15

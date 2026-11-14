@@ -1,18 +1,10 @@
 ---
 id: dub_bass
-association:
-  - point:
-      sync: 0.7
-      harm: 0.2
-      bite: 0.2
-      mood: 0.25
-    weight: 1
-    facet: bass
 source: seed
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=&tripHop
 &bassline over=&harm step=8n 0@4 ~ 0 2@2
 ```
 

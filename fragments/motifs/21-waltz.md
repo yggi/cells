@@ -1,18 +1,10 @@
 ---
 id: waltzBar
-association:
-  - point:
-      sync: 0
-      harm: 0.7
-      bite: 0.3
-      mood: 0.9
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&waltzBar from &key
+&waltzBar from &key style=&waltz
 &waltzBar over=&key step=8n 0@2 2 4 4@2
 ```
 

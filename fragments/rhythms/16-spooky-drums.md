@@ -1,17 +1,10 @@
 ---
 id: spooky_drums
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.3
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&kick, &hat, &euclid, &groove from (&bd, &rim, &rd)
+&kick, &hat, &euclid, &groove from (&bd, &rim, &rd) style=&(map=style sync=.2 harm=.9 bite=.3)
 &bd, &rim, &rd from gm_kit
 &kick role=kick step=16n &bd:0:.55 &bd:0:.3 ~ ~
 &hat role=hat step=4n &rd:0:.12

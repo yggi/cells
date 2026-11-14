@@ -31,7 +31,9 @@ export function boundText(text: string, args: Readonly<Record<string, string>>):
   return text
     .split('\n')
     .flatMap((line) => {
-      if (/^\s*(?:&[A-Za-z_]\w*\s*,\s*)*&[A-Za-z_]\w*\s+from(?:\s|$)/.test(line) && !wrote && signatureOf(line)) {
+      // (the signature once, bare: its other declaration lines, decision 089, are the template's association, not the variant's)
+      if (/^\s*(?:&[A-Za-z_]\w*\s*,\s*)*&[A-Za-z_]\w*\s+from(?:\s|$)/.test(line) && signatureOf(line)) {
+        if (wrote) return [];
         wrote = true;
         return [head];
       }

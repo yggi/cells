@@ -1,25 +1,10 @@
 ---
 id: march
-association:
-  - point:
-      sync: 0
-      harm: 0.1
-      bite: 0.6
-      mood: 0.45
-    weight: 1
-    facet: motif
-  - point:
-      sync: 0
-      harm: 0.1
-      bite: 0.75
-      mood: 0.7
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&march from &key
+&march from &key style=(&(map=style sync=0 harm=.1 bite=.6 mood=.45) | &march)
 &march over=&key step=8n 4 4 0 ~
 ```
 

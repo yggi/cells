@@ -1,18 +1,10 @@
 ---
 id: bebop
-association:
-  - point:
-      sync: 0.35
-      harm: 1
-      bite: 0.3
-      mood: 0.85
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&bebop from &key
+&bebop from &key style=&swingJazz
 &bebop over=&key step=8n 0 2 4 6 7@2 6 4
 ```
 

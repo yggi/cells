@@ -37,6 +37,7 @@ interface Body {
   tier: number | null;
   about: Ref[] | null;
   style: StyleSpec | null;
+  reach: Record<string, number> | null;
   chance: number | null;
   seed: number | null;
   size: number | null;
@@ -295,6 +296,32 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
     form: 'style=&s · style=[&a * w, &b * w] · style=a..b · style=a..b * &curve',
     examples: ['&style label="Funk" style=&funk', '&style label="close to Funk, then Bossa nova" style=[&funk * .8, &bossa * .2]..&bossa'],
     read: (s, b, _word, at) => {
+      // a set, found at each (decision 089 §2, §7): ( a | b * w ), each a style and its weight
+      if (s.peek() === '(') {
+        s.i++;
+        const set: { point: StylePoint; weight: number }[] = [];
+        for (;;) {
+          s.skipSpace();
+          const point = readStylePoint(s);
+          s.skipSpace();
+          let weight = 1;
+          if (s.peek() === '*') {
+            s.i++;
+            s.skipSpace();
+            weight = s.num('a weight after * in style=( … ): style=(&funk | &bossa * .5)', NUMBER_PLACES.weight).value;
+            s.skipSpace();
+          }
+          set.push({ point, weight });
+          if (s.peek() === '|') {
+            s.i++;
+            continue;
+          }
+          s.expect(')', `')' to close style=( … | … ), a set of styles`);
+          break;
+        }
+        b.style = { from: set[0]!.point, to: null, set, span: s.place(at) };
+        return;
+      }
       // a style, or a range from one to another over the cell's scope (decision 063)
       const from = readStylePoint(s);
       let to: StylePoint | null = null;
@@ -760,6 +787,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     tier: null,
     about: null,
     style: null,
+    reach: null,
     chance: null,
     seed: null,
     size: null,
@@ -812,6 +840,15 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       if (key === null && AXIS_NAMES.includes(word)) {
         if (axes.has(word)) s.fail(`${word}= is given twice`, at, word.length);
         const vat = s.i;
+        // (a point's reach, centre ± reach with no cell moving it: how sure the point is on the axis, decision 089 §6; its value the centre)
+        const reachOnly = /^(-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+))\s*(?:±|\+-)\s*([0-9]+(?:\.[0-9]+)?|\.[0-9]+)(?![0-9.])(?!\s*\*)/.exec(s.text.slice(s.i));
+        if (reachOnly) {
+          axes.set(word, { value: reachOnly[1]!, at });
+          b.reach = { ...(b.reach ?? {}), [word]: parseFloat(reachOnly[2]!) };
+          s.i += reachOnly[0].length;
+          if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
+          continue;
+        }
         // (a range's head: an end, a number or a slider, then `..` or `±`: decision 079)
         const ranged = /^(?:free\([^)]*\)|-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+))\s*(?:\.\.|±|\+-)/.test(s.text.slice(s.i));
         if (s.text.startsWith('free(', s.i) && !ranged) axes.set(word, { value: String(readAxisFree(s, word).value), at });
@@ -1075,6 +1112,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     span: head.span,
     over,
     ...(base ? { base } : {}),
+    ...(b.reach ? { reach: b.reach } : {}),
     shift,
     off,
     ...(oneshot ? { oneshot } : {}),

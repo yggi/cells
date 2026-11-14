@@ -1,17 +1,10 @@
 ---
 id: rounded_binary
-association:
-  - point:
-      sync: 0.1
-      harm: 0.12
-      bite: 0.6
-    weight: 0.5
-    facet: form
 source: seed
 ---
 
 ```cells
-&song from (&answer, &close, &bridge) &call
+&song from (&answer, &close, &bridge) &call style=&(map=style sync=.1 harm=.12 bite=.6) * .5
 &song step=8n &call &answer &call &close &bridge &bridge^1 &call &close
 &answer step=8n &call^1
 &close step=8n &call^-2

@@ -1,18 +1,10 @@
 ---
 id: oom_pah_bass
-association:
-  - point:
-      sync: 0
-      harm: 0.1
-      bite: 0.75
-      mood: 0.7
-    weight: 1
-    facet: bass
 source: seed
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=&march
 &bassline over=&harm step=4n 0 2
 ```
 

@@ -1,19 +1,11 @@
 ---
 id: ghostPhrase
-association:
-  - point:
-      sync: 0.35
-      harm: 0.15
-      bite: 0.4
-      mood: 0.1
-    weight: 1
-    facet: motif
 source: seed
 lifted: yggi/cells examples/ghosts.md @ a8de625f
 ---
 
 ```cells
-&ghostPhrase from &key
+&ghostPhrase from &key style=&darkAmbient
 &ghostPhrase over=&key step=8n 0 4 3 ~ 7 5 ~ ~
 ```
 

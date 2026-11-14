@@ -1,18 +1,10 @@
 ---
 id: guajeo
-association:
-  - point:
-      sync: 0.9
-      harm: 0.5
-      bite: 0.7
-      mood: 0.75
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&guajeo from &key
+&guajeo from &key style=&salsa
 &guajeo over=&key step=8n ~ 2 4 ~ 2 4 ~ 7
 ```
 

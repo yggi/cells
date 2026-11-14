@@ -1,18 +1,10 @@
 ---
 id: slap
-association:
-  - point:
-      sync: 1
-      harm: 0.12
-      bite: 0.95
-      mood: 0.65
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&slap from &key
+&slap from &key style=&(map=style sync=1 harm=.12 bite=.95 mood=.65)
 &slap over=&key step=8n 0 0 ~ 6 0 ~ 4 ~
 ```
 

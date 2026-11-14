@@ -1,18 +1,10 @@
 ---
 id: continuo_bass
-association:
-  - point:
-      sync: 0.15
-      harm: 0.8
-      bite: 0.5
-      mood: 0.85
-    weight: 1
-    facet: bass
 source: seed
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=&baroque
 &bassline over=&harm step=8n 0 1 2 1 0 1 2 1
 ```
 

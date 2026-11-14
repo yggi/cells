@@ -1,18 +1,11 @@
 ---
 id: swing_jazz_drums
-association:
-  - point:
-      sync: 0.35
-      harm: 1
-      bite: 0.3
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8
 ---
 
 ```cells
-&kick, &backbeat, &fill, &ghost, &hat, &pedal, &groove from (&bd, &sd, &ph, &rd)
+&kick, &backbeat, &fill, &ghost, &hat, &pedal, &groove from (&bd, &sd, &ph, &rd) style=&(map=style sync=.35 harm=1 bite=.3)
 &bd, &sd, &ph, &rd from gm_kit
 &kick role=kick step=16n &bd:0:.559551 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 &backbeat role=backbeat step=16n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ &sd:0:.416889 ~ ~ ~

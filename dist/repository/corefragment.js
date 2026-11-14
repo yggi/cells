@@ -3,6 +3,7 @@ import { declLine, deleteCell, splitComment } from "../engine/edit.js";
 import { parse } from "../engine/parser/index.js";
 import { readFrom } from "../engine/parser/use.js";
 import { signatureOf } from "../engine/use.js";
+import { withoutDeclarations } from "./declarations.js";
 import { headsOf, hosted, HOST, NO_HEAD } from "./audition.js";
 function unreadGone(text, keep) {
     let now = text;
@@ -28,14 +29,16 @@ export function coreFragment(text, options = {}) {
     const sig = signatureOf(text);
     if (!sig)
         return { source: text, why: 'no signature: a collection is cored as a piece' };
-    const h = hosted(text, { kit: null, style: null }, options, headsOf(text));
+    const declarations = text.split('\n').filter((l) => readFrom(splitComment(l)[0].trim())?.kind === 'signature');
+    const bare = withoutDeclarations(text);
+    const h = hosted(bare, { kit: null, style: null }, options, headsOf(bare));
     if (h.why)
         return { source: text, why: h.why === NO_HEAD ? `${NO_HEAD}: nothing to hear its rewrites by` : h.why };
     const { holes, meterless, source: host } = h;
     const hostNames = [...holes.uses.map((u) => u.replace(/^&/, '')), ...Object.values(HOST)];
-    const taken = text.split('\n').flatMap((l) => {
+    const taken = bare.split('\n').flatMap((l) => {
         const f = readFrom(splitComment(l)[0].trim());
-        return f && f.kind !== 'signature' ? (f.names ?? []) : [];
+        return f && f.kind === 'use' ? (f.names ?? []) : [];
     });
     const kept = [...sig.names, ...sig.optional, ...(sig.main ? [sig.main] : []), ...taken, ...hostNames.map((n) => `&${n}`)];
     let core = toCore(host, { ...options, interface: kept, ...(meterless || holes.uses.includes('&bar') ? { skip: ['taps'] } : {}) }).source;
@@ -44,7 +47,7 @@ export function coreFragment(text, options = {}) {
             core = deleteCell(core, n);
     const interfaceNames = new Set(kept.map((n) => n.replace(/^&/, '')));
     core = unreadGone(core, interfaceNames);
-    const fromLines = text.split('\n').filter((l) => {
+    const fromLines = bare.split('\n').filter((l) => {
         const f = readFrom(splitComment(l)[0].trim());
         return !!f && f.kind !== 'signature';
     });
@@ -52,7 +55,6 @@ export function coreFragment(text, options = {}) {
         if (declLine(core, n) >= 0)
             core = deleteCell(core, n);
     core = unreadGone(core, new Set([...interfaceNames].filter((n) => !taken.includes(`&${n}`))));
-    const sigLine = text.split('\n').find((l) => readFrom(splitComment(l)[0].trim())?.kind === 'signature');
     const lines = core.split('\n').filter((l) => readFrom(splitComment(l)[0].trim()) === undefined);
-    return { source: [sigLine.trim(), ...fromLines.map((l) => l.trim()), ...lines].join('\n').replace(/\n+$/, '') };
+    return { source: [...declarations.map((l) => l.trim()), ...fromLines.map((l) => l.trim()), ...lines].join('\n').replace(/\n+$/, '') };
 }

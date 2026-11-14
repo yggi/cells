@@ -79,6 +79,12 @@ export function readStyles(parsed: ParseResult, scope: Scope | null): { parsed: 
   const styles = new Map<string, { from: number[]; to: number[] | null; curve: Ref | null }>();
   for (const d of parsed.cells) {
     if (!d.style) continue;
+    // (a set, decision 089 §7: each style read, none of them the cell's one value)
+    if (d.style.set) {
+      for (const m of d.style.set) pointOf(m.point);
+      if (d.name === STYLE) error(`&${STYLE} style=( … | … ): the section's style is one point, not a set (a set says where a cell belongs: &${STYLE} style=&funk)`, d.style.span);
+      continue;
+    }
     const from = pointOf(d.style.from);
     const to = d.style.to ? pointOf(d.style.to) : null;
     if (!from || (d.style.to && !to)) continue;
@@ -121,6 +127,10 @@ export function readStyles(parsed: ParseResult, scope: Scope | null): { parsed: 
       return sd?.map?.kind === 'style' && axis ? sd.paramCells?.[axis] : undefined;
     };
     const written = d?.style;
+    if (written?.set) {
+      error(`&${r.name}[${AXES[i]?.name ?? i}]: a set has no one value: pick from one of its styles`, r.span);
+      return null;
+    }
     const named = written ? [written.from, ...(written.to ? [written.to] : [])].flatMap((p) => (p.kind === 'cell' ? [p.ref] : p.terms.map((t) => t.ref))) : [];
     const ownMoving = d?.map?.kind === 'style' ? movingOf(r.name) : undefined;
     if (!ownMoving && named.some((n) => movingOf(n.name)) && (written!.to || (written!.from.kind !== 'cell' && written!.from.kind !== 'mix'))) {

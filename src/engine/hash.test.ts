@@ -25,8 +25,10 @@ describe('e2: a fragment as a piece receives it (decision 089)', () => {
     expect(fragmentHash(groove('gm_kit'))).not.toBe(fragmentHash(groove('other_kit')));
   });
 
-  it('leaves a collection’s `* from` declaration out, all of it association', () => {
+  it('leaves a collection’s `* from` declaration out, all of it association, a lone point’s weight too', () => {
     expect(identityText(`* from style=(&funk | &techno)\n${KIT}`)).toBe(identityText(KIT));
+    expect(identityText(`* from style=&funk * .125\n${KIT}`)).toBe(identityText(KIT));
+    expect(fragmentHash(TEMPLATE.replace('&key from (&mode) &tonic', '&key from (&mode) &tonic style=&funk * .4'))).toBe(fragmentHash(TEMPLATE));
   });
 
   it('numbers a template’s private names, keeps its interface and a collection’s cells by name', () => {

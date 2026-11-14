@@ -1,19 +1,11 @@
 ---
 id: royalTheme
-association:
-  - point:
-      sync: 0.15
-      harm: 0.8
-      bite: 0.5
-      mood: 0.85
-    weight: 1
-    facet: motif
 source: seed
 lifted: yggi/cells examples/ricercar.md @ 3504291b
 ---
 
 ```cells
-&royalTheme from &key
+&royalTheme from &key style=&baroque
 &royalTheme over=&key step=8n 0@2 2@2 4@2 5@2
 ```
 

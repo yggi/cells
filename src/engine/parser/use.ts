@@ -45,6 +45,13 @@ export type FromForm =
       readonly optional: readonly string[];
       /** The main parameter (`&tempo`), or null where there is none. */
       readonly main: string | null;
+      /** Its declaration's attributes after it, as written (`style=(&funk | &techno)`, `facet=mode`, `mode=dorian`; decision 089): the repository reads them, the compile none. */
+      readonly attributes?: readonly string[];
+    }
+  | {
+      /** A collection's declaration, `* from` with no id (decision 089): its attributes, as written; it compiles to nothing. */
+      readonly kind: 'declaration';
+      readonly attributes: readonly string[];
     };
 
 /** A line's top-level tokens: split at spaces outside quotes and brackets, each with where it starts. */
@@ -99,6 +106,18 @@ const QUOTED_ID = /^"[^"]*\S[^"]*"/;
 /** A token that is an attribute, `key=value`. */
 export const isAttribute = (token: string): boolean => /^[A-Za-z_][A-Za-z0-9_]*=/.test(token);
 
+/**
+ * Whether tokens are a declaration's attributes alone (decision 089): each `name=value`, and a style's weight after it
+ * (`style=&funk * .5`, the `*` and the number apart).
+ */
+function declarationOnly(tokens: readonly string[]): boolean {
+  for (let i = 0; i < tokens.length; i++) {
+    if (!isAttribute(tokens[i]!)) return false;
+    if (tokens[i]!.startsWith('style=') && tokens[i + 1] === '*' && /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)$/.test(tokens[i + 2] ?? '')) i += 2;
+  }
+  return true;
+}
+
 /** The flags a head may carry before `from`, as a cell's line does: `off` (#686: `&bar off from meter &tempo`). */
 export const HEAD_FLAGS: ReadonlySet<string> = new Set(['off']);
 
@@ -125,15 +144,21 @@ export function readFrom(code: string): FromForm | null | undefined {
   const head = tokens.filter((t, i) => t.at >= leftEnd && i < from).map((t) => t.text);
   if (head.some((t) => !isAttribute(t) && !HEAD_FLAGS.has(t)) || (all && head.length)) return null;
   const rest = code.slice(tokens[from]!.at + 4).trim();
-  // (a signature: nothing, a list of parameters or a name after `from`, no id)
-  if (rest === '' || rest.startsWith('(') || rest.startsWith('&')) {
+  const restTokens = topTokens(rest).map((t) => t.text);
+  // (a collection's declaration: `* from` with no id, its attributes alone, decision 089)
+  if (all && !head.length && declarationOnly(restTokens)) return { kind: 'declaration', attributes: restTokens };
+  // (a signature: nothing, a list of parameters or a name after `from`, no id; then its declaration's attributes)
+  if (rest === '' || rest.startsWith('(') || rest.startsWith('&') || declarationOnly(restTokens)) {
     if (!names || head.length || takes!.some((t, i) => t !== names[i])) return null;
-    const after = topTokens(rest);
-    const optional = after[0]?.text.startsWith('(') ? listIn(after[0].text) : [];
+    const after = restTokens;
+    const optional = after[0]?.startsWith('(') ? listIn(after[0]) : [];
     if (optional === null || optional.some((p) => !NAME_ALONE.test(p))) return null;
-    const mains = after.slice(after[0]?.text.startsWith('(') ? 1 : 0);
-    if (mains.length > 1 || (mains[0] && !NAME_ALONE.test(mains[0].text))) return null;
-    return { kind: 'signature', names, optional: [...new Set(optional)], main: mains[0]?.text ?? null };
+    const tail = after.slice(after[0]?.startsWith('(') ? 1 : 0);
+    const main = tail[0] !== undefined && !isAttribute(tail[0]) ? tail[0] : null;
+    if (main !== null && !NAME_ALONE.test(main)) return null;
+    const attributes = tail.slice(main === null ? 0 : 1);
+    if (!declarationOnly(attributes)) return null;
+    return { kind: 'signature', names, optional: [...new Set(optional)], main, ...(attributes.length ? { attributes } : {}) };
   }
   const idText = (QUOTED_ID.exec(rest) ?? WORD_ID.exec(rest))?.[0];
   if (!idText) return null;

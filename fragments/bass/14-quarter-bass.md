@@ -1,19 +1,11 @@
 ---
 id: quarter_bass
-association:
-  - point:
-      sync: 0.1
-      harm: 0.25
-      bite: 0.7
-      mood: 0.65
-    weight: 1
-    facet: bass
 source: seed
 lifted: yggi/cells examples/sailor.md @ 014c4c73
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=&seaShanty
 &bassline over=&harm step=4n 0 0 0 0
 ```
 

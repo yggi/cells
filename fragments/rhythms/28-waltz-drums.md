@@ -1,17 +1,10 @@
 ---
 id: waltz_drums
-association:
-  - point:
-      sync: 0
-      harm: 0.7
-      bite: 0.3
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&kick, &chick, &groove from (&bd, &ph)
+&kick, &chick, &groove from (&bd, &ph) style=&(map=style sync=0 harm=.7 bite=.3)
 &bd, &ph from gm_kit
 &kick step=4n &bd:0:.5 ~ ~
 &chick step=4n ~ &ph:0:.3 &ph:0:.25

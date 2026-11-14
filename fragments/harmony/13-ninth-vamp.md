@@ -1,18 +1,10 @@
 ---
 id: ninth_vamp
-association:
-  - point:
-      sync: 0.35
-      harm: 0.55
-      bite: 0.65
-      mood: 0.65
-    weight: 1
-    facet: harmony
 source: seed
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=&deepHouse
 &harm over=&key step=1m cycle=4 [0,2,4,6,8]!2 [3,5,7,9,11]!2
 ```
 

@@ -1,17 +1,10 @@
 ---
 id: AABA
-association:
-  - point:
-      sync: 0.45
-      harm: 0.85
-      bite: 0.4
-    weight: 1
-    facet: form
 source: seed
 ---
 
 ```cells
-&chorus from (&b) &a
+&chorus from (&b) &a style=&(map=style sync=.45 harm=.85 bite=.4)
 &chorus step=8n &a &a &b &a
 &b step=8n &a^3
 ```

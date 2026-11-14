@@ -1,32 +1,10 @@
 ---
 id: axis_progression
-association:
-  - point:
-      sync: 0.25
-      harm: 0.45
-      bite: 0.8
-      mood: 0.9
-    weight: 0.4
-    facet: harmony
-  - point:
-      sync: 0.15
-      harm: 0.5
-      bite: 0.85
-      mood: 0.45
-    weight: 0.4
-    facet: harmony
-  - point:
-      sync: 0.3
-      harm: 0.45
-      bite: 0.55
-      mood: 0.5
-    weight: 0.4
-    facet: harmony
 source: seed
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=(&happyHardcore * .4 | &elektro * .4 | &synthPop * .4)
 &harm over=&key step=1m cycle=4 [0,2,4] [5,7,9] [2,4,6] [6,8,10]
 ```
 

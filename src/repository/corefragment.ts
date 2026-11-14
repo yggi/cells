@@ -15,6 +15,7 @@ import { declLine, deleteCell, splitComment } from '../engine/edit';
 import { parse } from '../engine/parser';
 import { readFrom } from '../engine/parser/use';
 import { signatureOf } from '../engine/use';
+import { withoutDeclarations } from './declarations';
 import { headsOf, hosted, HOST, NO_HEAD } from './audition';
 
 /** A fragment's core, and why it is the text as written where it is. */
@@ -50,15 +51,18 @@ function unreadGone(text: string, keep: ReadonlySet<string>): string {
 export function coreFragment(text: string, options: CoreOptions = {}): FragmentCore {
   const sig = signatureOf(text);
   if (!sig) return { source: text, why: 'no signature: a collection is cored as a piece' };
-  const h = hosted(text, { kit: null, style: null }, options, headsOf(text));
+  // (its declarations, decision 089, are where it is found, no line it plays: cored without them, written back as they are)
+  const declarations = text.split('\n').filter((l) => readFrom(splitComment(l)[0].trim())?.kind === 'signature');
+  const bare = withoutDeclarations(text);
+  const h = hosted(bare, { kit: null, style: null }, options, headsOf(bare));
   if (h.why) return { source: text, why: h.why === NO_HEAD ? `${NO_HEAD}: nothing to hear its rewrites by` : h.why };
   const { holes, meterless, source: host } = h;
   const hostNames = [...holes.uses.map((u) => u.replace(/^&/, '')), ...Object.values(HOST)];
   // (what it takes from another fragment, its instrument or a kit's drums, a piece may give in its place: `&bassV`
   // written in a score is the bass's voice, decision 065; kept by name, as the signature's)
-  const taken = text.split('\n').flatMap((l) => {
+  const taken = bare.split('\n').flatMap((l) => {
     const f = readFrom(splitComment(l)[0].trim());
-    return f && f.kind !== 'signature' ? (f.names ?? []) : [];
+    return f && f.kind === 'use' ? (f.names ?? []) : [];
   });
   const kept = [...sig.names, ...sig.optional, ...(sig.main ? [sig.main] : []), ...taken, ...hostNames.map((n) => `&${n}`)];
   // (a meter the fragment doesn't define is its piece's: a tap read against the host's would be the host's, so it stays)
@@ -69,14 +73,13 @@ export function coreFragment(text: string, options: CoreOptions = {}): FragmentC
   core = unreadGone(core, interfaceNames);
   // (what it takes from another fragment back as its `from` line: the cells the core wrote in off, with what only they
   // read, and the line as written, so a piece that gives its own `&bassV` still gives it)
-  const fromLines = text.split('\n').filter((l) => {
+  const fromLines = bare.split('\n').filter((l) => {
     const f = readFrom(splitComment(l)[0].trim());
     return !!f && f.kind !== 'signature';
   });
   for (const n of taken.map((t) => t.replace(/^&/, ''))) if (declLine(core, n) >= 0) core = deleteCell(core, n);
   core = unreadGone(core, new Set([...interfaceNames].filter((n) => !taken.includes(`&${n}`))));
-  // (the signature line as written, where Normalise moved or rewrote it, and the from lines after it)
-  const sigLine = text.split('\n').find((l) => readFrom(splitComment(l)[0].trim())?.kind === 'signature')!;
+  // (the signature lines as written, its declarations each, where Normalise moved or rewrote them, and the from lines after them)
   const lines = core.split('\n').filter((l) => readFrom(splitComment(l)[0].trim()) === undefined);
-  return { source: [sigLine.trim(), ...fromLines.map((l) => l.trim()), ...lines].join('\n').replace(/\n+$/, '') };
+  return { source: [...declarations.map((l) => l.trim()), ...fromLines.map((l) => l.trim()), ...lines].join('\n').replace(/\n+$/, '') };
 }

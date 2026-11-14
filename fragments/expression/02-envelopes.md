@@ -1,11 +1,10 @@
 ---
 id: envelopes
-association:
-  - facet: expression
 source: seed
 ---
 
 ```cells
+* from
 &click map=adsr 0 .03 0 .02
 &tap map=adsr 0 .08 0 .04
 &snap map=adsr 0 .12 0 .05

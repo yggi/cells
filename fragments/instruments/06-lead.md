@@ -1,60 +1,10 @@
 ---
 id: lead
-association:
-  - point:
-      sync: 0.3
-      harm: 0.45
-      bite: 0.55
-      mood: 0.5
-    weight: 0.25
-    facet: instrument
-  - point:
-      sync: 0.35
-      harm: 0.55
-      bite: 0.65
-      mood: 0.65
-    weight: 0.25
-    facet: instrument
-  - point:
-      sync: 0.5
-      harm: 0.75
-      bite: 0.35
-      mood: 0.5
-    weight: 0.25
-    facet: instrument
-  - point:
-      sync: 0.75
-      harm: 0.85
-      bite: 0.45
-      mood: 0.9
-    weight: 0.25
-    facet: instrument
-  - point:
-      sync: 0.12
-      harm: 0
-      bite: 1
-      mood: 0.4
-    weight: 0.25
-    facet: instrument
-  - point:
-      sync: 0.05
-      harm: 0.3
-      bite: 0
-      mood: 0.9
-    weight: 0.25
-    facet: instrument
-  - point:
-      sync: 1
-      harm: 0.12
-      bite: 0.85
-      mood: 0.65
-    weight: 0.25
-    facet: instrument
 source: seed
 ---
 
 ```cells
-&leadV from (&style)
+&leadV from (&style) style=(&synthPop * .25 | &deepHouse * .25 | &lofi * .25 | &bossaNova * .25 | &techno * .25 | &ambient * .25 | &funk * .25)
 &leadV s=tri..square * &style[bite] loop=C4 lpf=1400..3600 * &style[bite] env=&(map=adsr attack=.04..0.006 * &style[bite] decay=0 sustain=1 release=.08)
 &style map=style sync=.5 harm=.5 bite=.5 mood=.5
 ```

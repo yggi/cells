@@ -1,18 +1,10 @@
 ---
 id: peek
-association:
-  - point:
-      sync: 0.3
-      harm: 0.9
-      bite: 0.3
-      mood: 0.3
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&peek from &key
+&peek from &key style=&(map=style sync=.3 harm=.9 bite=.3 mood=.3)
 &peek over=&key step=8n ~ 0 1b 0 ~ ~ -1 0
 ```
 

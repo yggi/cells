@@ -1,18 +1,10 @@
 ---
 id: minor_swing
-association:
-  - point:
-      sync: 0.55
-      harm: 0.75
-      bite: 0.6
-      mood: 0.5
-    weight: 1
-    facet: harmony
 source: seed
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=&electroSwing
 &harm over=&key step=1m cycle=8 [0,2,4]!2 [3,5,7]!2 [0,2,4]!2 [4,6,8,10]!2
 ```
 

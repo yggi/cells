@@ -1,17 +1,10 @@
 ---
 id: bossa_nova_clave
-association:
-  - point:
-      sync: 0.8
-      harm: 0.85
-      bite: 0.35
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&clave, &percussion from (&claves)
+&clave, &percussion from (&claves) style=&(map=style sync=.8 harm=.85 bite=.35)
 &claves from gm_kit
 &clave role=clave step=16n cycle=2 &claves ~!5 &claves ~!5 &claves ~!7 &claves ~!5 &claves ~!5
 &percussion [&clave * .5]

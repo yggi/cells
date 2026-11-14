@@ -1,19 +1,11 @@
 ---
 id: charleston_stabs
-association:
-  - point:
-      sync: 0.55
-      harm: 0.75
-      bite: 0.6
-      mood: 0.5
-    weight: 0.4
-    facet: stab
 source: seed
 lifted: yggi/cells examples/electroswing.md @ 2c120d4
 ---
 
 ```cells
-&stabline from &harm
+&stabline from &harm style=&electroSwing * .4
 &stabline step=8n cycle=4 &charleston!3 &push
 &charleston over=&harm step=8n [0,1,2] ~ ~ [0,1,2] ~@4
 &push over=&harm step=8n [0,1,2] ~ ~ [0,1,2] ~ [0,1,2] ~ &ahead

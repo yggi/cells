@@ -1,17 +1,10 @@
 ---
 id: trip_hop_drums
-association:
-  - point:
-      sync: 0.7
-      harm: 0.2
-      bite: 0.2
-    weight: 0.5
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&kick, &snare, &hat, &groove from (&bd, &sd, &hh)
+&kick, &snare, &hat, &groove from (&bd, &sd, &hh) style=&(map=style sync=.7 harm=.2 bite=.2) * .5
 &bd, &sd, &hh from gm_kit
 &kick step=16n &bd:0:.8 ~ ~ ~ ~ ~ ~ &bd:0:.5 ~ ~ &bd:0:.6 ~ ~ ~ ~ ~
 &snare step=2n ~ &sd:0:.7

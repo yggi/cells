@@ -1,18 +1,10 @@
 ---
 id: riff
-association:
-  - point:
-      sync: 1
-      harm: 0.12
-      bite: 0.85
-      mood: 0.65
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&riff from &key
+&riff from &key style=&funk
 &riff over=&key step=8n 0 ~ 3 0 ~ 4 3 ~
 ```
 

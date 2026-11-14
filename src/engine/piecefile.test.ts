@@ -53,10 +53,11 @@ describe('a piece file', () => {
     for (const [key, { file }] of Object.entries(EXAMPLES)) expect(writePiece(read(file)), key).toBe(file);
   });
 
-  it("is the same kind of file as a fragment's: every seed fragment reads as one, its id and association kept as keys", () => {
+  it("is the same kind of file as a fragment's: every seed fragment reads as one, its id kept as a key (its association in its text, decision 089)", () => {
     for (const [path, markdown] of Object.entries(SEED_FILES)) {
       const file = read(markdown);
-      expect(Object.keys(file.frontmatter).slice(0, 2), path).toEqual(['id', 'association']);
+      expect(Object.keys(file.frontmatter)[0], path).toBe('id');
+      expect(Object.keys(file.frontmatter), path).not.toContain('association');
       expect(writePiece(file), path).toBe(markdown);
     }
   });

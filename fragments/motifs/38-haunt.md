@@ -1,18 +1,10 @@
 ---
 id: haunt
-association:
-  - point:
-      sync: 0.15
-      harm: 0.9
-      bite: 0.25
-      mood: 0.3
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&haunt from &key
+&haunt from &key style=&(map=style sync=.15 harm=.9 bite=.25 mood=.3)
 &haunt over=&key step=8n 2 4 6 9 6 4 2@2
 ```
 

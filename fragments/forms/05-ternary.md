@@ -1,17 +1,10 @@
 ---
 id: ternary
-association:
-  - point:
-      sync: 0.1
-      harm: 0.12
-      bite: 0.5
-    weight: 0.5
-    facet: form
 source: seed
 ---
 
 ```cells
-&song from (&answer, &bridge) &call
+&song from (&answer, &bridge) &call style=&(map=style sync=.1 harm=.12 bite=.5) * .5
 &song step=8n &call &answer &bridge &bridge &call &answer
 &answer step=8n &call^-2
 &bridge step=8n &answer^1

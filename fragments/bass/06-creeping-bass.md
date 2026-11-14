@@ -1,18 +1,10 @@
 ---
 id: creeping_bass
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.3
-      mood: 0.3
-    weight: 1
-    facet: bass
 source: seed
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=&spooky
 &bassline over=&harm step=4n 0@2 &creep^$1 0
 &creep over=&harm 0
 ```

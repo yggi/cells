@@ -1,18 +1,11 @@
 ---
 id: bossa_nova_drums
-association:
-  - point:
-      sync: 0.75
-      harm: 0.85
-      bite: 0.45
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8
 ---
 
 ```cells
-&kick, &backbeat, &fill, &ghost, &hat, &euclid, &euclidLevel, &groove from (&bd, &rim, &sd, &hh)
+&kick, &backbeat, &fill, &ghost, &hat, &euclid, &euclidLevel, &groove from (&bd, &rim, &sd, &hh) style=&(map=style sync=.75 harm=.85 bite=.45)
 &bd, &rim, &sd, &hh from gm_kit
 &kick role=kick step=16n &bd:0:.502201 ~ ~ &bd:0:.312543 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 &backbeat role=backbeat step=16n ~ ~ ~ ~ &sd:0:.416889 ~ ~ ~ ~ ~ ~ ~ &sd:0:.427119 ~ ~ ~

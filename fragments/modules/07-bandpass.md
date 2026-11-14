@@ -1,7 +1,5 @@
 ---
 id: bandpass
-association:
-  - facet: module
 source: seed
 ---
 

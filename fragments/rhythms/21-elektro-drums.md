@@ -1,18 +1,11 @@
 ---
 id: elektro_drums
-association:
-  - point:
-      sync: 0.15
-      harm: 0.5
-      bite: 0.85
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/cells examples/zell.md @ 014c4c73
 ---
 
 ```cells
-&kick, &backbeat, &tick, &groove from (&bd, &sd, &hh)
+&kick, &backbeat, &tick, &groove from (&bd, &sd, &hh) style=&(map=style sync=.15 harm=.5 bite=.85)
 &bd, &sd, &hh from gm_kit
 &kick role=kick step=2n &bd:0:.8
 &backbeat role=backbeat step=2n [~ &sd:0:.35]

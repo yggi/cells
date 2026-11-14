@@ -1,18 +1,10 @@
 ---
 id: soul
-association:
-  - point:
-      sync: 0.35
-      harm: 0.55
-      bite: 0.75
-      mood: 0.65
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&soul from &key
+&soul from &key style=&(map=style sync=.35 harm=.55 bite=.75 mood=.65)
 &soul over=&key step=8n 4 ~ 4 3 4@2 2@2
 ```
 

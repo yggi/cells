@@ -1,19 +1,11 @@
 ---
 id: korobeinikiBar
-association:
-  - point:
-      sync: 0.3
-      harm: 0.7
-      bite: 1
-      mood: 0.55
-    weight: 1
-    facet: motif
 source: seed
 lifted: yggi/cells examples/korobeiniki.md @ a8de625f
 ---
 
 ```cells
-&korobeinikiBar from &key
+&korobeinikiBar from &key style=&chiptune
 &korobeinikiBar over=&key step=8n 7@2 2 3 5@2 3 2
 ```
 

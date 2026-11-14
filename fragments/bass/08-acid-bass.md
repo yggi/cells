@@ -1,19 +1,11 @@
 ---
 id: acid_bass
-association:
-  - point:
-      sync: 0.45
-      harm: 0.05
-      bite: 0.85
-      mood: 0.35
-    weight: 1
-    facet: bass
 source: seed
 lifted: yggi/cells examples/acid.md @ 014c4c73
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=&acid
 &bassline over=&harm step=16n 0 0 &r^$12 0 ~ 0 &r^$7 0 &r^$10 ~ 0 &r^$12 0 &r^$3 &r^$5 &r^$7
 &r over=&harm 0
 ```

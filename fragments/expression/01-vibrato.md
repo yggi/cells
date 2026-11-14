@@ -1,11 +1,10 @@
 ---
 id: vibrato
-association:
-  - facet: expression
 source: seed
 ---
 
 ```cells
+* from
 &vibrato map=lin loop=5 0 .1 0 -.1 0
 ```
 

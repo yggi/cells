@@ -1,25 +1,11 @@
 ---
 id: celesta
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.3
-      mood: 0.3
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.15
-      harm: 0.8
-      bite: 0.5
-      mood: 0.85
-    weight: 0.125
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/spooky.md @ 6d1bfa7
 ---
 
 ```cells
+* from style=(&spooky * .125 | &baroque * .125)
 &keysV s=sine loop=C3 env=&(map=adsr .002 .7 0 .5)
 ```
 

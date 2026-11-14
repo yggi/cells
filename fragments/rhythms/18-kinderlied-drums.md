@@ -1,17 +1,10 @@
 ---
 id: kinderlied_drums
-association:
-  - point:
-      sync: 0.1
-      harm: 0.12
-      bite: 0.5
-    weight: 0.25
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&kick, &backbeat, &hat, &groove from (&bd, &sd, &hh)
+&kick, &backbeat, &hat, &groove from (&bd, &sd, &hh) style=&(map=style sync=.1 harm=.12 bite=.5) * .25
 &bd, &sd, &hh from gm_kit
 &kick role=kick step=2n &bd:0:.5
 &backbeat role=backbeat step=2n [~ &sd:0:.35]

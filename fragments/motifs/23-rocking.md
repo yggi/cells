@@ -1,18 +1,10 @@
 ---
 id: rocking
-association:
-  - point:
-      sync: 0.3
-      harm: 0.2
-      bite: 0.2
-      mood: 0.825
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&rocking from &key
+&rocking from &key style=&(map=style sync=.3 harm=.2 bite=.2 mood=.825)
 &rocking over=&key step=8n 0@2 2 4@2 2
 ```
 

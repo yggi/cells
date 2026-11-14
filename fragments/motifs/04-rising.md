@@ -1,18 +1,10 @@
 ---
 id: rising
-association:
-  - point:
-      sync: 0.05
-      harm: 0.3
-      bite: 0
-      mood: 0.9
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&rising from &key
+&rising from &key style=&ambient
 &rising over=&key step=8n 0@2 2@2 4@4
 ```
 

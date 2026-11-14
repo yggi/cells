@@ -1,18 +1,10 @@
 ---
 id: fanfare
-association:
-  - point:
-      sync: 0.2
-      harm: 0.6
-      bite: 0.9
-      mood: 0.6
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&fanfare from &key
+&fanfare from &key style=&(map=style sync=.2 harm=.6 bite=.9 mood=.6)
 &fanfare over=&key step=8n 0 0 0 2@2 4@2 ~
 ```
 

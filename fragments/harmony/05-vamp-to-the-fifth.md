@@ -1,40 +1,11 @@
 ---
 id: vamp_to_the_fifth
-association:
-  - point:
-      sync: 0.05
-      harm: 0.12
-      bite: 0
-      mood: 0.9
-    weight: 1
-    facet: harmony
-  - point:
-      sync: 0.1
-      harm: 0.12
-      bite: 0.5
-      mood: 0.95
-    weight: 0.5
-    facet: harmony
-  - point:
-      sync: 0
-      harm: 0.7
-      bite: 0.3
-      mood: 0.9
-    weight: 0.4
-    facet: harmony
-  - point:
-      sync: 0
-      harm: 0.1
-      bite: 0.75
-      mood: 0.7
-    weight: 0.4
-    facet: harmony
 source: seed
 lifted: yggi/jambot packages/engine/src/themes.ts @ 0a56da9
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=(&(map=style sync=.05 harm=.12 bite=0 mood=.9) | &kinderlied * .5 | &waltz * .4 | &march * .4)
 &harm over=&key step=1m cycle=8 [0,2,4]!4 [4,6,8]!4
 ```
 

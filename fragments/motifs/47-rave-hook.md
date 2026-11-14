@@ -1,19 +1,11 @@
 ---
 id: raveHook
-association:
-  - point:
-      sync: 0.25
-      harm: 0.45
-      bite: 0.8
-      mood: 0.9
-    weight: 1
-    facet: motif
 source: seed
 lifted: yggi/cells examples/hypercell.md @ 014c4c73
 ---
 
 ```cells
-&raveHook from &key
+&raveHook from &key style=&happyHardcore
 &raveHook over=&key step=8n 11!2 13 11 10 9 10@2
 ```
 

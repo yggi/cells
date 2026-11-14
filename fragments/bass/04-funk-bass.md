@@ -1,33 +1,11 @@
 ---
 id: funk_bass
-association:
-  - point:
-      sync: 1
-      harm: 0.12
-      bite: 0.85
-      mood: 0.65
-    weight: 1
-    facet: bass
-  - point:
-      sync: 0.5
-      harm: 0.75
-      bite: 0.35
-      mood: 0.5
-    weight: 1
-    facet: bass
-  - point:
-      sync: 0.75
-      harm: 0.85
-      bite: 0.45
-      mood: 0.9
-    weight: 1
-    facet: bass
 source: seed
 lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=(&funk | &lofi | &bossaNova)
 &bassline over=&harm step=16n 0 ~ ~ 0 ~ ~ 0 0 ~ ~ 0 0 ~ &bassNext &bassNext ~
 &bassNext over=&harm[>>] 0
 ```
