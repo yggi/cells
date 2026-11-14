@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EXAMPLES } from './examples';
 import { compileSource } from './compile';
+import { resolveSeed } from '../repository/library';
 import { codeShifts } from './program';
 import { plan, type Plan } from './realize';
 import { clocking } from './clocking';
@@ -39,7 +40,7 @@ describe('the main meter', () => {
   it('is found for the examples that have one, and none for those stepping at a bare rate', () => {
     const none: string[] = [];
     for (const [key, { source }] of Object.entries(EXAMPLES).sort(([a], [b]) => (a < b ? -1 : 1))) {
-      const r = compileSource(source);
+      const r = compileSource(source, undefined, { resolve: resolveSeed });
       if (r.ok && !mainMeter(r)) none.push(key);
     }
     expect(none).toEqual(['cellscape2', 'daytime', 'dtmf', 'fiveto12', 'oscillator', 'rests', 'semitones', 'steps', 'tone', 'twovoices']);
@@ -153,7 +154,7 @@ describe('the ticks', () => {
 
   it('every example: window by window as one piece, eight seconds, none lost or doubled', () => {
     for (const [f, { source }] of Object.entries(EXAMPLES)) {
-      const r = compileSource(source);
+      const r = compileSource(source, undefined, { resolve: resolveSeed });
       if (!r.ok || !mainMeter(r)) continue;
       const p = plan(r, codeShifts(r));
       const w = windowed(p, 0, 8);

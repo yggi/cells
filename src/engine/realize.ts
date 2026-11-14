@@ -644,15 +644,15 @@ const LAPS_KEPT = 96;
 
 /**
  * One unit lap of a law, read by the language (decision 085, #693): its fills filled with braid text, its cells compiled
- * and played on a voice of its own, so its notes go through its tables, and its places through the voice's `pan=` (#727),
- * as any line's do.
+ * and played on a voice of its own, so its notes go through its tables and its places through its line's `pan=` (#739), as
+ * any line's do; its head is notes with their levels, played on the lap's voice (decision 087).
  */
 function lawLap(law: PluginFragment, lap: number): readonly LapNote[] {
   const key = `${law.id} ${lap}`;
   const kept = LAPS.get(key);
   if (kept) return kept;
   const unit = unitOf(law);
-  const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4${law.voice ? ` ${law.voice}` : ''}\n&lapOut map=sample [${law.plays} * &lapVoice]`;
+  const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [&${law.head} * &lapVoice]`;
   const result = compile(parse(text, { old: false }), DEFAULT_ENV);
   if (!result.ok) throw new Error(`law=${law.id}, lap ${lap}: ${result.diagnostics.map((d) => d.message).join('; ')}`);
   const shifts = codeShifts(result);

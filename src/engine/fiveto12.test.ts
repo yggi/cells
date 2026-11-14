@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolveSeed } from '../repository/library';
 import { BAR, BLOCK, DAY, DAY_MODES, KEY, MODE_NAMES, SECONDS_PER_STEP, barOf, modeSemis, notesBetween, place, rowOf, tonicOf } from './fiveto12';
 
 const NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
@@ -98,7 +99,7 @@ describe('5 to 12 in the studio: law=fiveto12 plays the day', () => {
     const { eventsBetween, plan } = await import('./realize');
     const { pieceTime, sections } = await import('./duration');
     const { EXAMPLES } = await import('./examples');
-    const r = compileSource((EXAMPLES as Record<string, { source: string }>).fiveto12.source);
+    const r = compileSource((EXAMPLES as Record<string, { source: string }>).fiveto12.source, undefined, { resolve: resolveSeed });
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     const ev = eventsBetween(plan(r, codeShifts(r)), 0, 12 * SECONDS_PER_STEP - 1e-6);
     expect(new Set(ev.map((e) => e.at.toFixed(3))).size).toBe(7);
@@ -111,10 +112,9 @@ describe('5 to 12 in the studio: law=fiveto12 plays the day', () => {
     const { compileSource } = await import('./compile');
     const { codeShifts } = await import('./program');
     const { eventsBetween, plan } = await import('./realize');
-    const piece = (anchor: string) =>
-      `&day scan(1!24) loop=1d anchor=${anchor}\n&cycle law=fiveto12 over=&day step=84bpm\n&v s=tri loop=C4\n&out loop=SAMPLE_RATE map=sample [&cycle * &v]`;
+    const piece = (anchor: string) => `&day scan(1!24) loop=1d anchor=${anchor}\n&cycle from five_to_twelve &day\n&v s=tri loop=C4\n&out loop=SAMPLE_RATE map=sample [&cycle * &v]`;
     const at = (src: string, from: number) => {
-      const r = compileSource(src);
+      const r = compileSource(src, undefined, { resolve: resolveSeed });
       expect(r.diagnostics).toEqual([]);
       return eventsBetween(plan(r, codeShifts(r)), from, from + 12 * SECONDS_PER_STEP - 1e-6).map((e) => [+(e.at - from).toFixed(6), +e.freq.toFixed(3)]);
     };

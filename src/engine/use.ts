@@ -176,6 +176,13 @@ function pickPart(id: string, text: string, from: FromUse, say: (message: string
 export const hasFrom = (text: string): boolean => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
 
 /** A fragment's signature (decision 065): what its `from` line with no id declares; null for a collection, which has none. */
+/** The heads every signature line of a text names (`&cycle from &day` gives `&cycle`): the cells a template defines. */
+export const signatureHeads = (text: string): string[] =>
+  text.split('\n').flatMap((line) => {
+    const form = readFrom(splitComment(line)[0].trim());
+    return form?.kind === 'signature' ? form.names : [];
+  });
+
 export function signatureOf(text: string): Extract<FromForm, { kind: 'signature' }> | null {
   for (const l of linesOf(text)) if (l.from?.kind === 'signature') return l.from;
   return null;

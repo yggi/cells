@@ -1,0 +1,4 @@
+&day scan(1!24) loop=1d anchor=6.30
+&cycle law=fiveto12 over=&day step=84bpm label="the law"
+&glass s=tri loop=C4
+&out map=sample [&cycle * &glass * .3]

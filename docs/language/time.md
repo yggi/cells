@@ -149,7 +149,16 @@ A line stepped by the meter cell's own steps (`step=&bar`, `step=&bar*2`) is ret
 
 ## Laws
 
-A cell with **`law=`** has its notes computed by a law instead of written: `law=fiveto12` is the 5 to 12 cycle, a day of music (`src/engine/fiveto12.ts`). The law reads the day through **`over=&day`**: a day meter, a clock whose loop is a day, `&day scan(1!24) loop=1d`. **`anchor=hh.mm`** on that clock is the time of day it stands at when play starts (`anchor=11.55`); written on the law itself, it is a warning that says where it goes. Drawn **`show=sun`** (a built-in plugin: [plugins.md](plugins.md)), the day meter is a 24-hour dial, noon at the top. Rates take time units: `min` `h` `d` `wk` (`loop=1d` is one lap a day). See the example *5 to 12*.
+A **law** computes a cell's notes instead of writing them: `fiveto12` is the 5 to 12 cycle, a day of music (`src/engine/fiveto12.ts`), a plugin-fragment cells holds itself ([decision 085](https://github.com/yggi/cells/blob/main/docs/decisions/085-plugin-fragments.md)). A piece takes it from the clock it reads, its main argument: **`&cycle from five_to_twelve &day`**, where `&day` is a day meter, a clock whose loop is a day, `&day scan(1!24) loop=1d`. **`anchor=hh.mm`** on that clock is the time of day it stands at when play starts (`anchor=11.55`); written on the law's head, it is a warning that says where it goes. Its notes are read by the language: degrees over its key, its levels and places as cells ([plugins.md](plugins.md)). Drawn **`show=sun`** (a built-in plugin), the day meter is a 24-hour dial, noon at the top. Rates take time units: `min` `h` `d` `wk` (`loop=1d` is one lap a day). See the example *5 to 12*.
+
+```cells
+&day scan(1!24) loop=1d anchor=11.55 show=sun
+&cycle from five_to_twelve &day
+&glass s=tri loop=C4
+&out map=sample [&cycle * &glass * .3]
+```
+
+The old spelling, `&cycle law=fiveto12 over=&day`, still reads, with a warning naming the `from` line; Migrate rewrites it.
 
 ## Laps and selectors
 
