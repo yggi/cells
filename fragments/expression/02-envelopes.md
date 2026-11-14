@@ -1,12 +1,7 @@
 ---
 id: envelopes
 association:
-  - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.5
-    weight: 0.25
-    facet: expression
+  - facet: expression
 source: seed
 ---
 
@@ -28,4 +23,4 @@ They are the seven the examples wrote out most, each from its most common spelli
 An envelope near one of them, each value within a fifth of it, became it in the examples (the owner, #196: "collapse … minimal differences … as long as the 'spirit and style of the piece' is preserved"); one that is a piece's own, slower, longer or shaped otherwise, stays as the piece writes it.
 The names are no performer's (`&stab`, `&pad`, `&lead`, `&keys` are role cells, decision 061), so a piece that plays those parts takes these too.
 
-It defines cells and uses nothing, so it fits any workbench. Associated once, as the facet `expression`, as `vibrato` is: at the centre of style space, at a quarter weight.
+It defines cells and uses nothing, so it fits any workbench. Associated as the facet `expression` with no point, as `vibrato` is (#540).
