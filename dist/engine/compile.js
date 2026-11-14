@@ -5,7 +5,8 @@ import { clocking } from "./clocking.js";
 import { mainLength, pieceTime } from "./duration.js";
 import { codeShifts, DEFAULT_ENV } from "./program.js";
 import { readStyles } from "./styles.js";
-import { expansion, hasFrom } from "./use.js";
+import { expansion, hasFrom, signatureHeads } from "./use.js";
+import { BUILT_IN } from "./fills.js";
 function compile(parsed, env = DEFAULT_ENV, used) {
     const slotted = readSlots(parsed);
     const held = readStyles(slotted, null);
@@ -29,10 +30,30 @@ function scopeOf(result) {
     return Math.abs(bars - Math.round(bars)) < 1e-6 && Math.round(bars) > 0 ? { bars: Math.round(bars) } : { seconds };
 }
 export function compileSource(source, env = DEFAULT_ENV, options = {}) {
-    if (!hasFrom(source))
-        return compile(parse(source, { old: options.old ?? false }), env);
+    if (!hasFrom(source)) {
+        const alone = compile(parse(source, { old: options.old ?? false }), env);
+        const said = oldLaws(alone, () => true, source);
+        return said.length ? { ...alone, diagnostics: [...alone.diagnostics, ...said].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col) } : alone;
+    }
     const x = expansion(source, options);
     const result = compile(parse(x.text, { old: options.old ?? false }), env, x.given);
-    const diagnostics = [...x.diagnostics, ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span }))].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
+    const said = oldLaws(result, (line) => x.through(line) === null, source);
+    const diagnostics = [...x.diagnostics, ...said, ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span }))].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
     return { ...result, ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics, takes: x.takes, ...(x.origins.size ? { origins: x.origins } : {}) };
+}
+function oldLaws(result, own, source) {
+    const defined = new Set(signatureHeads(source).map((n) => n.slice(1)));
+    return [...result.cells.values()].flatMap((c) => {
+        const law = c.params.law;
+        if (typeof law !== 'string' || !own(c.span.line) || defined.has(c.name))
+            return [];
+        const clock = c.over ? ` &${c.over}` : ' &day';
+        return [
+            {
+                severity: 'warning',
+                message: `law=${law} is the old way: write &${c.name} from ${BUILT_IN.get(law)?.fragment ?? law}${clock}, the law taken from its clock (decision 085; Migrate rewrites it)`,
+                span: c.span,
+            },
+        ];
+    });
 }
