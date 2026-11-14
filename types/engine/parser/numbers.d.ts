@@ -60,6 +60,7 @@ export declare const NUMBER_PLACES: {
     readonly intervals: NumberPlace;
     readonly geo: NumberPlace;
     readonly args: NumberPlace;
+    readonly evenArg: NumberPlace;
     readonly fifths: NumberPlace;
     readonly phase: NumberPlace;
     readonly meter: NumberPlace;
