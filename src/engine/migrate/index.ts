@@ -24,7 +24,7 @@
  *                  gave: part=bass, role=kick (decision 075, the feel's version 3, #560 rung 2)
  *  - axes.ts:      a style on the axes sync harm artic energy as on sync harm bite mood (decision 076, #572): exact
  *                  against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
- *  - laws.ts:      a law written law=fiveto12 over=&day as the from line that takes it: &cycle from fiveto12 &day (decision 085)
+ *  - laws.ts:      a law written law=fiveto12 over=&day as the from line that takes it: &cycle from five_to_twelve &day (decision 085)
  *
  * `&parts` → `&sections` (decision 044) was offered for v0.15 and is retired (decision 049, ruling 4): `&parts` is a valid
  * name, the author's. The card's title= tags= tier= going to the file's frontmatter (decision 047) is a migration too, but its rewrite makes
@@ -83,7 +83,7 @@ export const migrations =
     ...axes(source),
     ...parts(source, result),
     ...movedIds(source, options.resolve),
-    ...laws(source),
+    ...laws(source, options.resolve),
   ];
 
 /** A text with every retired form written as it is now, one rewrite at a time, each playing the same notes; the steps are what each did. */

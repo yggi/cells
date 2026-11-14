@@ -40,7 +40,7 @@ That goes against the mix algebra's own laws (grouping doesn't matter), 075 and 
 ## Rejected
 
 - **A voiceless gate** (`play=` and `level=` with no voice): a second spelling of the same thing, and it would blur the gate as the performer.
-- **The voice as a fragment's argument** (`&cycle from fiveto12(voice=&glass) &day`): no language change, but the head couldn't be played on another voice, and naming would still differ from parentheses everywhere else.
+- **The voice as a fragment's argument** (`&cycle from five_to_twelve(voice=&glass) &day`): no language change, but the head couldn't be played on another voice, and naming would still differ from parentheses everywhere else.
 - **Context typing** (a cell's sort from where it is read, as a wave's half is): 006's rule that a sort comes from the cell holds; the inference only reads the line more closely.
 - **079 yielding** (a weighted line of numbers as notes): it would change what 079's examples mean.
 

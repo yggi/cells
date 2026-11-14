@@ -21,8 +21,7 @@
  * - A line taken twice from one id is taken once, at its first line; a line that then takes nothing says so.
  * - A cycle is an error naming it, and so is a depth past `FROM_DEPTH`; an unresolved id is an error naming it, and the
  *   piece's other lines compile as they would without it. Each is said on the piece's line it came through.
- * - Cells resolves nothing itself but its built-in plugin-fragments (`BUILT_IN`, decision 085 §6: `from fiveto12`): the
- *   host hands each compile a resolver (`Resolve`) for the rest, and the hashes its lockfile
+ * - Cells resolves nothing itself: the host hands each compile a resolver (`Resolve`), and the hashes its lockfile
  *   recorded (`Locked`); a recorded hash the library no longer gives plays the current version, with a warning.
  * - A fragment's hash is `e2:` and a hash of its text as a piece receives it (`identityText`, decision 089 §8): a
  *   declaration's association left out, a template's private names numbered, its interface by name. Its rung is written
@@ -39,7 +38,6 @@ import { STYLE } from './style';
 import { MOVED, RENAMED_IDS } from './renamed';
 import { BOUND_BY_NAME, byNameMessage } from './byname';
 import type { CompileOptions, Origin, Resolve, Take } from './program';
-import { BUILT_IN } from './fills';
 
 /** How deep `from` lines nest: a kit in a groove in a section in a piece is 3. */
 export const FROM_DEPTH = 8;
@@ -178,6 +176,13 @@ function pickPart(id: string, text: string, from: FromUse, say: (message: string
 export const hasFrom = (text: string): boolean => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
 
 /** A fragment's signature (decision 065): what its `from` line with no id declares; null for a collection, which has none. */
+/** The heads every signature line of a text names (`&cycle from &day` gives `&cycle`): the cells a template defines. */
+export const signatureHeads = (text: string): string[] =>
+  text.split('\n').flatMap((line) => {
+    const form = readFrom(splitComment(line)[0].trim());
+    return form?.kind === 'signature' ? form.names : [];
+  });
+
 export function signatureOf(text: string): Extract<FromForm, { kind: 'signature' }> | null {
   for (const l of linesOf(text)) if (l.from?.kind === 'signature') return l.from;
   return null;
@@ -791,9 +796,7 @@ export interface Expansion {
 }
 
 /** The expansion of a text (see the module's comment), its `use` and `from` lines resolved by `options`. */
-export function expansion(text: string, { resolve: host, locked = [], old = false }: CompileOptions = {}): Expansion {
-  // (a built-in plugin-fragment is cells' own, decision 085 §6: its id resolves to its text before the host's resolver is asked)
-  const resolve: Resolve = (id, hash) => BUILT_IN.get(id)?.text ?? host?.(id, hash) ?? null;
+export function expansion(text: string, { resolve, locked = [], old = false }: CompileOptions = {}): Expansion {
   const own = linesOf(text);
   const uses = own.flatMap((l) => {
     const entry = entryOf(l);
@@ -826,12 +829,12 @@ export function expansion(text: string, { resolve: host, locked = [], old = fals
     // (a seed fragment a piece took in as its part, read the old way as that part, decision 082: Migrate's `moved` rewrites it)
     const moved = old ? MOVED.get(id) : undefined;
     if (moved) diagnostics.push({ severity: 'warning', message: `${quoted(id)} is a part of ${moved.document} now: take it from there (Migrate rewrites it)`, span });
-    const whole = moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []));
+    const whole = resolve ? (moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []))) : null;
     const picked = whole === null ? null : pickPart(id, whole, u.from, say);
     const theirs = picked?.text ?? null;
     parts.push(picked?.part);
     if (theirs === null) {
-      if (whole === null) say(host ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
+      if (whole === null) say(resolve ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
       hashes.push(null);
       copies.push([]);
       args.push(undefined);

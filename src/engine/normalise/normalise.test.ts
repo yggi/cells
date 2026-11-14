@@ -100,6 +100,8 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       ['&style', '&style style=&(map=style sync=.5 harm=.5 bite=.5 mood=.5)'],
       // (a module's audio in, a filter's or an amp's: an oscillator, decision 067 §3)
       ['&in', '&in s=saw loop=C3'],
+      // (a law's day, decision 085)
+      ['&day', '&day scan(1!24) loop=1d'],
     ]);
     for (const f of LIBRARY) {
       const holes = holesOf(f.text, compiled, resolveSeed);

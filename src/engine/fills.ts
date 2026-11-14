@@ -5,8 +5,9 @@
  * one without is a braid, filled once; a mark is a section, its text the label. The language reads what the code
  * writes: its notes go through the fragment's tables like any braid's.
  *
- * Rung 1 of #691 (#693): the built-ins only, run in-process (TypeScript, pure), named by `law=` until the `from`
- * spelling (rung 5). Cells never runs foreign code; a host does, behind this same interface.
+ * A built-in's fragment file (`fragments/laws/fiveto12.md`, `runtime: builtin`, decision 090) is resolved by the host's
+ * library like any fragment; this module holds its code, run in-process (TypeScript, pure), by its id. Cells never runs
+ * foreign code; a host does, behind this same interface.
  */
 import { FIVETO12 } from './fiveto12';
 
@@ -20,7 +21,10 @@ export interface Fill {
 
 /** A plugin-fragment as cells reads it: its fills, the cells around them, and the code that fills them. */
 export interface PluginFragment {
+  /** Its word: `law=fiveto12` and its code's key. */
   readonly id: string;
+  /** The id of its fragment file, what a piece takes it from (`from five_to_twelve`): pieces and fragments share one namespace, and an example is `fiveto12`. */
+  readonly fragment: string;
   /** Its fills, by the name of the cell each one is (a mark's, by its own name). */
   readonly fills: Readonly<Record<string, Fill>>;
   /** Its cells, each fill written `fill()`; a timed fill's cell steps once a step (`step=1`) until rung 5 times it by its clock. */
@@ -30,13 +34,6 @@ export interface PluginFragment {
    * with their levels, a product with no voice, decision 087), its places on its lines (`pan=` on a line, #739).
    */
   readonly head: string;
-  /**
-   * The fragment as a piece takes it (decision 085 §2, rung 5): its signature and its head's line, the main argument the
-   * clock it reads (`&cycle from &day`, `&cycle law=fiveto12 over=&day …`). `from` resolves a built-in's id to it before
-   * asking the host's resolver, so `&cycle from fiveto12 &day` is the line the piece once wrote, `law=` now the
-   * fragment's own spelling.
-   */
-  readonly text: string;
   /** Where lap 0 sits on the clock it reads, as an `anchor=` writes it (11.55: 11:55). */
   readonly origin: number;
   /** Steps until it comes round (a day). */

@@ -200,11 +200,11 @@ export const PARAMS = {
         stub: true,
     },
     law: {
-        help: 'a law that computes the notes, the old spelling: &cycle from fiveto12 &day takes it now (decision 085)',
+        help: 'a law that computes the notes, the old spelling: &cycle from five_to_twelve &day takes it now (decision 085)',
         doc: 'time.md',
         value: 'word',
         on: ['law'],
-        old: 'from fiveto12 &day',
+        old: 'from five_to_twelve &day',
     },
     anchor: {
         help: 'a clock (a day meter, loop=1d): the time of day it stands at when play starts (hours.minutes — 11.55); play begins where the clock stands',

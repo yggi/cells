@@ -8,7 +8,7 @@ description: "Music on the clock on the wall: a tick each second, a chime each m
 ```cells
 &unitsNote label="Rates in clock time: loop=1min turns once a minute, 1h an hour, 1d a day, 1wk a week." about=(&minute &hour &day &week)
 &anchorNote label="anchor=11.55: where the day stands when play starts, at 11:55 (hours.minutes); then it keeps the time." about=&day
-&lawNote label="from fiveto12 &day: notes computed by a law, not written: the 5 to 12 cycle, a day of music read through the day." about=&cycle
+&lawNote label="from five_to_twelve &day: notes computed by a law, not written: the 5 to 12 cycle, a day of music read through the day." about=&cycle
 &minute scan(1!60) loop=1min label="a minute: sixty seconds"
 &hour scan(1!60) loop=1h label="an hour: sixty minutes"
 &day scan(1!24) loop=1d anchor=11.55 show=sun label="the day"
@@ -17,7 +17,7 @@ description: "Music on the clock on the wall: a tick each second, a chime each m
 &tick step=4n 0                                     # each second
 &chime step=&hour:4n 12                             # each minute
 &daily over=scale(major) step=&week:4n 0 1 2 3 4 5 6    # the chime a step higher each day
-&cycle label="the law: a day" from fiveto12 &day
+&cycle label="the law: a day" from five_to_twelve &day
 
 &click s=sine loop=C6 env=&(map=adsr 0 .01 0 .01)
 &bell s=sine loop=C5 env=&(map=adsr .002 2 0 1.5)

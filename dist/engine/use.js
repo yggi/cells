@@ -4,7 +4,6 @@ import { counts } from "./core/desugar.js";
 import { STYLE } from "./style.js";
 import { MOVED, RENAMED_IDS } from "./renamed.js";
 import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
-import { BUILT_IN } from "./fills.js";
 export const FROM_DEPTH = 8;
 const via = (lines, step) => lines.map((l) => ({ ...l, origin: [step, ...(l.origin ?? [])] }));
 const HEAD = /^&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
@@ -91,6 +90,10 @@ function pickPart(id, text, from, say) {
     return { text: part, part: asked };
 }
 export const hasFrom = (text) => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
+export const signatureHeads = (text) => text.split('\n').flatMap((line) => {
+    const form = readFrom(splitComment(line)[0].trim());
+    return form?.kind === 'signature' ? form.names : [];
+});
 export function signatureOf(text) {
     for (const l of linesOf(text))
         if (l.from?.kind === 'signature')
@@ -555,8 +558,7 @@ function forwardsTo(text) {
     const only = lines.length === 1 ? lines[0].from : null;
     return only?.kind === 'use' && !only.head.length && !only.args && only.main === null ? only.id : null;
 }
-export function expansion(text, { resolve: host, locked = [], old = false } = {}) {
-    const resolve = (id, hash) => BUILT_IN.get(id)?.text ?? host?.(id, hash) ?? null;
+export function expansion(text, { resolve, locked = [], old = false } = {}) {
     const own = linesOf(text);
     const uses = own.flatMap((l) => {
         const entry = entryOf(l);
@@ -588,13 +590,13 @@ export function expansion(text, { resolve: host, locked = [], old = false } = {}
         const moved = old ? MOVED.get(id) : undefined;
         if (moved)
             diagnostics.push({ severity: 'warning', message: `${quoted(id)} is a part of ${moved.document} now: take it from there (Migrate rewrites it)`, span });
-        const whole = moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []));
+        const whole = resolve ? (moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []))) : null;
         const picked = whole === null ? null : pickPart(id, whole, u.from, say);
         const theirs = picked?.text ?? null;
         parts.push(picked?.part);
         if (theirs === null) {
             if (whole === null)
-                say(host ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
+                say(resolve ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
             hashes.push(null);
             copies.push([]);
             args.push(undefined);

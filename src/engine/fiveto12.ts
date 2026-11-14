@@ -22,7 +22,8 @@
  * As a plugin-fragment (decision 085, #693): `FIVETO12` fills its cells with braid text, which the language reads —
  * its degrees over `&key` (the day's mode on the key's tonic), its chords as stacks in thirds, its lengths as `@n`, its
  * dynamics as a level cell; its place in space as a cell its notes line's `pan=` reads (#739); its head notes with
- * their levels (decision 087). A piece takes it as `&cycle from fiveto12 &day` (rung 5).
+ * their levels (decision 087). A piece takes it as `&cycle from five_to_twelve &day` (rung 5), its fragment file
+ * `fragments/laws/fiveto12.md` (decision 090).
  */
 import type { PluginFragment } from './fills';
 
@@ -227,9 +228,10 @@ function fill(name: string, lap: number): string {
   throw new Error(`fiveto12 has no fill ${name}`);
 }
 
-/** The 5 to 12 cycle as a plugin-fragment, built in: `law=fiveto12` until it is `&cycle from fiveto12 &day` (rung 5). */
+/** The 5 to 12 cycle as a plugin-fragment, built in: `law=fiveto12` until it is `&cycle from five_to_twelve &day` (rung 5). */
 export const FIVETO12: PluginFragment = {
   id: 'fiveto12',
+  fragment: 'five_to_twelve',
   fills: { mode: { lap: KEY }, tonic: { lap: KEY }, notes: { lap: BAR }, level: { lap: BAR }, space: { lap: BAR }, block: { lap: BLOCK, mark: true } },
   block: [
     '&cycle [&notes * &level]',
@@ -241,7 +243,6 @@ export const FIVETO12: PluginFragment = {
     '&tonic fill()',
   ].join('\n'),
   head: 'cycle',
-  text: ['&cycle from &day', '&cycle law=fiveto12 over=&day step=84bpm'].join('\n'),
   origin: 11.55,
   cycle: DAY,
   stepSeconds: SECONDS_PER_STEP,

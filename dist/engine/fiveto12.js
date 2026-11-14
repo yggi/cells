@@ -147,6 +147,7 @@ function fill(name, lap) {
 }
 export const FIVETO12 = {
     id: 'fiveto12',
+    fragment: 'five_to_twelve',
     fills: { mode: { lap: KEY }, tonic: { lap: KEY }, notes: { lap: BAR }, level: { lap: BAR }, space: { lap: BAR }, block: { lap: BLOCK, mark: true } },
     block: [
         '&cycle [&notes * &level]',
@@ -158,7 +159,6 @@ export const FIVETO12 = {
         '&tonic fill()',
     ].join('\n'),
     head: 'cycle',
-    text: ['&cycle from &day', '&cycle law=fiveto12 over=&day step=84bpm'].join('\n'),
     origin: 11.55,
     cycle: DAY,
     stepSeconds: SECONDS_PER_STEP,

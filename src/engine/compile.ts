@@ -7,7 +7,8 @@ import { clocking } from './clocking';
 import { mainLength, pieceTime } from './duration';
 import { codeShifts, DEFAULT_ENV, type CompileOptions, type CompileResult, type Env } from './program';
 import { readStyles, type Scope } from './styles';
-import { expansion, hasFrom } from './use';
+import { expansion, hasFrom, signatureHeads } from './use';
+import { BUILT_IN } from './fills';
 
 /** A parsed piece, compiled: the phases are in compiler/ (index.ts says their order). */
 function compile(parsed: ParseResult, env: Env = DEFAULT_ENV, used?: ReadonlySet<string>): CompileResult {
@@ -42,13 +43,13 @@ function scopeOf(result: CompileResult): Scope | null {
 export function compileSource(source: string, env: Env = DEFAULT_ENV, options: CompileOptions = {}): CompileResult {
   if (!hasFrom(source)) {
     const alone = compile(parse(source, { old: options.old ?? false }), env);
-    const said = oldLaws(alone, () => true);
+    const said = oldLaws(alone, () => true, source);
     return said.length ? { ...alone, diagnostics: [...alone.diagnostics, ...said].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col) } : alone;
   }
   const x = expansion(source, options);
   const result = compile(parse(x.text, { old: options.old ?? false }), env, x.given);
   // (law= on a line the piece wrote: the old way; through a from line it is the built-in fragment's own spelling)
-  const said = oldLaws(result, (line) => x.through(line) === null);
+  const said = oldLaws(result, (line) => x.through(line) === null, source);
   const diagnostics = [...x.diagnostics, ...said, ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span }))].sort(
     (a, b) => a.span.line - b.span.line || a.span.col - b.span.col,
   );
@@ -59,15 +60,17 @@ export function compileSource(source: string, env: Env = DEFAULT_ENV, options: C
  * `law=` written by a piece (decision 085 §2, rung 5): the old way of taking a built-in law, said with the `from` line
  * Migrate writes for it. `own(line)`: did the piece write the line (not a fragment, through a `from` line)?
  */
-function oldLaws(result: CompileResult, own: (line: number) => boolean): Diagnostic[] {
+function oldLaws(result: CompileResult, own: (line: number) => boolean, source: string): Diagnostic[] {
+  // (the law's own fragment defines it, its signature heading the line: no piece's old spelling)
+  const defined = new Set(signatureHeads(source).map((n) => n.slice(1)));
   return [...result.cells.values()].flatMap((c) => {
     const law = c.params.law;
-    if (typeof law !== 'string' || !own(c.span.line)) return [];
+    if (typeof law !== 'string' || !own(c.span.line) || defined.has(c.name)) return [];
     const clock = c.over ? ` &${c.over}` : ' &day';
     return [
       {
         severity: 'warning' as const,
-        message: `law=${law} is the old way: write &${c.name} from ${law}${clock}, the law taken from its clock (decision 085; Migrate rewrites it)`,
+        message: `law=${law} is the old way: write &${c.name} from ${BUILT_IN.get(law)?.fragment ?? law}${clock}, the law taken from its clock (decision 085; Migrate rewrites it)`,
         span: c.span,
       },
     ];

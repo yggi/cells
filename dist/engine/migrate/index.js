@@ -33,7 +33,7 @@ export const migrations = (options = {}) => (source, result) => [
     ...axes(source),
     ...parts(source, result),
     ...movedIds(source, options.resolve),
-    ...laws(source),
+    ...laws(source, options.resolve),
 ];
 export const migrate = (source, options = {}) => {
     const old = { ...options, old: true };

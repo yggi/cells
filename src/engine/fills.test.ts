@@ -3,6 +3,7 @@ import { BUILT_IN, filledAt, lawOf, marksOf, unitOf } from './fills';
 import * as deprecated from './holes';
 import { BAR, BLOCK_NAMES, DAY_MODES, KEY, MODE_NAMES, notesBetween, SECONDS_PER_STEP, START } from './fiveto12';
 import { compileSource } from './compile';
+import { resolveSeed } from '../repository/library';
 import { eventsBetween, plan } from './realize';
 import { codeShifts } from './program';
 import { pieceTime, sections } from './duration';
@@ -86,19 +87,21 @@ describe('a law taken with from (decision 085 §2, rung 5 of #691)', () => {
   const day = '&day scan(1!24) loop=1d anchor=6.30\n';
   const tail = '\n&glass s=tri loop=C4\n&out map=sample [&cycle * &glass * .3]';
   const run = (line: string) => {
-    const r = compileSource(day + line + tail);
+    const r = compileSource(day + line + tail, undefined, { resolve: resolveSeed });
     return { messages: r.diagnostics.map((d) => d.message), events: JSON.stringify(eventsBetween(plan(r, codeShifts(r)), 0, 60)) };
   };
-  it('from fiveto12 resolves with no host resolver, and plays what law= played', () => {
-    const now = run('&cycle from fiveto12 &day');
+  it('from five_to_twelve, its fragment file resolved by the library (decision 090), plays what law= played', () => {
+    const now = run('&cycle from five_to_twelve &day');
     expect(now.messages).toEqual([]);
     expect(now.events).toBe(run('&cycle law=fiveto12 over=&day step=84bpm').events);
     expect(now.events.length).toBeGreaterThan(1000);
+    // (no built-in is resolved behind the host's back: with no library, it says so)
+    expect(compileSource(day + '&cycle from five_to_twelve &day' + tail).diagnostics[0]?.message).toMatch(/No library to use "?five_to_twelve"? from/);
   });
   it('law= warns where the piece writes it, not where the fragment does', () => {
     expect(run('&cycle law=fiveto12 over=&day step=84bpm').messages).toEqual([
-      'law=fiveto12 is the old way: write &cycle from fiveto12 &day, the law taken from its clock (decision 085; Migrate rewrites it)',
+      'law=fiveto12 is the old way: write &cycle from five_to_twelve &day, the law taken from its clock (decision 085; Migrate rewrites it)',
     ]);
-    expect(run('&cycle label="the law" from fiveto12 &day').messages).toEqual([]);
+    expect(run('&cycle label="the law" from five_to_twelve &day').messages).toEqual([]);
   });
 });

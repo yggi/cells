@@ -9,7 +9,7 @@ description: "A day of music, anchored to the clock: it begins at 11:55 and play
 &keysNote label="Twelve keys of ten minutes, by fifths going down, by fourths coming up (a new dawn: strange, full of hope)." about=&cycle
 &barNote label="Every bar sounds all seven notes, on its mode's 12/8 bell." about=(&cycle &glass)
 &dimensionsNote label="Five dimensions in counterpoint — melody, rhythm, harmony, dynamics, space." about=&cycle
-# 5 to 12 — the law, taken from its day (from fiveto12 &day), computes every note of the day: 84 steps a minute, 70 bars of 12/8 to a
+# 5 to 12 — the law, taken from its day (from five_to_twelve &day), computes every note of the day: 84 steps a minute, 70 bars of 12/8 to a
 # key, each key's row derived from it. Phrase by phrase, the five operations — translation,
 # rotation, inversion, retrograde, multiplication (the Apple: ×5 mod 7) — each move their own
 # dimension; the second half of every key mirrors the first. &day is the day it reads (over=&day): a
@@ -17,7 +17,7 @@ description: "A day of music, anchored to the clock: it begins at 11:55 and play
 # (anchor=11.55: else where the clock stands; Reset: back to 11:55). Drawn as the sun (show=sun):
 # stopped, turn it to choose the moment.
 &day scan(1!24) loop=1d anchor=11.55 show=sun label="the sun: noon above, midnight below — east, west"
-&cycle label="the law: a day" from fiveto12 &day
+&cycle label="the law: a day" from five_to_twelve &day
 &glass s=tri loop=C4 lpf=3200 env=&(map=adsr .004 .9 .25 1.2) label="the voice"
 &present [&cycle * &glass * .3]
 
