@@ -1,5 +1,5 @@
 /**
- * The default performer's feel (decision 063 §2, #392; yggi/music-commons `contracts/feel`, version 3, #560): how a
+ * The default performer's feel (decision 063 §2, #392; yggi/music-commons `contracts/feel`, version 3, #560; minor 1, its ninth drum role, #717): how a
  * performer plays the events cells plays for a bar, its velocity loosened and accented and its length gated, so every
  * frontend plays a session as its host does; and which part and drum role each event is (`readerOf`: the `part=` and
  * `role=` its text declares, never a name, decision 075). The text says what is composed, and the playing is the player's (decision 037).
@@ -33,9 +33,15 @@ export interface FeelFrame {
 export type FeelPart = 'drums' | 'bass' | 'pad' | 'stab' | 'lead';
 const PARTS: readonly FeelPart[] = ['drums', 'bass', 'pad', 'stab', 'lead'];
 
-/** A drum hit's role in the groove. */
-export type DrumRole = 'kick' | 'backbeat' | 'ghost' | 'hat' | 'pedal' | 'euclid' | 'clave' | 'fill';
-const ROLES: ReadonlySet<string> = new Set<DrumRole>(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'clave', 'fill']);
+/**
+ * A drum hit's role in the groove: what its line does, never what it strikes (decision 075). `ostinato`, feel version 3
+ * minor 1 (yggi/music-commons#66, the owner's ruling on yggi/jambot#651, #717): a line that repeats a pitched figure on
+ * toms or congas.
+ */
+export type DrumRole = 'kick' | 'backbeat' | 'ghost' | 'hat' | 'pedal' | 'euclid' | 'ostinato' | 'clave' | 'fill';
+const ROLES: ReadonlySet<string> = new Set<DrumRole>(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'ostinato', 'clave', 'fill']);
+/** Version 2's roles, read off a name (`readingOf`): the eight before minor 1, so a line named `&ostinato` reads as it did, as nothing. */
+const ROLES_BY_NAME: ReadonlySet<string> = new Set<DrumRole>(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'clave', 'fill']);
 
 /**
  * Version 2's reading, by names (feel minor 1): the part and drum role an event of a host's section text is, read off the
@@ -46,7 +52,7 @@ const ROLES: ReadonlySet<string> = new Set<DrumRole>(['kick', 'backbeat', 'ghost
  */
 export function readingOf(output: string | undefined): Reading | null {
   const [first, second, third] = (output ?? '').split(':');
-  if (first === 'kit' && second === 'voices') return third !== undefined && ROLES.has(third) ? { part: 'drums', role: third as DrumRole } : null;
+  if (first === 'kit' && second === 'voices') return third !== undefined && ROLES_BY_NAME.has(third) ? { part: 'drums', role: third as DrumRole } : null;
   return isPitched(second) ? { part: second } : null;
 }
 
@@ -167,6 +173,7 @@ function baseOf({ groups, section, style, energy }: FeelFrame, { part, role, ste
       case 'pedal':
         return 58;
       case 'euclid':
+      case 'ostinato':
       case 'clave':
         return 72;
       case 'fill': {
@@ -174,7 +181,8 @@ function baseOf({ groups, section, style, energy }: FeelFrame, { part, role, ste
         return 50 + (step - from) * (60 / (steps - from));
       }
       default:
-        return NaN;
+        // (never reached: `played` plays a hit of a role not the feel's as cells gives it)
+        return 0;
     }
   };
   switch (part) {
@@ -203,8 +211,16 @@ export interface Widths {
 /** The contract's widths: a performer that plays as Jambot's does. */
 export const CONTRACT_WIDTHS: Widths = { licence: 1, accents: 1 };
 
-/** An event as the performers play it: its velocity loosened and accented, its length gated, by draws keyed by the bar and step (a drum's by its note too). */
+/** Whether an event is the feel's: one of its parts, and a drum hit of one of its roles. */
+const isFeels = ({ part, role }: FeelEvent): boolean => PARTS.includes(part) && (part !== 'drums' || (role !== undefined && ROLES.has(role)));
+
+/**
+ * An event as the performers play it: its velocity loosened and accented, its length gated, by draws keyed by the bar and
+ * step (a drum's by its note too). One none of the feel's (a part not among its five, a drum hit of a role not among its
+ * nine, or of none) plays as cells gives it, its velocity and length as written (feel version 3; yggi/jambot#668).
+ */
 export function played(frame: FeelFrame, event: FeelEvent, feel = feelOf(frame), widths: Widths = CONTRACT_WIDTHS): { velocity: number; length: number } {
+  if (!isFeels(event)) return { velocity: event.velocity, length: event.length };
   const { seed, bar } = frame;
   const { part, step, note } = event;
   const base = baseOf(frame, event);

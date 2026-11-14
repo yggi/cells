@@ -435,7 +435,7 @@ describe('a note by name is a pitch; a number an index', () => {
     expect(flatten(r, 'c', codeShifts(r)).map((e) => resolveIn(r, e.table, e.tableShift, e.value, e.alter, codeShifts(r)).position)).toEqual([2, 6, 9, 12]);
     expect(spell(r, 'd')).toBe('Bb Eb G');
   });
-  it('a name sits on the grid: ^n and ^$n move it alike; over a scale, numbers tell them apart', () => {
+  it('a name moved by degrees is the degree it sits on: ^n moves a name as it moves a number, ^$n on the grid (decision 092)', () => {
     const semis = (src: string) => {
       const r = compileSource(src);
       return flatten(r, 't', codeShifts(r)).map((e) => {
@@ -444,10 +444,21 @@ describe('a note by name is a pitch; a number an index', () => {
       });
     };
     const s = '&major scan(2 2 1 2 2 2 1)\n&q C E G\n&n 0 2 4\n&t over=&major step=1 ';
-    expect(semis(s + '&q^2')).toEqual([2, 6, 9]);
+    expect(semis(s + '&q^2')).toEqual([4, 7, 11]);
     expect(semis(s + '&q^$2')).toEqual([2, 6, 9]);
     expect(semis(s + '&n^2')).toEqual([4, 7, 11]);
     expect(semis(s + '&n^$2')).toEqual([2, 6, 9]);
+    // (a phrase of names and numbers stays in its key; as written, a name is its pitch)
+    const mixed = '&major scan(2 2 1 2 2 2 1)\n&q 0 E 4\n&t over=&major step=1 ';
+    expect(semis(mixed + '&q')).toEqual([0, 4, 7]);
+    expect(semis(mixed + '&q^2')).toEqual([4, 7, 11]);
+    // (a name off the table is the degree under it, raised: F# over C major is 3#, and the accidental goes with it, 033)
+    const sharp = '&major scan(2 2 1 2 2 2 1)\n&q F# G\n&t over=&major step=1 ';
+    expect(semis(sharp + '&q^1')).toEqual([8, 9]);
+    // (mirrored as numbers are, round the first degree)
+    expect(semis(s + 'inverse(&q)')).toEqual(semis(s + 'inverse(&n)'));
+    // (over no table, a name is on the grid, and a degree is a grid step)
+    expect(semis('&q C E G\n&t step=1 &q^2')).toEqual([2, 6, 9]);
   });
   it('free(D) is a pitch class by name: a tonic, a turn of the 12', () => {
     const r = compileSource('&s scale(dorian, free(D))\n&t over=&s 0\n&key shift=free(G)\n&u over=&key 0');

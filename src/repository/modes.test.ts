@@ -113,7 +113,7 @@ describe('the mode fragments', () => {
 
   it('leave the tonic to the text that uses them: &tonic, a hole the workbench fills, which moves every note (#290)', () => {
     for (const f of MODE_FRAGMENTS) {
-      expect(bodyOf(f.text)).toMatch(/^&key scale\((aeolian|dorian|ionian|mixolydian|harmonic|phrygian|lydian|locrian), &tonic\)/);
+      expect(bodyOf(f.text)).toMatch(/^&key scale\((harmonic|(even\(7, 12, )?(aeolian|dorian|ionian|mixolydian|phrygian|lydian|locrian)\)?), &tonic\)/);
       expect(takenOn(f.text, '').missing).toEqual(['&tonic']);
       const inA = `${filled(takenOn(f.text, meter('4/4', 'A'), '&tonic').union.text)}\n${PROBE}`;
       const inC = `${filled(takenOn(f.text, meter(), '&tonic').union.text)}\n${PROBE}`;

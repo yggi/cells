@@ -188,7 +188,7 @@ describe('the seeds', () => {
     // (each declares it, decision 065: its main parameter)
     for (const f of [...METER_FRAGMENTS, ...MODE_FRAGMENTS]) expect(signatureOf(f.text)?.main, f.id).toBe(f.text.includes('&tempo') ? '&tempo' : '&tonic');
     expect(MODE_FRAGMENTS).toHaveLength(9);
-    for (const f of MODE_FRAGMENTS) expect(bodyOf(f.text), f.id).toMatch(/^&key scale\([a-z]+, &tonic\)/);
+    for (const f of MODE_FRAGMENTS) expect(bodyOf(f.text), f.id).toMatch(/^&key scale\(([a-z]+|even\(7, 12, [a-z]+\)), &tonic\)/);
   });
 
   it('each compiles over a workbench that defines the two, with no diagnostic', () => {

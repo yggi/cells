@@ -1,5 +1,5 @@
 /** Generators: a braid written as a rule — scan(…), even(…), euclid(…), sin(…) saw(…) tri(…) square(…), scale(…), fifths(…), meter(…), spell(…). */
-import type { Braid, Ref, Span, WaveShape } from '../ast';
+import type { Braid, EvenArgs, Ref, Span, WaveShape } from '../ast';
 import { type Signature } from '../meter';
 import { type Syntax } from './syntax';
 import type { LineScanner } from './scanner';
@@ -31,6 +31,20 @@ export declare function groupingOf(sig: string): Grouping | null;
 export declare function signatureOf(sig: string): Signature;
 /** A meter's grades, one a step (contracts/meter v2): as written, or from its signature or sizes; '' where it is neither. */
 export declare function meterLevels(sig: string, sub: number): string;
+/**
+ * What is wrong with even(k, n, phase), or null: k places in n (1 ≤ k ≤ n), its phase a mode, 0 to k − 1. The parser
+ * asks it of numbers written, the compiler of numbers read from cells (decision 093).
+ */
+export declare function evenProblem(k: number, n: number, phase: number): string | null;
+/** even(k, n, phase)'s steps: the scan of its places' intervals. */
+export declare const evenSteps: (k: number, n: number, phase: number) => number[];
+/**
+ * `even(k, n, phase)` read from `(`, as a generator or as scale(…)'s table: each argument a number or a cell that is one
+ * number (decision 093, #531), `even(7, 12, &mode)`. With a cell, compile reads it and sets the steps (declare.ts).
+ */
+export declare function evenTable(s: LineScanner, start: number): Extract<Braid, {
+    kind: 'scan';
+}>;
 type Generator = (s: LineScanner, start: number) => Braid;
 /**
  * A waveform's n values, −1 … 1: Strudel's bipolar signals (sine2, saw2, tri2, square2) at each step's start, i/n of
@@ -52,6 +66,7 @@ export declare function parseScale(s: LineScanner, start: number): {
     key: Ref;
     span: Span;
     mode?: Ref;
+    even?: EvenArgs;
 };
 /**
  * `fifths()`, `fifths(n)`, `fifths(G)`: the circle of fifths, the twelve pitch classes a fifth apart (C G D A E B F#
