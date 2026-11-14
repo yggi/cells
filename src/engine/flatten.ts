@@ -5,7 +5,7 @@
  */
 import { pickLabel, type Atom, type Pick } from './ast';
 import { ROOT, MAX_EVENTS, pickIndices, pickSteps, type CompileResult, type Shifts } from './program';
-import { isRelativePick, positionOf, rootOf, shiftedUnits } from './helix';
+import { entries, isRelativePick, positionOf, resolveIn, rootOf, shiftedUnits } from './helix';
 import { placed, whole, type Chosen, type Hit, type Laps, type Leaf } from './subseq';
 
 /** What a slot holds as flatten reads it: a leaf, or a note of a cell spliced in (by the reference that splices it). */
@@ -54,6 +54,37 @@ export interface StepEvent {
   readonly laps?: Laps;
   /** `[a b|c]`: the choices it is in; it plays when each draws its option (realize.ts `thrown`). */
   readonly chosen?: readonly Chosen[];
+  /**
+   * A note by name (`E`, `F#3`): a pitch on the root grid, whatever its tables. The table it would read as a number,
+   * kept so a move by degrees (`&x^n`, `inverse(&x)`) reads it as the degree it sits on (decision 092, #756).
+   */
+  readonly named?: { readonly table: string; readonly tableShift: number };
+}
+
+/**
+ * The degree of `table` a pitch on its root grid sits on, and its accidental (decision 092): the entry that is the
+ * pitch, or the entry below it raised by whole steps of the grid under the table (`F#` over C major is its `3#`); null
+ * where the table has neither (a table that doesn't climb, a pitch between its grid's steps).
+ */
+export function degreeOf(result: CompileResult, table: string, tableShift: number, position: number, shifts: Shifts): { value: number; alter: number } | null {
+  const c = result.cells.get(table);
+  if (!c || c.root) return null;
+  const n = Math.max(1, entries(result, table, shifts(table) + tableShift, true).length);
+  const at = (d: number, alter = 0) => resolveIn(result, table, tableShift, d, alter, shifts).position;
+  const near = (a: number, b: number) => Math.abs(a - b) < 1e-6;
+  // (a table that climbs, a scale: walk from 0 to the entry at or under the pitch, 16 laps either way at most)
+  let d = 0;
+  const limit = 16 * n;
+  while (d < limit && at(d + 1) <= position + 1e-6) d++;
+  while (d > -limit && at(d) > position + 1e-6) d--;
+  if (near(at(d), position)) return { value: d, alter: 0 };
+  if (at(d) > position || at(d + 1) <= position) return null;
+  for (let alter = 1; alter <= 12; alter++) {
+    const p = at(d, alter);
+    if (near(p, position)) return { value: d, alter };
+    if (p > position) break;
+  }
+  return null;
 }
 
 export class ExpansionLimit extends Error {}
@@ -127,6 +158,8 @@ export function flatten(
           tableShift: 0,
           value: Math.round(positionOf(result, rootOf(result, table), semis) * 1e6) / 1e6,
           alter: 0,
+          // (the table it would read as a number: a move by degrees reads it there, decision 092)
+          ...(table !== rootOf(result, table) ? { named: { table, tableShift: tShift } } : {}),
         });
         if (a.kind === 'note') out.push(a.pitched ? { ...pitch(a.value), ...odds } : { ...ev, value: a.value, alter: a.alter, ...odds });
         else if (a.kind === 'chord')
@@ -143,13 +176,18 @@ export function flatten(
           // degree(…) / inverse(…): its values moved before its tables read them (accidentals mirrored with them)
           const m = ref.values;
           // (its laps and choices are the ones placed() worked out, through what holds it)
-          const { laps: _laps, chosen: _chosen, ...own } = e;
+          const { laps: _laps, chosen: _chosen, ...spliced } = e;
+          // (a note by name moved by degrees: the degree it sits on in the table it would read, then moved as a number
+          // is, decision 092; where the table has no such degree it stays a pitch, and moves on the grid as it did)
+          const degree = m && e.named ? degreeOf(result, e.named.table, e.named.tableShift, e.value, shifts) : null;
+          const { named: _named, ...unnamed } = spliced;
+          const own = degree ? { ...unnamed, table: e.named!.table, tableShift: e.named!.tableShift, value: degree.value, alter: degree.alter } : spliced;
           out.push({
             ...own,
             ...(m
               ? {
-                  value: m.mul * e.value + m.add,
-                  alter: m.mul * e.alter,
+                  value: m.mul * own.value + m.add,
+                  alter: m.mul * own.alter,
                   ...(e.options ? { options: e.options.map((o) => ({ value: m.mul * o.value + m.add, alter: m.mul * o.alter })) } : {}),
                   ...(e.via ? { via: { ...e.via, mul: (m.mul * e.via.mul) as 1 | -1, add: m.mul * e.via.add + m.add } } : {}),
                 }

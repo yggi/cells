@@ -1,6 +1,6 @@
 import { pickLabel } from "./ast.js";
 import { ROOT, MAX_EVENTS, pickIndices, pickSteps } from "./program.js";
-import { isRelativePick, positionOf, rootOf, shiftedUnits } from "./helix.js";
+import { entries, isRelativePick, positionOf, resolveIn, rootOf, shiftedUnits } from "./helix.js";
 import { placed, whole } from "./subseq.js";
 export function unitsFor(result, name, shifts, pick, table, extra = 0) {
     if (!pick)
@@ -10,6 +10,32 @@ export function unitsFor(result, name, shifts, pick, table, extra = 0) {
 }
 export const stepsOf = (result, name, pick) => pickSteps(result.cells.get(name), pick) ?? 0;
 const pickKey = (p, shift = 0) => (!p ? `>${shift}` : pickLabel(p));
+export function degreeOf(result, table, tableShift, position, shifts) {
+    const c = result.cells.get(table);
+    if (!c || c.root)
+        return null;
+    const n = Math.max(1, entries(result, table, shifts(table) + tableShift, true).length);
+    const at = (d, alter = 0) => resolveIn(result, table, tableShift, d, alter, shifts).position;
+    const near = (a, b) => Math.abs(a - b) < 1e-6;
+    let d = 0;
+    const limit = 16 * n;
+    while (d < limit && at(d + 1) <= position + 1e-6)
+        d++;
+    while (d > -limit && at(d) > position + 1e-6)
+        d--;
+    if (near(at(d), position))
+        return { value: d, alter: 0 };
+    if (at(d) > position || at(d + 1) <= position)
+        return null;
+    for (let alter = 1; alter <= 12; alter++) {
+        const p = at(d, alter);
+        if (near(p, position))
+            return { value: d, alter };
+        if (p > position)
+            break;
+    }
+    return null;
+}
 export class ExpansionLimit extends Error {
 }
 export function flatten(result, root, shifts, rootPick = null, silent = () => false, rootShift = 0, rootCtx = ROOT) {
@@ -63,6 +89,7 @@ export function flatten(result, root, shifts, rootPick = null, silent = () => fa
                     tableShift: 0,
                     value: Math.round(positionOf(result, rootOf(result, table), semis) * 1e6) / 1e6,
                     alter: 0,
+                    ...(table !== rootOf(result, table) ? { named: { table, tableShift: tShift } } : {}),
                 });
                 if (a.kind === 'note')
                     out.push(a.pitched ? { ...pitch(a.value), ...odds } : { ...ev, value: a.value, alter: a.alter, ...odds });
@@ -78,13 +105,16 @@ export function flatten(result, root, shifts, rootPick = null, silent = () => fa
                     const { e, ref } = a;
                     const up = ref.transpose ?? 0;
                     const m = ref.values;
-                    const { laps: _laps, chosen: _chosen, ...own } = e;
+                    const { laps: _laps, chosen: _chosen, ...spliced } = e;
+                    const degree = m && e.named ? degreeOf(result, e.named.table, e.named.tableShift, e.value, shifts) : null;
+                    const { named: _named, ...unnamed } = spliced;
+                    const own = degree ? { ...unnamed, table: e.named.table, tableShift: e.named.tableShift, value: degree.value, alter: degree.alter } : spliced;
                     out.push({
                         ...own,
                         ...(m
                             ? {
-                                value: m.mul * e.value + m.add,
-                                alter: m.mul * e.alter,
+                                value: m.mul * own.value + m.add,
+                                alter: m.mul * own.alter,
                                 ...(e.options ? { options: e.options.map((o) => ({ value: m.mul * o.value + m.add, alter: m.mul * o.alter })) } : {}),
                                 ...(e.via ? { via: { ...e.via, mul: (m.mul * e.via.mul), add: m.mul * e.via.add + m.add } } : {}),
                             }
