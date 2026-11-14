@@ -41,7 +41,7 @@ The places, from the parser's own table:
 | scan(n!k …) (an interval’s repeat) | ✓ whole | ✗ read as the piece is built | `&map scan(1!free(4, 1..8) 2)` |
 | geo(r, n, k …) | ✓ | ✗ read as the piece is built | `&series scan(geo(free(5, 2..8), 25, 0 10 5))` |
 | euclid(k, n, r) · sin(n) … | ✓ whole | ✗ read as the piece is built | `&hits euclid(free(3, 0..8), 8) step=8` |
-| even(k, n, phase) (an argument) | ✓ whole | `&k`, a cell that is one number, filled as the piece is built (decision 089); a mode’s name only as even(7, 12)’s phase; not stepped | `&key scale(even(7, 12, free(3, 0..6)), D)` |
+| even(k, n, phase) (an argument) | ✓ whole | `&k`, a cell that is one number, filled as the piece is built (decision 093); a mode’s name only as even(7, 12)’s phase; not stepped | `&key scale(even(7, 12, free(3, 0..6)), D)` |
 | fifths(n) | ✓ whole | ✗ read as the piece is built | `&circle fifths(free(1, 0..11))` |
 | scale(t, phase) (retired) | ✓ whole | ✗ read as the piece is built | `&key scale(2, free(3, 0..6))` |
 | meter(n, n) | ✓ | ✗ read as the piece is built | `&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm` |

@@ -114,7 +114,7 @@ export const NUMBER_PLACES = {
         form: 'even(k, n, phase) (an argument)',
         name: 'arg',
         whole: true,
-        cell: '`&k`, a cell that is one number, filled as the piece is built (decision 089); a mode’s name only as even(7, 12)’s phase; not stepped',
+        cell: '`&k`, a cell that is one number, filled as the piece is built (decision 093); a mode’s name only as even(7, 12)’s phase; not stepped',
         moves: true,
         example: '&key scale(even(7, 12, free(3, 0..6)), D)',
     }),

@@ -95,7 +95,7 @@ describe('a mode read from a cell', () => {
   });
 });
 
-// Decision 089, #531: a key from any necklace, scale(even(k, n, &mode), &tonic), even()'s arguments a cell that is one
+// Decision 093, #531: a key from any necklace, scale(even(k, n, &mode), &tonic), even()'s arguments a cell that is one
 // number, filled as the piece is built; a mode's name a phase of the diatonic, even(7, 12), alone.
 describe('a key from any necklace: scale(even(…), &tonic)', () => {
   for (const [word, phase] of Object.entries(MODE_WORDS))

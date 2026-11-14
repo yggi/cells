@@ -210,7 +210,7 @@ export type Braid =
       /** `scale(&mode, …)` (#363): the cell its mode is read from, one mode (`&mode major`); compile sets the steps (declare.ts). */
       readonly mode?: Ref;
       /**
-       * `even(k, n, phase)` with an argument read from a cell that is one number (decision 089, #531): `even(7, 12, &mode)`.
+       * `even(k, n, phase)` with an argument read from a cell that is one number (decision 093, #531): `even(7, 12, &mode)`.
        * Compile sets the steps (declare.ts); until then they are a placeholder.
        */
       readonly even?: EvenArgs;
@@ -218,7 +218,7 @@ export type Braid =
   /** One cycle of a waveform in n steps, −1 … 1, as Strudel's bipolar signals sampled at each step's start: sin(n) sin(2πi/n), saw(n) a ramp up, tri(n) up then down, square(n) −1 then 1. */
   | { readonly kind: 'wave'; readonly shape: WaveShape; readonly n: number; readonly span: Span };
 
-/** `even(k, n, phase)`'s arguments, each a number or a cell that is one number, filled as the piece is built (decision 089). */
+/** `even(k, n, phase)`'s arguments, each a number or a cell that is one number, filled as the piece is built (decision 093). */
 export interface EvenArgs {
   readonly k: number | Ref;
   readonly n: number | Ref;

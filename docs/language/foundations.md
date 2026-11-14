@@ -101,7 +101,7 @@ One phase brighter raises one note a semitone, a fifth round the circle.
 A mode word reads as its number, as a note name reads as its pitch.
 
 The key is the mode on the tonic, `scale(even(7, 12, &mode), &tonic)`: the diatonic necklace at the mode's phase, turned to the tonic, a table every line reads through by name, `over=&key` ([decision 060](https://github.com/yggi/cells/blob/main/docs/decisions/060-the-key-is-named.md), [#363](https://github.com/yggi/cells/issues/363)).
-`diatonic` is that line with the mode a parameter, the one source of the seven modes ([#387](https://github.com/yggi/cells/issues/387)); `scale(&mode, &tonic)` and `scale(dorian, D)` are its sugar, and any necklace is a key the same way, `scale(even(5, 12, &p), &tonic)` ([decision 089](https://github.com/yggi/cells/blob/main/docs/decisions/089-a-generator-reads-a-cell-that-is-one-number.md), [#531](https://github.com/yggi/cells/issues/531)).
+`diatonic` is that line with the mode a parameter, the one source of the seven modes ([#387](https://github.com/yggi/cells/issues/387)); `scale(&mode, &tonic)` and `scale(dorian, D)` are its sugar, and any necklace is a key the same way, `scale(even(5, 12, &p), &tonic)` ([decision 093](https://github.com/yggi/cells/blob/main/docs/decisions/093-a-generator-reads-a-cell-that-is-one-number.md), [#531](https://github.com/yggi/cells/issues/531)).
 Other scales are named, `scale(harmonic, A)`, or written, `scan(…)` ([tables.md](tables.md)).
 
 ## Degrees and tables

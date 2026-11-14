@@ -244,7 +244,7 @@ export function libraryTemplates(source: string, library: readonly LibraryFragme
       const pattern = t.braid
         .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         .replace(/&(\w+)/g, (_, p: string) => (!(t.params.has(p) || p === t.main) ? `&${p}` : seen.has(p) ? `\\k<${p}>` : (seen.add(p), `(?<${p}>.+?)`)));
-      // (a diatonic mode's name is sugar for its necklace, decision 089: scale(minor, &tonic) is scale(even(7, 12, minor), &tonic))
+      // (a diatonic mode's name is sugar for its necklace, decision 093: scale(minor, &tonic) is scale(even(7, 12, minor), &tonic))
       const flat = braid.replace(/\s+/g, ' ');
       const sugar = flat.replace(/^scale\(([a-z]+),/, (all, w: string) => (Object.hasOwn(MODE_WORDS, w) ? `scale(even(7, 12, ${w}),` : all));
       const m = new RegExp(`^${pattern}$`).exec(flat) ?? new RegExp(`^${pattern}$`).exec(sugar);

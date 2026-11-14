@@ -190,7 +190,7 @@ function modes(ctx: Ctx, decls: Map<string, CellDecl>): void {
 }
 
 /**
- * `even(k, n, phase)` with arguments read from cells (decision 089, #531): each a cell that is one number (088), filled
+ * `even(k, n, phase)` with arguments read from cells (decision 093, #531): each a cell that is one number (088), filled
  * as the piece is built, so `even(7, 12, &mode)` with `&mode 3` is `even(7, 12, 3)`. A diatonic mode's name (`&mode
  * dorian`) is its phase where the necklace is the diatonic, even(7, 12), and an error elsewhere: the language names no
  * other necklace's modes. A stepped cell is not yet a form (its phase at each bar line is the next rung, 081's rule);

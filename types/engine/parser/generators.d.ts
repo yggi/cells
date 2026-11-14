@@ -33,14 +33,14 @@ export declare function signatureOf(sig: string): Signature;
 export declare function meterLevels(sig: string, sub: number): string;
 /**
  * What is wrong with even(k, n, phase), or null: k places in n (1 ≤ k ≤ n), its phase a mode, 0 to k − 1. The parser
- * asks it of numbers written, the compiler of numbers read from cells (decision 089).
+ * asks it of numbers written, the compiler of numbers read from cells (decision 093).
  */
 export declare function evenProblem(k: number, n: number, phase: number): string | null;
 /** even(k, n, phase)'s steps: the scan of its places' intervals. */
 export declare const evenSteps: (k: number, n: number, phase: number) => number[];
 /**
  * `even(k, n, phase)` read from `(`, as a generator or as scale(…)'s table: each argument a number or a cell that is one
- * number (decision 089, #531), `even(7, 12, &mode)`. With a cell, compile reads it and sets the steps (declare.ts).
+ * number (decision 093, #531), `even(7, 12, &mode)`. With a cell, compile reads it and sets the steps (declare.ts).
  */
 export declare function evenTable(s: LineScanner, start: number): Extract<Braid, {
     kind: 'scan';

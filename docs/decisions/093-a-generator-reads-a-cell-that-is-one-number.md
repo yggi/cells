@@ -1,4 +1,4 @@
-# 089 · A generator's argument may read a cell that is one number, filled as the piece is built
+# 093 · A generator's argument may read a cell that is one number, filled as the piece is built
 
 **Date:** 2026-11-14 · **Status:** accepted (the owner on #531, 2026-11-14: the rule over every generator argument, rung 1 `even()` and `scale(table, tonic)`; a mode's name outside the diatonic an error; a stepped phase at the bar line, 081's rule, the next rung) · Issues: #531, #507, #363
 
