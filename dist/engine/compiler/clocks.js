@@ -93,17 +93,19 @@ export function clockCells(ctx, decls, given) {
     const drivers = new Set([...decls.values()].flatMap((d) => (d.step?.kind === 'driven' ? [d.step.driver.name] : d.step?.kind === 'tap' && d.step.meter ? [d.step.meter.name] : [])));
     const timing = new Map();
     const stepping = [];
-    let main;
+    const rooted = [...decls.values()].filter((d) => clocks.has(d.name) && cells.get(d.name)?.meter);
+    const meters = (rooted.some((d) => !d.step?.whole) ? rooted.filter((d) => !d.step?.whole) : rooted).map((d) => d.name);
     const tapped = new Map();
-    const mainMeter = () => {
-        if (main !== undefined)
-            return main;
-        const meters = [...decls.values()].filter((d) => clocks.has(d.name) && cells.get(d.name)?.meter);
-        main = (meters.find((d) => !d.step?.whole) ?? meters[0])?.name ?? null;
-        return main;
-    };
+    const mainMeter = () => meters[0] ?? null;
     const meterOfTap = (st, spelled, broke) => {
         const meter = st.meter?.name ?? mainMeter();
+        if (!st.meter && meters.length > 1) {
+            retired(`${spelled} names no meter, and the piece has ${meters.length} with a tempo of their own (${meters.map((m) => '&' + m).join(', ')}): name the one it taps, ${spelled.slice(0, spelled.indexOf('=') + 1)}&${meters[0]}:${spelled.slice(spelled.indexOf('=') + 1)} (Migrate writes the first in the text, which it read; decision 089)`, st.span);
+            if (!ctx.parsed.old) {
+                broke();
+                return null;
+            }
+        }
         if (!meter) {
             error(`${spelled} taps the piece's main meter, and it has none: write one (&bar meter("4/4") step=100bpm)`, st.span);
             broke();
@@ -270,5 +272,5 @@ export function clockCells(ctx, decls, given) {
             const perSecond = clocks.get(drv.clock).perSecond * drv.rate * st.ratio;
             cells.set(d.name, { ...c, params: { ...c.params, [key]: +(1 / perSecond).toFixed(6) } });
         }
-    return { cells, clocks, mainMeter: mainMeter() };
+    return { cells, clocks, mainMeter: mainMeter(), meters };
 }

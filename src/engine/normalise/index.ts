@@ -33,6 +33,7 @@ import { narrowestFroms } from './narrowest';
 import { interfaceNames } from './names';
 import { evenScan, shadowMeter, swingClock, tapClock } from './meter';
 import { migrations } from '../migrate';
+import { mainMeters } from '../migrate/mainmeter';
 
 /** What Normalise reads besides the text: the compile's options, and the library whose lines a piece takes by `use`. */
 export interface NormaliseOptions extends CompileOptions {
@@ -44,7 +45,9 @@ export const normalisations =
   (options: NormaliseOptions = {}) =>
   (source: string, result: CompileResult): Rewrite[] => [
     // (but a migration exact only against an older meaning: in a valid text it would change what the text says, #75)
-    ...migrations(options)(source, result).filter((r) => !r.exact),
+    // (and but naming a bare tap's meter, decision 089: last, after a second clock is folded into the main meter, so a
+    // piece left with one meter keeps its taps bare)
+    ...migrations(options)(source, result).filter((r) => !r.exact && r.rule !== 'main meter'),
     ...interfaceNames(source, result),
     ...evenScan(source, result),
     ...swingClock(source, result),
@@ -56,6 +59,7 @@ export const normalisations =
     ...libraryTemplates(source, options.library, options.resolve),
     ...libraryCells(source, options.library),
     ...narrowestFroms(source, options.resolve),
+    ...mainMeters(source, result),
   ];
 
 /** A text in the canonical spelling, one rewrite at a time, each playing the same notes; the steps are what each did. */

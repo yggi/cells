@@ -217,7 +217,10 @@ export function tapClock(source: string, result: CompileResult, options: Compile
     // (to 1e-9 s, or a double's rounding where the time is large: a day's 63rd tick is 5.4e6 s, past what 1e-9 s can tell)
     const near = (a: number[], b: number[]) => a.every((x, i) => Math.abs(x - b[i]!) <= Math.max(SAME.seconds, ULPS * Number.EPSILON * Math.abs(x)));
     const mine = clocksOf(source, options);
-    const main_ = clocksOf(`${source}\n${TAPS.map((t, i) => `&__tap${i} step=${t} 0`).join('\n')}`, options);
+    // (where the piece has several meters with a tempo of their own, a tap names its meter, decision 089: the readers
+    // are written on the first's taps by its name)
+    const named = result.meters ? `&${main}:` : '';
+    const main_ = clocksOf(`${source}\n${TAPS.map((t, i) => `&__tap${i} step=${named}${t} 0`).join('\n')}`, options);
     const instead = new Map<string, string>();
     for (const tap of taps) {
       const q = mine(`${name}:${tap}`);
@@ -246,8 +249,12 @@ export function tapClock(source: string, result: CompileResult, options: Compile
     const said = [...instead].map(([a, b]) => `&${name}:${a} is ${b}`).join(', ');
     out.push(
       rewrite('meter', `&${name}'s ticks are &${main}'s: ${said}`, `step=&${name}:${taps[0]}`, `step=${instead.get(taps[0]!)}`, (src) => {
-        let next = src.replace(tapped, (_, tap: string) => `step=${instead.get(tap) ?? `&${name}:${tap}`}`);
-        if (!noted(next, name) && otherMentions(next, name) === 0) next = dropLine(next, name);
+        const written = (prefix: string) => src.replace(tapped, (_, tap: string) => (instead.has(tap) ? `step=${prefix}${instead.get(tap)}` : `step=&${name}:${tap}`));
+        let next = written('');
+        const gone = !noted(next, name) && otherMentions(next, name) === 0;
+        // (the taps name the meter where the piece still has several once this clock is folded, decision 089)
+        if ((result.meters ?? []).filter((m) => m !== name || !gone).length > 1) next = written(named);
+        if (gone) next = dropLine(next, name);
         return next;
       }),
     );

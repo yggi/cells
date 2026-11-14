@@ -222,7 +222,8 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
 
   it('a time parameter reads a tap as a length, as the same length in seconds does (#87)', () => {
     const play = (meter: string, time: string) => {
-      const r = compiled(`${meter}\n&x step=pulse 0 2\n&v s=saw delaytime=${time} delayfeedback=.4\n&out map=sample [&x * &v]`);
+      // (a piece of two meters names the one each tap reads, decision 089)
+      const r = compiled(`${meter}\n&x step=${meter.includes('&bar2') ? '&bar:' : ''}pulse 0 2\n&v s=saw delaytime=${time} delayfeedback=.4\n&out map=sample [&x * &v]`);
       return { time: r.cells.get('v')!.params.delaytime as number, events: eventsBetween(plan(r, codeShifts(r)), 0, 4).map((e) => ({ ...e })) };
     };
     const four = '&bar meter("4/4") step=120bpm';
