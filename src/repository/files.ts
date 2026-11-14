@@ -74,7 +74,7 @@ function association(node: YamlNode, problems: YamlProblem[]): WeightedPoint[] {
     for (const e of item.entries) if (!POINT_KEYS.includes(e.key)) problems.push({ line: e.line, message: `${where}: ${e.key} is none of point, weight, facet, args` });
     const point: Record<string, number> = {};
     const axes = entry(item, 'point');
-    // (no point: a fragment of no style, found at ANY_DISTANCE from every style, #540; its weight 1 where it states none)
+    // (no point: a kind and no style, found by no query, taken by its name: decision 090; its weight 1 where it states none)
     if (!axes) {
       if (!entry(item, 'facet')) problems.push({ line: item.line, message: `${where} has no point and no facet: a fragment of no style names the facet it is found as` });
     } else if (axes.value.kind !== 'map' || !axes.value.entries.length) problems.push({ line: axes.line, message: `${where}: its point is a map of axes to numbers` });

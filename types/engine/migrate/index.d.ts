@@ -24,6 +24,8 @@
  *                  gave: part=bass, role=kick (decision 075, the feel's version 3, #560 rung 2)
  *  - axes.ts:      a style on the axes sync harm artic energy as on sync harm bite mood (decision 076, #572): exact
  *                  against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
+ *  - mainmeter.ts: a tap that names no meter, in a piece with several meters with a tempo of their own, written with
+ *                  the first's name, the one it read (decision 091, #757)
  *
  * `&parts` → `&sections` (decision 044) was offered for v0.15 and is retired (decision 049, ruling 4): `&parts` is a valid
  * name, the author's. The card's title= tags= tier= going to the file's frontmatter (decision 047) is a migration too, but its rewrite makes
@@ -40,7 +42,7 @@
 import { type Find, type Rewrite } from '../rewrite';
 import type { CompileOptions } from '../program';
 /** The rules a migration is found by (Shorten's suggestions keep theirs as their kinds). */
-export type MigrationRule = 'gate' | 'tap' | 'swing' | 'main key' | 'forwarded' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs' | 'beats' | 'notes' | 'arguments' | 'axes' | 'parts' | 'moved';
+export type MigrationRule = 'gate' | 'tap' | 'swing' | 'main key' | 'forwarded' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs' | 'beats' | 'notes' | 'arguments' | 'axes' | 'parts' | 'moved' | 'main meter';
 export type Migration = Rewrite<MigrationRule>;
 /** Every migration a text has, in the order its form was retired; a `from` line's fragment read through `options.resolve`. */
 export declare const migrations: (options?: CompileOptions) => Find;

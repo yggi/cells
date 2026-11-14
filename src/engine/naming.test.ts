@@ -50,8 +50,8 @@ function named(text: string, sortOf: (name: string) => string | undefined): { te
     // (one line, as written: a product across lines is left alone)
     if (e.factors.some((f) => (f.k === 'ref' ? f.ref.span.line : f.span.line) !== e.span.line)) return;
     const line = lines[e.span.line - 1]!;
-    // (a mix continued on the next line: the parser gives its later products a place on the first line, past its end
-    // (#764), so they can't be rewritten in place; left as written, and counted)
+    // (a product on a continued line of a mix is placed where it is written, #764: none is past its line's end, and the
+    // count below holds that)
     if (e.span.col - 1 + e.span.len > line.length) {
       continued++;
       return;
@@ -111,10 +111,10 @@ describe('law L17: naming a sub-product plays as its parentheses do (decision 08
     expect(count).toBeGreaterThan(0);
     expect({ count, examples: rewritten.length, skipped, continued }).toMatchInlineSnapshot(`
       {
-        "continued": 33,
-        "count": 105,
-        "examples": 57,
-        "skipped": 45,
+        "continued": 0,
+        "count": 126,
+        "examples": 60,
+        "skipped": 57,
       }
     `);
   });
