@@ -26,16 +26,17 @@ export interface PluginFragment {
   /** Its cells, each fill written `fill()`; a timed fill's cell steps once a step (`step=1`) until rung 5 times it by its clock. */
   readonly block: string;
   /**
-   * What it plays, as the terms of a product a voice joins (`&notes * &level`). (Its head, `&cycle [&notes * &level]`,
-   * would be a product with no voice, which the mix algebra refuses: rung 5 spells it.)
+   * Its head: the cell of its block a piece plays on its voice (`cycle`, its block's `&cycle [&notes * &level]`: notes
+   * with their levels, a product with no voice, decision 087), its places on its lines (`pan=` on a line, #739).
    */
-  readonly plays: string;
+  readonly head: string;
   /**
-   * What the voice it plays on reads of its cells (`pan=&space`: its notes' places). `pan=` is a voice's attribute, not a
-   * line's, so a fragment's places reach its notes only through the voice: here the voice is realize's own; for a
-   * piece's voice it is rung 5's question.
+   * The fragment as a piece takes it (decision 085 §2, rung 5): its signature and its head's line, the main argument the
+   * clock it reads (`&cycle from &day`, `&cycle law=fiveto12 over=&day …`). `from` resolves a built-in's id to it before
+   * asking the host's resolver, so `&cycle from fiveto12 &day` is the line the piece once wrote, `law=` now the
+   * fragment's own spelling.
    */
-  readonly voice?: string;
+  readonly text: string;
   /** Where lap 0 sits on the clock it reads, as an `anchor=` writes it (11.55: 11:55). */
   readonly origin: number;
   /** Steps until it comes round (a day). */

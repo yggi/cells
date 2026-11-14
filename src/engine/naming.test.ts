@@ -13,7 +13,7 @@ import { parse } from './parser';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { resolveSeed } from '../repository/library';
-import { expansion, hasFrom } from './use';
+import { expand, hasFrom } from './use';
 import { valueSumOf } from './valuesum';
 
 /** Plain data to compare: numbers to 9 significant digits. */
@@ -56,6 +56,9 @@ function named(text: string, sortOf: (name: string) => string | undefined): { te
       return;
     }
     const written = (f: Expr) => (f.k === 'ref' ? line.slice(f.ref.span.col - 1, f.ref.span.col - 1 + f.ref.span.len) : line.slice(f.span.col - 1, f.span.col - 1 + f.span.len));
+    // (the test's own text surgery: an edit only where every factor's span reads back as that factor, and the product's as it)
+    const readsBack = (f: Expr) => (f.k === 'ref' ? written(f) === `&${f.ref.name}` || !voiceless.includes(f) : f.k === 'num' ? Number(written(f)) === f.value : false);
+    if (!e.factors.every(readsBack) || !line.slice(e.span.col - 1, e.span.col - 1 + e.span.len).includes(written(e.factors[0]!))) return;
     added.push(`&${name} [${voiceless.map(written).join(' * ')}]`);
     const rest = e.factors.filter((f) => !voiceless.includes(f));
     const list = edits.get(e.span.line) ?? [];
@@ -81,9 +84,11 @@ describe('law L17: naming a sub-product plays as its parentheses do (decision 08
     let skipped = 0;
     const rewritten: string[] = [];
     for (const [key, { source }] of Object.entries(EXAMPLES)) {
-      const text = hasFrom(source) ? expansion(source, { resolve: resolveSeed }).text : source;
+      // (a text with from lines, written out: the expansion standing alone, as Cell studio's "write out" writes it)
+      const text = hasFrom(source) ? expand(source, resolveSeed) : source;
       const before = played(text);
-      if (!before.r.ok) continue;
+      // (every example compiles, written out too: one that didn't would be skipped without a word)
+      expect(before.r.ok, key).toBe(true);
       const n = named(text, (name) => before.r.cells.get(name)?.sort);
       skipped += n.skipped;
       if (!n.count) continue;
@@ -100,9 +105,9 @@ describe('law L17: naming a sub-product plays as its parentheses do (decision 08
     expect(count).toBeGreaterThan(0);
     expect({ count, examples: rewritten.length, skipped }).toMatchInlineSnapshot(`
       {
-        "count": 11,
-        "examples": 8,
-        "skipped": 8,
+        "count": 104,
+        "examples": 56,
+        "skipped": 57,
       }
     `);
   });

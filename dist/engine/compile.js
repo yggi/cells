@@ -29,10 +29,29 @@ function scopeOf(result) {
     return Math.abs(bars - Math.round(bars)) < 1e-6 && Math.round(bars) > 0 ? { bars: Math.round(bars) } : { seconds };
 }
 export function compileSource(source, env = DEFAULT_ENV, options = {}) {
-    if (!hasFrom(source))
-        return compile(parse(source, { old: options.old ?? false }), env);
+    if (!hasFrom(source)) {
+        const alone = compile(parse(source, { old: options.old ?? false }), env);
+        const said = oldLaws(alone, () => true);
+        return said.length ? { ...alone, diagnostics: [...alone.diagnostics, ...said].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col) } : alone;
+    }
     const x = expansion(source, options);
     const result = compile(parse(x.text, { old: options.old ?? false }), env, x.given);
-    const diagnostics = [...x.diagnostics, ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span }))].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
+    const said = oldLaws(result, (line) => x.through(line) === null);
+    const diagnostics = [...x.diagnostics, ...said, ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span }))].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
     return { ...result, ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics, takes: x.takes, ...(x.origins.size ? { origins: x.origins } : {}) };
+}
+function oldLaws(result, own) {
+    return [...result.cells.values()].flatMap((c) => {
+        const law = c.params.law;
+        if (typeof law !== 'string' || !own(c.span.line))
+            return [];
+        const clock = c.over ? ` &${c.over}` : ' &day';
+        return [
+            {
+                severity: 'warning',
+                message: `law=${law} is the old way: write &${c.name} from ${law}${clock}, the law taken from its clock (decision 085; Migrate rewrites it)`,
+                span: c.span,
+            },
+        ];
+    });
 }

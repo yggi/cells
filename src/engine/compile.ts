@@ -1,5 +1,5 @@
 /** compile(): a parsed piece as a program (program.ts), in phases (compiler/). */
-import type { ParseResult } from './ast';
+import type { Diagnostic, ParseResult } from './ast';
 import { parse } from './parser';
 import { compile as compileIn } from './compiler';
 import { readSlots } from './compiler/slots';
@@ -40,11 +40,36 @@ function scopeOf(result: CompileResult): Scope | null {
  * came through.
  */
 export function compileSource(source: string, env: Env = DEFAULT_ENV, options: CompileOptions = {}): CompileResult {
-  if (!hasFrom(source)) return compile(parse(source, { old: options.old ?? false }), env);
+  if (!hasFrom(source)) {
+    const alone = compile(parse(source, { old: options.old ?? false }), env);
+    const said = oldLaws(alone, () => true);
+    return said.length ? { ...alone, diagnostics: [...alone.diagnostics, ...said].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col) } : alone;
+  }
   const x = expansion(source, options);
   const result = compile(parse(x.text, { old: options.old ?? false }), env, x.given);
-  const diagnostics = [...x.diagnostics, ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span }))].sort(
+  // (law= on a line the piece wrote: the old way; through a from line it is the built-in fragment's own spelling)
+  const said = oldLaws(result, (line) => x.through(line) === null);
+  const diagnostics = [...x.diagnostics, ...said, ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span }))].sort(
     (a, b) => a.span.line - b.span.line || a.span.col - b.span.col,
   );
   return { ...result, ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics, takes: x.takes, ...(x.origins.size ? { origins: x.origins } : {}) };
+}
+
+/**
+ * `law=` written by a piece (decision 085 §2, rung 5): the old way of taking a built-in law, said with the `from` line
+ * Migrate writes for it. `own(line)`: did the piece write the line (not a fragment, through a `from` line)?
+ */
+function oldLaws(result: CompileResult, own: (line: number) => boolean): Diagnostic[] {
+  return [...result.cells.values()].flatMap((c) => {
+    const law = c.params.law;
+    if (typeof law !== 'string' || !own(c.span.line)) return [];
+    const clock = c.over ? ` &${c.over}` : ' &day';
+    return [
+      {
+        severity: 'warning' as const,
+        message: `law=${law} is the old way: write &${c.name} from ${law}${clock}, the law taken from its clock (decision 085; Migrate rewrites it)`,
+        span: c.span,
+      },
+    ];
+  });
 }

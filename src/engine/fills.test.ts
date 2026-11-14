@@ -17,14 +17,15 @@ describe('a built-in plugin-fragment answers the contract (decision 085 §3, #69
   });
   it('every lap it fills is cells that compile with no diagnostics', () => {
     for (const lap of LAPS) {
-      const r = compileSource(`${filledAt(law, lap)}\n&v s=sine loop=C4 ${law.voice ?? ''}\n&out map=sample [${law.plays} * &v]`);
+      const r = compileSource(`${filledAt(law, lap)}\n&v s=sine loop=C4\n&out map=sample [&${law.head} * &v]`);
       expect(r.diagnostics, `lap ${lap}`).toEqual([]);
     }
   });
   it('fiveto12, bar 0 (11:55): C Ionian, its first bar as the decision shows it', () => {
     expect(filledAt(law, 0)).toBe(
       [
-        '&notes over=&key step=1 [1, 3]@2 [5, 7, 9, 11, 13, 15]@2 [2, 4, 6] [6, 8, 10, 12, 14, 16, 18]@2 [3, 5, 7, 9]@2 0@2 [4, 6, 8, 10, 12]',
+        '&cycle [&notes * &level]',
+        '&notes over=&key pan=&space step=1 [1, 3]@2 [5, 7, 9, 11, 13, 15]@2 [2, 4, 6] [6, 8, 10, 12, 14, 16, 18]@2 [3, 5, 7, 9]@2 0@2 [4, 6, 8, 10, 12]',
         '&level map=amp step=1 0.4@2 0.84@2 0.51 0.18@2 0.62@2 0.29@2 0.73',
         '&space map=lin step=1 1/2@2 0@2 2/3 1/6@2 5/6@2 1/3@2 1',
         '&key scale(&mode, &tonic)',
@@ -78,5 +79,26 @@ describe('engine/holes.ts, deprecated for one minor (#727): the same functions u
     expect(deprecated.lawOf).toBe(lawOf);
     expect(deprecated.BUILT_IN).toBe(BUILT_IN);
     expect([deprecated.filledAt, deprecated.marksOf, deprecated.unitOf]).toEqual([filledAt, marksOf, unitOf]);
+  });
+});
+
+describe('a law taken with from (decision 085 §2, rung 5 of #691)', () => {
+  const day = '&day scan(1!24) loop=1d anchor=6.30\n';
+  const tail = '\n&glass s=tri loop=C4\n&out map=sample [&cycle * &glass * .3]';
+  const run = (line: string) => {
+    const r = compileSource(day + line + tail);
+    return { messages: r.diagnostics.map((d) => d.message), events: JSON.stringify(eventsBetween(plan(r, codeShifts(r)), 0, 60)) };
+  };
+  it('from fiveto12 resolves with no host resolver, and plays what law= played', () => {
+    const now = run('&cycle from fiveto12 &day');
+    expect(now.messages).toEqual([]);
+    expect(now.events).toBe(run('&cycle law=fiveto12 over=&day step=84bpm').events);
+    expect(now.events.length).toBeGreaterThan(1000);
+  });
+  it('law= warns where the piece writes it, not where the fragment does', () => {
+    expect(run('&cycle law=fiveto12 over=&day step=84bpm').messages).toEqual([
+      'law=fiveto12 is the old way: write &cycle from fiveto12 &day, the law taken from its clock (decision 085; Migrate rewrites it)',
+    ]);
+    expect(run('&cycle label="the law" from fiveto12 &day').messages).toEqual([]);
   });
 });

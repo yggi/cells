@@ -3,6 +3,7 @@ import { FROM_FORM, HEAD_FLAGS, isAttribute, readFrom, topTokens } from "./parse
 import { STYLE } from "./style.js";
 import { MOVED, RENAMED_IDS } from "./renamed.js";
 import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
+import { BUILT_IN } from "./fills.js";
 export const FROM_DEPTH = 8;
 const via = (lines, step) => lines.map((l) => ({ ...l, origin: [step, ...(l.origin ?? [])] }));
 const HEAD = /^&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
@@ -515,7 +516,8 @@ function forwardsTo(text) {
     const only = lines.length === 1 ? lines[0].from : null;
     return only?.kind === 'use' && !only.head.length && !only.args && only.main === null ? only.id : null;
 }
-export function expansion(text, { resolve, locked = [], old = false } = {}) {
+export function expansion(text, { resolve: host, locked = [], old = false } = {}) {
+    const resolve = (id, hash) => BUILT_IN.get(id)?.text ?? host?.(id, hash) ?? null;
     const own = linesOf(text);
     const uses = own.flatMap((l) => {
         const entry = entryOf(l);
@@ -547,13 +549,13 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
         const moved = old ? MOVED.get(id) : undefined;
         if (moved)
             diagnostics.push({ severity: 'warning', message: `${quoted(id)} is a part of ${moved.document} now: take it from there (Migrate rewrites it)`, span });
-        const whole = resolve ? (moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []))) : null;
+        const whole = moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []));
         const picked = whole === null ? null : pickPart(id, whole, u.from, say);
         const theirs = picked?.text ?? null;
         parts.push(picked?.part);
         if (theirs === null) {
             if (whole === null)
-                say(resolve ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
+                say(host ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
             hashes.push(null);
             copies.push([]);
             args.push(undefined);

@@ -295,7 +295,14 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     stub: true,
   },
   // laws
-  law: { help: 'a law that computes the notes (law=fiveto12: the 5 to 12 cycle, a day of music)', doc: 'time.md', value: 'word', on: ['law'] },
+  // (the old spelling of a built-in law: a plugin-fragment taken from its clock now, decision 085; Migrate rewrites it)
+  law: {
+    help: 'a law that computes the notes, the old spelling: &cycle from fiveto12 &day takes it now (decision 085)',
+    doc: 'time.md',
+    value: 'word',
+    on: ['law'],
+    old: 'from fiveto12 &day',
+  },
   anchor: {
     help: 'a clock (a day meter, loop=1d): the time of day it stands at when play starts (hours.minutes — 11.55); play begins where the clock stands',
     doc: 'time.md',

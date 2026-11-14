@@ -111,8 +111,7 @@ describe('5 to 12 in the studio: law=fiveto12 plays the day', () => {
     const { compileSource } = await import('./compile');
     const { codeShifts } = await import('./program');
     const { eventsBetween, plan } = await import('./realize');
-    const piece = (anchor: string) =>
-      `&day scan(1!24) loop=1d anchor=${anchor}\n&cycle law=fiveto12 over=&day step=84bpm\n&v s=tri loop=C4\n&out loop=SAMPLE_RATE map=sample [&cycle * &v]`;
+    const piece = (anchor: string) => `&day scan(1!24) loop=1d anchor=${anchor}\n&cycle from fiveto12 &day\n&v s=tri loop=C4\n&out loop=SAMPLE_RATE map=sample [&cycle * &v]`;
     const at = (src: string, from: number) => {
       const r = compileSource(src);
       expect(r.diagnostics).toEqual([]);

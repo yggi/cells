@@ -21,7 +21,8 @@
  * - A line taken twice from one id is taken once, at its first line; a line that then takes nothing says so.
  * - A cycle is an error naming it, and so is a depth past `FROM_DEPTH`; an unresolved id is an error naming it, and the
  *   piece's other lines compile as they would without it. Each is said on the piece's line it came through.
- * - Cells resolves nothing itself: the host hands each compile a resolver (`Resolve`), and the hashes its lockfile
+ * - Cells resolves nothing itself but its built-in plugin-fragments (`BUILT_IN`, decision 085 §6: `from fiveto12`): the
+ *   host hands each compile a resolver (`Resolve`) for the rest, and the hashes its lockfile
  *   recorded (`Locked`); a recorded hash the library no longer gives plays the current version, with a warning.
  * - A fragment's hash is `e1:` and a hash of its text up to layout (decision 050's E1, its rung written first, so it
  *   still checks once E4 exists).
@@ -36,6 +37,7 @@ import { STYLE } from './style';
 import { MOVED, RENAMED_IDS } from './renamed';
 import { BOUND_BY_NAME, byNameMessage } from './byname';
 import type { CompileOptions, Origin, Resolve, Take } from './program';
+import { BUILT_IN } from './fills';
 
 /** How deep `from` lines nest: a kit in a groove in a section in a piece is 3. */
 export const FROM_DEPTH = 8;
@@ -732,7 +734,9 @@ export interface Expansion {
 }
 
 /** The expansion of a text (see the module's comment), its `use` and `from` lines resolved by `options`. */
-export function expansion(text: string, { resolve, locked = [], old = false }: CompileOptions = {}): Expansion {
+export function expansion(text: string, { resolve: host, locked = [], old = false }: CompileOptions = {}): Expansion {
+  // (a built-in plugin-fragment is cells' own, decision 085 §6: its id resolves to its text before the host's resolver is asked)
+  const resolve: Resolve = (id, hash) => BUILT_IN.get(id)?.text ?? host?.(id, hash) ?? null;
   const own = linesOf(text);
   const uses = own.flatMap((l) => {
     const entry = entryOf(l);
@@ -765,12 +769,12 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
     // (a seed fragment a piece took in as its part, read the old way as that part, decision 082: Migrate's `moved` rewrites it)
     const moved = old ? MOVED.get(id) : undefined;
     if (moved) diagnostics.push({ severity: 'warning', message: `${quoted(id)} is a part of ${moved.document} now: take it from there (Migrate rewrites it)`, span });
-    const whole = resolve ? (moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []))) : null;
+    const whole = moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []));
     const picked = whole === null ? null : pickPart(id, whole, u.from, say);
     const theirs = picked?.text ?? null;
     parts.push(picked?.part);
     if (theirs === null) {
-      if (whole === null) say(resolve ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
+      if (whole === null) say(host ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
       hashes.push(null);
       copies.push([]);
       args.push(undefined);

@@ -21,7 +21,8 @@
  *
  * As a plugin-fragment (decision 085, #693): `FIVETO12` fills its cells with braid text, which the language reads —
  * its degrees over `&key` (the day's mode on the key's tonic), its chords as stacks in thirds, its lengths as `@n`, its
- * dynamics as a level cell; its place in space as a cell the voice's `pan=` reads (#727).
+ * dynamics as a level cell; its place in space as a cell its notes line's `pan=` reads (#739); its head notes with
+ * their levels (decision 087). A piece takes it as `&cycle from fiveto12 &day` (rung 5).
  */
 import type { PluginFragment } from './fills';
 export declare const BAR = 12;

@@ -21,7 +21,8 @@
  *
  * As a plugin-fragment (decision 085, #693): `FIVETO12` fills its cells with braid text, which the language reads —
  * its degrees over `&key` (the day's mode on the key's tonic), its chords as stacks in thirds, its lengths as `@n`, its
- * dynamics as a level cell; its place in space as a cell the voice's `pan=` reads (#727).
+ * dynamics as a level cell; its place in space as a cell its notes line's `pan=` reads (#739); its head notes with
+ * their levels (decision 087). A piece takes it as `&cycle from fiveto12 &day` (rung 5).
  */
 import type { PluginFragment } from './fills';
 
@@ -230,11 +231,17 @@ function fill(name: string, lap: number): string {
 export const FIVETO12: PluginFragment = {
   id: 'fiveto12',
   fills: { mode: { lap: KEY }, tonic: { lap: KEY }, notes: { lap: BAR }, level: { lap: BAR }, space: { lap: BAR }, block: { lap: BLOCK, mark: true } },
-  block: ['&notes over=&key step=1 fill()', '&level map=amp step=1 fill()', '&space map=lin step=1 fill()', '&key scale(&mode, &tonic)', '&mode fill()', '&tonic fill()'].join(
-    '\n',
-  ),
-  plays: '&notes * &level',
-  voice: 'pan=&space',
+  block: [
+    '&cycle [&notes * &level]',
+    '&notes over=&key pan=&space step=1 fill()',
+    '&level map=amp step=1 fill()',
+    '&space map=lin step=1 fill()',
+    '&key scale(&mode, &tonic)',
+    '&mode fill()',
+    '&tonic fill()',
+  ].join('\n'),
+  head: 'cycle',
+  text: ['&cycle from &day', '&cycle law=fiveto12 over=&day step=84bpm'].join('\n'),
   origin: 11.55,
   cycle: DAY,
   stepSeconds: SECONDS_PER_STEP,

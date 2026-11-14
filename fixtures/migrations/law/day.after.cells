@@ -1,0 +1,4 @@
+&day scan(1!24) loop=1d anchor=6.30
+&cycle label="the law" from fiveto12 &day
+&glass s=tri loop=C4
+&out map=sample [&cycle * &glass * .3]

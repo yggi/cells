@@ -6,7 +6,7 @@ A **plugin** is a `show=` wheel beyond the language's own, drawn by code. The co
 
 | `show=` | draws |
 |---|---|
-| `sun` | a meter that is a day (`loop=1d`, `anchor=`) as a 24-hour dial, noon at the top; with a `law=fiveto12` that reads it through `over=`, its twelve blocks round the rim, each as bright as its mode. Stopped, turn it to choose where play starts. See *5 to 12* and *Clock time*. |
+| `sun` | a meter that is a day (`loop=1d`, `anchor=`) as a 24-hour dial, noon at the top; with a law taken from it (`&cycle from fiveto12 &day`), its twelve blocks round the rim, each as bright as its mode. Stopped, turn it to choose where play starts. See *5 to 12* and *Clock time*. |
 
 A built-in plugin needs no code in the piece (`&day scan(1!24) loop=1d anchor=11.55 show=sun`) and runs without asking. A piece can't write a plugin of the same name. The bundle is `src/engine/builtinPlugins.ts`, in the block syntax below.
 
