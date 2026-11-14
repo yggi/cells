@@ -19,6 +19,8 @@ const READERS = [
   '&f step=&second:1m 5',
   '&out map=sample [&a * &lead, &b * &lead, &c * &lead, &d * &lead, &e * &lead, &f * &lead]',
 ];
+// (a second meter with a tempo of its own is the old way, decision 093: read so, to compare a derived one with it)
+const OLD = { old: true };
 const piece = (march: string, second: string) => [`&march meter("4/4") ${march}`, `&second ${second}`, ...READERS].join('\n');
 
 describe('a meter derived from another (#778, rung 1)', () => {
@@ -31,13 +33,13 @@ describe('a meter derived from another (#778, rung 1)', () => {
     ['a phase, 121 against 120', 'meter("4/4") step=beat*121/120', 'meter("4/4") step=121bpm'],
   ])('%s plays as the same meter at that tempo', (_, derived, own) => {
     expect(errors(piece('step=120bpm', derived))).toEqual([]);
-    expect(soundsIdentical(piece('step=120bpm', derived), piece('step=120bpm', own))).toBe(true);
+    expect(soundsIdentical(piece('step=120bpm', derived), piece('step=120bpm', own), undefined, OLD)).toBe(true);
   });
 
   it('follows the meter it taps: the root’s tempo moved moves it, where a tempo of its own stays', () => {
     const derived = 'meter("3/4") step=beat/2';
-    expect(soundsIdentical(piece('step=90bpm', derived), piece('step=90bpm', 'meter("3/4") step=45bpm'))).toBe(true);
-    expect(soundsIdentical(piece('step=90bpm', derived), piece('step=90bpm', 'meter("3/4") step=60bpm'))).toBe(false);
+    expect(soundsIdentical(piece('step=90bpm', derived), piece('step=90bpm', 'meter("3/4") step=45bpm'), undefined, OLD)).toBe(true);
+    expect(soundsIdentical(piece('step=90bpm', derived), piece('step=90bpm', 'meter("3/4") step=60bpm'), undefined, OLD)).toBe(false);
   });
 
   it('is not the piece’s main meter, wherever it is written', () => {

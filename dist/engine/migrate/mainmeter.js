@@ -4,6 +4,9 @@ export function mainMeters(source, result) {
     const main = result.meters?.[0];
     if (!main)
         return [];
+    const written = new Map(parse(source).cells.map((d) => [d.name, d]));
+    if (result.meters.some((m) => !written.get(m)?.step?.whole))
+        return [];
     const out = [];
     for (const d of parse(source).cells) {
         if (d.lambda !== undefined || declLine(source, d.name) < 0)

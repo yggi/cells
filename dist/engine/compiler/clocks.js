@@ -1,6 +1,29 @@
 import { isPositional } from "../program.js";
 import { bareSwingLevel, noteValue, stepsPerPulse, swingAt, swingLevelProblem, swungSteps, tapPositions } from "../meter.js";
 export const tapClockName = (meter, tap, bars) => `${meter}:${tap.written}${bars > 1 ? `:${bars}` : ''}`;
+export function derivedTap(root, second) {
+    const pulses = root.perSecond / stepsPerPulse(root.meter);
+    const steps = second.scan ? second.perSecond : second.perSecond / Math.max(1e-12, second.beat);
+    const x = steps / pulses;
+    if (!(x > 0) || !Number.isFinite(x))
+        return null;
+    let [n0, d0, n1, d1] = [0, 1, 1, 0];
+    let rest = x;
+    for (let i = 0; i < 40; i++) {
+        const a = Math.floor(rest);
+        [n0, d0, n1, d1] = [n1, d1, a * n1 + n0, a * d1 + d0];
+        if (d1 > 100_000)
+            return null;
+        if (Math.abs(n1 / d1 - x) <= 1e-9 * x)
+            break;
+        if (rest - a < 1e-12)
+            break;
+        rest = 1 / (rest - a);
+    }
+    if (Math.abs(n1 / d1 - x) > 1e-9 * x)
+        return null;
+    return `pulse${n1 === 1 ? '' : `*${n1}`}${d1 === 1 ? '' : `/${d1}`}`;
+}
 export function tapFor(meterSteps, pulses, unit, ratio) {
     const k = (ratio * meterSteps) / Math.max(1, pulses);
     const perBar = k * pulses;
@@ -90,16 +113,25 @@ export function clockCells(ctx, decls, given) {
             swing = d.params.swing;
         clocks.set(name, { cell: name, perSecond, positional: isPositional(c), ...(swing !== undefined ? { swing } : {}), ...(swung ? { swung } : {}) });
     }
-    const drivers = new Set([...decls.values()].flatMap((d) => (d.step?.kind === 'driven' ? [d.step.driver.name] : d.step?.kind === 'tap' && d.step.meter ? [d.step.meter.name] : [])));
+    const drivers = new Set([...decls.values()].flatMap((d) => [
+        ...(d.step?.kind === 'driven' ? [d.step.driver.name] : d.step?.kind === 'tap' && d.step.meter ? [d.step.meter.name] : []),
+        ...Object.values(d.paramClocks ?? {}).flatMap((st) => (st.kind === 'tap' && st.meter ? [st.meter.name] : [])),
+    ]));
     const timing = new Map();
     const stepping = [];
     const rooted = [...decls.values()].filter((d) => clocks.has(d.name) && cells.get(d.name)?.meter);
-    const meters = (rooted.some((d) => !d.step?.whole) ? rooted.filter((d) => !d.step?.whole) : rooted).map((d) => d.name);
+    const roots = rooted.filter((d) => !d.step?.whole);
+    for (const d of roots.slice(1)) {
+        const [root, c] = [cells.get(roots[0].name), cells.get(d.name)];
+        const tap = derivedTap({ meter: root.meter, perSecond: clocks.get(root.name).perSecond }, { beat: c.beat, scan: !!c.scan, perSecond: clocks.get(d.name).perSecond });
+        retired(`&${d.name} is a second meter with a tempo of its own, and a piece has one (&${root.name}): a second meter is derived from it${tap ? `, step=${tap}` : ' by a tap (step=beat/2, step=pulse*5/4)'} — read as any meter is, and it follows &${root.name}'s tempo (Migrate writes it; decision 093)`, d.step?.span ?? d.span);
+    }
+    const meters = (roots.length ? roots : rooted).map((d) => d.name);
     const tapped = new Map();
     const mainMeter = () => meters[0] ?? null;
     const meterOfTap = (st, spelled, broke) => {
         const meter = st.meter?.name ?? mainMeter();
-        if (!st.meter && meters.length > 1) {
+        if (!st.meter && meters.length > 1 && !roots.length) {
             retired(`${spelled} names no meter, and the piece has ${meters.length} with a tempo of their own (${meters.map((m) => '&' + m).join(', ')}): name the one it taps, ${spelled.slice(0, spelled.indexOf('=') + 1)}&${meters[0]}:${spelled.slice(spelled.indexOf('=') + 1)} (Migrate writes the first in the text, which it read; decision 091)`, st.span);
             if (!ctx.parsed.old) {
                 broke();

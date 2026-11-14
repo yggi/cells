@@ -1,7 +1,7 @@
-# a tap that names no meter, in a piece with two: it read the first in the text (decision 091)
-&waltz meter("3/4") step=60bpm
-&march meter("4/4") step=120bpm
-&low step=&waltz:4n 0 7 7
-&high step=&march:8n 12 ~ 14 ~ 16 ~ 14 ~
+# a tap that names no meter, in a piece of two clocks of the wall: it read the first in the text (decision 091)
+&minute scan(1!60) loop=1min
+&hour scan(1!60) loop=1h
+&tick step=&minute:4n 0 7
+&chime step=&hour:4n 12
 &lead s=tri loop=C4
-&out map=sample [&low * &lead, &high * &lead]
+&out map=sample [&tick * &lead, &chime * &lead]

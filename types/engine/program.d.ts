@@ -475,11 +475,14 @@ export interface CompileResult {
     /** Sections of an arrangement (decisions 016 and 044), each to its table: what a selector reading the table switches. */
     readonly sections?: ReadonlyMap<string, string>;
     /**
-     * The meter a tap that names none reads (decision 040): the meter with a tempo of its own. Where a piece has several
-     * (`meters`), the first in the text, for a host that shows one tempo; a tap there names its own (decision 091).
+     * The piece's root meter (decision 093): the one meter with a tempo of its own, which a tap that names none reads
+     * (decision 040) and a host that shows a tempo shows. With no such meter, the first clock of the wall (`loop=1d`).
      */
     readonly mainMeter?: string;
-    /** The meters with a tempo of their own, in the text's order, where a piece has more than one (decision 091). */
+    /**
+     * The clocks of the wall, in the text's order, where a piece has several and no root: a tap there names its own
+     * (decision 091). Read the old way (Migrate), a piece's several meters with a tempo of their own, the first its root.
+     */
     readonly meters?: readonly string[];
     /** The key a bare `over=key` reads, the old way (#124; #301, decision 060): the first cell in the text whose braid is `scale(…)`. */
     readonly mainKey?: string;

@@ -85,6 +85,7 @@ describe('Migrate: retired forms written as they are now (decision 049, #156)', 
         'axes',
         'parts',
         'main-meter',
+        'one-root',
       ]),
     );
     // (axes, decision 076: the old meaning, artic and energy, is no longer played, and the old way reads a line as Migrate

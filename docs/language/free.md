@@ -63,7 +63,7 @@ A rate's unit can be an argument, its numbers then the core's (a second): `step=
 
 ```cells
 &bar meter("4/4") step=free(90bpm, 60..240) swing=&swing
-&slow meter("4/4") step=free(adagio)
+&slow step=free(adagio)                 # a tempo, a marking's range
 &swing swing=8n:free(2/3, 1/2..3/4)   # a share left free, its ends fractions
 ```
 

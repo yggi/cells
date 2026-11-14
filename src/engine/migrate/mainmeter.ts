@@ -13,6 +13,9 @@ import type { Rewrite } from '../rewrite';
 export function mainMeters(source: string, result: Result): Rewrite<'main meter'>[] {
   const main = result.meters?.[0];
   if (!main) return [];
+  // (the clocks of the wall alone: a second meter of the piece's own is derived from its root, decision 093, oneroot.ts)
+  const written = new Map(parse(source).cells.map((d) => [d.name, d]));
+  if (result.meters!.some((m) => !written.get(m)?.step?.whole)) return [];
   const out: Rewrite<'main meter'>[] = [];
   for (const d of parse(source).cells) {
     if (d.lambda !== undefined || declLine(source, d.name) < 0) continue;

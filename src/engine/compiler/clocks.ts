@@ -1,11 +1,39 @@
 /** Phase 4: time — clocks (cells moved at a rate), every cell's steps per step of its clock, times given as clocks. */
 import type { CellDecl, Span, Tap } from '../ast';
 import { isPositional, type Clock } from '../program';
-import { bareSwingLevel, noteValue, stepsPerPulse, swingAt, swingLevelProblem, swungSteps, tapPositions } from '../meter';
+import { bareSwingLevel, noteValue, stepsPerPulse, swingAt, swingLevelProblem, swungSteps, tapPositions, type Meter } from '../meter';
 import type { Cells, Ctx } from './context';
 
 /** A tap's clock's name: the meter's, the tap and its bars (`bar:16n`, `bar:1n:4`); no cell can be called that. */
 export const tapClockName = (meter: string, tap: Tap, bars: number) => `${meter}:${tap.written}${bars > 1 ? `:${bars}` : ''}`;
+
+/**
+ * The tap of a root meter that steps a second meter as its own tempo does (decision 093): `pulse*n/d`, the second's beats
+ * a second (a meter(…)'s, as its bpm counts them; a scan's entries) over the root's pulses a second, as a fraction of
+ * whole numbers; null where the two rates are in no such ratio (a denominator past 100,000).
+ */
+export function derivedTap(
+  root: { readonly meter: Meter; readonly perSecond: number },
+  second: { readonly beat: number; readonly scan: boolean; readonly perSecond: number },
+): string | null {
+  const pulses = root.perSecond / stepsPerPulse(root.meter);
+  const steps = second.scan ? second.perSecond : second.perSecond / Math.max(1e-12, second.beat);
+  const x = steps / pulses;
+  if (!(x > 0) || !Number.isFinite(x)) return null;
+  // (the fraction by continued fractions, exact to 1e-9 of the ratio)
+  let [n0, d0, n1, d1] = [0, 1, 1, 0];
+  let rest = x;
+  for (let i = 0; i < 40; i++) {
+    const a = Math.floor(rest);
+    [n0, d0, n1, d1] = [n1, d1, a * n1 + n0, a * d1 + d0];
+    if (d1 > 100_000) return null;
+    if (Math.abs(n1 / d1 - x) <= 1e-9 * x) break;
+    if (rest - a < 1e-12) break;
+    rest = 1 / (rest - a);
+  }
+  if (Math.abs(n1 / d1 - x) > 1e-9 * x) return null;
+  return `pulse${n1 === 1 ? '' : `*${n1}`}${d1 === 1 ? '' : `/${d1}`}`;
+}
 
 /**
  * The tap that says what `step=&bar<chain>` says on a meter of `meterSteps` steps and `pulses` pulses of note value `unit`
@@ -123,7 +151,11 @@ export function clockCells(
   // (a driven meter — a scan that drives other cells, like swung eighths — becomes a clock of its own:
   //  its rate from its driver's, its positions bending its own lap)
   const drivers = new Set(
-    [...decls.values()].flatMap((d) => (d.step?.kind === 'driven' ? [d.step.driver.name] : d.step?.kind === 'tap' && d.step.meter ? [d.step.meter.name] : [])),
+    [...decls.values()].flatMap((d) => [
+      ...(d.step?.kind === 'driven' ? [d.step.driver.name] : d.step?.kind === 'tap' && d.step.meter ? [d.step.meter.name] : []),
+      // (a time parameter that reads a tap of a meter, delaytime=&waltz:8n, reads it as a line does)
+      ...Object.values(d.paramClocks ?? {}).flatMap((st) => (st.kind === 'tap' && st.meter ? [st.meter.name] : [])),
+    ]),
   );
   const timing = new Map<string, { clock: string; rate: number } | null>();
   const stepping: string[] = [];
@@ -132,7 +164,19 @@ export function clockCells(
   // one there is (decision 040); with several, none is the piece's by its place in the text, and a bare tap names its
   // own (decision 091, #757). The first is still `mainMeter`, for a host that shows one tempo.
   const rooted = [...decls.values()].filter((d) => clocks.has(d.name) && cells.get(d.name)?.meter);
-  const meters = (rooted.some((d) => !d.step?.whole) ? rooted.filter((d) => !d.step?.whole) : rooted).map((d) => d.name);
+  // one root meter a piece (decision 093): the meter with a tempo of its own, every other meter derived from it by a tap.
+  // A second one is an error that writes its tap; the old way kept both, and Migrate writes it. The clocks of the wall
+  // (loop=1d) are the environment's, not the piece's tempo: any number of them, each with a rate of its own.
+  const roots = rooted.filter((d) => !d.step?.whole);
+  for (const d of roots.slice(1)) {
+    const [root, c] = [cells.get(roots[0]!.name)!, cells.get(d.name)!];
+    const tap = derivedTap({ meter: root.meter!, perSecond: clocks.get(root.name)!.perSecond }, { beat: c.beat, scan: !!c.scan, perSecond: clocks.get(d.name)!.perSecond });
+    retired(
+      `&${d.name} is a second meter with a tempo of its own, and a piece has one (&${root.name}): a second meter is derived from it${tap ? `, step=${tap}` : ' by a tap (step=beat/2, step=pulse*5/4)'} — read as any meter is, and it follows &${root.name}'s tempo (Migrate writes it; decision 093)`,
+      d.step?.span ?? d.span,
+    );
+  }
+  const meters = (roots.length ? roots : rooted).map((d) => d.name);
   // (each tapped cell's meter: its step names it)
   const tapped = new Map<string, string>();
   const mainMeter = (): string | null => meters[0] ?? null;
@@ -142,7 +186,8 @@ export function clockCells(
   const meterOfTap = (st: Extract<NonNullable<CellDecl['step']>, { kind: 'tap' }>, spelled: string, broke: () => void): string | null => {
     const meter = st.meter?.name ?? mainMeter();
     // (several meters with a tempo of their own: the old way read the first in the text, and Migrate names it)
-    if (!st.meter && meters.length > 1) {
+    // (of the wall's clocks alone: a second meter of the piece's own is said once, on its line, decision 093)
+    if (!st.meter && meters.length > 1 && !roots.length) {
       retired(
         `${spelled} names no meter, and the piece has ${meters.length} with a tempo of their own (${meters.map((m) => '&' + m).join(', ')}): name the one it taps, ${spelled.slice(0, spelled.indexOf('=') + 1)}&${meters[0]}:${spelled.slice(spelled.indexOf('=') + 1)} (Migrate writes the first in the text, which it read; decision 091)`,
         st.span,

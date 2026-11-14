@@ -26,6 +26,8 @@
  *                  against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
  *  - mainmeter.ts: a tap that names no meter, in a piece with several meters with a tempo of their own, written with
  *                  the first's name, the one it read (decision 091, #757)
+ *  - oneroot.ts:   a second meter with a tempo of its own, derived from the root by the tap that says its tempo
+ *                  (decision 093, #778)
  *
  * `&parts` → `&sections` (decision 044) was offered for v0.15 and is retired (decision 049, ruling 4): `&parts` is a valid
  * name, the author's. The card's title= tags= tier= going to the file's frontmatter (decision 047) is a migration too, but its rewrite makes
@@ -58,6 +60,7 @@ import { argumentsByName } from './arguments';
 import { parts } from './parts';
 import { axes } from './axes';
 import { mainMeters } from './mainmeter';
+import { oneRoot } from './oneroot';
 
 /** The rules a migration is found by (Shorten's suggestions keep theirs as their kinds). */
 export type MigrationRule =
@@ -77,7 +80,8 @@ export type MigrationRule =
   | 'axes'
   | 'parts'
   | 'moved'
-  | 'main meter';
+  | 'main meter'
+  | 'one root';
 export type Migration = Rewrite<MigrationRule>;
 
 /** Every migration a text has, in the order its form was retired; a `from` line's fragment read through `options.resolve`. */
@@ -100,6 +104,7 @@ export const migrations =
     ...axes(source),
     ...parts(source, result),
     ...movedIds(source, options.resolve),
+    ...oneRoot(source, result),
     ...mainMeters(source, result),
   ];
 
