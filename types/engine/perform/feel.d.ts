@@ -1,5 +1,5 @@
 /**
- * The default performer's feel (decision 063 §2, #392; yggi/music-commons `contracts/feel`, version 3, #560): how a
+ * The default performer's feel (decision 063 §2, #392; yggi/music-commons `contracts/feel`, version 3, #560; minor 1, its ninth drum role, #717): how a
  * performer plays the events cells plays for a bar, its velocity loosened and accented and its length gated, so every
  * frontend plays a session as its host does; and which part and drum role each event is (`readerOf`: the `part=` and
  * `role=` its text declares, never a name, decision 075). The text says what is composed, and the playing is the player's (decision 037).
@@ -35,8 +35,12 @@ export interface FeelFrame {
 }
 /** A part as the feel keys it, in the order its draws number them. */
 export type FeelPart = 'drums' | 'bass' | 'pad' | 'stab' | 'lead';
-/** A drum hit's role in the groove. */
-export type DrumRole = 'kick' | 'backbeat' | 'ghost' | 'hat' | 'pedal' | 'euclid' | 'clave' | 'fill';
+/**
+ * A drum hit's role in the groove: what its line does, never what it strikes (decision 075). `ostinato`, feel version 3
+ * minor 1 (yggi/music-commons#66, the owner's ruling on yggi/jambot#651, #717): a line that repeats a pitched figure on
+ * toms or congas.
+ */
+export type DrumRole = 'kick' | 'backbeat' | 'ghost' | 'hat' | 'pedal' | 'euclid' | 'ostinato' | 'clave' | 'fill';
 /**
  * Version 2's reading, by names (feel minor 1): the part and drum role an event of a host's section text is, read off the
  * output cells names it by (`voice:cell:line:col`, split on `:`): a groove's member of the kit cells makes,
@@ -108,7 +112,11 @@ export interface Widths {
 }
 /** The contract's widths: a performer that plays as Jambot's does. */
 export declare const CONTRACT_WIDTHS: Widths;
-/** An event as the performers play it: its velocity loosened and accented, its length gated, by draws keyed by the bar and step (a drum's by its note too). */
+/**
+ * An event as the performers play it: its velocity loosened and accented, its length gated, by draws keyed by the bar and
+ * step (a drum's by its note too). One none of the feel's (a part not among its five, a drum hit of a role not among its
+ * nine, or of none) plays as cells gives it, its velocity and length as written (feel version 3; yggi/jambot#668).
+ */
 export declare function played(frame: FeelFrame, event: FeelEvent, feel?: number, widths?: Widths): {
     velocity: number;
     length: number;

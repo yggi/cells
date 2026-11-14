@@ -101,6 +101,8 @@ const benches: Readonly<Record<string, readonly string[]>> = {
   '&padline': [...KEYED, STYLE, '&padline over=&key step=1m [0,2,4]'],
   '&stabline': [...KEYED, STYLE, '&stabline over=&key step=4n [0,2,4] ~'],
   '&leadline': [...KEYED, STYLE, '&leadline over=&key step=8n 0 2 4 2'],
+  // (a law, decision 085: the day it reads)
+  '&day': ['&day scan(1!24) loop=1d'],
 };
 const meters = [
   'meter("16/8") step=120bpm',

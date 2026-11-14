@@ -246,7 +246,6 @@ export const TIERS = [
             'rate nd',
             'rate nwk',
             'parameter anchor',
-            'parameter law',
         ],
     },
     {

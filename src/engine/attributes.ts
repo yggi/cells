@@ -256,10 +256,10 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     form: 'part=bass (bass, pad, stab, lead or drums)',
   },
   role: {
-    help: 'a drum line’s role, as the default performer plays it (feel v3, decision 075): kick, backbeat, ghost, hat, pedal, euclid, clave or fill (&k role=kick step=16n &bd!4); a name gives none',
+    help: 'a drum line’s role, as the default performer plays it (feel v3, decision 075): kick, backbeat, ghost, hat, pedal, euclid, ostinato, clave or fill (&k role=kick step=16n &bd!4); a name gives none',
     doc: 'mix.md',
     value: 'word',
-    form: 'role=kick (kick, backbeat, ghost, hat, pedal, euclid, clave or fill)',
+    form: 'role=kick (kick, backbeat, ghost, hat, pedal, euclid, ostinato, clave or fill)',
   },
   // (the old spelling of a gate, still read with a warning; Migrate rewrites it: decision 023)
   trigger: { help: 'a gate, the old spelling of play=: the notes it plays (trigger=&tune)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'play=' },
@@ -295,7 +295,14 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     stub: true,
   },
   // laws
-  law: { help: 'a law that computes the notes (law=fiveto12: the 5 to 12 cycle, a day of music)', doc: 'time.md', value: 'word', on: ['law'] },
+  // (the old spelling of a built-in law: a plugin-fragment taken from its clock now, decision 085; Migrate rewrites it)
+  law: {
+    help: 'a law that computes the notes, the old spelling: &cycle from five_to_twelve &day takes it now (decision 085)',
+    doc: 'time.md',
+    value: 'word',
+    on: ['law'],
+    old: 'from five_to_twelve &day',
+  },
   anchor: {
     help: 'a clock (a day meter, loop=1d): the time of day it stands at when play starts (hours.minutes — 11.55); play begins where the clock stands',
     doc: 'time.md',

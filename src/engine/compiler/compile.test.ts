@@ -948,9 +948,14 @@ describe('diagnostics: nothing plays, or the wrong thing, without a word (#143)'
 
   it('anchor= on a law says it belongs on the clock the law reads', () => {
     const law = (cycle: string) => `&day scan(1!24) loop=1d anchor=11.55\n${cycle}\n&bell s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&cycle * &bell]`;
-    expect(compileSource(law('&cycle law=fiveto12 over=&day step=84bpm')).diagnostics).toEqual([]);
-    expect(said(law('&cycle law=fiveto12 over=&day step=84bpm anchor=13.00'))).toEqual([
-      ['warning', 2, 49, "anchor= sets the clock a law reads, not the law: write it on &day — the law on &cycle doesn't read it"],
+    expect(compileSource(law('&cycle from five_to_twelve &day')).diagnostics).toEqual([]);
+    // (the head's attribute, before from (decision 065 §4), said on the from line)
+    expect(said(law('&cycle anchor=13.00 from five_to_twelve &day'))).toEqual([
+      ['warning', 2, 1, "anchor= sets the clock a law reads, not the law: write it on &day — the law on &cycle doesn't read it"],
+    ]);
+    // (written the old way, law= says so too, rung 5 of #691)
+    expect(said(law('&cycle law=fiveto12 over=&day step=84bpm')).map((d) => d[3])).toEqual([
+      'law=fiveto12 is the old way: write &cycle from five_to_twelve &day, the law taken from its clock (decision 085; Migrate rewrites it)',
     ]);
   });
 

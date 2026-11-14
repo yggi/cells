@@ -13,8 +13,8 @@ source: seed
 ```cells
 &kick, &chick, &groove from (&bd, &ph)
 &bd, &ph from gm_kit
-&kick step=4n &bd:0:.5 ~ ~
-&chick step=4n ~ &ph:0:.3 &ph:0:.25
+&kick role=kick step=4n &bd:0:.5 ~ ~
+&chick role=pedal step=4n ~ &ph:0:.3 &ph:0:.25
 &groove [&kick, &chick]
 ```
 
