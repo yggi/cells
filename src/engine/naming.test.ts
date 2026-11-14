@@ -4,6 +4,8 @@
  * one a pitch) are pulled out into a cell of their own, `&L17_k [&a * &b * .3]`, and the product reads `&L17_k * <the rest>`: the text plays
  * what it played, note for note. The one exception is decision 079's: one line of plain numbers (no table) times numbers,
  * named, is a weighted value, not notes; those groups are left as written, and counted.
+ * Each example is compiled as written, its `from` lines read through the seed library, and one that doesn't compile fails
+ * the test (#761: with its `from` lines written in and no resolver, 72 of the 89 didn't, and were skipped).
  */
 import { describe, expect, it } from 'vitest';
 import type { Expr } from './ast';
@@ -13,7 +15,6 @@ import { parse } from './parser';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { resolveSeed } from '../repository/library';
-import { expand, hasFrom } from './use';
 import { valueSumOf } from './valuesum';
 
 /** Plain data to compare: numbers to 9 significant digits. */
@@ -26,13 +27,14 @@ const plain = (x: unknown): unknown =>
         ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k, plain(v)]))
         : x;
 const played = (text: string) => {
-  const r = compileSource(text);
+  const r = compileSource(text, undefined, { resolve: resolveSeed });
   return { r, events: r.ok ? plain(eventsBetween(plan(r, codeShifts(r)), 0, 40)) : null };
 };
 
 /** The text with every voiceless sub-product of its mixes named (law L17), and how many it named. */
-function named(text: string, sortOf: (name: string) => string | undefined): { text: string; count: number; skipped: number } {
+function named(text: string, sortOf: (name: string) => string | undefined): { text: string; count: number; skipped: number; continued: number } {
   let skipped = 0;
+  let continued = 0;
   const lines = text.split('\n');
   const edits = new Map<number, { col: number; len: number; with: string }[]>();
   const added: string[] = [];
@@ -47,8 +49,14 @@ function named(text: string, sortOf: (name: string) => string | undefined): { te
     if (voiceless.length < 2 || !cells.some((f) => sortOf(f.ref.name) === 'pitch') || cells.length === refs.length) return;
     // (one line, as written: a product across lines is left alone)
     if (e.factors.some((f) => (f.k === 'ref' ? f.ref.span.line : f.span.line) !== e.span.line)) return;
-    const name = `L17_${added.length}`;
     const line = lines[e.span.line - 1]!;
+    // (a product on a continued line of a mix is placed where it is written, #764: none is past its line's end, and the
+    // count below holds that)
+    if (e.span.col - 1 + e.span.len > line.length) {
+      continued++;
+      return;
+    }
+    const name = `L17_${added.length}`;
     // (one line of plain numbers times numbers is 079's weighted value, not notes: the law's one exception, counted)
     const probe = parse(`${text}\n&${name} [${voiceless.map((f) => (f.k === 'ref' ? `&${f.ref.name}` : f.k === 'num' ? String(f.value) : '')).join(' * ')}]`).cells;
     if (valueSumOf(name, new Map(probe.map((d) => [d.name, d]))) !== null) {
@@ -56,9 +64,6 @@ function named(text: string, sortOf: (name: string) => string | undefined): { te
       return;
     }
     const written = (f: Expr) => (f.k === 'ref' ? line.slice(f.ref.span.col - 1, f.ref.span.col - 1 + f.ref.span.len) : line.slice(f.span.col - 1, f.span.col - 1 + f.span.len));
-    // (the test's own text surgery: an edit only where every factor's span reads back as that factor, and the product's as it)
-    const readsBack = (f: Expr) => (f.k === 'ref' ? written(f) === `&${f.ref.name}` || !voiceless.includes(f) : f.k === 'num' ? Number(written(f)) === f.value : false);
-    if (!e.factors.every(readsBack) || !line.slice(e.span.col - 1, e.span.col - 1 + e.span.len).includes(written(e.factors[0]!))) return;
     added.push(`&${name} [${voiceless.map(written).join(' * ')}]`);
     const rest = e.factors.filter((f) => !voiceless.includes(f));
     const list = edits.get(e.span.line) ?? [];
@@ -74,7 +79,7 @@ function named(text: string, sortOf: (name: string) => string | undefined): { te
     for (const x of [...list].sort((a, b) => b.col - a.col)) line = line.slice(0, x.col - 1) + x.with + line.slice(x.col - 1 + x.len);
     lines[n - 1] = line;
   }
-  return { text: [...lines, ...added].join('\n'), count: added.length, skipped };
+  return { text: [...lines, ...added].join('\n'), count: added.length, skipped, continued };
 }
 
 describe('law L17: naming a sub-product plays as its parentheses do (decision 087)', () => {
@@ -82,15 +87,16 @@ describe('law L17: naming a sub-product plays as its parentheses do (decision 08
   it('every example, its voiceless sub-products named, plays what it played', () => {
     let count = 0;
     let skipped = 0;
+    let continued = 0;
     const rewritten: string[] = [];
     for (const [key, { source }] of Object.entries(EXAMPLES)) {
-      // (a text with from lines, written out: the expansion standing alone, as Cell studio's "write out" writes it)
-      const text = hasFrom(source) ? expand(source, resolveSeed) : source;
+      // (as written, its `from` lines read through the seed library: an example that doesn't compile fails here, #761)
+      const text = source;
       const before = played(text);
-      // (every example compiles, written out too: one that didn't would be skipped without a word)
       expect(before.r.ok, key).toBe(true);
       const n = named(text, (name) => before.r.cells.get(name)?.sort);
       skipped += n.skipped;
+      continued += n.continued;
       if (!n.count) continue;
       const after = played(n.text);
       expect(
@@ -103,10 +109,11 @@ describe('law L17: naming a sub-product plays as its parentheses do (decision 08
     }
     // (how many it named, so a change that names none is seen: 0 would prove nothing)
     expect(count).toBeGreaterThan(0);
-    expect({ count, examples: rewritten.length, skipped }).toMatchInlineSnapshot(`
+    expect({ count, examples: rewritten.length, skipped, continued }).toMatchInlineSnapshot(`
       {
-        "count": 104,
-        "examples": 56,
+        "continued": 0,
+        "count": 126,
+        "examples": 60,
         "skipped": 57,
       }
     `);

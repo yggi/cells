@@ -24,6 +24,8 @@
  *                  gave: part=bass, role=kick (decision 075, the feel's version 3, #560 rung 2)
  *  - axes.ts:      a style on the axes sync harm artic energy as on sync harm bite mood (decision 076, #572): exact
  *                  against the old meaning, taken unchecked (`Rewrite.exact`), and never Normalise's
+ *  - mainmeter.ts: a tap that names no meter, in a piece with several meters with a tempo of their own, written with
+ *                  the first's name, the one it read (decision 091, #757)
  *  - laws.ts:      a law written law=fiveto12 over=&day as the from line that takes it: &cycle from five_to_twelve &day (decision 085)
  *
  * `&parts` → `&sections` (decision 044) was offered for v0.15 and is retired (decision 049, ruling 4): `&parts` is a valid
@@ -56,11 +58,29 @@ import { notes } from './notes';
 import { argumentsByName } from './arguments';
 import { parts } from './parts';
 import { axes } from './axes';
+import { mainMeters } from './mainmeter';
 import { laws } from './laws';
 
 /** The rules a migration is found by (Shorten's suggestions keep theirs as their kinds). */
 export type MigrationRule =
-  'gate' | 'tap' | 'swing' | 'main key' | 'forwarded' | 'grid' | 'laps' | 'renamed' | 'oneshot' | 'pairs' | 'beats' | 'notes' | 'arguments' | 'axes' | 'parts' | 'moved' | 'law';
+  | 'gate'
+  | 'tap'
+  | 'swing'
+  | 'main key'
+  | 'forwarded'
+  | 'grid'
+  | 'laps'
+  | 'renamed'
+  | 'oneshot'
+  | 'pairs'
+  | 'beats'
+  | 'notes'
+  | 'arguments'
+  | 'axes'
+  | 'parts'
+  | 'moved'
+  | 'main meter'
+  | 'law';
 export type Migration = Rewrite<MigrationRule>;
 
 /** Every migration a text has, in the order its form was retired; a `from` line's fragment read through `options.resolve`. */
@@ -83,6 +103,7 @@ export const migrations =
     ...axes(source),
     ...parts(source, result),
     ...movedIds(source, options.resolve),
+    ...mainMeters(source, result),
     ...laws(source, options.resolve),
   ];
 

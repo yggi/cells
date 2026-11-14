@@ -14,7 +14,7 @@ description: "Music on the clock on the wall: a tick each second, a chime each m
 &day scan(1!24) loop=1d anchor=11.55 show=sun label="the day"
 &week scan(1!7) loop=1wk label="a week: seven days"
 
-&tick step=4n 0                                     # each second
+&tick step=&minute:4n 0                                  # each second
 &chime step=&hour:4n 12                             # each minute
 &daily over=scale(major) step=&week:4n 0 1 2 3 4 5 6    # the chime a step higher each day
 &cycle label="the law: a day" from five_to_twelve &day
