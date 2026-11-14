@@ -1,6 +1,6 @@
 # 089 · A tap names its meter where a piece has several
 
-**Date:** 2026-11-14 · **Status:** accepted in part (the owner, 2026-11-14: "order should not matter, it should be a language law. 'the order of lines in a piece is irrelevant'", and on option A, "1 seems good"); what a host reads where a piece has several meters, and whether a piece may have several at all, are open with him · Issues: #757
+**Date:** 2026-11-14 · **Status:** accepted (the owner, 2026-11-14: "order should not matter, it should be a language law. 'the order of lines in a piece is irrelevant'", and on option A, "1 seems good"); whether a piece may have several meters at all, and with it what a host reads there, is #778) · Issues: #757, #778
 
 *Amends [040](040-pulse-beat-and-laps.md) (a tap reads the piece's main meter). Read with [075](075-a-name-is-only-a-name.md) (no name is the piece's by convention).*
 
@@ -34,7 +34,7 @@ So the order mattered in two examples, and one bare tap leaned on it.
 2. **A meter that taps another is never the main one**, wherever it is written (`&clave scan(3 3 4 3 3) step=pulse*5/4`): it keeps the first's time. It was so already, by the order the compiler happened to read the clocks in; it is now by rule, the meters gathered before any tap is read.
 3. **Where a piece has several meters with a tempo of their own, none is the main one by its place in the text.** A tap there names its meter (`step=&waltz:4n`), and a bare one is an error that lists them and writes the first's tap.
 4. **Migrate writes the meter the tap read**: the first in the text, `step=4n` → `step=&minute:4n` (`migrate/mainmeter.ts`), checked by sound against the old way of reading it.
-5. **`CompileResult.mainMeter` stays** the first of them, for a host that shows one tempo (a MIDI file's, a clock's); `CompileResult.meters` lists them where there is more than one. Whether a host's choice among several should be said in the text is open.
+5. **`CompileResult.mainMeter` stays** the first of them, for a host that shows one tempo (a MIDI file's, a clock's); `CompileResult.meters` lists them where there is more than one. Whether a host's choice among several should be said in the text is #778's.
 6. **The law (L19): the order of a piece's lines is irrelevant.** Every example, its lines in three other orders, plays what it played (`src/engine/lineorder.test.ts`). The main meter was the one place the order was read.
 
 **Why not** a word that declares the main meter (option B): a new form for a case two examples have, and a tap that names its meter already says it.
@@ -46,4 +46,4 @@ So the order mattered in two examples, and one bare tap leaned on it.
 - **`daytime`** writes `&tick step=&minute:4n`; its events don't move. No other example and no seed fragment changes.
 - A time parameter that reads a tap (`delaytime=8n`) in such a piece names its meter too.
 - **Normalise** names a bare tap's meter last, after it folds a second clock into the main meter (`tapClock`, `shadowMeter`, #668): a piece left with one meter keeps its taps bare, and one that still has several has them named. Its readers folded onto a meter of several are written by its name (`daytime`'s kept rewrite: `step=&minute:1m`).
-- **Open:** what a host that needs one tempo reads in a piece of several meters (5); and whether Normalise writes a tap that names the piece's one meter bare (`step=&bar:4n` → `step=4n`), a row of the canonical table (#27).
+- **Open, on #778** (one root meter a piece): what a host that needs one tempo reads in a piece of several meters (5); and whether Normalise writes a tap that names the piece's one meter bare (`step=&bar:4n` → `step=4n`), a row of the canonical table (#27).
