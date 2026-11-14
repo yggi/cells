@@ -566,7 +566,7 @@ export interface Take {
   readonly names: readonly string[] | null;
   /** The line it is on. */
   readonly span: Span;
-  /** The hash of the text it resolved to (`e1:…`: the text up to layout, decision 050), or null where it didn't resolve. */
+  /** The hash of the text it resolved to (`e2:…`: the fragment as a piece receives it, decision 089 §8), or null where it didn't resolve. */
   readonly hash: string | null;
   /**
    * The names it gave the piece (`&bd`), in the order the expansion writes them: its own lines, then those it took. For a
