@@ -15,7 +15,7 @@ lifted: yggi/cells examples/hypercell.md @ 014c4c73
 &kick, &clap, &hat, &groove from (&bd, &cp, &hh)
 &bd, &cp, &hh from gm_kit
 &kick role=kick step=4n &bd:0:.8
-&clap step=2n [~ &cp:0:.35]
+&clap role=backbeat step=2n [~ &cp:0:.35]
 &hat role=hat step=8n [~ &hh:0:.2]
 &groove [&kick, &clap, &hat]
 ```

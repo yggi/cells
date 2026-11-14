@@ -81,6 +81,7 @@ export function compile(written, env, used = new Set()) {
         performers,
         sections: declared.sections,
         ...(timed.mainMeter ? { mainMeter: timed.mainMeter } : {}),
+        ...(timed.meters.length > 1 ? { meters: timed.meters } : {}),
         ...(declared.mainKey ? { mainKey: declared.mainKey } : {}),
         ...(builtin ? { builtinCard: builtin } : {}),
     };

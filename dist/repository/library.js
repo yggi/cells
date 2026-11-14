@@ -5,7 +5,7 @@ import { EMPTY_LAYER, fragmentProblems } from "./fragments.js";
 import { readPiece } from "../engine/piecefile.js";
 import { partOf, usesIn } from "../engine/use.js";
 import { variantsOf } from "./variants.js";
-const FOLDERS = ['meters', 'rhythms', 'bass', 'harmony', 'instruments', 'expression', 'modes', 'performers', 'stab', 'motifs', 'forms', 'bands', 'styles', 'modules'];
+const FOLDERS = ['meters', 'rhythms', 'bass', 'harmony', 'instruments', 'expression', 'modes', 'performers', 'stab', 'motifs', 'forms', 'bands', 'styles', 'modules', 'laws'];
 export const PARTS = Object.entries(EXAMPLES).flatMap(([key, e]) => {
     const file = readPiece(e.file);
     const parts = 'problems' in file ? undefined : file.frontmatter.parts;

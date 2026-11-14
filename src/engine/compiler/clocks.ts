@@ -45,7 +45,11 @@ function fraction(x: number): [number, number] | null {
 }
 
 /** The clocks; each cell's clock, rate and times given as clocks, set on a copy of the cells it is given. */
-export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given: Cells): { cells: Cells; clocks: ReadonlyMap<string, Clock>; mainMeter: string | null } {
+export function clockCells(
+  ctx: Ctx,
+  decls: ReadonlyMap<string, CellDecl>,
+  given: Cells,
+): { cells: Cells; clocks: ReadonlyMap<string, Clock>; mainMeter: string | null; meters: readonly string[] } {
   const { rateOf, error, warn, unknownCell, broken } = ctx;
   // (a retired form (#15, rung 5; #26: retired forms only through Migrate): an error that names its Migrate rule, read the
   // old way, with a warning, only where the text is (`CompileOptions.old`: Migrate and Normalise compile so)
@@ -123,22 +127,31 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
   );
   const timing = new Map<string, { clock: string; rate: number } | null>();
   const stepping: string[] = [];
-  // the piece's main meter, which a tap that names none reads (decision 040): the first meter in the text with a tempo
-  // of its own (a lap of a day, loop=1d, only when there is no other)
-  let main: string | null | undefined;
+  // the meters with a tempo of their own, a rate or a tempo cell's (a meter that taps another keeps its time, and is
+  // none), in the text's order; a lap of a day, loop=1d, only when no meter steps. A tap that names no meter reads the
+  // one there is (decision 040); with several, none is the piece's by its place in the text, and a bare tap names its
+  // own (decision 091, #757). The first is still `mainMeter`, for a host that shows one tempo.
+  const rooted = [...decls.values()].filter((d) => clocks.has(d.name) && cells.get(d.name)?.meter);
+  const meters = (rooted.some((d) => !d.step?.whole) ? rooted.filter((d) => !d.step?.whole) : rooted).map((d) => d.name);
   // (each tapped cell's meter: its step names it)
   const tapped = new Map<string, string>();
-  const mainMeter = (): string | null => {
-    if (main !== undefined) return main;
-    const meters = [...decls.values()].filter((d) => clocks.has(d.name) && cells.get(d.name)?.meter);
-    main = (meters.find((d) => !d.step?.whole) ?? meters[0])?.name ?? null;
-    return main;
-  };
+  const mainMeter = (): string | null => meters[0] ?? null;
   // a tap of a meter (decision 040): a clock of its own, its steps where the tap puts them in the bar, through the
   // meter's time map; its chain steps it as a chain steps any clock
   // (the meter a tap reads: the one it names, or the main one; null, with the error said, when there is none to read)
   const meterOfTap = (st: Extract<NonNullable<CellDecl['step']>, { kind: 'tap' }>, spelled: string, broke: () => void): string | null => {
     const meter = st.meter?.name ?? mainMeter();
+    // (several meters with a tempo of their own: the old way read the first in the text, and Migrate names it)
+    if (!st.meter && meters.length > 1) {
+      retired(
+        `${spelled} names no meter, and the piece has ${meters.length} with a tempo of their own (${meters.map((m) => '&' + m).join(', ')}): name the one it taps, ${spelled.slice(0, spelled.indexOf('=') + 1)}&${meters[0]}:${spelled.slice(spelled.indexOf('=') + 1)} (Migrate writes the first in the text, which it read; decision 091)`,
+        st.span,
+      );
+      if (!ctx.parsed.old) {
+        broke();
+        return null;
+      }
+    }
     if (!meter) {
       error(`${spelled} taps the piece's main meter, and it has none: write one (&bar meter("4/4") step=100bpm)`, st.span);
       broke();
@@ -313,5 +326,5 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       const perSecond = clocks.get(drv.clock)!.perSecond * drv.rate * st.ratio;
       cells.set(d.name, { ...c, params: { ...c.params, [key]: +(1 / perSecond).toFixed(6) } });
     }
-  return { cells, clocks, mainMeter: mainMeter() };
+  return { cells, clocks, mainMeter: mainMeter(), meters };
 }

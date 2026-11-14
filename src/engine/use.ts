@@ -176,6 +176,13 @@ function pickPart(id: string, text: string, from: FromUse, say: (message: string
 export const hasFrom = (text: string): boolean => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
 
 /** A fragment's signature (decision 065): what its `from` line with no id declares; null for a collection, which has none. */
+/** The heads every signature line of a text names (`&cycle from &day` gives `&cycle`): the cells a template defines. */
+export const signatureHeads = (text: string): string[] =>
+  text.split('\n').flatMap((line) => {
+    const form = readFrom(splitComment(line)[0].trim());
+    return form?.kind === 'signature' ? form.names : [];
+  });
+
 export function signatureOf(text: string): Extract<FromForm, { kind: 'signature' }> | null {
   for (const l of linesOf(text)) if (l.from?.kind === 'signature') return l.from;
   return null;
@@ -258,7 +265,22 @@ export function identityText(text: string): string {
 }
 
 /** A fragment's hash: `e2:` and the hash of its text as a piece receives it (`identityText`, decision 089 §8). */
-export const fragmentHash = (text: string): string => `e2:${hash64(identityText(text))}`;
+/**
+ * Hashes already taken, by text: a hash is read each time a `from` line is expanded and each time a query tries a
+ * fragment, and `identityText` reads the text's signature and counts its runs (#788: uncached, three fitting queries
+ * took 8 s where they took 5). A text's hash never changes, so this is no state; it is emptied past `HASHES` texts.
+ */
+const hashes = new Map<string, string>();
+const HASHES = 4096;
+
+export const fragmentHash = (text: string): string => {
+  const known = hashes.get(text);
+  if (known !== undefined) return known;
+  const hash = `e2:${hash64(identityText(text))}`;
+  if (hashes.size >= HASHES) hashes.clear();
+  hashes.set(text, hash);
+  return hash;
+};
 
 /** Whether a recorded hash is a text's: an `e1:` read as `e1:` (what a lockfile wrote before decision 089), any other as `e2:`. */
 export const hashIs = (recorded: string, text: string): boolean => recorded === (recorded.startsWith('e1:') ? fragmentHashE1(text) : fragmentHash(text));

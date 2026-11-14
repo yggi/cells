@@ -193,14 +193,13 @@ Parameters belong to voices (the sound ones keep dough's names) and to physical 
 - `licence=n` · `licence=free(n, lo..hi)`: On a gate: its performer’s licence, how far it loosens velocity and length, a share of the feel’s (1 as the contract plays; 0 exactly as written) — on a gate (play= with a braid) [→](mix.md)
 - `accents=n` · `accents=free(n, lo..hi)`: On a gate: its performer’s own accents, a share of the feel’s (1 as the contract plays; 0 none) — on a gate (play= with a braid) [→](mix.md)
 - `part=bass (bass, pad, stab, lead or drums)`: The part the default performer plays a line as (feel v3, decision 075): on a role cell, its performer’s part (&low map=role part=bass &lowOut), or on a line (&low part=bass …): bass, pad, stab, lead or drums; a name gives none. [→](mix.md)
-- `role=kick (kick, backbeat, ghost, hat, pedal, euclid, clave or fill)`: A drum line’s role, as the default performer plays it (feel v3, decision 075): kick, backbeat, ghost, hat, pedal, euclid, clave or fill (&k role=kick step=16n &bd!4); a name gives none. [→](mix.md)
+- `role=kick (kick, backbeat, ghost, hat, pedal, euclid, ostinato, clave or fill)`: A drum line’s role, as the default performer plays it (feel v3, decision 075): kick, backbeat, ghost, hat, pedal, euclid, ostinato, clave or fill (&k role=kick step=16n &bd!4); a name gives none. [→](mix.md)
 - `gain=n` · `gain=free(n, lo..hi)`: On a voice: its own gain, dough’s, times every gain it is played at (1 by default, a negative one inverts the phase; a kit member’s balance); on a gate written the old way (trigger=): the number in level= — on a voice or a gate (play= with a braid) [→](sound.md)
 - `scope=word`: A scope: stack, split, xy (in time) — spectrum, waterfall (in frequency, or value); its braid lists its channels — on a scope (scope=) [→](display.md)
 - `fold=n` · `fold=free(n, lo..hi)`: A spectrum or waterfall: pitches folded by this stride into as many bins (12: by pitch class, the default) — on a scope (scope=) [→](display.md)
 - `bins=n` · `bins=free(n, lo..hi)`: A spectrum or waterfall without a fold: this many bands, low to high (1 a meter, 3 low-mid-high, 20 an equaliser) — on a scope (scope=) [→](display.md)
 - `channels=word`: A spectrum or waterfall: sum (one, the default) or split (each channel its own) — on a scope (scope=) [→](display.md)
 - `restart=word`: What switching a part on does to its time (on a selector: for all its sections) — restart (from its top, the default), resume (where it stopped), free (its time runs on, only its sound is switched; a performer’s default) — on a section (a name a stepped table of names declares), a performer (a gate or a role a band names) or a selector (over= a table of sections, or a band) [→](time.md)
-- `law=word`: A law that computes the notes (law=fiveto12: the 5 to 12 cycle, a day of music) — on a law (law=) [→](time.md)
 - `anchor=n` · `anchor=free(n, lo..hi)`: A clock (a day meter, loop=1d): the time of day it stands at when play starts (hours.minutes — 11.55); play begins where the clock stands — on a meter (step= a rate) [→](time.md)
 
 ## Sorts: what a cell is in a mix

@@ -15,4 +15,5 @@ export declare function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl
     cells: Cells;
     clocks: ReadonlyMap<string, Clock>;
     mainMeter: string | null;
+    meters: readonly string[];
 };
