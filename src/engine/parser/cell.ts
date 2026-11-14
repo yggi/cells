@@ -152,7 +152,7 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
           span: sc.span,
           lambda: s.text.slice(at0, s.i),
           over: sc.key,
-          braid: { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}) },
+          braid: { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}), ...(sc.even ? { even: sc.even } : {}) },
         });
         b.over = { name, pick: null, shift: 0, span: sc.span };
       } else b.over = s.cellRef('a cell or scale(name, tonic) after over=, like over=&key or over=scale(minor, A)', 'after over=');
@@ -915,7 +915,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       } else if (word === 'scale') {
         // scale(name, tonic): its steps the cell's braid, read through the key it brings
         const sc = parseScale(s, at);
-        generator = { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}) };
+        generator = { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}), ...(sc.even ? { even: sc.even } : {}) };
         scaleKey = sc.key;
       } else generator = parseGenerator(s, word, at);
       continue;

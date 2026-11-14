@@ -49,7 +49,24 @@ export interface StepEvent {
     readonly laps?: Laps;
     /** `[a b|c]`: the choices it is in; it plays when each draws its option (realize.ts `thrown`). */
     readonly chosen?: readonly Chosen[];
+    /**
+     * A note by name (`E`, `F#3`): a pitch on the root grid, whatever its tables. The table it would read as a number,
+     * kept so a move by degrees (`&x^n`, `inverse(&x)`) reads it as the degree it sits on (decision 092, #756).
+     */
+    readonly named?: {
+        readonly table: string;
+        readonly tableShift: number;
+    };
 }
+/**
+ * The degree of `table` a pitch on its root grid sits on, and its accidental (decision 092): the entry that is the
+ * pitch, or the entry below it raised by whole steps of the grid under the table (`F#` over C major is its `3#`); null
+ * where the table has neither (a table that doesn't climb, a pitch between its grid's steps).
+ */
+export declare function degreeOf(result: CompileResult, table: string, tableShift: number, position: number, shifts: Shifts): {
+    value: number;
+    alter: number;
+} | null;
 export declare class ExpansionLimit extends Error {
 }
 /**

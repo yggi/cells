@@ -89,7 +89,7 @@ export const KEYS = {
                     span: sc.span,
                     lambda: s.text.slice(at0, s.i),
                     over: sc.key,
-                    braid: { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}) },
+                    braid: { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}), ...(sc.even ? { even: sc.even } : {}) },
                 });
                 b.over = { name, pick: null, shift: 0, span: sc.span };
             }
@@ -767,7 +767,7 @@ export function parseBody(s, head) {
             }
             else if (word === 'scale') {
                 const sc = parseScale(s, at);
-                generator = { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}) };
+                generator = { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}), ...(sc.even ? { even: sc.even } : {}) };
                 scaleKey = sc.key;
             }
             else
