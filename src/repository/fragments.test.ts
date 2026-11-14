@@ -4,6 +4,7 @@
 // count that saturates, as strongly as the query's pull (#151).
 import { describe, expect, it } from 'vitest';
 import {
+  ANY_DISTANCE,
   CO_USE_KNOWN,
   CO_USE_PULL,
   CO_USE_REACH,
@@ -30,8 +31,6 @@ describe('a malformed entry fails', () => {
     ['a weight below 0', { ...good, association: [{ point: { x: 0 }, weight: -1 }] }],
     ['a weight that is no number', { ...good, association: [{ point: { x: 0 }, weight: NaN }] }],
     ['a weight missing', { ...good, association: [{ point: { x: 0 } }] }],
-    ['an empty point', { ...good, association: [{ point: {}, weight: 1 }] }],
-    ['an empty point after a good one', { ...good, association: [...good.association, { point: {}, weight: 1 }] }],
     ['an axis that is no number', { ...good, association: [{ point: { x: Infinity }, weight: 1 }] }],
     ['no style point', { ...good, association: [] }],
     ['no id', { ...good, id: '' }],
@@ -299,5 +298,28 @@ describe('the pull, a query option', () => {
   it('refuses a pull that isn’t a number ≥ 0', () => {
     for (const pull of [-0.1, -Infinity, Infinity, NaN, '0.1' as unknown as number, null as unknown as number])
       expect(() => ask({ pull }), String(pull)).toThrow(/query: pull is .*, not a number ≥ 0/);
+  });
+});
+
+describe('a fragment of no style (#540)', () => {
+  const at = (id: string, point: Record<string, number>, weight = 1) => ({ id, text: `&${id} 0`, association: [{ point, weight, facet: 'module' }] });
+
+  it('is well formed with no point: an empty point is no style, not a malformed one', () => {
+    expect(fragmentProblems(at('osc', {}))).toEqual([]);
+  });
+
+  it('is found at ANY_DISTANCE from every style, behind every fragment placed nearer and ahead of none placed farther', () => {
+    expect(ANY_DISTANCE).toBe(1);
+    // (far at weight 0.5: from (1, 1, 1, 1) it is 2 away, farther than any style's ANY_DISTANCE)
+    const repo = createRepository([at('none', {}), at('near', { sync: 0.2 }), at('far', { sync: 0, harm: 0, bite: 0, mood: 0 }, 0.5)]);
+    for (const point of [
+      { sync: 0.2, harm: 1, bite: 1, mood: 1 },
+      { sync: 1, harm: 1, bite: 1, mood: 1 },
+    ]) {
+      const found = repo.query(point, 3, {}, { facet: 'module' });
+      expect(found.find((f) => f.fragment.id === 'none')!.distance).toBe(ANY_DISTANCE);
+    }
+    expect(repo.query({ sync: 0.2, harm: 1, bite: 1, mood: 1 }, 3, {}, { facet: 'module' }).map((f) => f.fragment.id)).toEqual(['near', 'none', 'far']);
+    expect(repo.query({ sync: 1, harm: 1, bite: 1, mood: 1 }, 3, {}, { facet: 'module' }).map((f) => f.fragment.id)).toEqual(['near', 'none', 'far']);
   });
 });

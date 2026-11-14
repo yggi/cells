@@ -1,12 +1,7 @@
 ---
 id: lowpass
 association:
-  - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.5
-    weight: 0.25
-    facet: module
+  - facet: module
 source: seed
 ---
 
@@ -30,4 +25,4 @@ The three multiply, as a moving parameter's cells do (sound.md): an envelope sca
 **Its signature** (decision 065): `&lowpass from (&cutoff, &res, &eg) &in`. A cable is a reference argument, the piece's own cell, so a slider on it keeps working through the filter. Patched into nothing, a jack is its knob.
 Its own attributes, before `from`, are the head's: `&vcf delay=.3 delaytime=&bar*3/16 from lowpass …` sends what it filters to an echo.
 
-Associated once, as the facet `module`, at the centre of style space, at a quarter weight; in a patch it is the VCF.
+Associated as the facet `module` with no point: no style's (#540); in a patch it is the VCF.

@@ -74,15 +74,17 @@ function association(node: YamlNode, problems: YamlProblem[]): WeightedPoint[] {
     for (const e of item.entries) if (!POINT_KEYS.includes(e.key)) problems.push({ line: e.line, message: `${where}: ${e.key} is none of point, weight, facet, args` });
     const point: Record<string, number> = {};
     const axes = entry(item, 'point');
-    if (!axes) problems.push({ line: item.line, message: `${where} has no point` });
-    else if (axes.value.kind !== 'map' || !axes.value.entries.length) problems.push({ line: axes.line, message: `${where}: its point is a map of axes to numbers` });
+    // (no point: a fragment of no style, found at ANY_DISTANCE from every style, #540; its weight 1 where it states none)
+    if (!axes) {
+      if (!entry(item, 'facet')) problems.push({ line: item.line, message: `${where} has no point and no facet: a fragment of no style names the facet it is found as` });
+    } else if (axes.value.kind !== 'map' || !axes.value.entries.length) problems.push({ line: axes.line, message: `${where}: its point is a map of axes to numbers` });
     else
       for (const axis of axes.value.entries) {
         if (axis.value.kind === 'scalar' && typeof axis.value.value === 'number') point[axis.key] = axis.value.value;
         else problems.push({ line: axis.line, message: `${where}: ${axis.key} is ${JSON.stringify(yamlValue(axis.value))}, not a number` });
       }
     const weight = entry(item, 'weight');
-    const w = weight?.value.kind === 'scalar' ? weight.value.value : undefined;
+    const w = weight?.value.kind === 'scalar' ? weight.value.value : !weight && !axes ? 1 : undefined;
     if (typeof w !== 'number')
       problems.push({ line: weight?.line ?? item.line, message: `${where}: ${weight ? `its weight is ${JSON.stringify(yamlValue(weight.value))}, not a number` : 'no weight'}` });
     const facet = entry(item, 'facet');
@@ -150,8 +152,8 @@ export function writeFragment({ fragment, meta, prose, layout }: FragmentFile): 
   const clash = ENTRY_KEYS.filter((key) => Object.hasOwn(meta, key));
   if (clash.length) throw new Error(`writeFragment: the metadata has ${clash.join(' and ')}, which the entry writes`);
   const association = fragment.association.map(({ point, weight, facet, args }) => ({
-    point,
-    weight,
+    // (a point of no style is written as its facet alone, its weight where it isn't 1, #540)
+    ...(Object.keys(point).length ? { point, weight } : weight === 1 ? {} : { weight }),
     ...(facet === undefined ? {} : { facet }),
     ...(args === undefined ? {} : { args }),
   }));

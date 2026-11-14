@@ -141,8 +141,18 @@ export declare function pointDistance(a: StylePoint, b: StylePoint, axisWeights?
 /** A fragment's association points a query of this facet measures: those of the facet and those that name none; all, for no facet. */
 export declare const pointsOf: (fragment: Fragment, facet?: string) => readonly WeightedPoint[];
 /**
+ * Where a fragment of no style is found (#540, the owner, 2026-11-13): an association with no point (a module, an
+ * expression: `- facet: module`) is at this distance from every point, the farthest a placed point can be (each axis
+ * spans 0 to 1, and a distance is their root mean square). So it ranks behind every fragment placed nearer and ahead of
+ * none placed farther, at every style alike; its weight divides it as a point's does.
+ */
+export declare const ANY_DISTANCE = 1;
+/** Whether a point is no style: it names no axis. */
+export declare const isAnyStyle: (point: StylePoint) => boolean;
+/**
  * How far a fragment is from a point: the nearest of its association's points (of the facet, where one is named), each
- * distance divided by that point's weight. Infinite when it has no point of that facet.
+ * distance divided by that point's weight; a point of no style is `ANY_DISTANCE` away. Infinite when it has no point of
+ * that facet.
  */
 export declare function fragmentDistance(fragment: Fragment, point: StylePoint, axisWeights?: StylePoint, facet?: string): number;
 export declare const byId: (a: string, b: string) => number;

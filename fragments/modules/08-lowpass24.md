@@ -1,12 +1,7 @@
 ---
 id: lowpass24
 association:
-  - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.5
-    weight: 0.25
-    facet: module
+  - facet: module
 source: seed
 ---
 
@@ -27,4 +22,4 @@ A 24 dB low-pass (decision 074): two of the `lowpass` module's stages in series,
 
 **Its signature** (decision 065): `&lowpass24 from (&cutoff, &res, &eg) &in`, as the `lowpass` module's.
 
-Associated once, as the facet `module`, at the centre of style space, at a quarter weight.
+Associated as the facet `module` with no point: no style's (#540).
