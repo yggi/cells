@@ -1,12 +1,7 @@
 ---
 id: bandpass
 association:
-  - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.5
-    weight: 0.25
-    facet: module
+  - facet: module
 source: seed
 ---
 
@@ -28,4 +23,4 @@ A band-pass filter (decision 074): it lets a band around its centre through and 
 
 **Its signature** (decision 065): `&bandpass from (&cutoff, &res, &eg) &in`, as the `lowpass` module's.
 
-Associated once, as the facet `module`, at the centre of style space, at a quarter weight.
+Associated as the facet `module` with no point: no style's (#540).

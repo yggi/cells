@@ -10,10 +10,7 @@ const isFiniteNumber = (x) => typeof x === 'number' && Number.isFinite(x);
 function pointProblems(point, where) {
     if (typeof point !== 'object' || point === null)
         return [`${where}: not a style point`];
-    const axes = Object.entries(point);
-    if (!axes.length)
-        return [`${where}: an empty point (no axes)`];
-    return axes.flatMap(([axis, value]) => (isFiniteNumber(value) ? [] : [`${where}: ${axis} is ${String(value)}, not a number`]));
+    return Object.entries(point).flatMap(([axis, value]) => (isFiniteNumber(value) ? [] : [`${where}: ${axis} is ${String(value)}, not a number`]));
 }
 export function fragmentProblems(entry) {
     const problems = [];
@@ -104,8 +101,10 @@ export function pointDistance(a, b, axisWeights = {}) {
     return weights > 0 ? Math.sqrt(sum / weights) : Infinity;
 }
 export const pointsOf = (fragment, facet) => facet === undefined ? fragment.association : fragment.association.filter((wp) => wp.facet === undefined || wp.facet === facet);
+export const ANY_DISTANCE = 1;
+export const isAnyStyle = (point) => Object.keys(point).length === 0;
 export function fragmentDistance(fragment, point, axisWeights = {}, facet) {
-    return Math.min(...pointsOf(fragment, facet).map((wp) => pointDistance(wp.point, point, axisWeights) / wp.weight));
+    return Math.min(...pointsOf(fragment, facet).map((wp) => (isAnyStyle(wp.point) ? ANY_DISTANCE : pointDistance(wp.point, point, axisWeights)) / wp.weight));
 }
 const WAS = new Map([...RENAMED_IDS].reverse().map(([old, word]) => [word, old]));
 const tieKey = (id) => WAS.get(id) ?? id;

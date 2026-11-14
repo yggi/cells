@@ -29,7 +29,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { byId, createRepository, pointDistance, type Fragment, type StylePoint } from '../src/repository/fragments';
+import { ANY_DISTANCE, byId, createRepository, isAnyStyle, pointDistance, type Fragment, type StylePoint } from '../src/repository/fragments';
 import { LIBRARY } from '../src/repository/library';
 import { STYLES, type Style } from '../src/repository/styles';
 
@@ -62,6 +62,8 @@ export const HINGE = 0.25;
 
 /** How far a fragment's point is from a style's, by the mode, before its weight. Infinite when they share no axis (`today`, `window`). */
 export function distanceOf(at: Placed, style: StylePoint, mode: DistanceMode): number {
+  // (a point of no style is ANY_DISTANCE from every style, in every mode, #540)
+  if (isAnyStyle(at.point)) return ANY_DISTANCE;
   if (mode === 'today') return pointDistance(at.point, style);
   let sum = 0;
   let axes = 0;

@@ -1,12 +1,7 @@
 ---
 id: amp
 association:
-  - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.5
-    weight: 0.25
-    facet: module
+  - facet: module
 source: seed
 ---
 
@@ -27,4 +22,4 @@ It is what an instrument with an envelope always was, `[&(map=adsr …) * &saw]`
 
 **Its signature** (decision 065): `&amp from (&eg, &level) &in`.
 
-Associated once, as the facet `module`, at the centre of style space, at a quarter weight; in a patch it is the VCA.
+Associated as the facet `module` with no point: no style's (#540); in a patch it is the VCA.

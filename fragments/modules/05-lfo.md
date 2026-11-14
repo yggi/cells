@@ -1,12 +1,7 @@
 ---
 id: lfo
 association:
-  - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.5
-    weight: 0.25
-    facet: module
+  - facet: module
 source: seed
 ---
 
@@ -22,4 +17,4 @@ An LFO is a braid turned slowly, as a voice is one turned fast (sound.md): patch
 
 **Its signature** (decision 065): `&lfo from`, the head alone. `&sweep from lfo` takes a copy of it, named `&sweep`.
 
-Associated once, as the facet `module`, at the centre of style space, at a quarter weight; in a patch it is the LFO.
+Associated as the facet `module` with no point: no style's (#540); in a patch it is the LFO.

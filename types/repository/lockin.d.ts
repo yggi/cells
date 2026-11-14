@@ -1,4 +1,4 @@
-import { type LearnedLayer, type StylePoint } from './fragments';
+import { type Fragment, type LearnedLayer, type StylePoint } from './fragments';
 /** The presets a draw's runs start from, in order: run `i` of a draw starts at the `i`th. */
 export declare const LOCK_IN_PRESETS: Readonly<Record<string, StylePoint>>;
 /** Runs in a draw: one from each preset. */
@@ -46,6 +46,12 @@ export interface Draws {
     readonly learned: readonly (readonly LearnedRun[][])[];
 }
 export declare function lockInDraws(from: number, to: number, learnings: readonly Learning[]): Draws;
+/**
+ * One draw's runs, learning as given, over another library than the seed's: a fixture, such as one with a known gap, where
+ * the walk must file fragments of its own whatever the seed library holds (#706). No baselines: a facet the library lacks
+ * has no first to read.
+ */
+export declare function lockInRunsOver(library: readonly Fragment[], draw: number, learn: Learning): LearnedRun[];
 /** The share of sections whose fragment is among the 3 most used of the run. */
 export declare function topThree(ids: readonly string[]): number;
 /** What learning added, on a facet, to the share among each run's 3 most used: in points of the share. */

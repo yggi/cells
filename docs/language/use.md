@@ -106,10 +106,10 @@ A piece file's frontmatter records what each `from` line resolved to, so a saved
 ```yaml
 uses:
   - id: gm_kit
-    hash: e1:f1ce77754dab5d20
+    hash: e2:f1ce77754dab5d20
 ```
 
-- The hash is `e1:` and a hash of the fragment's text up to layout (decision 050's E1, its rung written first, so a lockfile still checks once E4, what a hash reads, exists).
+- The hash is `e2:` and a hash of the fragment as a piece receives it (decision 089 §8): its lines' code, a declaration's association left out, a template's private names numbered, its interface (a collection's cells, a template's parameters and heads, the names it reads, the fragments it takes) by name. Its rung is written first, so a lockfile written before it (`e1:`, decision 050's E1: the text up to layout) still checks as `e1:`, and a later rung (E3, E4) as its own.
 - `lockfileOf(file)` reads it, for the compile's `locked`; a recorded hash the library no longer gives plays the current version, with a warning naming the id.
 - `withLockfile(file, result.takes)` records a compile's hashes; `writePiece` drops an entry no `from` line names.
 - A document's part is locked by its key and its head, `kinderlied/twinkle`, its hash its part's: two parts of one document are two entries, and the piece's own lines move neither.
