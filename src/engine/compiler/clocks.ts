@@ -206,6 +206,12 @@ export function clockCells(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
       clocks.set(name, { cell: name, perSecond: clocks.get(key)!.perSecond * ratio, positional: true });
       return { clock: name, rate: 1 };
     }
+    // (a meter(…) tapped that others tap, &waltz meter("3/4") step=beat/2: a meter derived from the one it taps, a step
+    // of the tap a beat of it, as its bpm would count them (#778 rung 1); read by pulse, beat or note value as any meter)
+    if (c?.meter && !c.scan && !c.bend && drivers.has(name)) {
+      clocks.set(name, { cell: name, perSecond: clocks.get(key)!.perSecond * ratio * c.beat, positional: isPositional(c) });
+      return { clock: name, rate: 1 };
+    }
     // (a belt on a tap: the cell follows the tap through a spring, as it follows a meter's steps)
     if (c && typeof decls.get(name)?.params.belt === 'number') {
       clocks.set(name, { cell: name, perSecond: clocks.get(key)!.perSecond * ratio, positional: false, belt: { driver: key, rate: ratio } });

@@ -164,6 +164,10 @@ export function clockCells(ctx, decls, given) {
             clocks.set(name, { cell: name, perSecond: clocks.get(key).perSecond * ratio, positional: true });
             return { clock: name, rate: 1 };
         }
+        if (c?.meter && !c.scan && !c.bend && drivers.has(name)) {
+            clocks.set(name, { cell: name, perSecond: clocks.get(key).perSecond * ratio * c.beat, positional: isPositional(c) });
+            return { clock: name, rate: 1 };
+        }
         if (c && typeof decls.get(name)?.params.belt === 'number') {
             clocks.set(name, { cell: name, perSecond: clocks.get(key).perSecond * ratio, positional: false, belt: { driver: key, rate: ratio } });
             return { clock: name, rate: 1 };
