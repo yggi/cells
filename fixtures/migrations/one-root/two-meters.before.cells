@@ -1,0 +1,7 @@
+# a second meter with a tempo of its own: the piece has one root, and the second is derived from it (decision 093)
+&march meter("4/4") step=120bpm
+&waltz meter("3/4") step=60bpm
+&low step=4n 0 7 7 5
+&high step=&waltz:8n 12 ~ 14 ~ 16 ~
+&lead s=tri loop=C4
+&out map=sample [&low * &lead, &high * &lead]

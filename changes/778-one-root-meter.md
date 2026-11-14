@@ -1,0 +1,3 @@
+### Changed
+
+- A piece has one root meter, the meter with a tempo of its own (decision 093, #778): a second one is an error that writes the tap it is derived by (`&waltz meter("3/4") step=60bpm` under a 4/4 at 120 → `step=pulse/2`), and Migrate writes it (`one root`), where it plays the same. **A derived meter follows the root's tempo**, where a second meter kept its own: a host with two tempo sliders has one tempo and a ratio. The clocks of the wall (`loop=1d`) are not the piece's tempo and are as they were; decision 091's error on a bare tap is theirs alone now. `CompileResult.mainMeter` is the root, and no order of lines decides it. `breve` writes its second meter as a tap (`step=pulse*4`): its events don't move, its live view does.

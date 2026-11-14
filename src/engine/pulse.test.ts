@@ -222,7 +222,8 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
 
   it('a time parameter reads a tap as a length, as the same length in seconds does (#87)', () => {
     const play = (meter: string, time: string) => {
-      const r = compiled(`${meter}\n&x step=pulse 0 2\n&v s=saw delaytime=${time} delayfeedback=.4\n&out map=sample [&x * &v]`);
+      // (a piece of two meters names the one each tap reads, decision 091)
+      const r = compiled(`${meter}\n&x step=${meter.includes('&bar2') ? '&bar:' : ''}pulse 0 2\n&v s=saw delaytime=${time} delayfeedback=.4\n&out map=sample [&x * &v]`);
       return { time: r.cells.get('v')!.params.delaytime as number, events: eventsBetween(plan(r, codeShifts(r)), 0, 4).map((e) => ({ ...e })) };
     };
     const four = '&bar meter("4/4") step=120bpm';
@@ -243,7 +244,8 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     // (7/8 as 3+2+2 at 90 bpm: a bar of 2 s, three beats: a parameter is one number, so `beat` is their mean, 2/3 s)
     expect(play('&bar meter("7/8") step=90bpm', 'beat').time).toBeCloseTo(2 / 3, 6);
     // (a named meter, at its own tempo)
-    expect(play(`${four}\n&bar2 meter("3/4") step=60bpm`, '&bar2:4n').time).toBeCloseTo(1, 6);
+    // (a second meter is derived from the root, decision 093: half its pulse, a beat a second)
+    expect(play(`${four}\n&bar2 meter("3/4") step=pulse/2`, '&bar2:4n').time).toBeCloseTo(1, 6);
     // (a swing moves the steps and not their mean)
     expect(play('&bar meter("4/4") step=120bpm swing=8n:2/3'.replace('2/3', '.67'), '8n').time).toBeCloseTo(0.25, 6);
   });
@@ -295,7 +297,7 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
   });
 
   it('a tap reads the main meter, or the one it names; chains step it as they step any clock', () => {
-    const two = `&bar meter("4/4") step=120bpm\n&bar2 meter("3/4") step=120bpm\n&x step=&bar2:pulse 0${VOICE}`;
+    const two = `&bar meter("4/4") step=120bpm\n&bar2 meter("3/4") step=pulse\n&x step=&bar2:pulse 0${VOICE}`;
     const r = compiled(two);
     expect(r.mainMeter).toBe('bar');
     expect(r.cells.get('x')!.step).toMatchObject({ driver: 'bar2', tap: 'pulse' });

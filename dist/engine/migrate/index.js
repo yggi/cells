@@ -15,6 +15,8 @@ import { notes } from "./notes.js";
 import { argumentsByName } from "./arguments.js";
 import { parts } from "./parts.js";
 import { axes } from "./axes.js";
+import { mainMeters } from "./mainmeter.js";
+import { oneRoot } from "./oneroot.js";
 export const migrations = (options = {}) => (source, result) => [
     ...gates(source, result, options),
     ...taps(source, result, options),
@@ -32,6 +34,8 @@ export const migrations = (options = {}) => (source, result) => [
     ...axes(source),
     ...parts(source, result),
     ...movedIds(source, options.resolve),
+    ...oneRoot(source, result),
+    ...mainMeters(source, result),
 ];
 export const migrate = (source, options = {}) => {
     const old = { ...options, old: true };
