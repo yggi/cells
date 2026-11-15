@@ -130,7 +130,7 @@ describe('the performers', () => {
     ]);
   });
 
-  it('leave the part to the score, their one hole: its main parameter; a level is an optional one, its default .8 (decision 065)', () => {
+  it('leave the part to the score, their one hole: its main parameter; a level is an optional one, its default .8 (decision 065), a drive its factor, its default 1 (decision 096)', () => {
     const holes = PERFORMER_FRAGMENTS.map((f) => holesOf(f.text, (t) => compileSource(t, undefined, { resolve: resolveSeed }), resolveSeed).uses);
     expect(holes).toEqual([['&drumlines'], ['&bassline'], ['&padline'], ['&stabline'], ['&leadline']]);
     // (the signature, its declaration's attributes, decision 089, aside)
@@ -140,10 +140,10 @@ describe('the performers', () => {
         return s;
       }),
     ).toEqual([
-      { kind: 'signature', names: ['&drums', '&drumsOut'], optional: ['&kit'], main: '&drumlines' },
-      { kind: 'signature', names: ['&bass', '&bassOut'], optional: ['&bassLevel', '&bassV', '&style'], main: '&bassline' },
+      { kind: 'signature', names: ['&drums', '&drumsOut'], optional: ['&kit', '&drumsDrive'], main: '&drumlines' },
+      { kind: 'signature', names: ['&bass', '&bassOut'], optional: ['&bassLevel', '&bassV', '&style', '&bassDrive'], main: '&bassline' },
       { kind: 'signature', names: ['&pad', '&padOut'], optional: ['&padLevel', '&padV', '&style'], main: '&padline' },
-      { kind: 'signature', names: ['&stab', '&stabOut'], optional: ['&stabLevel', '&keysV', '&style'], main: '&stabline' },
+      { kind: 'signature', names: ['&stab', '&stabOut'], optional: ['&stabLevel', '&keysV', '&style', '&stabDrive'], main: '&stabline' },
       { kind: 'signature', names: ['&lead', '&leadOut'], optional: ['&leadLevel', '&leadV', '&style'], main: '&leadline' },
     ]);
   });

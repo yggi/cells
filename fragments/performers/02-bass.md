@@ -4,11 +4,12 @@ source: seed
 ---
 
 ```cells
-&bass, &bassOut from (&bassLevel, &bassV, &style) &bassline style=(&(map=style sync=.3 harm=.45 bite=.55) | &(map=style sync=.12 harm=0 bite=1) | &(map=style sync=.35 harm=.55 bite=.65) | &(map=style sync=.05 harm=.3 bite=0) | &(map=style sync=.5 harm=.75 bite=.35) | &(map=style sync=1 harm=.12 bite=.85) | &(map=style sync=.75 harm=.85 bite=.45) | &(map=style sync=.35 harm=1 bite=.3))
+&bass, &bassOut from (&bassLevel, &bassV, &style, &bassDrive) &bassline style=(&(map=style sync=.3 harm=.45 bite=.55) | &(map=style sync=.12 harm=0 bite=1) | &(map=style sync=.35 harm=.55 bite=.65) | &(map=style sync=.05 harm=.3 bite=0) | &(map=style sync=.5 harm=.75 bite=.35) | &(map=style sync=1 harm=.12 bite=.85) | &(map=style sync=.75 harm=.85 bite=.45) | &(map=style sync=.35 harm=1 bite=.3))
 &bassV from bass(style=&style)
-&bassOut play=&bassline^$-12 level=&bassLevel &bassV
+&bassOut play=&bassline^$-12 level=&bassLevel*&bassDrive*&bassDrive &bassV
 &bass map=role part=bass &bassOut
 &bassLevel map=amp .8
+&bassDrive map=amp 1
 &style map=style sync=.5 harm=.5 bite=.5 mood=.5
 ```
 
@@ -18,5 +19,7 @@ Its two inputs are the score's (decision 065: the line its main parameter, the l
 
 Associated as the facet `performer` at each of Jambot's eight presets' points (`styles`), at weight 1: every preset's section text plays this part the same way (yggi/jambot `packages/score/src/section-text.ts` @ 24a528b: one voice, one register and one channel for all eight), so the eight share this one performer, and what a preset sounds like is its parts, not its players.
 
-**Its signature** (decision 065): `&bass, &bassOut from (&bassLevel, &bassV, &style) &bassline`. `&bass from bass_performer &line` takes a copy of it, `&bassline` its main argument; `&bassLevel` an optional parameter, its line its default (`"bass_performer"(bassLevel=…)`).
+**Its signature** (decision 065): `&bass, &bassOut from (&bassLevel, &bassV, &style, &bassDrive) &bassline`. `&bass from bass_performer &line` takes a copy of it, `&bassline` its main argument; `&bassLevel` an optional parameter, its line its default (`"bass_performer"(bassLevel=…)`).
 Its instrument and the style it plays at are optional parameters too (decision 075, #560): `&bassV` its default `&bassV from bass(style=&style)`, the `bass` instrument, and `&style` the centre of style space. A piece passes its own (`bass_performer(bassV=&bassV, style=&style)`), where it took them by their names before; Migrate writes it.
+
+**Its drive** (decision 096): `&bassDrive`, an optional parameter, its default 1, a factor of its levels on the velocity's scale: the gate's level reads it twice (`level=…*&bassDrive*&bassDrive`), since MIDI out sends a level's square root as its velocity (`velocityOf`). The band passes it, a sum of the score's `&intensity` (`fragments/bands/01-band.md`), so a section's intensity scales its levels as Jambot's dynamics scale it.

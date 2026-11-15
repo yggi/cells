@@ -30,6 +30,8 @@ function itemOf(e: Expr, sign: 1 | -1): { term: SumTerm } | { constant: number }
   if (e.k === 'num') return { constant: sign * e.value };
   if (e.k === 'ref') return e.ref.pick || e.level !== undefined ? null : { term: { cell: e.ref.name, weight: sign } };
   if (e.k === 'prod') {
+    // (numbers alone, a cell that is one number times its weight among them: a constant, decision 096)
+    if (e.factors.every((f) => f.k === 'num')) return { constant: e.factors.reduce<number>((w, f) => (f.k === 'num' ? w * f.value : w), sign) };
     const refs = e.factors.filter((f) => f.k === 'ref');
     if (refs.length !== 1 || refs[0]!.k !== 'ref' || refs[0]!.ref.pick || !e.factors.every((f) => f.k === 'ref' || f.k === 'num')) return null;
     const weight = e.factors.reduce<number>((w, f) => (f.k === 'num' ? w * f.value : w), sign);
@@ -37,6 +39,9 @@ function itemOf(e: Expr, sign: 1 | -1): { term: SumTerm } | { constant: number }
   }
   return null;
 }
+
+/** Does an expression name a cell (a bare reference, alone or in a sum or a product)? */
+const names = (e: Expr): boolean => (e.k === 'ref' ? true : e.k === 'sum' ? e.items.some((it) => names(it.e)) : e.k === 'prod' ? e.factors.some(names) : false);
 
 /** Does an atom hold numbers alone: a note, a rest, a choice, or a subsequence of them (no cell spliced, no sound)? */
 const numeric = (atom: Token['atom']): boolean =>
@@ -65,7 +70,8 @@ export function valueSumOf(name: string, decls: ReadonlyMap<string, CellDecl>, s
   const exprs = chordOf(decls.get(name));
   if (!exprs || exprs.length !== 1 || seen.has(name)) return null;
   // (a weight or a constant named is the number it names, decision 088)
-  const e = inlineNumbers(exprs[0]!, decls);
+  const written = exprs[0]!;
+  const e = inlineNumbers(written, decls);
   const items = e.k === 'sum' ? e.items : [{ e, sign: 1 as const }];
   const terms: SumTerm[] = [];
   let constant = 0;
@@ -75,7 +81,9 @@ export function valueSumOf(name: string, decls: ReadonlyMap<string, CellDecl>, s
     if ('term' in x) terms.push(x.term);
     else constant += x.constant;
   }
-  if (!terms.length || (terms.length === 1 && terms[0]!.weight === 1 && constant === 0)) return null;
+  // (no cell left: a sum of numbers alone is a value where it names one, `[&song + -.45]` with `&song .55`, decision 096)
+  if (!terms.length) return names(written) ? { terms, constant } : null;
+  if (terms.length === 1 && terms[0]!.weight === 1 && constant === 0) return null;
   const inner = new Set([...seen, name]);
   return terms.every((t) => isValueLine(t.cell, decls, inner)) ? { terms, constant } : null;
 }

@@ -104,7 +104,8 @@ describe('outlineOf', () => {
   it('keeps a splice of voices out of both trees: the drum line plays on the kit', () => {
     expect(part('6')).toMatchObject({ reads: ['1'], on: ['8/3'] });
     // (without it, the drum line and its performer would read each other, and one would be cut from the other)
-    expect(part('8/3').reads).toEqual(['6']);
+    // (and the band's drive, &drumsDrive, the band's own line: decision 096)
+    expect(part('8/3').reads).toEqual(['6', '8']);
   });
 
   it("names a fragment's facets by the frontend's catalogue, and a written part none", () => {

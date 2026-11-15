@@ -56,7 +56,7 @@ describe('what a cell is: one table of kinds (#782)', () => {
         "midi card": 3,
         "mix": 27,
         "note": 196,
-        "number": 11,
+        "number": 12,
         "phrase": 2,
         "ramp": 51,
         "resonator": 15,
@@ -66,12 +66,12 @@ describe('what a cell is: one table of kinds (#782)', () => {
         "selector": 12,
         "steps": 213,
         "style": 3,
-        "sum": 2,
+        "sum": 5,
         "table": 51,
         "tape": 6,
         "tempo": 74,
         "voice": 358,
-        "volume": 38,
+        "volume": 46,
         "wave": 16,
       }
     `);
