@@ -385,13 +385,13 @@ function renamesOf(from, lines, id, say) {
     return { names, lacking };
 }
 const sharedLines = (lines) => lines.map((l) => (l.shared ? l : { ...l, shared: true }));
-function give(entry, path, text, resolve, say, taken, old, level) {
+function give(entry, path, text, resolve, plugins, say, taken, old, level) {
     const { id, from } = entry;
     const signatures = oneSignatureEach(linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : [])));
     if (!signatures.length) {
         if (from.head.length || from.args || from.main !== null)
             say(`${quoted(id)} has no signature, so it takes no arguments: a collection gives the cells it defines by name (${entry.names ? entry.names.join(', ') : '*'} from ${from.id})`);
-        const lines = sharedLines(fragmentLines(path, text, resolve, say));
+        const lines = sharedLines(fragmentLines(path, text, resolve, plugins, say));
         const renames = renamesOf(from, lines, id, say);
         if (!renames)
             return { taken: { id, names: namesOf(entry), lines, resolved: true }, copy: [] };
@@ -402,10 +402,10 @@ function give(entry, path, text, resolve, say, taken, old, level) {
     }
     if (signatures.length > 1)
         say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
-    return instantiate(from, id, signatures[0], path, text, resolve, say, taken, old, level);
+    return instantiate(from, id, signatures[0], path, text, resolve, plugins, say, taken, old, level);
 }
-function instantiate(from, id, signature, path, text, resolve, say, taken, old, level) {
-    const full = fragmentLines(path, text, resolve, say);
+function instantiate(from, id, signature, path, text, resolve, plugins, say, taken, old, level) {
+    const full = fragmentLines(path, text, resolve, plugins, say);
     const own = full.filter((l) => !l.shared && l.name);
     const shared = full.filter((l) => l.shared && l.name);
     const definesOwn = new Set(own.map((l) => l.name));
@@ -517,6 +517,14 @@ function instantiate(from, id, signature, path, text, resolve, say, taken, old, 
                     queue.push(r);
         }
     }
+    const argsOf = () => Object.fromEntries([...optional, ...(main ? [main] : [])].flatMap((o) => {
+        const v = values.get(o) ??
+            byName
+                .get(o)
+                ?.code.replace(new RegExp(`^&${o}\\s*`), '')
+                .trim();
+        return v !== undefined ? [[o, v]] : [];
+    }));
     const copy = [];
     for (const l of own) {
         const p = l.name;
@@ -524,7 +532,12 @@ function instantiate(from, id, signature, path, text, resolve, say, taken, old, 
             continue;
         let code = renamed(l.code, names);
         if (/(^|\s)fill\(\s*\)/.test(code)) {
-            const answer = BY_FRAGMENT.get(id)?.fill(p, 0, {}) ?? '';
+            const plugin = plugins.get(id);
+            if (plugin && plugin.fills[p] && plugin.fills[p].lap === undefined)
+                code = code.replace(/(^|\s)fill\(\s*\)/, `$1${plugin.fill(p, 0, argsOf())}`);
+        }
+        if (/(^|\s)fill\(\s*\)/.test(code)) {
+            const answer = plugins.get(id)?.fill(p, 0, {}) ?? '';
             code = code.replace(/(^|\s)fill\(\s*\)/, `$1fill(${id}, ${p}${main && names.has(main) ? `, &${names.get(main)}` : ''})${answer ? ` ${answer}` : ''}`);
         }
         if (values.has(p))
@@ -545,7 +558,7 @@ function instantiate(from, id, signature, path, text, resolve, say, taken, old, 
     const given = { id, names: new Set(sharing.map((l) => l.name)), lines: sharing, resolved: true };
     return { taken: given, copy, args: Object.fromEntries(values) };
 }
-function fragmentLines(path, text, resolve, say) {
+function fragmentLines(path, text, resolve, plugins, say) {
     const here = path.at(-1);
     const own = linesOf(text).map((l) => ({ ...l, origin: [{ id: here, line: l.line }] }));
     const where = ` (in ${pathOf(path)})`;
@@ -573,7 +586,7 @@ function fragmentLines(path, text, resolve, say) {
             if (whole === null)
                 sayHere(`No fragment ${quoted(id)} to use`);
             else if (theirs !== null) {
-                const g = give(entry, next, theirs, resolve, say, taken);
+                const g = give(entry, next, theirs, resolve, plugins, say, taken);
                 const step = { id: here, line: l.line };
                 copies.push(...via(g.copy, step));
                 return [{ ...g.taken, lines: via(g.taken.lines, step) }];
@@ -589,7 +602,8 @@ function forwardsTo(text) {
     const only = lines.length === 1 ? lines[0].from : null;
     return only?.kind === 'use' && !only.head.length && !only.args && only.main === null ? only.id : null;
 }
-export function expansion(text, { resolve, locked = [], old = false } = {}) {
+export function expansion(text, { resolve, locked = [], old = false, plugins: theirs = [] } = {}) {
+    const plugins = theirs.length ? new Map([...BY_FRAGMENT, ...theirs.map((f) => [f.fragment, f])]) : BY_FRAGMENT;
     const own = linesOf(text);
     const uses = own.flatMap((l) => {
         const entry = entryOf(l);
@@ -646,7 +660,7 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
         const binding = old
             ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message) => diagnostics.push({ severity: 'warning', message, span }) }
             : undefined;
-        const g = give(u, [id], theirs, resolve, say, taken, binding, { ...level, warn: (message) => diagnostics.push({ severity: 'warning', message, span }) });
+        const g = give(u, [id], theirs, resolve, plugins, say, taken, binding, { ...level, warn: (message) => diagnostics.push({ severity: 'warning', message, span }) });
         const step = { id: null, line: u.line.line };
         copies.push(via(g.copy, step));
         args.push(g.args);
@@ -697,10 +711,10 @@ export function expansion(text, { resolve, locked = [], old = false } = {}) {
         origins: new Map(added.flatMap((l) => (l.name && l.origin ? [[l.name, l.origin]] : []))),
     };
 }
-export function expand(text, resolve, locked) {
+export function expand(text, resolve, locked, plugins) {
     if (!hasFrom(text))
         return text;
-    const x = expansion(text, { resolve, ...(locked ? { locked } : {}) });
+    const x = expansion(text, { resolve, ...(locked ? { locked } : {}), ...(plugins ? { plugins } : {}) });
     const kept = new Set(x.takes.filter((u) => u.hash === null).map((u) => u.span.line));
     const own = text
         .split('\n')
