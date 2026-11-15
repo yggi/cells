@@ -38,6 +38,12 @@ export type FromForm = {
     readonly optional: readonly string[];
     /** The main parameter (`&tempo`), or null where there is none. */
     readonly main: string | null;
+    /** Its declaration's attributes after it, as written (`style=(&funk | &techno)`, `facet=mode`, `mode=dorian`; decision 089): the repository reads them, the compile none. */
+    readonly attributes?: readonly string[];
+} | {
+    /** A collection's declaration, `* from` with no id (decision 089): its attributes, as written; it compiles to nothing. */
+    readonly kind: 'declaration';
+    readonly attributes: readonly string[];
 };
 /** A line's top-level tokens: split at spaces outside quotes and brackets, each with where it starts. */
 export declare function topTokens(text: string): {

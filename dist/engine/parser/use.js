@@ -56,6 +56,15 @@ const NAME_ALONE = new RegExp(`^${NAME}$`);
 const WORD_ID = /^[A-Za-z_][A-Za-z0-9_]*/;
 const QUOTED_ID = /^"[^"]*\S[^"]*"/;
 export const isAttribute = (token) => /^[A-Za-z_][A-Za-z0-9_]*=/.test(token);
+function declarationOnly(tokens) {
+    for (let i = 0; i < tokens.length; i++) {
+        if (!isAttribute(tokens[i]))
+            return false;
+        if (tokens[i].startsWith('style=') && tokens[i + 1] === '*' && /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)$/.test(tokens[i + 2] ?? ''))
+            i += 2;
+    }
+    return true;
+}
 export const HEAD_FLAGS = new Set(['off']);
 export function readFrom(code) {
     const left = LEFT.exec(code);
@@ -79,17 +88,24 @@ export function readFrom(code) {
     if (head.some((t) => !isAttribute(t) && !HEAD_FLAGS.has(t)) || (all && head.length))
         return null;
     const rest = code.slice(tokens[from].at + 4).trim();
-    if (rest === '' || rest.startsWith('(') || rest.startsWith('&')) {
+    const restTokens = topTokens(rest).map((t) => t.text);
+    if (all && !head.length && declarationOnly(restTokens))
+        return { kind: 'declaration', attributes: restTokens };
+    if (rest === '' || rest.startsWith('(') || rest.startsWith('&') || declarationOnly(restTokens)) {
         if (!names || head.length || takes.some((t, i) => t !== names[i]))
             return null;
-        const after = topTokens(rest);
-        const optional = after[0]?.text.startsWith('(') ? listIn(after[0].text) : [];
+        const after = restTokens;
+        const optional = after[0]?.startsWith('(') ? listIn(after[0]) : [];
         if (optional === null || optional.some((p) => !NAME_ALONE.test(p)))
             return null;
-        const mains = after.slice(after[0]?.text.startsWith('(') ? 1 : 0);
-        if (mains.length > 1 || (mains[0] && !NAME_ALONE.test(mains[0].text)))
+        const tail = after.slice(after[0]?.startsWith('(') ? 1 : 0);
+        const main = tail[0] !== undefined && !isAttribute(tail[0]) ? tail[0] : null;
+        if (main !== null && !NAME_ALONE.test(main))
             return null;
-        return { kind: 'signature', names, optional: [...new Set(optional)], main: mains[0]?.text ?? null };
+        const attributes = tail.slice(main === null ? 0 : 1);
+        if (!declarationOnly(attributes))
+            return null;
+        return { kind: 'signature', names, optional: [...new Set(optional)], main, ...(attributes.length ? { attributes } : {}) };
     }
     const idText = (QUOTED_ID.exec(rest) ?? WORD_ID.exec(rest))?.[0];
     if (!idText)

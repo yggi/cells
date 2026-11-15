@@ -37,7 +37,7 @@ export const migrations = (options = {}) => (source, result) => [
     ...movedIds(source, options.resolve),
     ...oneRoot(source, result),
     ...mainMeters(source, result),
-    ...laws(source, options.resolve),
+    ...laws(source),
 ];
 export const migrate = (source, options = {}) => {
     const old = { ...options, old: true };

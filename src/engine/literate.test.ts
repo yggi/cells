@@ -9,7 +9,8 @@ import { parse } from './parser';
 import { readPiece, writePiece } from './piecefile';
 import { EXAMPLES } from './examples';
 import { SEED_FILES } from '../repository/seed.generated';
-import { readFragment, writeFragment } from '../repository/files';
+import { readFragment, styleNamesIn, writeFragment } from '../repository/files';
+import { FOLDER_FACETS } from '../repository/declarations';
 
 /** Three blocks, prose between them (a heading, a paragraph, a fence of another language), a typo in the second. */
 const LITERATE =
@@ -173,11 +174,14 @@ describe('every example and fragment reads as before', () => {
   });
 
   it('a fragment file reads and writes as before', () => {
+    // (its association read from its text, decision 089: its folder's facet and the seed's styles)
+    const styles = styleNamesIn(SEED_FILES);
     for (const [path, markdown] of Object.entries(SEED_FILES)) {
-      const file = readFragment(markdown);
+      const options = { facet: FOLDER_FACETS[path.split('/')[0]!]!, styles };
+      const file = readFragment(markdown, options);
       if ('problems' in file) throw new Error(path);
       expect(file.fragment.text, path).toBe(read(markdown).text);
-      expect(writeFragment(file), path).toBe(markdown);
+      expect(writeFragment(file, options), path).toBe(markdown);
     }
   });
 });

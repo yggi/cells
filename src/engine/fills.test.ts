@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { BUILT_IN, filledAt, lawOf, marksOf, unitOf } from './fills';
+import { BUILT_IN, lawAt, lawIn, lawOf, marksOf, unitOf } from './fills';
 import * as deprecated from './holes';
 import { BAR, BLOCK_NAMES, DAY_MODES, KEY, MODE_NAMES, notesBetween, SECONDS_PER_STEP, START } from './fiveto12';
 import { compileSource } from './compile';
+import { expand } from './use';
 import { resolveSeed } from '../repository/library';
 import { eventsBetween, plan } from './realize';
 import { codeShifts } from './program';
@@ -16,33 +17,43 @@ describe('a built-in plugin-fragment answers the contract (decision 085 §3, #69
   it('the same fill, lap and arguments answer the same text', () => {
     for (const name of Object.keys(law.fills)) for (const lap of LAPS) expect(law.fill(name, lap, {})).toBe(law.fill(name, lap, {}));
   });
-  it('every lap it fills is cells that compile with no diagnostics', () => {
+  // (a piece's copy of the fragment file, #792: its fills each carrying its first lap, `fill(five_to_twelve, notes, &day) …`)
+  const copy = expand('&day scan(1!24) loop=1d\n&cycle from five_to_twelve &day\n&glass s=tri loop=C4\n&out map=sample [&cycle * &glass * .3]', resolveSeed)
+    .split('\n')
+    .filter((l) => l.startsWith('&cycle'));
+  it("every lap it fills, written in place of the copy's first, is cells that compile with no diagnostics", () => {
     for (const lap of LAPS) {
-      const r = compileSource(`${filledAt(law, lap)}\n&v s=sine loop=C4\n&out map=sample [&${law.head} * &v]`);
+      const lines = copy.map((l) => {
+        const m = /fill\(five_to_twelve, (\w+), &day\).*$/.exec(l);
+        const x = m ? law.fills[m[1]!] : undefined;
+        return m && x?.lap ? l.replace(m[0], law.fill(m[1]!, Math.floor((lap * BAR) / x.lap), {})) : l;
+      });
+      const r = compileSource(`${lines.join('\n')}\n&v s=sine loop=C4\n&out map=sample [&cycle * &v]`);
       expect(r.diagnostics, `lap ${lap}`).toEqual([]);
     }
   });
-  it('fiveto12, bar 0 (11:55): C Ionian, its first bar as the decision shows it', () => {
-    expect(filledAt(law, 0)).toBe(
-      [
-        '&cycle [&notes * &level]',
-        '&notes over=&key pan=&space step=1 [1, 3]@2 [5, 7, 9, 11, 13, 15]@2 [2, 4, 6] [6, 8, 10, 12, 14, 16, 18]@2 [3, 5, 7, 9]@2 0@2 [4, 6, 8, 10, 12]',
-        '&level map=amp step=1 0.4@2 0.84@2 0.51 0.18@2 0.62@2 0.29@2 0.73',
-        '&space map=lin step=1 1/2@2 0@2 2/3 1/6@2 5/6@2 1/3@2 1',
-        '&key scale(&mode, &tonic)',
-        '&mode ionian',
-        '&tonic C',
-      ].join('\n'),
-    );
+  it('five_to_twelve, bar 0 (11:55): C Ionian, its copy’s first lap as the decision shows it', () => {
+    expect(copy).toEqual([
+      '&cycle [&cycle_notes * &cycle_level]',
+      '&cycle_notes over=&cycle_key pan=&cycle_space step=1 fill(five_to_twelve, notes, &day) [1, 3]@2 [5, 7, 9, 11, 13, 15]@2 [2, 4, 6] [6, 8, 10, 12, 14, 16, 18]@2 [3, 5, 7, 9]@2 0@2 [4, 6, 8, 10, 12]',
+      '&cycle_level map=amp step=1 fill(five_to_twelve, level, &day) 0.4@2 0.84@2 0.51 0.18@2 0.62@2 0.29@2 0.73',
+      '&cycle_space map=lin step=1 fill(five_to_twelve, space, &day) 1/2@2 0@2 2/3 1/6@2 5/6@2 1/3@2 1',
+      '&cycle_mode fill(five_to_twelve, mode, &day) ionian',
+      '&cycle_tonic fill(five_to_twelve, tonic, &day) C',
+      // (its key the diatonic fragment's, `&key from diatonic(mode=&mode) &tonic`, expanded after the copy's own lines)
+      '&cycle_key scale(even(7, 12, &cycle_mode), &cycle_tonic)',
+    ]);
     expect(unitOf(law)).toBe(BAR);
     expect(lawOf({ law: 'fiveto12' })).toBe(law);
     expect(lawOf({ law: 'elsewhere' })).toBeNull();
   });
 });
 
-describe('law=fiveto12 read through the language plays what it played (#693)', () => {
+describe("five_to_twelve played from a piece's copy, lap by lap, plays what the law played (#693, #792)", () => {
   const piece = (anchor: string) =>
-    compileSource(`&day scan(1!24) loop=1d anchor=${anchor}\n&cycle law=fiveto12 over=&day step=84bpm\n&glass s=tri loop=C4\n&out map=sample [&cycle * &glass * .3]`);
+    compileSource(`&day scan(1!24) loop=1d anchor=${anchor}\n&cycle from five_to_twelve &day\n&glass s=tri loop=C4\n&out map=sample [&cycle * &glass * .3]`, undefined, {
+      resolve: resolveSeed,
+    });
   /** What the law played before it was a plugin-fragment: its notes as semitones, placed by its own space. */
   const before = (r: ReturnType<typeof piece>, anchor: number, from: number, to: number) => {
     const sec = (h: number) => Math.floor(h) * 3600 + Math.round((h % 1) * 100) * 60;
@@ -72,6 +83,9 @@ describe('law=fiveto12 read through the language plays what it played (#693)', (
     expect(sections(r)).toEqual(DAY_MODES.map((m, b) => ({ at: b * 7200, label: `${MODE_NAMES[m]} · ${BLOCK_NAMES[b]}` })));
     expect(marksOf(law)).toHaveLength(12);
     expect(law.cycle / KEY).toBe(144);
+    // (what a frontend reads: the law a program plays, and the one on a clock, the sun's day)
+    expect(lawIn(r)).toBe(law);
+    expect([lawAt(r, 'day'), lawAt(r, 'glass')]).toEqual([law, null]);
   });
 });
 
@@ -79,7 +93,7 @@ describe('engine/holes.ts, deprecated for one minor (#727): the same functions u
   it('re-exports what a frontend pinned at v0.25.0 imports from it', () => {
     expect(deprecated.lawOf).toBe(lawOf);
     expect(deprecated.BUILT_IN).toBe(BUILT_IN);
-    expect([deprecated.filledAt, deprecated.marksOf, deprecated.unitOf]).toEqual([filledAt, marksOf, unitOf]);
+    expect([deprecated.marksOf, deprecated.unitOf]).toEqual([marksOf, unitOf]);
   });
 });
 

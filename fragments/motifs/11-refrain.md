@@ -1,18 +1,10 @@
 ---
 id: refrain
-association:
-  - point:
-      sync: 0.3
-      harm: 0.45
-      bite: 0.65
-      mood: 0.5
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&refrain from &key
+&refrain from &key style=&(map=style sync=.3 harm=.45 bite=.65 mood=.5)
 &refrain over=&key step=8n 2 2 2 4@2 3 2 0
 ```
 

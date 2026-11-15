@@ -7,7 +7,7 @@
  * numbers in `flatten.ts`, streams of values over a note in `series.ts`.
  */
 import type { Pick } from './ast';
-import { filledAt, lawOf, unitOf, type PluginFragment } from './fills';
+import { BY_FRAGMENT, unitOf, type PluginFragment } from './fills';
 import { parse } from './parser';
 import { compile } from './compiler';
 import { adsrOf, balance, codeShifts, CV_LAPS, DEFAULT_ENV, type CompileResult, type Output, type Shifts } from './program';
@@ -617,18 +617,17 @@ export function kitPickAt(p: Plan, o: Output, at: number): string | null {
 }
 
 /**
- * A law's steps ahead of play (law=fiveto12 over=&day): where its day stands when play starts, against its origin (11:55
- * for fiveto12), the moment its cycle begins; 0 without a day, or with a day that starts there.
+ * A stream's steps ahead of play: where the clock its call site gave stands when play starts, against its origin (11:55
+ * for fiveto12), the moment its cycle begins; 0 without a clock, or with one that starts there.
  */
-function lawOffset(result: Plan['result'], cell: string, law: PluginFragment): number {
-  const day = result.cells.get(result.cells.get(cell)?.over ?? '');
-  const anchor = day?.params.anchor;
+function lawOffset(result: Plan['result'], clock: string | null, law: PluginFragment): number {
+  const anchor = clock ? result.cells.get(clock)?.params.anchor : undefined;
   if (typeof anchor !== 'number') return 0;
   const sec = (h: number) => Math.floor(h) * 3600 + Math.round((h % 1) * 100) * 60;
   return Math.round(((((sec(anchor) - sec(law.origin)) % 86400) + 86400) % 86400) / law.stepSeconds);
 }
 
-/** A note of a law's lap: its step in the lap, length in steps, pitch as a ratio to the voice's, level, and channel gains (its place). */
+/** A note of a lap: its step in the lap, length in steps, pitch as a ratio to the voice's, level, and channel gains (its place). */
 interface LapNote {
   readonly step: number;
   readonly dur: number;
@@ -637,24 +636,80 @@ interface LapNote {
   readonly gains: readonly [number, number];
 }
 
-/** Laps a law has rendered, by its id and lap: they are pure (decision 085 §3), so any piece may share them. */
+/**
+ * A stream an output plays (decision 085, #792): the plugin-fragment its line is a fill of, and the cells a lap of it
+ * compiles: its line, its levels that are fills of the same fragment, and what they read (its key, its places), each a
+ * cell of the piece's copy, as the `from` line wrote it (`CompileResult.codes`).
+ */
+interface Stream {
+  readonly law: PluginFragment;
+  readonly clock: string | null;
+  readonly head: string;
+  readonly levels: readonly string[];
+  /** The cells a lap compiles, and each fill's name among them. */
+  readonly cells: readonly { readonly name: string; readonly code: string; readonly fill: string | null }[];
+  /** What its laps are kept by: its fragment and its cells' code. */
+  readonly key: string;
+}
+
+const STREAMS = new WeakMap<Output, Stream | null>();
+/** The stream an output plays, or null: its line a stream fill of a built-in plugin-fragment (#792). */
+function streamOf(result: Plan['result'], o: Output): Stream | null {
+  if (STREAMS.has(o)) return STREAMS.get(o)!;
+  const found = ((): Stream | null => {
+    const f = result.cells.get(o.cell)?.fill;
+    const law = f?.fragment ? BY_FRAGMENT.get(f.fragment) : undefined;
+    const codes = result.codes;
+    if (!f || !law || !codes || law.fills[f.name ?? '']?.lap === undefined) return null;
+    const levels = o.levels.map((t) => t.cell).filter((n) => result.cells.get(n)?.fill?.fragment === f.fragment);
+    const MARKER = /(^|\s)fill\([^)]*\).*$/;
+    // (what a cell's code reads, its fill's marker aside: the clock it names is the call site's, read by the offset)
+    const reads = (n: string) => [...(codes.get(n) ?? '').replace(MARKER, '').matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]!).filter((r) => r !== n && codes.has(r));
+    const names: string[] = [];
+    for (const queue = [o.cell, ...levels]; queue.length;) {
+      const n = queue.shift()!;
+      if (names.includes(n)) continue;
+      names.push(n);
+      queue.push(...reads(n));
+    }
+    const cells = names.map((name) => ({ name, code: codes.get(name)!, fill: result.cells.get(name)?.fill?.name ?? null }));
+    return { law, clock: f.clock, head: o.cell, levels, cells, key: `${law.fragment}\n${cells.map((c) => c.code).join('\n')}` };
+  })();
+  STREAMS.set(o, found);
+  return found;
+}
+
+/** Laps a stream has rendered, by its cells and lap: they are pure (decision 085 §3), so any piece may share them. */
 const LAPS = new Map<string, readonly LapNote[]>();
 /** How many it keeps: about ten minutes of fiveto12's bars. */
 const LAPS_KEPT = 96;
 
 /**
- * One unit lap of a law, read by the language (decision 085, #693): its fills filled with braid text, its cells compiled
- * and played on a voice of its own, so its notes go through its tables and its places through its line's `pan=` (#739), as
- * any line's do; its head is notes with their levels, played on the lap's voice (decision 087).
+ * One unit lap of a stream, read by the language (decision 085, #693, #792): its cells as the piece's copy wrote them,
+ * each fill's answer for this lap in place of its first, compiled and played on a voice of its own, so its notes go
+ * through its tables and its places through its line's `pan=` (#739), as any line's do.
  */
-function lawLap(law: PluginFragment, lap: number): readonly LapNote[] {
-  const key = `${law.id} ${lap}`;
+function lawLap(st: Stream, lap: number): readonly LapNote[] {
+  const unit = unitOf(st.law);
+  const laps = Math.round(st.law.cycle / unit);
+  const k = ((lap % laps) + laps) % laps;
+  const key = `${st.key}\n${k}`;
   const kept = LAPS.get(key);
   if (kept) return kept;
-  const unit = unitOf(law);
-  const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [&${law.head} * &lapVoice]`;
+  const lines = st.cells.map(({ code, fill }) => {
+    const lapOf = fill === null ? undefined : st.law.fills[fill]?.lap;
+    if (fill === null) return code;
+    const answer = st.law.fill(fill, lapOf ? Math.floor((k * unit) / lapOf) : 0, {});
+    // (a timed fill steps once a step of the law's own, its code's time, whatever rate its line writes: so no action
+    // on the text, a tempo scaled, reaches it, as the wall clock it reads doesn't scale, decision 085's 1a)
+    // (a line that steps steps at the law's own rate, step=1; one that doesn't, a mode or a tonic per key, stays so)
+    const timed = code.replace(/(^|\s)step=\S+/, '$1step=1');
+    return timed.replace(/(^|\s)fill\([^)]*\).*$/, `$1${answer}`);
+  });
+  const product = [st.head, ...st.levels, 'lapVoice'].map((n) => `&${n}`).join(' * ');
+  const text = `${lines.join('\n')}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [${product}]`;
   const result = compile(parse(text, { old: false }), DEFAULT_ENV);
-  if (!result.ok) throw new Error(`law=${law.id}, lap ${lap}: ${result.diagnostics.map((d) => d.message).join('; ')}`);
+  if (!result.ok) throw new Error(`${st.law.fragment}, lap ${k}: ${result.diagnostics.map((d) => d.message).join('; ')}`);
   const shifts = codeShifts(result);
   const base = result.cells.get('lapVoice')!.freq;
   const notes = eventsBetween(plan(result, shifts), 0, unit)
@@ -665,12 +720,12 @@ function lawLap(law: PluginFragment, lap: number): readonly LapNote[] {
   return notes;
 }
 
-/** Every note of a law starting in its steps [from, to): each unit lap it reaches, read by the language. */
-function lawNotes(law: PluginFragment, from: number, to: number): LapNote[] {
-  const unit = unitOf(law);
+/** Every note of a stream starting in its steps [from, to): each unit lap it reaches, read by the language. */
+function lawNotes(st: Stream, from: number, to: number): LapNote[] {
+  const unit = unitOf(st.law);
   const out: LapNote[] = [];
   for (let lap = Math.floor(from / unit); lap * unit < to; lap++)
-    for (const n of lawLap(law, lap)) {
+    for (const n of lawLap(st, lap)) {
       const step = lap * unit + n.step;
       if (step >= from && step < to) out.push({ ...n, step });
     }
@@ -689,7 +744,8 @@ const RUN = 256;
  */
 export function eventsBetween(p: Plan, from: number, to: number, outputs = false, held: Held = {}): Played[] {
   // (a law's cell plays only what its law computes — not its steps counted as values)
-  const lawful = (t: PlanTrack) => p.result.cells.get(t.output.cell)?.params.law !== undefined;
+  // (a stream's line plays what its plugin-fragment's code writes lap by lap, not its first lap as written, #792)
+  const lawful = (t: PlanTrack) => streamOf(p.result, t.output) !== null;
   const plain = p.tracks.filter((t) => !t.output.tape && !lawful(t));
   const taped = p.tracks.filter((t) => t.output.tape);
   const out = plainEvents({ ...p, tracks: plain }, from, to, outputs);
@@ -699,8 +755,9 @@ export function eventsBetween(p: Plan, from: number, to: number, outputs = false
   }
   // a law (law=fiveto12): a plugin-fragment built in, its fills filled and read by the language — any moment of its day at once
   for (const o of p.result.outputs) {
-    const law = lawOf(p.result.cells.get(o.cell)?.params);
-    if (!law) continue;
+    const st = streamOf(p.result, o);
+    if (!st) continue;
+    const law = st.law;
     const g = heardGains(o, p.muted);
     // (on a MIDI card too: its notes are sent there, and heard on it as well: decision 064)
     const midi = o.midi ? liveMidi(o, p.muted) : [];
@@ -708,9 +765,9 @@ export function eventsBetween(p: Plan, from: number, to: number, outputs = false
     if (!heard && !midi.length) continue;
     const base = p.result.cells.get(o.voice)?.freq || 261.63;
     // (it reads the day it plays in, over=&day: where that day stands when play starts, against the law's own 11:55)
-    const off = lawOffset(p.result, o.cell, law);
+    const off = lawOffset(p.result, st.clock, law);
     const sps = law.stepSeconds;
-    for (const n of lawNotes(law, Math.ceil(from / sps - 1e-9) + off, Math.ceil(to / sps - 1e-9) + off)) {
+    for (const n of lawNotes(st, Math.ceil(from / sps - 1e-9) + off, Math.ceil(to / sps - 1e-9) + off)) {
       const at = (n.step - off) * sps;
       out.push({
         at,

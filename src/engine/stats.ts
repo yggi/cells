@@ -65,7 +65,7 @@ const COUNTED: Readonly<Record<Kind, CellKind>> = {
   role: 'line',
   style: 'line',
   scope: 'line',
-  law: 'line',
+  fill: 'line',
   tape: 'line',
   head: 'line',
   sum: 'line',

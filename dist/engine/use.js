@@ -4,6 +4,7 @@ import { counts } from "./core/desugar.js";
 import { STYLE } from "./style.js";
 import { MOVED, RENAMED_IDS } from "./renamed.js";
 import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
+import { BY_FRAGMENT } from "./fills.js";
 export const FROM_DEPTH = 8;
 const via = (lines, step) => lines.map((l) => ({ ...l, origin: [step, ...(l.origin ?? [])] }));
 const HEAD = /^&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
@@ -36,7 +37,7 @@ function lineOf(code, written = code, line = 0) {
 }
 export function partOf(text, head) {
     const lines = linesOf(text);
-    const sigs = lines.flatMap((l) => (l.from?.kind === 'signature' ? [{ line: l, sig: l.from }] : []));
+    const sigs = oneSignatureEach(lines.flatMap((l) => (l.from?.kind === 'signature' ? [{ line: l, sig: l.from }] : [])), (s) => s.sig);
     const found = sigs.find((s) => s.sig.names.includes(`&${head}`));
     if (!found)
         return null;
@@ -71,7 +72,18 @@ export function partOf(text, head) {
 export const usesIn = (text, head) => linesOf(text).flatMap((l) => l.from?.kind === 'use' && l.from.main?.trim().split(/\s+/).at(-1) === `&${head}`
     ? [{ id: l.from.id, args: Object.fromEntries((l.from.args ?? []).map((a) => [a.name, a.value.trim()])) }]
     : []);
-export const partsOf = (text) => linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from.names.map((n) => n.slice(1))] : []));
+export const partsOf = (text) => oneSignatureEach(linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : []))).map((s) => s.names.map((n) => n.slice(1)));
+function oneSignatureEach(items, sigOf = (t) => t) {
+    const seen = new Set();
+    return items.filter((t) => {
+        const s = sigOf(t);
+        const key = JSON.stringify([s.names, s.optional, s.main]);
+        if (seen.has(key))
+            return false;
+        seen.add(key);
+        return true;
+    });
+}
 function pickPart(id, text, from, say) {
     const parts = partsOf(text);
     if (parts.length < 2)
@@ -102,7 +114,10 @@ export function signatureOf(text) {
 }
 export const bodyOf = (text) => text
     .split('\n')
-    .filter((raw) => readFrom(splitComment(raw)[0].trim())?.kind !== 'signature')
+    .filter((raw) => {
+    const kind = readFrom(splitComment(raw)[0].trim())?.kind;
+    return kind !== 'signature' && kind !== 'declaration';
+})
     .join('\n');
 function hash64(s) {
     let a = 0x811c9dc5;
@@ -123,11 +138,12 @@ function withoutAssociation(code) {
     if (from < 1)
         return code;
     const after = tokens.slice(from + 1);
-    if (tokens[0].text === '*' && from === 1 && after.every((t) => isAttribute(t.text)))
+    const weightOfStyle = (i) => (after[i]?.text === '*' && after[i - 1]?.text.startsWith('style=')) || (after[i - 1]?.text === '*' && after[i - 2]?.text.startsWith('style='));
+    if (tokens[0].text === '*' && from === 1 && after.every((t, i) => isAttribute(t.text) || weightOfStyle(i)))
         return null;
     if (after.length && !after[0].text.startsWith('(') && !after[0].text.startsWith('&') && !isAttribute(after[0].text))
         return code;
-    const kept = after.filter((t) => !isAttribute(t.text));
+    const kept = after.filter((t, i) => !isAttribute(t.text) && !(t.text === '*' && after[i - 1]?.text.startsWith('style=')) && !(after[i - 1]?.text === '*' && after[i - 2]?.text.startsWith('style=')));
     if (kept.length === after.length)
         return code;
     return [...tokens.slice(0, from + 1), ...kept].map((t) => t.text).join(' ');
@@ -371,7 +387,7 @@ function renamesOf(from, lines, id, say) {
 const sharedLines = (lines) => lines.map((l) => (l.shared ? l : { ...l, shared: true }));
 function give(entry, path, text, resolve, say, taken, old, level) {
     const { id, from } = entry;
-    const signatures = linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : []));
+    const signatures = oneSignatureEach(linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : [])));
     if (!signatures.length) {
         if (from.head.length || from.args || from.main !== null)
             say(`${quoted(id)} has no signature, so it takes no arguments: a collection gives the cells it defines by name (${entry.names ? entry.names.join(', ') : '*'} from ${from.id})`);
@@ -507,6 +523,10 @@ function instantiate(from, id, signature, path, text, resolve, say, taken, old, 
         if (byReference.has(p) || !reached.has(p) || overridden.includes(p))
             continue;
         let code = renamed(l.code, names);
+        if (/(^|\s)fill\(\s*\)/.test(code)) {
+            const answer = BY_FRAGMENT.get(id)?.fill(p, 0, {}) ?? '';
+            code = code.replace(/(^|\s)fill\(\s*\)/, `$1fill(${id}, ${p}${main && names.has(main) ? `, &${names.get(main)}` : ''})${answer ? ` ${answer}` : ''}`);
+        }
         if (values.has(p))
             code = inherited(names.get(p), code, asCell(values.get(p), p, own));
         if (heads.includes(p) && from.head.length && one)

@@ -1,18 +1,10 @@
 ---
 id: tumbao_bass
-association:
-  - point:
-      sync: 0.9
-      harm: 0.5
-      bite: 0.7
-      mood: 0.75
-    weight: 1
-    facet: bass
 source: seed
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=&salsa
 &bassline over=&harm step=8n ~ ~ ~ 2 ~ ~ 0 ~
 ```
 

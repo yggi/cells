@@ -168,7 +168,8 @@ describe('a pitched voice by its place, a bar of a longer fragment, and the lear
   });
 
   it('a bar of the two-bar bossa nova clave, its second, is recognised as the clave from its bar 1', () => {
-    const second = '&clave step=16n ~!4 &claves ~!5 &claves ~!5\n&percussion map=midi(10) [&clave * .5]';
+    // (its strokes an eighth long, struck from even on its eighths: #531, decision 093 §6)
+    const second = '&clave step=8n ~!2 &claves ~!2 &claves ~!2\n&percussion map=midi(10) [&clave * .5]';
     expect(found(recogniser.recognise(second, LIBRARY, DRUM_OPTIONS))).toEqual(['bossa_nova_clave [] bar 1 at 0']);
   });
 

@@ -32,7 +32,7 @@ Each law below names its test, tagged in the test's file as `// law L<n>`, and w
 | L18 | **Naming a number plays as the number:** a plain number in a mix, given a cell of its own and named, plays what it played (decision 088). | `src/engine/numbercell.test.ts` | every example (the numbers of its own mixes) | quick | PLT: let-substitution | law |
 | L19 | **The order of lines is irrelevant:** a piece's lines in any other order play what they played (decision 091). | `src/engine/lineorder.test.ts` | every example, in three seeded orders | quick | an unordered set of definitions; CT: a commutative monoid | law |
 | L20 | **Every cell has one kind:** the first of the ordered rules that holds, the last holding for any cell; each rule's example is a cell of its kind (#782). | `src/engine/kinds.test.ts` | every example, every cell; each rule's example | quick | type theory: a tagged sum; a decision list | law |
-| L21 | **A cell's sort is its kind's:** what a cell is in a mix follows from what it is, but for a read head (its tape's), a card and a meter (#782). | `src/engine/kinds.test.ts` | every example, every cell; each rule's example | quick | type theory: a function between two classifications | law |
+| L21 | **A cell's sort is its kind's:** what a cell is in a mix follows from what it is, but for a read head (its tape's), a fill (what its fragment's code writes), a card and a meter (#782). | `src/engine/kinds.test.ts` | every example, every cell; each rule's example | quick | type theory: a function between two classifications | law |
 
 L6 to L10 are checked over texts written for them, not every example; #632 widens each.
 

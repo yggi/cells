@@ -3,13 +3,13 @@ import { ATTRIBUTES, rolesText, VOICE_PARAMS } from "../attributes.js";
 import { PLUGIN_SYNTAX } from "../plugins.js";
 import { isMidiCard } from "../program.js";
 import { kindsOf } from "../kinds.js";
+import { streamClockOf } from "../fills.js";
 const RESTARTS = ['restart', 'resume', 'free'];
 const KIND_ROLE = {
     tape: 'tape',
     head: 'head',
     resonator: 'resonator',
     scope: 'scope',
-    law: 'law',
     gate: 'gate',
     card: 'card',
     note: 'note',
@@ -30,6 +30,8 @@ export function rolesOf({ cells, clocks, sections, bands = new Map() }) {
             r.add('driven');
         if (typeof c.params.motor === 'number')
             r.add('motor');
+        if (typeof c.params.law === 'string' || streamClockOf(cells, c) !== undefined)
+            r.add('law');
         if (typeof c.params.fm === 'string')
             r.add('carrier');
         if (modulators.has(c.name))

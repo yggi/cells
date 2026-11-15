@@ -1,18 +1,11 @@
 ---
 id: moog
-association:
-  - point:
-      sync: 0.15
-      harm: 0.8
-      bite: 0.5
-      mood: 0.85
-    weight: 0.125
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/prelude.md @ a8de625f
 ---
 
 ```cells
+* from style=&baroque * .125
 &leadV s=saw loop=C4 lpf=1600 lpq=7 env=&(map=adsr .002 .3 .4 .25)
 ```
 

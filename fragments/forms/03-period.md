@@ -1,17 +1,10 @@
 ---
 id: period
-association:
-  - point:
-      sync: 0.15
-      harm: 0.4
-      bite: 0.3
-    weight: 1
-    facet: form
 source: seed
 ---
 
 ```cells
-&period from (&antecedent, &consequent) &call
+&period from (&antecedent, &consequent) &call style=&(map=style sync=.15 harm=.4 bite=.3)
 &period step=8n &antecedent &consequent
 &antecedent step=8n &call &call^1
 &consequent step=8n &call &call^-1

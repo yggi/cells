@@ -5,6 +5,7 @@ import { ATTRIBUTES, rolesText, VOICE_PARAMS, type Role } from '../attributes';
 import { PLUGIN_SYNTAX, type ShowPlugin } from '../plugins';
 import { isMidiCard, type Clock, type ResolvedCell } from '../program';
 import { kindsOf, type Kind } from '../kinds';
+import { streamClockOf } from '../fills';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
 
@@ -23,14 +24,14 @@ export interface RolePiece {
  * The roles that are kinds (`kinds.ts`, #782): what a cell is, read from the one table. The rest of a cell's roles are
  * not what it is: how it is moved (`clock`, `driven`, `motor`), whether it sounds as a voice (`voice`: a module mix with
  * sound parameters does, a wave that only bends another doesn't), and what stands in a relation to another cell
- * (`carrier`, `modulator`, `section`, `selector`, `performer`).
+ * (`carrier`, `modulator`, `section`, `selector`, `performer`, and `law`: a fill's cell or the mix that reads one, on
+ * its stream's clock).
  */
 const KIND_ROLE: Partial<Record<Kind, Role>> = {
   tape: 'tape',
   head: 'head',
   resonator: 'resonator',
   scope: 'scope',
-  law: 'law',
   gate: 'gate',
   card: 'card',
   note: 'note',
@@ -51,6 +52,7 @@ export function rolesOf({ cells, clocks, sections, bands = new Map() }: RolePiec
     if (c.step) r.add('driven');
     if (typeof c.params.motor === 'number') r.add('motor');
     // what it is to another cell
+    if (typeof c.params.law === 'string' || streamClockOf(cells, c) !== undefined) r.add('law');
     if (typeof c.params.fm === 'string') r.add('carrier');
     if (modulators.has(c.name)) r.add('modulator');
     if (sections.has(c.name)) r.add('section');

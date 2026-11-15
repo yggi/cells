@@ -44,7 +44,7 @@ export function checkLimits(ctx, decls, cells, clocks, outputs) {
     const fastest = new Map();
     for (const o of outputs) {
         const c = cells.get(o.cell);
-        if (!c?.clock || over.has(c.name) || reported.has(c.name) || c.params.law !== undefined)
+        if (!c?.clock || over.has(c.name) || reported.has(c.name) || c.params.law !== undefined || c.fill?.fragment)
             continue;
         const clock = clocks.get(c.clock);
         if (!clock)

@@ -1,17 +1,10 @@
 ---
 id: sentence
-association:
-  - point:
-      sync: 0.2
-      harm: 0.55
-      bite: 0.5
-    weight: 1
-    facet: form
 source: seed
 ---
 
 ```cells
-&sentence from (&continuation) &call
+&sentence from (&continuation) &call style=&(map=style sync=.2 harm=.55 bite=.5)
 &sentence step=8n &call &call^1 &continuation
 &continuation step=8n inverse(&call) &call[::-1]
 ```

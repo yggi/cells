@@ -1,7 +1,5 @@
 ---
 id: osc
-association:
-  - facet: module
 source: seed
 ---
 

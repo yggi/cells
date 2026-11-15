@@ -252,5 +252,5 @@ export function bindVoices(ctx, decls, given, typed) {
 }
 function styleRefs(s) {
     const of = (p) => (p.kind === 'cell' ? [p.ref] : p.terms.map((t) => t.ref));
-    return [...of(s.from), ...(s.to ? of(s.to) : []), ...(s.curve ? [s.curve] : [])];
+    return [...(s.set ? s.set.flatMap((m) => of(m.point)) : of(s.from)), ...(s.to ? of(s.to) : []), ...(s.curve ? [s.curve] : [])];
 }

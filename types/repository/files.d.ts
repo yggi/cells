@@ -31,6 +31,7 @@
  * file with a newline, so a file written that way reads and writes back byte for byte.
  */
 import type { Layout } from '../engine/literate';
+import { type StyleNames } from './declarations';
 import { type Fragment } from './fragments';
 import { type YamlProblem, type YamlValue } from './yaml';
 /** A fragment's metadata: every frontmatter key but `id` and `association`, in the order the file gives them. */
@@ -51,9 +52,16 @@ export interface FragmentFileProblems {
     readonly problems: readonly YamlProblem[];
 }
 /** A fragment file read: its fragment, metadata and prose, or what is wrong with it, each problem naming its line. */
-export declare function readFragment(markdown: string): FragmentFile | FragmentFileProblems;
+/** How a file's association is read from its text (decision 089): the facet its folder gives, and the styles a declaration names. */
+export interface ReadOptions {
+    /** The facet of the fragment's folder (`FOLDER_FACETS`), where it has one. */
+    readonly facet?: string;
+    /** The styles `&funk` names; none where the library has no `styles`. */
+    readonly styles?: StyleNames;
+}
+export declare function readFragment(markdown: string, options?: ReadOptions): FragmentFile | FragmentFileProblems;
 /** A fragment file's text: frontmatter (the entry, then the metadata), the cells block, the prose. */
-export declare function writeFragment({ fragment, meta, prose, layout }: FragmentFile): string;
+export declare function writeFragment({ fragment, meta, prose, layout }: FragmentFile, options?: ReadOptions): string;
 /** A fragment file read from a library of files, with the path it was read from. */
 export interface LibraryFile extends FragmentFile {
     readonly path: string;
@@ -67,3 +75,9 @@ export declare function readFragments(files: Readonly<Record<string, string>>): 
 } | {
     problems: string[];
 };
+/**
+ * The styles a library's declarations name (decision 089 §2): the cells of its `styles`, each a `map=style` cell with a
+ * value on each axis, by name. Read from the file's text alone, before any association, since `styles` declares its own
+ * points by its cells' names.
+ */
+export declare function styleNamesIn(files: Readonly<Record<string, string>>): StyleNames;

@@ -1,17 +1,10 @@
 ---
 id: band
-association:
-  - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.5
-    weight: 1
-    facet: band
 source: seed
 ---
 
 ```cells
-&band, &drums, &bass, &pad, &stab, &lead, &drumsOut, &bassOut, &padOut, &stabOut, &leadOut, &bassV, &padV, &keysV, &leadV, &sound, &midi from (&drumlines, &bassline, &padline, &stabline, &leadline, &bassLevel, &padLevel, &stabLevel, &leadLevel, &style)
+&band, &drums, &bass, &pad, &stab, &lead, &drumsOut, &bassOut, &padOut, &stabOut, &leadOut, &bassV, &padV, &keysV, &leadV, &sound, &midi from (&drumlines, &bassline, &padline, &stabline, &leadline, &bassLevel, &padLevel, &stabLevel, &leadLevel, &style) style=&(map=style sync=.5 harm=.5 bite=.5)
 &band &drums &bass &pad &stab &lead
 &drums, &drumsOut from drums_performer &drumlines
 &bass, &bassOut from bass_performer(bassLevel=&bassLevel, bassV=&bassV) &bassline

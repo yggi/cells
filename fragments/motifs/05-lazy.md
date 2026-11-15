@@ -1,18 +1,10 @@
 ---
 id: lazy
-association:
-  - point:
-      sync: 0.5
-      harm: 0.75
-      bite: 0.35
-      mood: 0.5
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&lazy from &key
+&lazy from &key style=&lofi
 &lazy over=&key step=8n ~ 2 4 ~ 3@2 2 0
 ```
 

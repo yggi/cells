@@ -45,19 +45,19 @@ describe('what a cell is: one table of kinds (#782)', () => {
         "blank": 65,
         "card": 88,
         "envelope": 399,
+        "fill": 10,
         "gate": 20,
         "grid": 12,
         "groove": 62,
         "head": 15,
         "kit": 7,
-        "law": 2,
         "line": 361,
         "meter": 88,
         "midi card": 3,
         "mix": 27,
         "note": 196,
         "number": 11,
-        "phrase": 0,
+        "phrase": 2,
         "ramp": 51,
         "resonator": 15,
         "role": 16,
@@ -67,7 +67,7 @@ describe('what a cell is: one table of kinds (#782)', () => {
         "steps": 213,
         "style": 3,
         "sum": 2,
-        "table": 49,
+        "table": 51,
         "tape": 6,
         "tempo": 74,
         "voice": 358,
@@ -80,8 +80,8 @@ describe('what a cell is: one table of kinds (#782)', () => {
   // law L21
   it('a cell’s sort is its kind’s: what it is in a mix follows from what it is, for every cell of every example', () => {
     const said = KINDS.filter((k) => SORT_OF_KIND[k] !== null);
-    // (three kinds don't say: a read head is its tape's, and a card and a meter are never a mix's factor)
-    expect(KINDS.filter((k) => SORT_OF_KIND[k] === null)).toEqual(['card', 'midi card', 'head', 'meter']);
+    // (four kinds don't say: a read head is its tape's, a fill what its fragment's code writes, and a card and a meter are never a mix's factor)
+    expect(KINDS.filter((k) => SORT_OF_KIND[k] === null)).toEqual(['card', 'midi card', 'fill', 'head', 'meter']);
     let checked = 0;
     for (const [key, p] of Object.entries(EXAMPLES)) {
       const result = compileSource(p.source, undefined, { resolve: resolveSeed });

@@ -1,19 +1,11 @@
 ---
 id: sequencer
-association:
-  - point:
-      sync: 0.15
-      harm: 0.5
-      bite: 0.85
-      mood: 0.45
-    weight: 1
-    facet: motif
 source: seed
 lifted: yggi/cells examples/zell.md @ 014c4c73
 ---
 
 ```cells
-&sequencer from &key
+&sequencer from &key style=&elektro
 &sequencer over=&key step=8n 0 2 4 7 0 2 4 7
 ```
 

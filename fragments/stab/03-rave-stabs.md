@@ -1,19 +1,11 @@
 ---
 id: rave_stabs
-association:
-  - point:
-      sync: 0.25
-      harm: 0.45
-      bite: 0.8
-      mood: 0.9
-    weight: 0.4
-    facet: stab
 source: seed
 lifted: yggi/cells examples/hypercell.md @ 014c4c73
 ---
 
 ```cells
-&stabline from &harm
+&stabline from &harm style=&happyHardcore * .4
 &stabline over=&harm step=8n ~ [0,1,2] ~ [0,1,2] ~ [0,1,2] ~ [0,1,2]
 ```
 

@@ -1,4 +1,4 @@
-import { lawOf, marksOf } from "./fills.js";
+import { lawIn, marksOf, streamClockOf } from "./fills.js";
 import { codeShifts } from "./program.js";
 import { clocking, ownLength, selects, turnLap } from "./clocking.js";
 import { plan } from "./realize.js";
@@ -27,7 +27,7 @@ function fraction(x) {
 }
 const gcd = (a, b) => (b === 0n ? a : gcd(b, a % b));
 export function pieceTime(result, seen) {
-    const law = [...result.cells.values()].map((c) => lawOf(c.params)).find((l) => l !== null);
+    const law = lawIn(result);
     if (law) {
         const day = law.cycle * law.stepSeconds;
         return { ends: day, cycle: day, chance: false, longest: day };
@@ -124,7 +124,7 @@ export function durationText(seconds) {
     return `10^${Math.floor(Math.log10(years))} years`;
 }
 export function sections(result) {
-    const law = [...result.cells.values()].map((c) => lawOf(c.params)).find((l) => l !== null);
+    const law = lawIn(result);
     if (law)
         return marksOf(law);
     const statics = codeShifts(result);
@@ -162,7 +162,8 @@ export function mainTempo(result) {
     return null;
 }
 export function anchoredAt(result, now) {
-    const anchor = [...result.cells.values()].find((c) => typeof c.params.anchor === 'number' && c.params.law === undefined)?.params.anchor;
+    const anchor = [...result.cells.values()].find((c) => typeof c.params.anchor === 'number' && c.params.law === undefined && streamClockOf(result.cells, c) === undefined)?.params
+        .anchor;
     if (anchor === undefined)
         return null;
     const sec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();

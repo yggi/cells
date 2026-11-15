@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { parse } from './parser';
 import { compileSource } from './compile';
+import { resolveSeed } from '../repository/library';
 import { codeShifts } from './program';
 import { eventsBetween, outputPlays, outputSounds, plan } from './realize';
 import { channelTable, midiNote, router, routesOf } from './midi';
@@ -29,7 +30,7 @@ const compiled = (src: string) => {
   };
 };
 const eventsOf = (src: string, seconds = 4, muted = new Set<string>()) => {
-  const r = compileSource(src);
+  const r = compileSource(src, undefined, { resolve: resolveSeed });
   return eventsBetween(plan(r, codeShifts(r), muted), 0, seconds, true);
 };
 

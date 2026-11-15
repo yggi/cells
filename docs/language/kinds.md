@@ -11,7 +11,7 @@ What a cell is. Every cell has exactly one **kind**, read from its own line and 
 | `role` | map=role: its name is the role, its entries the gates that play it. | pitch | `&lead map=role &violin` |
 | `style` | map=style: a point in style space; it doesn’t sound. | pitch | `&funk map=style .3 .45 .55 .5` |
 | `scope` | scope=: a picture of the cells its braid lists. | pitch | `&screen scope=stack &a` |
-| `law` | law=: its notes are computed. | pitch | `&cycle law=fiveto12 over=&day step=84bpm` |
+| `fill` | fill(…): a plugin-fragment’s code writes its braid (decision 085). | — | `&cycle_mode fill(five_to_twelve, mode, &day) ionian` |
 | `tape` | write=: it records what its write head names. | pitch | `&tape write=&t step=1 length=4` |
 | `head` | play= with no braid: a read head of a tape. | — | `&echo play=&tape at=1` |
 | `sum` | A mix of cells with no voice: the sum of their values (decision 079). | plain | `&drift [&a * .7 + &b * .3]` |
@@ -44,6 +44,6 @@ A kind is not what reads a cell. These are relations between two cells, and a ce
 - **a performer**: an entry of a band ([mix.md](mix.md));
 - **a modulator**: a voice another's `fm=` names ([physics.md](physics.md)).
 
-**In a mix** is the cell's **sort** ([mix.md](mix.md#the-algebra-of-a-mix)): a sound (signal), a volume, a plain value, a pitch or a wave. It follows from the kind (law L21), but for three that don't say (—): a read head is what its tape records, and a card and a meter are never a mix's factor.
+**In a mix** is the cell's **sort** ([mix.md](mix.md#the-algebra-of-a-mix)): a sound (signal), a volume, a plain value, a pitch or a wave. It follows from the kind (law L21), but for four that don't say (—): a read head is what its tape records, a fill what its fragment's code writes (notes, a level, a number), and a card and a meter are never a mix's factor.
 
-Three things read this table (#782, rung 2): the sort, as above; what an attribute acts on, where that is a kind (a tape, a read head, a resonator, a scope, a law, a gate, the card, a note: [reference](reference.md#parameters)); and the Stats page's count. What an attribute acts on beyond that is how a cell is moved (a clock, a driven cell, a motor), whether it sounds as a voice, and the relations above.
+Three things read this table (#782, rung 2): the sort, as above; what an attribute acts on, where that is a kind (a tape, a read head, a resonator, a scope, a gate, the card, a note: [reference](reference.md#parameters)); and the Stats page's count. What an attribute acts on beyond that is how a cell is moved (a clock, a driven cell, a motor), whether it sounds as a voice, the relations above, and a law (a fill's cell or the mix that reads one).

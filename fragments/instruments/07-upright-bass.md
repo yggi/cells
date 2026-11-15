@@ -1,39 +1,11 @@
 ---
 id: upright_bass
-association:
-  - point:
-      sync: 0.55
-      harm: 0.75
-      bite: 0.6
-      mood: 0.5
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.35
-      harm: 1
-      bite: 0.3
-      mood: 0.85
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.65
-      harm: 0.55
-      bite: 0.45
-      mood: 0.65
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.75
-      harm: 0.85
-      bite: 0.55
-      mood: 0.9
-    weight: 0.5
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/electroswing.md @ 6d1bfa7
 ---
 
 ```cells
+* from style=(&electroSwing * .125 | &swingJazz * .125 | &bluesShuffle * .125 | &(map=style sync=.75 harm=.85 bite=.55 mood=.9) * .5)
 &bassV s=saw loop=C2 lpf=700 env=&(map=adsr .005 .3 .25 .08)
 ```
 

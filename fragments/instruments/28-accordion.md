@@ -1,24 +1,10 @@
 ---
 id: accordion
-association:
-  - point:
-      sync: 0
-      harm: 0.7
-      bite: 0.3
-      mood: 0.9
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.1
-      harm: 0.25
-      bite: 0.8
-      mood: 0.65
-    weight: 0.5
-    facet: instrument
 source: seed
 ---
 
 ```cells
+* from style=(&waltz * .125 | &(map=style sync=.1 harm=.25 bite=.8 mood=.65) * .5)
 &leadV s=square loop=C4 lpf=2200 env=&(map=adsr .03 .1 .9 .15) pitch=&(map=lin loop=6 0 .06 0 -.06 0)
 ```
 

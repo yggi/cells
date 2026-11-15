@@ -209,6 +209,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             ...(sum ? { sum } : {}),
             sink: d.map?.kind === 'sample',
             sort: sortOf(name),
+            ...(d.fill ? { fill: d.fill } : {}),
             ...(d.map?.kind === 'midi' ? { chords: units.map((u) => (u.atom.kind === 'mix' ? typed(u.atom) : null)) } : {}),
             clock: null,
             rate: 0,

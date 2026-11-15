@@ -250,7 +250,9 @@ describe('the claves', () => {
     const { hits, diagnostics } = played(hosted(meterText('meter'), 120, byId(id).text, coreKit), 120, 32 * bars);
     expect(diagnostics).toEqual([]);
     expect(hits.map((h) => h.step)).toEqual([...strokes, ...strokes.map((s) => s + 16 * bars)]);
-    expect(new Set(hits.map((h) => [h.note, h.length, h.velocity].join()))).toEqual(new Set(['75,1,90']));
+    // (a stroke a sixteenth; the cinquillo's and the two-bar clave's an eighth, struck from even on their own grid: #531)
+    const length = id === 'cinquillo' || id === 'bossa_nova_clave' ? 2 : 1;
+    expect(new Set(hits.map((h) => [h.note, h.length, h.velocity].join()))).toEqual(new Set([`75,${length},90`]));
   });
 
   it.each(Object.keys(CLAVES).flatMap((clave) => drumBars.map((w) => [clave, w.preset, clave, w] as const)))('%s layers on %s drums in one text', (_, __, clave, w) => {

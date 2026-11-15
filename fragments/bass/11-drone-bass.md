@@ -1,19 +1,11 @@
 ---
 id: drone_bass
-association:
-  - point:
-      sync: 0.35
-      harm: 0.15
-      bite: 0.4
-      mood: 0.1
-    weight: 1
-    facet: bass
 source: seed
 lifted: yggi/cells examples/ghosts.md @ a8de625f
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=&darkAmbient
 &bassline over=&harm step=1m 0
 ```
 

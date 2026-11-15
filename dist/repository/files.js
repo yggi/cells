@@ -1,4 +1,7 @@
 import { readPiece, writePiece } from "../engine/piecefile.js";
+import { parse } from "../engine/parser/index.js";
+import { AXIS_NAMES } from "../engine/style.js";
+import { associationOf, FOLDER_FACETS } from "./declarations.js";
 import { fragmentProblems } from "./fragments.js";
 import { readYaml, yamlValue } from "./yaml.js";
 const ENTRY_KEYS = ['id', 'association'];
@@ -56,7 +59,7 @@ function association(node, problems) {
         return { point, weight: typeof w === 'number' ? w : 0, ...(typeof f === 'string' ? { facet: f } : {}), ...(Object.keys(args).length ? { args } : {}) };
     });
 }
-export function readFragment(markdown) {
+export function readFragment(markdown, options = {}) {
     const lines = markdown.split(/\r?\n/);
     if (lines[0] !== '---')
         return { problems: [{ line: 1, message: 'no frontmatter: a fragment file starts with a line `---`' }] };
@@ -73,9 +76,15 @@ export function readFragment(markdown) {
     else if (typeof idValue !== 'string')
         problems.push({ line: id.line, message: `the id is ${JSON.stringify(yamlValue(id.value))}, not a string: quote it` });
     const assoc = entry(root, 'association');
-    if (!assoc)
-        problems.push({ line: 1, message: 'no association in the frontmatter' });
-    const points = assoc ? association(assoc.value, problems) : [];
+    const declared = associationOf(piece.text, { ...(options.facet === undefined ? {} : { facet: options.facet }), styles: options.styles ?? new Map() });
+    const firstLine = (piece.map?.[0]?.line ?? close + 2) - 1;
+    if (assoc && declared?.explicit)
+        problems.push({ line: assoc.line, message: 'the association is written twice: in the frontmatter and in the text’s declarations (decision 089): keep the declarations' });
+    else if (!assoc && !declared)
+        problems.push({ line: 1, message: 'no association: no declaration in the text (`* from style=…`, a signature with style=) and none in the frontmatter' });
+    if (declared && !assoc)
+        problems.push(...declared.problems.map((message) => ({ line: firstLine, message })));
+    const points = assoc ? association(assoc.value, problems) : (declared?.association ?? []);
     if (problems.length)
         return { problems: problems.sort((a, b) => a.line - b.line) };
     const fragment = { id: idValue, text: piece.text, association: points };
@@ -84,7 +93,7 @@ export function readFragment(markdown) {
         return {
             problems: wrong.map((message) => {
                 const point = /point (\d+)/.exec(message);
-                const line = point
+                const line = point && assoc
                     ? assoc.value.items[Number(point[1]) - 1].line
                     : /no text/.test(message)
                         ? (piece.map?.[0]?.line ?? close + 2) - 1
@@ -95,7 +104,7 @@ export function readFragment(markdown) {
     const meta = Object.fromEntries(Object.entries(piece.frontmatter).filter(([key]) => !ENTRY_KEYS.includes(key)));
     return { fragment, meta, prose: piece.prose, layout: piece.layout };
 }
-export function writeFragment({ fragment, meta, prose, layout }) {
+export function writeFragment({ fragment, meta, prose, layout }, options = {}) {
     const clash = ENTRY_KEYS.filter((key) => Object.hasOwn(meta, key));
     if (clash.length)
         throw new Error(`writeFragment: the metadata has ${clash.join(' and ')}, which the entry writes`);
@@ -104,14 +113,18 @@ export function writeFragment({ fragment, meta, prose, layout }) {
         ...(facet === undefined ? {} : { facet }),
         ...(args === undefined ? {} : { args }),
     }));
-    return writePiece({ frontmatter: { id: fragment.id, association, ...meta }, text: fragment.text, prose, layout });
+    const derived = associationOf(fragment.text, { ...(options.facet === undefined ? {} : { facet: options.facet }), styles: options.styles ?? new Map() });
+    const declares = derived !== null && (derived.explicit || sameAssociation(derived.association, fragment.association));
+    return writePiece({ frontmatter: { id: fragment.id, ...(declares ? {} : { association }), ...meta }, text: fragment.text, prose, layout });
 }
 export function readFragments(files) {
     const read = [];
     const problems = [];
     const firstPath = new Map();
+    const styles = styleNamesIn(files);
     for (const [path, markdown] of Object.entries(files)) {
-        const file = readFragment(markdown);
+        const facet = FOLDER_FACETS[path.split('/')[0]];
+        const file = readFragment(markdown, { ...(facet === undefined || !path.includes('/') ? {} : { facet }), styles });
         if ('problems' in file) {
             problems.push(...file.problems.map((p) => `${path}:${p.line}: ${p.message}`));
             continue;
@@ -126,3 +139,20 @@ export function readFragments(files) {
     }
     return problems.length ? { problems } : { files: read };
 }
+export function styleNamesIn(files) {
+    for (const markdown of Object.values(files)) {
+        if (!/^id: styles$/m.test(markdown.slice(0, markdown.indexOf('\n---', 3) + 1)))
+            continue;
+        const piece = readPiece(markdown);
+        if ('problems' in piece)
+            return new Map();
+        return new Map(parse(piece.text).cells.flatMap((cell) => {
+            const values = cell.braid.kind === 'list' ? cell.braid.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : NaN)) : [];
+            return cell.map?.kind === 'style' && values.length === AXIS_NAMES.length && values.every(Number.isFinite)
+                ? [[cell.name, Object.fromEntries(AXIS_NAMES.map((a, i) => [a, values[i]]))]]
+                : [];
+        }));
+    }
+    return new Map();
+}
+const sameAssociation = (a, b) => JSON.stringify(a) === JSON.stringify(b);

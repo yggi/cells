@@ -1,25 +1,10 @@
 ---
 id: haunted_progression
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.25
-      mood: 0.3
-    weight: 0.4
-    facet: harmony
-  - point:
-      sync: 0.35
-      harm: 0.15
-      bite: 0.5
-      mood: 0.1
-    weight: 0.5
-    facet: harmony
 source: seed
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=(&(map=style sync=.2 harm=.9 bite=.25 mood=.3) * .4 | &(map=style sync=.35 harm=.15 bite=.5 mood=.1) * .5)
 &harm over=&key step=1m cycle=8 [0,2,4] [2,4,6] [3,5,7] [4,6,8] [5,7,9] [1,3,5] [4,6,8] [0,2,4]
 ```
 

@@ -1,31 +1,18 @@
 ---
 id: bell_and_scale
-association:
-  - point:
-      sync: 0.383
-      harm: 0.717
-      bite: 0.25
-      mood: 0.825
-    weight: 1
-    facet: mode
-  - point:
-      sync: 0.8
-      harm: 0.1
-      bite: 0.9
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&key, &bell, &agogo from &tonic
-&key scale(ionian, &tonic) step=1m*7
+&key, &bell, &agogo from &tonic style=&(map=style sync=.383 harm=.717 bite=.25 mood=.825)
+&key, &bell, &agogo from &tonic style=&(map=style sync=.8 harm=.1 bite=.9) facet=rhythm
+&key scale(even(7, 12, 5), &tonic) step=1m*7
 &bell step=&key:pulse &highagogo &highagogo:0:.5 &highagogo:0:.7 &highagogo:0:.5 &highagogo:0:.6 &highagogo:0:.5 &highagogo:0:.7
 &agogo [&bell * .5]
 ```
 
 The West African standard bell pattern, x.x.xx.x.x.x, seven strokes over twelve pulses, has the major scale's intervals, 2 2 1 2 2 2 1 (the example `bell_and_scale`): both are `even(7, 12, 5)`, the diatonic necklace at the ionian's phase (decision 072; `even.test.ts`).
-So one cell is both: `&key` is the major scale, the piece's main key, and stepped seven times a bar, each step as long as its interval, it is the bell's timeline, which `&bell` strikes (`step=&key:pulse`).
+So one cell is both, written as the necklace, `scale(even(7, 12, 5), &tonic)` (decision 093): `&key` is the major scale, the piece's main key, and stepped seven times a bar, each step as long as its interval, it is the bell's timeline, which `&bell` strikes (`step=&key:pulse`).
 The repository's first fragment of two facets, a `mode`, ionian, and a `rhythm`, the bell, each at a place of its own: "the bell is a world-music associated rhythm-facet and a western music associated harmony / scale-facet" (the owner, decision 046).
 
 A stepped key that nothing plays doesn't turn, so a line over it (`over=&key`) reads the major scale as `&key scale(ionian, &tonic)` does, note for note; the tonic is left to the text that uses it, `&tonic`, as the mode fragments leave it (#290).

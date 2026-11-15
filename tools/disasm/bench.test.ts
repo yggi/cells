@@ -17,6 +17,7 @@
 // - **time**: the fold's, in ms.
 // Run: BENCH=out.md [ONLY=fugue,ricercar] [SET=wtc|examples] npx vitest run tools/disasm/bench.test.ts
 // (SET=examples: the examples, each the way a MIDI file of it comes in, as the ratchet takes them; no ground truth)
+import { lawIn } from '../../src/engine/fills';
 import { describe, it } from 'vitest';
 import { appendFileSync, existsSync, readFileSync, readdirSync } from 'node:fs';
 import { readMidi, writeMidi, type Smf } from '../../src/engine/midifile';
@@ -75,7 +76,7 @@ describe.runIf(process.env.BENCH)('the disassembler bench', () => {
       process.env.SET === 'examples'
         ? Object.entries(EXAMPLES).flatMap(([key, p]) => {
             const r = compileSource(p.source);
-            if (!r.ok || [...r.cells.values()].some((c) => c.params.law !== undefined)) return [];
+            if (!r.ok || lawIn(r) !== null) return [];
             return [{ set: 'examples', key, title: key, tonality: undefined, smf: (): Smf => readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf)) }];
           })
         : [];

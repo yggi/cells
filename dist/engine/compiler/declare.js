@@ -107,6 +107,8 @@ function tonics(ctx, decls) {
             ctx.unknownCell(d.tonic.name, d.tonic.span);
             continue;
         }
+        if (t.fill && t.braid.kind === 'blank')
+            continue;
         const tokens = t.braid.kind === 'list' ? t.braid.tokens : [];
         const notes = tokens.every((k) => k.subdivide === 1 && k.atom.kind === 'note' && Number.isInteger(k.atom.value)) ? tokens : [];
         const first = notes[0]?.atom;
@@ -128,6 +130,8 @@ function modes(ctx, decls) {
             ctx.unknownCell(d.braid.mode.name, d.braid.mode.span);
             continue;
         }
+        if (m.fill && m.braid.kind === 'blank')
+            continue;
         const table = !m.step ? modeTable(m) : null;
         if (table) {
             decls.set(name, { ...d, braid: { ...d.braid, steps: table } });
@@ -164,6 +168,8 @@ function evens(ctx, decls) {
                 ctx.unknownCell(x.name, x.span);
                 return null;
             }
+            if (c.fill && c.braid.kind === 'blank')
+                return null;
             const value = c.step ? null : numberCellOf(c);
             if (value === null) {
                 ctx.error(c.step
