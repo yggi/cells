@@ -85,6 +85,7 @@ describe('Migrate: retired forms written as they are now (decision 049, #156)', 
         'axes',
         'parts',
         'main-meter',
+        'one-root',
         'law',
       ]),
     );

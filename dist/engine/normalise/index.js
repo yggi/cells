@@ -6,8 +6,9 @@ import { interfaceNames } from "./names.js";
 import { evenScan, shadowMeter, swingClock, tapClock } from "./meter.js";
 import { migrations } from "../migrate/index.js";
 import { mainMeters } from "../migrate/mainmeter.js";
+import { oneRoot } from "../migrate/oneroot.js";
 export const normalisations = (options = {}) => (source, result) => [
-    ...migrations(options)(source, result).filter((r) => !r.exact && r.rule !== 'main meter'),
+    ...migrations(options)(source, result).filter((r) => !r.exact && r.rule !== 'main meter' && r.rule !== 'one root'),
     ...interfaceNames(source, result),
     ...evenScan(source, result),
     ...swingClock(source, result),
@@ -19,6 +20,7 @@ export const normalisations = (options = {}) => (source, result) => [
     ...libraryTemplates(source, options.library, options.resolve),
     ...libraryCells(source, options.library),
     ...narrowestFroms(source, options.resolve),
+    ...oneRoot(source, result),
     ...mainMeters(source, result),
 ];
 export const normalise = (source, options) => {

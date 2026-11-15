@@ -34,6 +34,7 @@ import { interfaceNames } from './names';
 import { evenScan, shadowMeter, swingClock, tapClock } from './meter';
 import { migrations } from '../migrate';
 import { mainMeters } from '../migrate/mainmeter';
+import { oneRoot } from '../migrate/oneroot';
 
 /** What Normalise reads besides the text: the compile's options, and the library whose lines a piece takes by `use`. */
 export interface NormaliseOptions extends CompileOptions {
@@ -47,7 +48,7 @@ export const normalisations =
     // (but a migration exact only against an older meaning: in a valid text it would change what the text says, #75)
     // (and but naming a bare tap's meter, decision 091: last, after a second clock is folded into the main meter, so a
     // piece left with one meter keeps its taps bare)
-    ...migrations(options)(source, result).filter((r) => !r.exact && r.rule !== 'main meter'),
+    ...migrations(options)(source, result).filter((r) => !r.exact && r.rule !== 'main meter' && r.rule !== 'one root'),
     ...interfaceNames(source, result),
     ...evenScan(source, result),
     ...swingClock(source, result),
@@ -59,6 +60,7 @@ export const normalisations =
     ...libraryTemplates(source, options.library, options.resolve),
     ...libraryCells(source, options.library),
     ...narrowestFroms(source, options.resolve),
+    ...oneRoot(source, result),
     ...mainMeters(source, result),
   ];
 
