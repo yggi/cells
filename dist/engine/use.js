@@ -4,6 +4,7 @@ import { counts } from "./core/desugar.js";
 import { STYLE } from "./style.js";
 import { MOVED, RENAMED_IDS } from "./renamed.js";
 import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
+import { BY_FRAGMENT } from "./fills.js";
 export const FROM_DEPTH = 8;
 const via = (lines, step) => lines.map((l) => ({ ...l, origin: [step, ...(l.origin ?? [])] }));
 const HEAD = /^&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
@@ -507,6 +508,10 @@ function instantiate(from, id, signature, path, text, resolve, say, taken, old, 
         if (byReference.has(p) || !reached.has(p) || overridden.includes(p))
             continue;
         let code = renamed(l.code, names);
+        if (/(^|\s)fill\(\s*\)/.test(code)) {
+            const answer = BY_FRAGMENT.get(id)?.fill(p, 0, {}) ?? '';
+            code = code.replace(/(^|\s)fill\(\s*\)/, `$1fill(${id}, ${p}${main && names.has(main) ? `, &${names.get(main)}` : ''})${answer ? ` ${answer}` : ''}`);
+        }
         if (values.has(p))
             code = inherited(names.get(p), code, asCell(values.get(p), p, own));
         if (heads.includes(p) && from.head.length && one)

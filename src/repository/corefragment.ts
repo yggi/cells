@@ -73,8 +73,14 @@ export function coreFragment(text: string, options: CoreOptions = {}): FragmentC
     const f = readFrom(splitComment(l)[0].trim());
     return !!f && f.kind !== 'signature';
   });
-  for (const n of taken.map((t) => t.replace(/^&/, ''))) if (declLine(core, n) >= 0) core = deleteCell(core, n);
-  core = unreadGone(core, new Set([...interfaceNames].filter((n) => !taken.includes(`&${n}`))));
+  // (a fill the from line reads stays: it is the fragment's own, its plugin's to answer, not one a piece gives, #792)
+  const fills = new Set(
+    parse(text)
+      .cells.filter((d) => d.fill)
+      .map((d) => d.name),
+  );
+  for (const n of taken.map((t) => t.replace(/^&/, ''))) if (!fills.has(n) && declLine(core, n) >= 0) core = deleteCell(core, n);
+  core = unreadGone(core, new Set([...[...interfaceNames].filter((n) => !taken.includes(`&${n}`)), ...fills]));
   // (the signature line as written, where Normalise moved or rewrote it, and the from lines after it)
   const sigLine = text.split('\n').find((l) => readFrom(splitComment(l)[0].trim())?.kind === 'signature')!;
   const lines = core.split('\n').filter((l) => readFrom(splitComment(l)[0].trim()) === undefined);

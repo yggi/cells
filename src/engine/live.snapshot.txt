@@ -35,7 +35,7 @@ harmonograph  live 41d5ef3a6979a9be
 echotape  live 18479fec6fabb64f
 worn  live b52a60e68894bee3
 dtmf  live b4e8e67829ce9cb6
-daytime  live 71ca15c20760da5e
+daytime  live 87b5f0dbf0b81d46
 gate  live 400caf4aa6182ac4
 play-in  live 0da707207ad6f5bd
 midi-out  live 3762805e6305502f
@@ -87,3 +87,8 @@ testtones  live 093f97975cdb1903
 forks  live 8c5730563a39740c
 resonanz  live 5fb6705698717c53
 fiveto12  live ea879c86606b487b
+soundtape  live 329db392528907d7
+testtones  live 1bfd199a67c2cf91
+forks  live af29689676b65173
+resonanz  live 4162b09201a81bcc
+fiveto12  live 47beb6e8efd37a70

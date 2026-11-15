@@ -783,6 +783,8 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   let fifthsShift: number | null = null;
   // the braid is free(…): nothing else may be braid
   let freeBraid = false;
+  // fill(): a plugin-fragment's cell its code writes (decision 085), stamped by the expansion with its fragment, its name and the clock
+  let fill: { fragment: string | null; name: string | null; clock: string | null } | null = null;
   // (where it ends, and its steps as written: a stray ')' or a modifier after it says what it is)
   let freeEnd = -1;
   let freeSteps = '';
@@ -903,6 +905,27 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       freeBraid = true;
       freeEnd = s.i;
       freeSteps = s.text.slice(at + 'free('.length, s.i - 1).trim();
+      continue;
+    }
+    if (word === 'fill' && s.peek() === '(') {
+      // fill() as a fragment writes it; fill(id, name) or fill(id, name, &clock) as a from line's copy has it (use.ts)
+      if (generator || tokens.length) s.fail('A cell has one braid: fill() is all of it', at, word.length);
+      s.i++;
+      const args: string[] = [];
+      for (;;) {
+        s.skipSpace();
+        if (s.peek() === ')') break;
+        const from = s.i;
+        while (s.i < s.text.length && !/[\s,)]/.test(s.text[s.i]!)) s.i++;
+        if (s.i === from) s.fail("fill(…): a fragment's id, a fill's name and the clock it reads, by commas", from, 1);
+        args.push(s.text.slice(from, s.i));
+        s.skipSpace();
+        if (s.peek() === ',') s.i++;
+      }
+      s.i++;
+      if (args.length > 3 || (args[2] !== undefined && !args[2].startsWith('&'))) s.fail('fill(id, name, &clock): at most three, the clock a cell', at, s.i - at);
+      fill = { fragment: args[0] ?? null, name: args[1] ?? null, clock: args[2]?.slice(1) ?? null };
+      // (what follows is its answer, a braid as any: the expansion writes a stream's first lap, a braid fill's whole)
       continue;
     }
     if (word !== null && isGenerator(word) && s.peek() === '(') {
@@ -1106,6 +1129,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     paramClocks,
     ...(playMove ? { playMove } : {}),
     braid,
+    ...(fill ? { fill } : {}),
     frees: [...s.frees],
   };
 }

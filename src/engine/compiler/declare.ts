@@ -135,6 +135,8 @@ function tonics(ctx: Ctx, decls: Map<string, CellDecl>): void {
       ctx.unknownCell(d.tonic.name, d.tonic.span);
       continue;
     }
+    // (a fill not yet answered, a fragment's `&tonic fill()` compiled alone: what its code writes is its tonic, decision 085)
+    if (t.fill && t.braid.kind === 'blank') continue;
     const tokens = t.braid.kind === 'list' ? t.braid.tokens : [];
     const notes = tokens.every((k) => k.subdivide === 1 && k.atom.kind === 'note' && Number.isInteger(k.atom.value)) ? tokens : [];
     const first = notes[0]?.atom;
@@ -168,9 +170,17 @@ function modes(ctx: Ctx, decls: Map<string, CellDecl>): void {
     }
     // (a mode written as its table, decision 069 §6's keys, the owner's (a): its steps, `scan(2 1 2 2 1 2 2)` or
     // `0 2 3 5 7 8 10`, the tonic still the cell's; the core writes a key so, the mode out and the tonic a cell read)
+    // (a fill not yet answered, a fragment's `&mode fill()` compiled alone: what its code writes is its mode, decision 085)
+    if (m.fill && m.braid.kind === 'blank') continue;
     const table = !m.step ? modeTable(m) : null;
     if (table) {
       decls.set(name, { ...d, braid: { ...d.braid, steps: table } });
+      continue;
+    }
+    if (m.step && m.braid.kind === 'list') {
+      // (a stepped mode, its phase at each bar line: as scale(even(7, 12, &mode), …), which it is the sugar of, decision 093)
+      const first = steppedPhase(ctx, d, m, 7, 12, d.braid.mode.span);
+      if (first !== null) decls.set(name, { ...d, braid: { kind: 'scan', span: d.braid.span, steps: diatonicSteps(first), phaseCell: { name: m.name, k: 7, n: 12 } } });
       continue;
     }
     const tokens = m.braid.kind === 'list' ? m.braid.tokens : [];
@@ -207,6 +217,8 @@ function evens(ctx: Ctx, decls: Map<string, CellDecl>): void {
         ctx.unknownCell(x.name, x.span);
         return null;
       }
+      // (a fill not answered yet, a fragment read alone: its plugin answers it in a piece, #792)
+      if (c.fill && c.braid.kind === 'blank') return null;
       const value = c.step ? null : numberCellOf(c);
       if (value === null) {
         ctx.error(
@@ -220,6 +232,19 @@ function evens(ctx: Ctx, decls: Map<string, CellDecl>): void {
       const t = c.braid.kind === 'list' ? c.braid.tokens[0]!.atom : null;
       return { value, word: t?.kind === 'note' && t.mode === true, at: x.span };
     };
+    // (a stepped phase, the next rung (#531, 081's rule): its phase in force at each bar line, the scale and its key turned to it)
+    const steppedCell = typeof even.phase !== 'number' ? decls.get(even.phase.name) : undefined;
+    if (steppedCell?.step) {
+      const [k, n] = [read(even.k, 'k'), read(even.n, 'n')];
+      if (!k || !n) continue;
+      const first = steppedPhase(ctx, d, steppedCell, k.value, n.value, (even.phase as Ref).span);
+      if (first !== null)
+        decls.set(name, {
+          ...d,
+          braid: { kind: 'scan', span, steps: evenSteps(k.value, n.value, first), phaseCell: { name: steppedCell.name, k: k.value, n: n.value } },
+        });
+      continue;
+    }
     const [k, n, phase] = [read(even.k, 'k'), read(even.n, 'n'), read(even.phase, 'phase')];
     if (!k || !n || !phase) continue;
     const word = [k, n].find((a) => a.word) ?? (phase.word && !(k.value === 7 && n.value === 12) ? phase : null);
@@ -239,6 +264,46 @@ function evens(ctx: Ctx, decls: Map<string, CellDecl>): void {
     }
     decls.set(name, { ...d, braid: { kind: 'scan', span, steps: evenSteps(k.value, n.value, phase.value) } });
   }
+}
+
+/**
+ * A scale's phase read from a stepped cell (#531's second rung, decision 093 §5): each step a phase of the necklace, a
+ * number from 0 to k − 1 or, of the diatonic even(7, 12), a mode's name; read at each bar line and held through the bar
+ * (081's rule), the scale turned to the mode in force and its key turned back so the tonic stays (`shiftsAt`). Only in a
+ * key, `scale(even(k, 12, &mode), …)` or `scale(&mode, …)`: a necklace over the twelve, whose modes are each other turned.
+ * The first step's phase, or null where it said why not.
+ */
+function steppedPhase(ctx: Ctx, d: CellDecl, c: CellDecl, k: number, n: number, at: Span): number | null {
+  if (!d.over?.name.startsWith(SCALE_KEY) || n !== 12) {
+    ctx.error(
+      n !== 12
+        ? `&${c.name} steps even(${k}, ${n}, …)'s phase: a stepped phase is a key's, a necklace over the twelve (even(k, 12, &${c.name}))`
+        : `&${c.name} steps even(…)'s phase: a stepped phase is read in a key, scale(even(${k}, ${n}, &${c.name}), &tonic)`,
+      at,
+    );
+    return null;
+  }
+  const atoms = c.braid.kind === 'list' ? c.braid.tokens.flatMap((t) => leaves(t.atom)) : [];
+  const phases: number[] = [];
+  for (const a of atoms) {
+    if (a.kind === 'rest') continue;
+    const problem =
+      a.kind !== 'note' || a.pitched || a.alter !== 0 || !Number.isInteger(a.value)
+        ? `&${c.name} steps a scale's phase: each step a number from 0 to ${k - 1}${k === 7 ? ' or a mode by name' : ''} (&${c.name} step=1m 3 5)`
+        : a.mode && k !== 7
+          ? `even(${k}, ${n}, &${c.name}): a mode's name is a phase of the diatonic, even(7, 12); here write its number (${a.value})`
+          : evenProblem(k, n, a.value);
+    if (problem) {
+      ctx.error(problem, c.span);
+      return null;
+    }
+    phases.push((a as { value: number }).value);
+  }
+  if (!phases.length) {
+    ctx.error(`&${c.name} steps a scale's phase and holds none: write one a step (&${c.name} step=1m 3 5)`, c.span);
+    return null;
+  }
+  return phases[0]!;
 }
 
 /**

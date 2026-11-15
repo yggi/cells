@@ -1,0 +1,3 @@
+### Added
+
+- A key's mode may step (decision 093 §5, #531's second rung): `&mode step=1m major dorian` in `scale(&mode, &tonic)` or `scale(even(7, 12, &mode), &tonic)`. It is read at each bar line of the main meter and held through the bar (081's rule), and the tonic stays: the scale is turned to the mode in force and its key turned back. Any necklace over the twelve steps the same way (`scale(even(5, 12, &p), C)`, `&p step=1m 0 3`), and a stepped tonic moves the key as before. It was an error ("a stepped mode is not yet a form"); a stepped phase outside a key, or over a necklace not of the twelve, still is. A resolved cell may carry `phase` (the cell, the necklace, its key), and a parsed scan braid `phaseCell`.

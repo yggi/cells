@@ -107,6 +107,8 @@ function tonics(ctx, decls) {
             ctx.unknownCell(d.tonic.name, d.tonic.span);
             continue;
         }
+        if (t.fill && t.braid.kind === 'blank')
+            continue;
         const tokens = t.braid.kind === 'list' ? t.braid.tokens : [];
         const notes = tokens.every((k) => k.subdivide === 1 && k.atom.kind === 'note' && Number.isInteger(k.atom.value)) ? tokens : [];
         const first = notes[0]?.atom;
@@ -128,9 +130,17 @@ function modes(ctx, decls) {
             ctx.unknownCell(d.braid.mode.name, d.braid.mode.span);
             continue;
         }
+        if (m.fill && m.braid.kind === 'blank')
+            continue;
         const table = !m.step ? modeTable(m) : null;
         if (table) {
             decls.set(name, { ...d, braid: { ...d.braid, steps: table } });
+            continue;
+        }
+        if (m.step && m.braid.kind === 'list') {
+            const first = steppedPhase(ctx, d, m, 7, 12, d.braid.mode.span);
+            if (first !== null)
+                decls.set(name, { ...d, braid: { kind: 'scan', span: d.braid.span, steps: diatonicSteps(first), phaseCell: { name: m.name, k: 7, n: 12 } } });
             continue;
         }
         const tokens = m.braid.kind === 'list' ? m.braid.tokens : [];
@@ -158,6 +168,8 @@ function evens(ctx, decls) {
                 ctx.unknownCell(x.name, x.span);
                 return null;
             }
+            if (c.fill && c.braid.kind === 'blank')
+                return null;
             const value = c.step ? null : numberCellOf(c);
             if (value === null) {
                 ctx.error(c.step
@@ -168,6 +180,19 @@ function evens(ctx, decls) {
             const t = c.braid.kind === 'list' ? c.braid.tokens[0].atom : null;
             return { value, word: t?.kind === 'note' && t.mode === true, at: x.span };
         };
+        const steppedCell = typeof even.phase !== 'number' ? decls.get(even.phase.name) : undefined;
+        if (steppedCell?.step) {
+            const [k, n] = [read(even.k, 'k'), read(even.n, 'n')];
+            if (!k || !n)
+                continue;
+            const first = steppedPhase(ctx, d, steppedCell, k.value, n.value, even.phase.span);
+            if (first !== null)
+                decls.set(name, {
+                    ...d,
+                    braid: { kind: 'scan', span, steps: evenSteps(k.value, n.value, first), phaseCell: { name: steppedCell.name, k: k.value, n: n.value } },
+                });
+            continue;
+        }
         const [k, n, phase] = [read(even.k, 'k'), read(even.n, 'n'), read(even.phase, 'phase')];
         if (!k || !n || !phase)
             continue;
@@ -185,6 +210,35 @@ function evens(ctx, decls) {
         }
         decls.set(name, { ...d, braid: { kind: 'scan', span, steps: evenSteps(k.value, n.value, phase.value) } });
     }
+}
+function steppedPhase(ctx, d, c, k, n, at) {
+    if (!d.over?.name.startsWith(SCALE_KEY) || n !== 12) {
+        ctx.error(n !== 12
+            ? `&${c.name} steps even(${k}, ${n}, …)'s phase: a stepped phase is a key's, a necklace over the twelve (even(k, 12, &${c.name}))`
+            : `&${c.name} steps even(…)'s phase: a stepped phase is read in a key, scale(even(${k}, ${n}, &${c.name}), &tonic)`, at);
+        return null;
+    }
+    const atoms = c.braid.kind === 'list' ? c.braid.tokens.flatMap((t) => leaves(t.atom)) : [];
+    const phases = [];
+    for (const a of atoms) {
+        if (a.kind === 'rest')
+            continue;
+        const problem = a.kind !== 'note' || a.pitched || a.alter !== 0 || !Number.isInteger(a.value)
+            ? `&${c.name} steps a scale's phase: each step a number from 0 to ${k - 1}${k === 7 ? ' or a mode by name' : ''} (&${c.name} step=1m 3 5)`
+            : a.mode && k !== 7
+                ? `even(${k}, ${n}, &${c.name}): a mode's name is a phase of the diatonic, even(7, 12); here write its number (${a.value})`
+                : evenProblem(k, n, a.value);
+        if (problem) {
+            ctx.error(problem, c.span);
+            return null;
+        }
+        phases.push(a.value);
+    }
+    if (!phases.length) {
+        ctx.error(`&${c.name} steps a scale's phase and holds none: write one a step (&${c.name} step=1m 3 5)`, c.span);
+        return null;
+    }
+    return phases[0];
 }
 function modeTable(m) {
     if (m.braid.kind === 'scan' && !m.braid.mode)

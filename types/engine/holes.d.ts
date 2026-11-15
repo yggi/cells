@@ -4,6 +4,6 @@
  * version as a re-export for a frontend that imports it (Cell studio's `pluginView.ts` imports `lawOf`); it goes at the
  * next. Import from `@yggi/cells/engine/fills`.
  */
-export { BUILT_IN, filledAt, lawOf, marksOf, unitOf, type Fill, type PluginFragment } from './fills';
+export { BUILT_IN, lawOf, marksOf, unitOf, type Fill, type PluginFragment } from './fills';
 /** @deprecated A fill (`Fill`, `engine/fills.ts`). */
 export type { Fill as Hole } from './fills';

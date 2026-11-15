@@ -19,7 +19,7 @@ export const KINDS = [
   'role',
   'style',
   'scope',
-  'law',
+  'fill',
   'tape',
   'head',
   'sum',
@@ -126,10 +126,10 @@ export const KIND_RULES: readonly KindRule[] = [
     holds: (c) => has(c, 'scope'),
   },
   {
-    kind: 'law',
-    is: 'law=: its notes are computed.',
-    example: ['&day scan(1!24) loop=1d', '&cycle law=fiveto12 over=&day step=84bpm'],
-    holds: (c) => has(c, 'law'),
+    kind: 'fill',
+    is: 'fill(…): a plugin-fragment’s code writes its braid (decision 085).',
+    example: ['&day scan(1!24) loop=1d', '&cycle_mode fill(five_to_twelve, mode, &day) ionian'],
+    holds: (c) => c.fill !== undefined,
   },
   {
     kind: 'tape',

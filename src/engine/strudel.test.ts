@@ -186,6 +186,17 @@ describe('x(k,n,r): a euclid on a step, as Strudel’s bd(3,8,2)', () => {
     expect(laps('0(3,8,2)', 1)[0].map((x) => x[0])).toEqual(at);
   });
 
+  it('x(even(k, n, p)): even(k, n)’s places at its phase p, each hit 1/n of the step (decision 093 §6)', () => {
+    // (the bossa nova clave on a step: even(5, 16, 2), the places 0 3 6 10 13 of sixteen; Strudel's turn of it is 10)
+    expect(laps('0(even(5,16,2))', 1)[0]).toEqual([0, 3, 6, 10, 13].map((j) => [j / 16, 1 / 16, 0]));
+    expect(laps('0(even(5, 16, 2))', 1)).toEqual(laps('0(5,16,10)', 1));
+    // (its phase is its mode, each phase one place moved: even(3, 8) is 0 2 5, short-long-long; phase 2 the tresillo's 0 3 6)
+    expect(laps('0(even(3,8))', 1)[0]!.map((x) => x[0])).toEqual([0, 2, 5].map((j) => j / 8));
+    expect(laps('0(even(3,8,2))', 1)[0]!.map((x) => x[0])).toEqual([0, 3, 6].map((j) => j / 8));
+    for (const bad of ['0(even(5,16,5))', '0(even(9,8))', '0(even(5))'])
+      expect(compileSource(`&t step=1 ${bad}\n&v s=sine loop=C4\n&out map=sample [&t * &v]`).diagnostics[0]?.message, bad).toMatch(/x\(even\(k, n, p\)\)/);
+  });
+
   it('plays what the step holds where each hit begins: a subsequence, an alternation, a chord', () => {
     expect(notes('[0 2](3,8)', 1)).toEqual(['0 0 2']);
     expect(notes('<0 2>(3,8)', 2)).toEqual(['0 0 0', '2 2 2']);

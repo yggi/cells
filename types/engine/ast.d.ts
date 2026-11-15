@@ -147,8 +147,11 @@ export type Atom = {
 export interface Euclid {
     readonly k: number;
     readonly n: number;
+    /** The turn: Strudel's rotation; with `even`, even's phase. */
     readonly r: number;
     readonly hits: readonly number[];
+    /** `x(even(k, n, p))` (decision 093 §6): the hits even(k, n, p)'s places, `r` its phase. */
+    readonly even?: true;
 }
 /** An expression in a mix chord, as written: sums and products of cells and numbers. */
 export type Expr = {
@@ -251,6 +254,15 @@ export type Braid = {
      * Compile sets the steps (declare.ts); until then they are a placeholder.
      */
     readonly even?: EvenArgs;
+    /**
+     * A key's phase read from a stepped cell (#531, decision 093 §5): compile set `steps` to its first step's mode; the
+     * clocks turn the scale and its key to the phase in force at each bar line (`shiftsAt`).
+     */
+    readonly phaseCell?: {
+        readonly name: string;
+        readonly k: number;
+        readonly n: number;
+    };
 }
 /** One cycle of a waveform in n steps, −1 … 1, as Strudel's bipolar signals sampled at each step's start: sin(n) sin(2πi/n), saw(n) a ramp up, tri(n) up then down, square(n) −1 then 1. */
  | {
@@ -438,6 +450,17 @@ export interface CellDecl {
     readonly span: Span;
     /** Numbers left free for the performer (sliders). */
     readonly frees?: readonly FreeSpec[];
+    /**
+     * A fill (decision 085): a cell a plugin-fragment's code writes, written `fill()` in the fragment. A from line's copy
+     * says whose and which, `fill(five_to_twelve, notes, &day)`: its fragment, its fill's name there, and the clock the
+     * call site gave, then its answer as its braid (a stream's first lap, `ionian`): every reader sees a braid; realize plays a
+     * stream's laps one by one (#792).
+     */
+    readonly fill?: {
+        readonly fragment: string | null;
+        readonly name: string | null;
+        readonly clock: string | null;
+    };
     /** An unnamed cell, written where it's used (`&( … )`): its body as written. */
     readonly lambda?: string;
     readonly over: Ref | null;
