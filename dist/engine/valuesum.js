@@ -8,6 +8,8 @@ function itemOf(e, sign) {
     if (e.k === 'ref')
         return e.ref.pick || e.level !== undefined ? null : { term: { cell: e.ref.name, weight: sign } };
     if (e.k === 'prod') {
+        if (e.factors.every((f) => f.k === 'num'))
+            return { constant: e.factors.reduce((w, f) => (f.k === 'num' ? w * f.value : w), sign) };
         const refs = e.factors.filter((f) => f.k === 'ref');
         if (refs.length !== 1 || refs[0].k !== 'ref' || refs[0].ref.pick || !e.factors.every((f) => f.k === 'ref' || f.k === 'num'))
             return null;
@@ -16,6 +18,7 @@ function itemOf(e, sign) {
     }
     return null;
 }
+const names = (e) => (e.k === 'ref' ? true : e.k === 'sum' ? e.items.some((it) => names(it.e)) : e.k === 'prod' ? e.factors.some(names) : false);
 const numeric = (atom) => atom.kind === 'note' || atom.kind === 'rest' || atom.kind === 'choice' || (atom.kind === 'seq' && atom.layers.every((l) => l.every((t) => numeric(t.atom))));
 export function isValueLine(name, decls, seen = new Set()) {
     const d = decls.get(name);
@@ -31,7 +34,8 @@ export function valueSumOf(name, decls, seen = new Set()) {
     const exprs = chordOf(decls.get(name));
     if (!exprs || exprs.length !== 1 || seen.has(name))
         return null;
-    const e = inlineNumbers(exprs[0], decls);
+    const written = exprs[0];
+    const e = inlineNumbers(written, decls);
     const items = e.k === 'sum' ? e.items : [{ e, sign: 1 }];
     const terms = [];
     let constant = 0;
@@ -44,7 +48,9 @@ export function valueSumOf(name, decls, seen = new Set()) {
         else
             constant += x.constant;
     }
-    if (!terms.length || (terms.length === 1 && terms[0].weight === 1 && constant === 0))
+    if (!terms.length)
+        return names(written) ? { terms, constant } : null;
+    if (terms.length === 1 && terms[0].weight === 1 && constant === 0)
         return null;
     const inner = new Set([...seen, name]);
     return terms.every((t) => isValueLine(t.cell, decls, inner)) ? { terms, constant } : null;

@@ -4,11 +4,12 @@ source: seed
 ---
 
 ```cells
-&drums, &drumsOut from (&kit) &drumlines style=(&(map=style sync=.3 harm=.45 bite=.55) | &(map=style sync=.12 harm=0 bite=1) | &(map=style sync=.35 harm=.55 bite=.65) | &(map=style sync=.05 harm=.3 bite=0) | &(map=style sync=.5 harm=.75 bite=.35) | &(map=style sync=1 harm=.12 bite=.85) | &(map=style sync=.75 harm=.85 bite=.45) | &(map=style sync=.35 harm=1 bite=.3))
+&drums, &drumsOut from (&kit, &drumsDrive) &drumlines style=(&(map=style sync=.3 harm=.45 bite=.55) | &(map=style sync=.12 harm=0 bite=1) | &(map=style sync=.35 harm=.55 bite=.65) | &(map=style sync=.05 harm=.3 bite=0) | &(map=style sync=.5 harm=.75 bite=.35) | &(map=style sync=1 harm=.12 bite=.85) | &(map=style sync=.75 harm=.85 bite=.45) | &(map=style sync=.35 harm=1 bite=.3))
 &bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit
 &kit &bd &rim &sd &cp &lt &hh &ph &mt &oh &ht &cr &rd &claves
-&drumsOut play=&drumlines &kit
+&drumsOut play=&drumlines level=&drumsDrive*&drumsDrive &kit
 &drums map=role &drumsOut
+&drumsDrive map=amp 1
 ```
 
 The drummer (decisions 058 and 061, #287): a gate, `&drumsOut` (named as Jambot's section text names its gates), whose role is `drums` (`&drums map=role &drumsOut`), playing the part `&drumlines` on 13 of the General MIDI kit's voices, which it takes by name.
@@ -19,4 +20,6 @@ Its kit is the drummer's own set-up of those 13 voices, the kick, the side stick
 
 Associated as the facet `performer` at each of Jambot's eight presets' points (`styles`), at weight 1: every preset's section text plays its drums the same way, on these 13 voices on channel 10, so the eight share this one drummer, and what a preset's drums sound like is its lines, not its player.
 
-**Its signature** (decision 065): `&drums, &drumsOut from (&kit) &drumlines`. `&drums from drums_performer &groove` takes a copy of it, `&drumlines` its main argument; `&kit` an optional parameter, its line its default (`"drums_performer"(kit=…)`).
+**Its signature** (decision 065): `&drums, &drumsOut from (&kit, &drumsDrive) &drumlines`. `&drums from drums_performer &groove` takes a copy of it, `&drumlines` its main argument; `&kit` an optional parameter, its line its default (`"drums_performer"(kit=…)`).
+
+**Its drive** (decision 096): `&drumsDrive`, an optional parameter, its default 1, a factor of every hit on the velocity's scale: the gate's level reads it twice (`level=…*&drumsDrive*&drumsDrive`), since MIDI out sends a level's square root as its velocity (`velocityOf`). The band passes it, a sum of the score's `&intensity` (`fragments/bands/01-band.md`), so a section's intensity scales every hit as Jambot's dynamics scale it.

@@ -61,9 +61,9 @@ describe('the cells counted by kind, over every example (#782)', () => {
     expect(sum).toMatchInlineSnapshot(`
       {
         "card": 91,
-        "envelope": 488,
+        "envelope": 496,
         "gate": 20,
-        "line": 848,
+        "line": 852,
         "meter": 88,
         "mix": 29,
         "note": 196,

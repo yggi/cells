@@ -97,6 +97,34 @@ describe('the default band (#391)', () => {
     expect(theirs[0]).toBeLessThan(own[0]!);
   });
 
+  it('drives the drums, the bass and the stab by the score’s &intensity, Jambot’s dynamics; a score that writes none plays as written (decision 096)', () => {
+    const style = '&(map=style sync=.5 harm=.5 bite=.5 mood=.5)';
+    /** Each voice's velocities, over the first two seconds. */
+    const velocities = (more: readonly string[]) => {
+      const by = new Map<string, Set<number>>();
+      for (const n of sent(score(style, undefined, more))) {
+        const [, , velocity, , , voice] = n.split(' ');
+        by.set(voice!, (by.get(voice!) ?? new Set()).add(Number(velocity)));
+      }
+      return Object.fromEntries([...by].map(([v, s]) => [v, [...s].sort((a, b) => a - b)]));
+    };
+    const written = velocities([]);
+    // (an intensity of 1 drives nothing: the band's own, so a score that passes one at 1 plays as one that passes none)
+    expect(velocities(['&intensity 1'])).toEqual(written);
+    expect(score(style, undefined, ['&intensity 1']).split('\n').at(-1)).toMatch(/intensity=&intensity\)$/);
+    // (a breakdown at a song of .7: .25, the drums at .65 + .35 × .25, the bass at .75 + .25 × .25, the stab at 7/9 + 2/9 × .25)
+    const quiet = velocities(['&song .7', '&intensity [&song + -.45]']);
+    const scaled = (voice: string, drive: number) => written[voice]!.map((v) => Math.round(v * drive));
+    for (const [voice, drive] of [
+      ['bd', 0.65 + 0.35 * 0.25],
+      ['bassV', 0.75 + 0.25 * 0.25],
+      ['keysV', 0.7778 + 0.2222 * 0.25],
+    ] as const)
+      for (const [i, v] of quiet[voice]!.entries()) expect(Math.abs(v - scaled(voice, drive)[i]!), voice).toBeLessThanOrEqual(1);
+    // (the pad and the lead are not driven: Jambot's pad reads the bite beside the energy, its lead not the energy at all)
+    expect([quiet['padV'], quiet['leadV']]).toEqual([written['padV'], written['leadV']]);
+  });
+
   it('rests a part the score doesn’t pass: its default a tacet, said nothing of (decision 063 §4, declared since #560)', () => {
     const four = { drumlines: '&kick', bassline: '0 ~ 2 ~', padline: '[0,2,4]@4', stabline: '~ [0,2] ~ [0,2]' };
     const rests = compileSource(score('&(map=style sync=.5 harm=.5 bite=.5 mood=.5)', four), undefined, { resolve: resolveSeed });

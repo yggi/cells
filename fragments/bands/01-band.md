@@ -4,12 +4,12 @@ source: seed
 ---
 
 ```cells
-&band, &drums, &bass, &pad, &stab, &lead, &drumsOut, &bassOut, &padOut, &stabOut, &leadOut, &bassV, &padV, &keysV, &leadV, &sound, &midi from (&drumlines, &bassline, &padline, &stabline, &leadline, &bassLevel, &padLevel, &stabLevel, &leadLevel, &style) style=&(map=style sync=.5 harm=.5 bite=.5)
+&band, &drums, &bass, &pad, &stab, &lead, &drumsOut, &bassOut, &padOut, &stabOut, &leadOut, &bassV, &padV, &keysV, &leadV, &sound, &midi from (&drumlines, &bassline, &padline, &stabline, &leadline, &bassLevel, &padLevel, &stabLevel, &leadLevel, &style, &intensity) style=&(map=style sync=.5 harm=.5 bite=.5)
 &band &drums &bass &pad &stab &lead
-&drums, &drumsOut from drums_performer &drumlines
-&bass, &bassOut from bass_performer(bassLevel=&bassLevel, bassV=&bassV) &bassline
+&drums, &drumsOut from drums_performer(drumsDrive=&drumsDrive) &drumlines
+&bass, &bassOut from bass_performer(bassLevel=&bassLevel, bassV=&bassV, bassDrive=&bassDrive) &bassline
 &pad, &padOut from pad_performer(padLevel=&padLevel, padV=&padV) &padline
-&stab, &stabOut from stab_performer(stabLevel=&stabLevel, keysV=&keysV) &stabline
+&stab, &stabOut from stab_performer(stabLevel=&stabLevel, keysV=&keysV, stabDrive=&stabDrive) &stabline
 &lead, &leadOut from lead_performer(leadLevel=&leadLevel, leadV=&leadV) &leadline
 &bassV from bass(style=&style)
 &padV from pad(style=&style)
@@ -19,6 +19,9 @@ source: seed
 &padLevel map=amp .8
 &stabLevel map=amp .8
 &leadLevel map=amp .8
+&drumsDrive [&intensity * .35 + .65]
+&bassDrive [&intensity * .25 + .75]
+&stabDrive [&intensity * .2222 + .7778]
 &sound map=sample [&drumsOut, &bassOut * .8, &padOut * .35, &stabOut * .4, &leadOut * .45]
 &midi map=midi &leadOut &bassOut [&padOut, &stabOut] ~!6 &drumsOut
 &drumlines step=1m ~
@@ -27,15 +30,18 @@ source: seed
 &stabline step=1m ~
 &leadline step=1m ~
 &style map=style sync=.5 harm=.5 bite=.5 mood=.5
+&intensity 1
 ```
 
 The default band (decision 063 §1, #391): who plays a score, on what, and where it goes out. A score ends in `* from band(…)`, the same line on every client, and each client's resolver answers `band` with its own; this is the one cells' library holds.
 
-**Its signature** (decision 065; decision 075, #560): its heads, `&band` and the roles, the gates, the voices and the cards, keep their names in the score; its inputs are optional parameters, `(&drumlines, &bassline, &padline, &stabline, &leadline, &bassLevel, &padLevel, &stabLevel, &leadLevel, &style)`. A score passes what it writes, `* from band(bassline=&bassline, …, style=&style)` (`bandLine(score)`, `src/repository/band.ts`). A part it doesn't pass is a tacet, `&bassline step=1m ~`, and says nothing; a level it doesn't pass is .8; a style it doesn't pass is the centre of style space, `&style map=style sync=.5 harm=.5 bite=.5 mood=.5`. A score that took them by name before passes them now, and Migrate writes it.
+**Its signature** (decision 065; decision 075, #560): its heads, `&band` and the roles, the gates, the voices and the cards, keep their names in the score; its inputs are optional parameters, `(&drumlines, &bassline, &padline, &stabline, &leadline, &bassLevel, &padLevel, &stabLevel, &leadLevel, &style, &intensity)`. A score passes what it writes, `* from band(bassline=&bassline, …, style=&style)` (`bandLine(score)`, `src/repository/band.ts`). A part it doesn't pass is a tacet, `&bassline step=1m ~`, and says nothing; a level it doesn't pass is .8; a style it doesn't pass is the centre of style space, `&style map=style sync=.5 harm=.5 bite=.5 mood=.5`. A score that took them by name before passes them now, and Migrate writes it.
 
 **Its head, `&band`,** is decision 061's table of performers: the five role cells, `&drums`, `&bass`, `&pad`, `&stab` and `&lead`, so a score's selector over the band (`&form over=&band step=1m …`) reads the client's players. Who plays when is the score's; who they are, the band's.
 
 **The performers** are the seed library's five (decisions 058 and 061), each a copy taken by its signature (decision 065): its role and its gate, `&bass, &bassOut from bass_performer(bassLevel=&bassLevel, bassV=&bassV) &bassline`. The part each plays is the score's, passed as the band's argument (`bassline=&bassline`), and so are its levels (`bassLevel=&bassLevel`). A level the score doesn't pass is the band's own, one level of .8, the performers' default. A part it doesn't pass rests (decision 063 §4).
+
+**Its intensity** (decision 096): `&intensity`, an optional parameter, the section's from 0 to 1 (the song's plus its kind's offset, a sum the score writes: `&intensity [&song + -.45]` for a breakdown), its own 1. The band drives three of its performers by it, each a sum on the velocity's scale, Jambot's dynamics lifted (yggi/jambot `packages/engine/src/dynamics.ts` @ 602cb26, `baseVelocityOf`): the drums `[&intensity * .35 + .65]`, the bass `[&intensity * .25 + .75]`, the stab `[&intensity * .2222 + .7778]` (its 70 + 20e over 90). The pad's velocity reads the bite beside the energy, and the lead's no energy, so neither is driven. At its own 1 every drive is 1: a score that writes no intensity plays its levels as written.
 
 **The instruments** are the performers' own (`bass`, `keys`, `pad`, `lead`, and 13 of `gm_kit`'s voices), each with a sound. The band takes each pitched one itself, `&bassV from bass(style=&style)`, and passes it to its performer (`bassV=&bassV`), so a score's own `&bassV` is the one played, and `bandAt` replaces the band's line for it. They read the score's style, `&style` (decision 063 §3), passed by the band, which declares it (#560), where Jambot's `timbreOf` reads it (yggi/jambot `packages/engine/src/sound.ts` @ 227aa74): the bass's cutoff opens with bite; the lead blends from a triangle to a square as bite rises, its cutoff opening with it; the chords' attack and release shorten as bite rises (decision 066, #411). The section's style is the composer's: the score writes it and passes it; the band's own `&style` is only its default, the centre.
 
