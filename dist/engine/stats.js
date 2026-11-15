@@ -1,3 +1,4 @@
+import { kindsOf } from "./kinds.js";
 export const CELL_KINDS = ['line', 'table', 'meter', 'voice', 'envelope', 'gate', 'mix', 'card', 'note'];
 export function spread(xs) {
     if (!xs.length)
@@ -11,32 +12,48 @@ export function spread(xs) {
         median: s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2,
     };
 }
-function kindOf(c, meters, tables) {
-    if (c.sink || c.map?.kind === 'midi')
-        return 'card';
-    if (c.mix)
-        return 'mix';
-    if (c.gate)
-        return 'gate';
-    if (c.voice)
-        return 'voice';
-    if (meters.has(c.name))
-        return 'meter';
-    if (tables.has(c.name))
-        return 'table';
-    if (c.map && ['adsr', 'amp', 'lin', 'db'].includes(c.map.kind))
-        return 'envelope';
-    if (c.note)
-        return 'note';
-    return 'line';
-}
+const COUNTED = {
+    note: 'note',
+    card: 'card',
+    'midi card': 'card',
+    gate: 'gate',
+    role: 'line',
+    style: 'line',
+    scope: 'line',
+    law: 'line',
+    tape: 'line',
+    head: 'line',
+    sum: 'line',
+    phrase: 'mix',
+    mix: 'mix',
+    resonator: 'voice',
+    wave: 'voice',
+    voice: 'voice',
+    kit: 'line',
+    band: 'line',
+    meter: 'meter',
+    tempo: 'line',
+    groove: 'line',
+    grid: 'line',
+    envelope: 'envelope',
+    ramp: 'envelope',
+    volume: 'envelope',
+    sections: 'line',
+    selector: 'line',
+    number: 'line',
+    line: 'line',
+    table: 'line',
+    blank: 'line',
+    steps: 'line',
+};
+const kindOf = (kind, readThrough) => (COUNTED[kind] === 'line' && readThrough ? 'table' : COUNTED[kind]);
 export function pieceStats(result, graph, text) {
     const written = [...result.cells.values()].filter((c) => !c.implicit && c.name !== result.builtinCard);
-    const meters = new Set(graph.nodes.flatMap((n) => (n.kind === 'cell' && n.isMeter ? [n.cell.name] : [])));
     const tables = new Set(written.flatMap((c) => (c.over ? [c.over] : [])));
+    const kind = kindsOf(result);
     const kinds = Object.fromEntries(CELL_KINDS.map((k) => [k, 0]));
     for (const c of written)
-        kinds[kindOf(c, meters, tables)]++;
+        kinds[kindOf(kind(c.name), tables.has(c.name))]++;
     const braids = written.filter((c) => c.braid === 'list' && !c.mix);
     const perCell = braids.map((c) => c.units.length);
     const splicedIn = written.flatMap((c) => [...c.children]);
