@@ -9,6 +9,8 @@ import { codeShifts, DEFAULT_ENV, type CompileOptions, type CompileResult, type 
 import { readStyles, type Scope } from './styles';
 import { expansion, hasFrom, signatureHeads } from './use';
 import { BUILT_IN } from './fills';
+import { laws } from './migrate/laws';
+import { splitComment } from './edit';
 
 /** A parsed piece, compiled: the phases are in compiler/ (index.ts says their order). */
 function compile(parsed: ParseResult, env: Env = DEFAULT_ENV, used?: ReadonlySet<string>): CompileResult {
@@ -40,20 +42,40 @@ function scopeOf(result: CompileResult): Scope | null {
  * (`options.locked`): what compiles is the expansion (`use.ts`), and what a used line says is said on the `from` line it
  * came through.
  */
-export function compileSource(source: string, env: Env = DEFAULT_ENV, options: CompileOptions = {}): CompileResult {
+export function compileSource(written: string, env: Env = DEFAULT_ENV, options: CompileOptions = {}): CompileResult {
+  // (law= written by a piece, the old way: read as the from line Migrate writes for it, and said, #792)
+  const old = laws(written);
+  const source = old.reduce((text, r) => r.apply(text), written);
+  const said: Diagnostic[] = old.map((r) => {
+    const line = Number(r.id.slice('law:'.length));
+    return {
+      severity: 'warning',
+      message: `${r.title.split(':')[0]}: write ${r.after}, the law taken from its clock (decision 085; Migrate rewrites it)`,
+      span: { line, col: 1, len: Math.max(1, (written.split('\n')[line - 1] ?? '').length) },
+    };
+  });
   if (!hasFrom(source)) {
-    const alone = compile(parse(source, { old: options.old ?? false }), env);
-    const said = oldLaws(alone, () => true, source);
-    return said.length ? { ...alone, diagnostics: [...alone.diagnostics, ...said].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col) } : alone;
+    const alone = withCodes(compile(parse(source, { old: options.old ?? false }), env), source);
+    const all = [...said, ...oldLaws(alone, () => true, source)];
+    return all.length ? { ...alone, diagnostics: [...alone.diagnostics, ...all].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col) } : alone;
   }
   const x = expansion(source, options);
-  const result = compile(parse(x.text, { old: options.old ?? false }), env, x.given);
-  // (law= on a line the piece wrote: the old way; through a from line it is the built-in fragment's own spelling)
-  const said = oldLaws(result, (line) => x.through(line) === null, source);
-  const diagnostics = [...x.diagnostics, ...said, ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span }))].sort(
-    (a, b) => a.span.line - b.span.line || a.span.col - b.span.col,
-  );
+  const result = withCodes(compile(parse(x.text, { old: options.old ?? false }), env, x.given), x.text);
+  const diagnostics = [
+    ...x.diagnostics,
+    ...said,
+    ...oldLaws(result, (line) => x.through(line) === null, source),
+    ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span })),
+  ].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
   return { ...result, ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics, takes: x.takes, ...(x.origins.size ? { origins: x.origins } : {}) };
+}
+
+/** A program with each cell's line of code, where it has fills: what realize compiles a stream's laps from (#792). */
+function withCodes(result: CompileResult, text: string): CompileResult {
+  if (![...result.cells.values()].some((c) => c.fill)) return result;
+  const lines = text.split('\n');
+  const codes = new Map([...result.cells.values()].map((c) => [c.name, splitComment(lines[c.span.line - 1] ?? '')[0].trim()] as const));
+  return { ...result, codes };
 }
 
 /**

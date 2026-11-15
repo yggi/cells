@@ -455,6 +455,17 @@ export interface CellDecl {
     readonly span: Span;
     /** Numbers left free for the performer (sliders). */
     readonly frees?: readonly FreeSpec[];
+    /**
+     * A fill (decision 085): a cell a plugin-fragment's code writes, written `fill()` in the fragment. A from line's copy
+     * says whose and which, `fill(five_to_twelve, notes, &day)`: its fragment, its fill's name there, and the clock the
+     * call site gave, then its answer as its braid (a stream's first lap, `ionian`): every reader sees a braid; realize plays a
+     * stream's laps one by one (#792).
+     */
+    readonly fill?: {
+        readonly fragment: string | null;
+        readonly name: string | null;
+        readonly clock: string | null;
+    };
     /** An unnamed cell, written where it's used (`&( … )`): its body as written. */
     readonly lambda?: string;
     readonly over: Ref | null;

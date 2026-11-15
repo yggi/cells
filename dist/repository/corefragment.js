@@ -51,10 +51,13 @@ export function coreFragment(text, options = {}) {
         const f = readFrom(splitComment(l)[0].trim());
         return !!f && f.kind !== 'signature';
     });
+    const fills = new Set(parse(text)
+        .cells.filter((d) => d.fill)
+        .map((d) => d.name));
     for (const n of taken.map((t) => t.replace(/^&/, '')))
-        if (declLine(core, n) >= 0)
+        if (!fills.has(n) && declLine(core, n) >= 0)
             core = deleteCell(core, n);
-    core = unreadGone(core, new Set([...interfaceNames].filter((n) => !taken.includes(`&${n}`))));
+    core = unreadGone(core, new Set([...[...interfaceNames].filter((n) => !taken.includes(`&${n}`)), ...fills]));
     const lines = core.split('\n').filter((l) => readFrom(splitComment(l)[0].trim()) === undefined);
     return { source: [...declarations.map((l) => l.trim()), ...fromLines.map((l) => l.trim()), ...lines].join('\n').replace(/\n+$/, '') };
 }

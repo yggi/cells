@@ -11,7 +11,7 @@ What a cell is. Every cell has exactly one **kind**, read from its own line and 
 | `role` | map=role: its name is the role, its entries the gates that play it. | `&lead map=role &violin` |
 | `style` | map=style: a point in style space; it doesn’t sound. | `&funk map=style .3 .45 .55 .5` |
 | `scope` | scope=: a picture of the cells its braid lists. | `&screen scope=stack &a` |
-| `law` | law=: its notes are computed. | `&cycle law=fiveto12 over=&day step=84bpm` |
+| `fill` | fill(…): a plugin-fragment’s code writes its braid (decision 085). | `&cycle_mode fill(five_to_twelve, mode, &day) ionian` |
 | `tape` | write=: it records what its write head names. | `&tape write=&t step=1 length=4` |
 | `head` | play= with no braid: a read head of a tape. | `&echo play=&tape at=1` |
 | `sum` | A mix of cells with no voice: the sum of their values (decision 079). | `&drift [&a * .7 + &b * .3]` |

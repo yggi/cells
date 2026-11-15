@@ -1,4 +1,4 @@
-import { filledAt, lawOf, unitOf } from "./fills.js";
+import { BY_FRAGMENT, unitOf } from "./fills.js";
 import { parse } from "./parser/index.js";
 import { compile } from "./compiler/index.js";
 import { adsrOf, balance, codeShifts, CV_LAPS, DEFAULT_ENV } from "./program.js";
@@ -414,26 +414,63 @@ export function kitPickAt(p, o, at) {
     const e = t?.picker && heldAt(p, t.picker, at);
     return (e && voiceFor(p.result, o, e.value)?.voice) ?? null;
 }
-function lawOffset(result, cell, law) {
-    const day = result.cells.get(result.cells.get(cell)?.over ?? '');
-    const anchor = day?.params.anchor;
+function lawOffset(result, clock, law) {
+    const anchor = clock ? result.cells.get(clock)?.params.anchor : undefined;
     if (typeof anchor !== 'number')
         return 0;
     const sec = (h) => Math.floor(h) * 3600 + Math.round((h % 1) * 100) * 60;
     return Math.round(((((sec(anchor) - sec(law.origin)) % 86400) + 86400) % 86400) / law.stepSeconds);
 }
+const STREAMS = new WeakMap();
+function streamOf(result, o) {
+    if (STREAMS.has(o))
+        return STREAMS.get(o);
+    const found = (() => {
+        const f = result.cells.get(o.cell)?.fill;
+        const law = f?.fragment ? BY_FRAGMENT.get(f.fragment) : undefined;
+        const codes = result.codes;
+        if (!f || !law || !codes || law.fills[f.name ?? '']?.lap === undefined)
+            return null;
+        const levels = o.levels.map((t) => t.cell).filter((n) => result.cells.get(n)?.fill?.fragment === f.fragment);
+        const MARKER = /(^|\s)fill\([^)]*\).*$/;
+        const reads = (n) => [...(codes.get(n) ?? '').replace(MARKER, '').matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]).filter((r) => r !== n && codes.has(r));
+        const names = [];
+        for (const queue = [o.cell, ...levels]; queue.length;) {
+            const n = queue.shift();
+            if (names.includes(n))
+                continue;
+            names.push(n);
+            queue.push(...reads(n));
+        }
+        const cells = names.map((name) => ({ name, code: codes.get(name), fill: result.cells.get(name)?.fill?.name ?? null }));
+        return { law, clock: f.clock, head: o.cell, levels, cells, key: `${law.fragment}\n${cells.map((c) => c.code).join('\n')}` };
+    })();
+    STREAMS.set(o, found);
+    return found;
+}
 const LAPS = new Map();
 const LAPS_KEPT = 96;
-function lawLap(law, lap) {
-    const key = `${law.id} ${lap}`;
+function lawLap(st, lap) {
+    const unit = unitOf(st.law);
+    const laps = Math.round(st.law.cycle / unit);
+    const k = ((lap % laps) + laps) % laps;
+    const key = `${st.key}\n${k}`;
     const kept = LAPS.get(key);
     if (kept)
         return kept;
-    const unit = unitOf(law);
-    const text = `${filledAt(law, lap)}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [&${law.head} * &lapVoice]`;
+    const lines = st.cells.map(({ code, fill }) => {
+        const lapOf = fill === null ? undefined : st.law.fills[fill]?.lap;
+        if (fill === null)
+            return code;
+        const answer = st.law.fill(fill, lapOf ? Math.floor((k * unit) / lapOf) : 0, {});
+        const timed = code.replace(/(^|\s)step=\S+/, '$1step=1');
+        return timed.replace(/(^|\s)fill\([^)]*\).*$/, `$1${answer}`);
+    });
+    const product = [st.head, ...st.levels, 'lapVoice'].map((n) => `&${n}`).join(' * ');
+    const text = `${lines.join('\n')}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [${product}]`;
     const result = compile(parse(text, { old: false }), DEFAULT_ENV);
     if (!result.ok)
-        throw new Error(`law=${law.id}, lap ${lap}: ${result.diagnostics.map((d) => d.message).join('; ')}`);
+        throw new Error(`${st.law.fragment}, lap ${k}: ${result.diagnostics.map((d) => d.message).join('; ')}`);
     const shifts = codeShifts(result);
     const base = result.cells.get('lapVoice').freq;
     const notes = eventsBetween(plan(result, shifts), 0, unit)
@@ -444,11 +481,11 @@ function lawLap(law, lap) {
     LAPS.set(key, notes);
     return notes;
 }
-function lawNotes(law, from, to) {
-    const unit = unitOf(law);
+function lawNotes(st, from, to) {
+    const unit = unitOf(st.law);
     const out = [];
     for (let lap = Math.floor(from / unit); lap * unit < to; lap++)
-        for (const n of lawLap(law, lap)) {
+        for (const n of lawLap(st, lap)) {
             const step = lap * unit + n.step;
             if (step >= from && step < to)
                 out.push({ ...n, step });
@@ -457,7 +494,7 @@ function lawNotes(law, from, to) {
 }
 const RUN = 256;
 export function eventsBetween(p, from, to, outputs = false, held = {}) {
-    const lawful = (t) => p.result.cells.get(t.output.cell)?.params.law !== undefined;
+    const lawful = (t) => streamOf(p.result, t.output) !== null;
     const plain = p.tracks.filter((t) => !t.output.tape && !lawful(t));
     const taped = p.tracks.filter((t) => t.output.tape);
     const out = plainEvents({ ...p, tracks: plain }, from, to, outputs);
@@ -466,18 +503,19 @@ export function eventsBetween(p, from, to, outputs = false, held = {}) {
         out.sort((a, b) => a.at - b.at);
     }
     for (const o of p.result.outputs) {
-        const law = lawOf(p.result.cells.get(o.cell)?.params);
-        if (!law)
+        const st = streamOf(p.result, o);
+        if (!st)
             continue;
+        const law = st.law;
         const g = heardGains(o, p.muted);
         const midi = o.midi ? liveMidi(o, p.muted) : [];
         const heard = audible(g);
         if (!heard && !midi.length)
             continue;
         const base = p.result.cells.get(o.voice)?.freq || 261.63;
-        const off = lawOffset(p.result, o.cell, law);
+        const off = lawOffset(p.result, st.clock, law);
         const sps = law.stepSeconds;
-        for (const n of lawNotes(law, Math.ceil(from / sps - 1e-9) + off, Math.ceil(to / sps - 1e-9) + off)) {
+        for (const n of lawNotes(st, Math.ceil(from / sps - 1e-9) + off, Math.ceil(to / sps - 1e-9) + off)) {
             const at = (n.step - off) * sps;
             out.push({
                 at,

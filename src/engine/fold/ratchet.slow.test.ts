@@ -6,6 +6,7 @@
 // records the new numbers.
 // The MIDI library's ratchet is midiRatchet.ts.
 // Record: UPDATE_RATCHET=1 npx vitest run src/engine/fold/ratchet.slow.test.ts
+import { lawIn } from '../fills';
 import { describe, expect, it } from 'vitest';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { compileSource } from '../compile';
@@ -35,7 +36,7 @@ describe('the ratchet: every example through MIDI, folded', () => {
       const source = expand(p.source, resolveSeed);
       const r = compileSource(source);
       // (a law's notes are computed, not written: nothing to fold)
-      if (!r.ok || [...r.cells.values()].some((c) => c.params.law !== undefined)) continue;
+      if (!r.ok || lawIn(r) !== null) continue;
       const midi = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf));
       const flat = cellsFromMidi(midi, key);
       if (!flat.notes) continue;
