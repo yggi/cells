@@ -43,6 +43,10 @@ describe('a section’s intensity: its song’s plus its kind’s offset, a sum 
     expect(levels(['&song .7', '&i [&song + -.45]'])).toEqual(Array<number>(8).fill(0.25));
     expect(levels(['&song .7', '&breakdown -.45', '&i [&song + &breakdown]'])).toEqual(Array<number>(8).fill(0.25));
     expect(levels(['&song .5', '&rise step=1m 0 .5 1', '&i [&song + -.15 + &rise * .45]'])).toEqual([0.35, 0.575, 0.8, 0.35, 0.575, 0.8, 0.35, 0.575]);
+    // (every part of a kind's offset named, as a section fragment gives them (#571 step 3): its start and its ramp's depth numbers, its ramp a line)
+    expect(levels(['&song .5', '&buildFrom -.15', '&buildDepth .45', '&rise step=1m 0 .5 1', '&i [&song + &buildFrom + &rise * &buildDepth]'])).toEqual([
+      0.35, 0.575, 0.8, 0.35, 0.575, 0.8, 0.35, 0.575,
+    ]);
     // (before decision 096 a sum whose cells were all numbers was refused, shown firing on the rule's own case)
     expect(errors(['&song .7', '&i [&song + &song]'])).toEqual([]);
   });
