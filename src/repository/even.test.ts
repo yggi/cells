@@ -1,8 +1,9 @@
 // The even rhythms (decision 072, #507): the timelines of the library that are maximally even necklaces are even(k, n, p)'s
-// places, struck as written. Each stays written out, and this states the identity. The bell is the major scale stepped
+// places, and each is written from even by its phase, which this checks. The bell is the major scale stepped
 // over a bar, even(7, 12, 5); the tresillo's durations even(3, 8, 2); the cinquillo even(5, 8, 2); the bossa nova clave
 // even(5, 16, 2), in one bar of sixteenths and over two of eighths. The son and rumba claves are not even: no phase of
-// even(5, 16) is theirs, which is what makes them the claves they are. Striking even's places by phase is #531's.
+// even(5, 16) is theirs, which is what makes them the claves they are. The even ones are struck from even by phase (#531,
+// decision 093 §6): `&claves(even(5,16,2))`, the tresillo tapping its table, the bell its key `scale(even(7, 12, 5), &tonic)`.
 import { describe, expect, it } from 'vitest';
 import { compileSource } from '../engine/compile';
 import { codeShifts } from '../engine/program';
@@ -36,7 +37,11 @@ const TIMELINES: Record<string, { text: string; bars: number; k: number; n: numb
   rumba_clave_3_2: { text: clave('rumba_clave_3_2'), bars: 2, k: 5, n: 16, phase: null },
 };
 
-describe('the even rhythms: even(k, n, p)’s places, struck as written', () => {
+describe('the even rhythms: even(k, n, p)’s places, struck from even', () => {
+  it.each(Object.entries(TIMELINES).filter(([, t]) => t.phase !== null))('%s writes its necklace, even(k, n, p)', (id, { k, n, phase }) => {
+    expect(resolveSeed(id)).toMatch(new RegExp(`even\\(${k}, ?${n}, ?${phase}\\)`));
+  });
+
   it.each(Object.entries(TIMELINES))('%s', (_, { text, bars, k, n, phase }) => {
     const { places, diagnostics } = onsets(text, bars, n);
     expect(diagnostics).toEqual([]);

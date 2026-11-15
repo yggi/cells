@@ -17,6 +17,7 @@ import { declWords, splitComment, splitWords } from '../edit';
 import { flatten } from '../flatten';
 import { noteValue, type Meter } from '../meter';
 import { bjorklund } from '../parser/generators';
+import { even } from '../../theory/modes';
 import { readFrom } from '../parser/use';
 import { codeShifts, type CompileResult } from '../program';
 
@@ -112,6 +113,8 @@ const HIT = /^&([A-Za-z_][A-Za-z0-9_]*)(?::0(?::([0-9]*\.?[0-9]+))?)?(?:!(\d+))?
 const CHORD = /^\[([^[\]]*,[^[\]]*)\]$/;
 const SEQ = /^\[([^[\],]*)\]$/;
 const EUCLID = /^&([A-Za-z_][A-Za-z0-9_]*)\((\d+),\s*(\d+)(?:,\s*(-?\d+))?\)$/;
+/** `&claves(even(5,16,2))` (decision 093 §6): a euclid struck at even's places, by its phase. */
+const EUCLID_EVEN = /^&([A-Za-z_][A-Za-z0-9_]*)\(even\((\d+),\s*(\d+)(?:,\s*(\d+))?\)\)$/;
 const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
 const DEGREE = /^(-?\d+)[#b]?(?:!(\d+))?$/;
 /** A degree held for n steps (`7@2`, `4b@3`): one note, n steps long. */
@@ -261,7 +264,13 @@ function lineOf(source: string, result: CompileResult, trigger: string, levelCel
   let form: Form = 'steps';
   let steps: Step[] | null;
   let euclid: Line['euclid'];
-  if (words.braid.length === 1 && EUCLID.test(words.braid[0]!)) {
+  if (words.braid.length === 1 && EUCLID_EVEN.test(words.braid[0]!)) {
+    // (even's places by phase: its hits written back as the steps of n where a variation moves them, the phase no turn)
+    const [, voice, k, n, p] = EUCLID_EVEN.exec(words.braid[0]!)!;
+    form = 'euclid';
+    const hits = new Set(even(Number(k), Number(n), Number(p ?? 0)));
+    steps = Array.from({ length: Number(n) }, (_, j) => (hits.has(j) ? [{ voice: `&${voice}`, own: null }] : []));
+  } else if (words.braid.length === 1 && EUCLID.test(words.braid[0]!)) {
     const [, voice, k, n, r] = EUCLID.exec(words.braid[0]!)!;
     form = 'euclid';
     euclid = { voice: `&${voice}`, k: Number(k), n: Number(n), r: Number(r ?? 0) };

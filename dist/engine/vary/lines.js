@@ -2,6 +2,7 @@ import { declWords, splitComment, splitWords } from "../edit.js";
 import { flatten } from "../flatten.js";
 import { noteValue } from "../meter.js";
 import { bjorklund } from "../parser/generators.js";
+import { even } from "../../theory/modes.js";
 import { readFrom } from "../parser/use.js";
 import { codeShifts } from "../program.js";
 export const moved = (p, sign, by) => ({ ...p, sign: (p.sign * sign), by: p.by * sign + by });
@@ -23,6 +24,7 @@ const HIT = /^&([A-Za-z_][A-Za-z0-9_]*)(?::0(?::([0-9]*\.?[0-9]+))?)?(?:!(\d+))?
 const CHORD = /^\[([^[\]]*,[^[\]]*)\]$/;
 const SEQ = /^\[([^[\],]*)\]$/;
 const EUCLID = /^&([A-Za-z_][A-Za-z0-9_]*)\((\d+),\s*(\d+)(?:,\s*(-?\d+))?\)$/;
+const EUCLID_EVEN = /^&([A-Za-z_][A-Za-z0-9_]*)\(even\((\d+),\s*(\d+)(?:,\s*(\d+))?\)\)$/;
 const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
 const DEGREE = /^(-?\d+)[#b]?(?:!(\d+))?$/;
 const HELD = /^(-?\d+)[#b]?@(\d+)$/;
@@ -162,7 +164,13 @@ function lineOf(source, result, trigger, levelCell, card) {
     let form = 'steps';
     let steps;
     let euclid;
-    if (words.braid.length === 1 && EUCLID.test(words.braid[0])) {
+    if (words.braid.length === 1 && EUCLID_EVEN.test(words.braid[0])) {
+        const [, voice, k, n, p] = EUCLID_EVEN.exec(words.braid[0]);
+        form = 'euclid';
+        const hits = new Set(even(Number(k), Number(n), Number(p ?? 0)));
+        steps = Array.from({ length: Number(n) }, (_, j) => (hits.has(j) ? [{ voice: `&${voice}`, own: null }] : []));
+    }
+    else if (words.braid.length === 1 && EUCLID.test(words.braid[0])) {
         const [, voice, k, n, r] = EUCLID.exec(words.braid[0]);
         form = 'euclid';
         euclid = { voice: `&${voice}`, k: Number(k), n: Number(n), r: Number(r ?? 0) };
