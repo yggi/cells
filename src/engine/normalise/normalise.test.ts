@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { PARAM_ALIASES } from '../attributes';
-import { normalise } from './index';
+import { normalise, normalisations } from './index';
+import { libraryCells, takenArguments } from './library';
+import { FAMILIES } from '../core';
+import { rewriteAll, ROUNDS } from '../rewrite';
 import { KEPT } from './kept';
 import { compileSource } from '../compile';
 import { samePiece, soundsIdentical } from '../sameness';
@@ -366,11 +369,11 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
   it('writes a fragment cell written inline as the cell by name, and a from line of it (#196): every place, once', () => {
     const seed = { resolve: resolveSeed, library: LIBRARY };
     const vib = '&(map=lin loop=5 0 .1 0 -.1 0)';
-    // (the bar the meter fragment's: the from line goes after the piece's own from lines)
+    // (the bar the meter fragment's: the from line goes before the first line that reads the cell, #729)
     const base = BASE.replace('&bar meter("4/4") step=&tempo', '&bar from meter &tempo');
     const written = `${base}&lead s=saw loop=C4 pitch=${vib}\n&pad s=tri loop=C3 pitch=${vib}\n&mix [&tune * &lead, &tune * &pad]`;
     const { source, steps } = normalise(written, seed);
-    expect(source).toBe(written.replace('&bar from meter &tempo\n', '&bar from meter &tempo\n&vibrato from vibrato\n').replaceAll(vib, '&vibrato'));
+    expect(source).toBe(written.replace('&lead s=saw', '&vibrato from vibrato\n&lead s=saw').replaceAll(vib, '&vibrato'));
     expect(steps).toHaveLength(1);
     expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
     // (a vibrato a word off is the piece's own; a piece that names &vibrato itself keeps its inline cell)
@@ -381,5 +384,56 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
   it('docs/language/canonical.md lists every alias it writes, and what it writes', () => {
     const page = readFileSync('docs/language/canonical.md', 'utf8');
     for (const [alias, ours] of Object.entries(PARAM_ALIASES)) expect([alias, new RegExp(`\\|[^|\\n]*\`${alias}=\`[^|\\n]*\\| \`${ours}=\``).test(page)]).toEqual([alias, true]);
+  });
+});
+
+describe('Normalise’s rules reach one text in any order (#729, law L15)', () => {
+  const OLD = { resolve: resolveSeed, library: LIBRARY, old: true };
+  /** Normalise with each round's rewrites tried last first. */
+  const backwards = (text: string) => rewriteAll(text, (s, r) => [...normalisations(OLD)(s, r)].reverse(), ROUNDS, OLD);
+  const forwards = (text: string) => normalise(text, OLD);
+
+  it('an inline cell in a line that is the library’s is left in it: the line is the fragment’s to take whole', () => {
+    const text = [
+      '&bar meter("4/4") step=120bpm',
+      '&sd note=38 s=white hpf=1500 env=&(map=adsr 0 .12 0 .05)',
+      '&kit &sd',
+      '&beat over=&kit step=4n 0!4',
+      '&lead s=saw loop=C4 env=&(map=adsr 0 .12 0 .05)',
+      '&tune step=4n 0 2 4 5',
+      '&out map=sample [&beat, &tune * &lead]',
+    ].join('\n');
+    // (the rule alone: the voice's envelope is named, the kit's line is as it was)
+    const named = libraryCells(text, LIBRARY).map((r) => r.apply(text));
+    expect(named).toHaveLength(1);
+    expect(named[0]).toContain('&sd note=38 s=white hpf=1500 env=&(map=adsr 0 .12 0 .05)');
+    expect(named[0]).toContain('&lead s=saw loop=C4 env=&snap');
+    // (and either way round, the same text: the snare from the kit, the envelope by name)
+    const a = forwards(text).source;
+    expect(a).toContain('&sd from gm_kit');
+    expect(a).toContain('env=&snap');
+    expect(backwards(text).source).toBe(a);
+  });
+
+  it('an argument that names a cell the library gives is left out, where the line plays the same', () => {
+    // (Funk's drums, their kit taken from the library by name and passed by name: what Migrate wrote where the piece
+    // had the kit's lines, once Normalise has made those lines the library's)
+    const funk = EXAMPLES.funk.source;
+    expect(funk).toMatch(/ from funk_drums$/m);
+    const explicit = funk.replace(/^(.*) from funk_drums$/m, '&bd, &rim, &sd, &hh, &oh from gm_kit\n$1 from funk_drums(bd=&bd, rim=&rim, sd=&sd, hh=&hh, oh=&oh)');
+    const { source, steps } = forwards(explicit);
+    expect(steps).toEqual([expect.stringContaining('as the library gives them')]);
+    expect(source).toBe(funk.replace(/^(.*) from funk_drums$/m, '&bd, &rim, &sd, &hh, &oh from gm_kit\n$1 from funk_drums'));
+    expect(backwards(explicit).source).toBe(source);
+    // (an argument the piece's own line fills stays: the piece's kick is not the library's)
+    const own = '&bd note=36 s=sine loop=A1\n&kick from funk_drums(bd=&bd)';
+    expect(takenArguments(own)).toEqual([]);
+  });
+
+  it('a template waits for a second clock to be folded and the tempo named: breve, forwards and backwards', () => {
+    const breve = FAMILIES.find((f) => f.key === 'from')!.rewrite(EXAMPLES.breve.source, { resolve: resolveSeed });
+    const a = forwards(breve).source;
+    expect(a).toContain('&tempo step=60bpm');
+    expect(backwards(breve).source).toBe(a);
   });
 });

@@ -2,10 +2,11 @@
 // is a text Normalise and Shorten have work on: Normalise takes it back towards the example, Shorten makes it smaller.
 //
 // - **Confluence (L15):** Normalise's rewrites, taken in any order, reach one text. Checked in Normalise's own order and
-//   in ORDERS seeded orders (each round's rewrites shuffled; `rewriteAll` still checks each by S1). It doesn't hold in
-//   twelve examples, four critical pairs between the library's rules and the meter's (#729): each is listed by name, and
-//   its test fails once it holds, so the list only shrinks. ORDERS is 4: 3 found all twelve, and 20, run once over every
-//   example (2026-11-11, 331 s), found no more.
+//   in ORDERS seeded orders (each round's rewrites shuffled; `rewriteAll` still checks each by S1). It holds for every
+//   example since #729, where twelve reached two texts or more: an inline cell named inside a line that is the
+//   library's, an argument written for a cell the library then gave, and a template taking its line before a clock was
+//   folded and the tempo named. ORDERS is 4: 3 found all twelve, and 20, run once over every example (2026-11-11,
+//   331 s), found no more.
 // - **The measure never grows (L16):** no step Normalise or Shorten takes raises the structure measure as written (decision
 //   049, `structureOf(…, { asWritten: true })`; over the normal form, Normalise's steps are all one text's measure). But a
 //   rule that names the interface, which writes the named cell (`&tempo step=60bpm` out of `&bar … step=60bpm`): a cell
@@ -53,21 +54,11 @@ function normalised(text: string, seed?: number): string {
 /** The texts Normalise reaches from `text`: its own order's, and each seeded order's. */
 const reached = (key: string) => new Set([normalised(source(key)), ...Array.from({ length: ORDERS }, (_, i) => normalised(source(key), 7919 * (i + 1) + key.length))]);
 
-/** Where Normalise's order decides its text (#729): each example, by the critical pair it meets. */
-const NOT_CONFLUENT: Record<string, string> = {
-  drums: 'library × library: an envelope named first, the kit no longer gm_kit’s word for word',
-  swing: 'library × library, arguments × library',
-  breve: 'library × meter, library × tempo: the template takes the meter before the tempo is named',
-  'midi-out': 'library × library',
-  funk: 'library × library, arguments × library',
-  twelve: 'library × library',
-  aksak: 'library × library',
-  sailor: 'library × library',
-  electroswing: 'library × library',
-  spooky: 'library × library',
-  kinderlied: 'library × library',
-  radio: 'library × library, arguments × library',
-};
+/**
+ * Where Normalise's order decides its text: none since #729. An example it doesn't hold for is a bug against the law,
+ * listed here by name with its issue, and its test fails once it holds, so the list only shrinks (decision 083).
+ */
+const NOT_CONFLUENT: Record<string, string> = {};
 
 // law L15
 describe('Normalise is confluent: its rewrites, in any order, reach one text (#632 rung 4)', () => {
@@ -75,8 +66,20 @@ describe('Normalise is confluent: its rewrites, in any order, reach one text (#6
     expect(reached(key).size).toBe(1);
   });
 
-  it.each(Object.keys(NOT_CONFLUENT))('%s is listed against #729, and reaches more than one text', (key) => {
-    expect(reached(key).size).toBeGreaterThan(1);
+  it('lists no example against it', () => {
+    for (const key of Object.keys(NOT_CONFLUENT)) expect(reached(key).size, key).toBeGreaterThan(1);
+    expect(Object.keys(NOT_CONFLUENT)).toEqual([]);
+  });
+
+  it('is shown firing: a rule that names one inline cell or another by the order it is offered in reaches two texts', () => {
+    // (two rewrites of one place, neither seeing the other: the order they are tried in is the text)
+    const text = '&a step=2 0 2 4';
+    const first: Find = () => [
+      { id: 'x', tool: 'normalise', rule: 'aliases', title: 'x', before: '', after: '', apply: (s) => s.replace('0 2 4', '0 2 4 5'), exact: true },
+      { id: 'y', tool: 'normalise', rule: 'aliases', title: 'y', before: '', after: '', apply: (s) => s.replace('0 2 4', '0 2 4 7'), exact: true },
+    ];
+    const second: Find = (s, r) => [...first(s, r)].reverse();
+    expect(rewriteAll(text, first, 1).source).not.toBe(rewriteAll(text, second, 1).source);
   });
 });
 

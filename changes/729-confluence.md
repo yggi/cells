@@ -1,0 +1,3 @@
+### Changed
+
+- Normalise reaches one text whatever the order its rules are tried in (#729, law L15): over every example, where twelve reached two texts or more. Three things it writes differently for a text that is not yet normal: a library cell written inline is left inline inside a line that is a library fragment's own, word for word (that line is taken whole, `&sd from gm_kit`); an argument that names a cell the piece takes from the library by that name is left out where the line plays the same (`from funk_drums(bd=&bd)` under `&bd from gm_kit` → `from funk_drums`); and a new `from` line for a cell named so goes before the first line that reads the cell, where it went after the piece's `from` lines. No example changes, in text or in sound.
