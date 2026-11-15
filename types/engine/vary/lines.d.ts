@@ -48,6 +48,10 @@ export interface Line {
     /** Its trigger cell's name, bare. */
     readonly trigger: string;
     readonly form: Form;
+    /** Written as one Euclid struck at even's places (`&claves(even(5,16,2))@16`): its steps read, but none of them written, so no reference picks them. */
+    readonly struck?: boolean;
+    /** Its one step held over as many of the line's (`@n`), where it isn't read as its steps written out. */
+    readonly hold?: number;
     /** Its Euclid as written (its form `euclid`): k hits in n, turned right by r. */
     readonly euclid?: {
         readonly voice: string;

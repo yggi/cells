@@ -70,7 +70,7 @@ export function referenceOf(
   pinned: ReadonlySet<number>,
   amount: number | null,
 ): Reference | null {
-  if (line.form !== 'steps' || line.levels || line.euclid || !notes.length) return null;
+  if (line.form !== 'steps' || line.levels || line.euclid || line.struck || !notes.length) return null;
   const tokens = tokensOf(braid, line.steps);
   if (!tokens) return null;
   const x = line.name;

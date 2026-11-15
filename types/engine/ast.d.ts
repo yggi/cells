@@ -147,8 +147,11 @@ export type Atom = {
 export interface Euclid {
     readonly k: number;
     readonly n: number;
+    /** The turn: Strudel's rotation; with `even`, even's phase. */
     readonly r: number;
     readonly hits: readonly number[];
+    /** `x(even(k, n, p))` (decision 093 §6): the hits even(k, n, p)'s places, `r` its phase. */
+    readonly even?: true;
 }
 /** An expression in a mix chord, as written: sums and products of cells and numbers. */
 export type Expr = {
