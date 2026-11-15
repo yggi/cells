@@ -24,7 +24,7 @@ Sound parameters use dough's names; any of them makes a cell a voice. Strudel's 
 | `ftype=` | its filters' model ([decision 074](https://github.com/yggi/cells/blob/main/docs/decisions/074-filters-are-superdoughs.md), superdough's word): `12db`, one biquad each, the default; `24db`, two in series at the same cutoff and Q, what a filter then an instrument's filter at the same settings play; `ladder`, a low-pass of its own whose resonance sings by itself past about 31 (`lpq=` read as its resonance, not in dB; `drive=` how hard it is pushed, .69 unless given; on an instrument, on its voices' sum). On a voice or an instrument; superdough's numbers 0, 2, 1 name the same, and Normalise writes the word |
 | `room=` | reverb send, 0–1; can move |
 | `delay=` `delaytime=` `delayfeedback=` | echo send (0–1, can move), time (seconds or a clock), feedback (0–1) |
-| `pan=` | where it sits in stereo: 0 left, .5 centre (as without it), 1 right; the far side fades, the near one stays full. It can move, read at each note's start (`pan=&space`: below). Past 0 or 1 it plays hard left or right, and warns; on a mix or the sound card it does nothing, and warns |
+| `pan=` | where it sits in stereo: 0 left, .5 centre (as without it), 1 right; the far side fades, the near one stays full. It can move, read at each note's start (`pan=&space`: below). On a voice or a line: a line's `pan=` places the notes it plays, after its voice's own. Past 0 or 1 it plays hard left or right, and warns; on a mix or the sound card it does nothing, and warns |
 | `distort=` | distortion: 0 clean, .3 gritty, 1 and more harsh |
 | `crush=` | bit depth: 16 clean, 8 grainy, 3 and fewer rubble |
 
@@ -93,6 +93,15 @@ A sound parameter can be a range times cells, so it moves with the music: `lpf=1
 &t step=4 0 2 4 7
 &space map=lin step=4 0 .33 .67 1
 &v s=tri loop=C4 pan=&space
+&out map=sample [&t * &v * .4]
+```
+
+**`pan=` on a line, as `legato=` is** ([#739](https://github.com/yggi/cells/issues/739)): written on a line rather than its voice, it places the notes the line plays, fixed or moving, read at each note's start. It is a balance after the voice's own, in series, as an instrument's is after its voices': a line at 0 on a voice at .5 sits hard left, a line at .5 leaves the voice where it is. A line with `pan=` stays a line: `pan=` alone makes no cell a voice. On a cell that plays no notes (a table, a level) it does nothing, and says so.
+
+```cells
+&t step=4 pan=&space 0 2 4 7
+&space map=lin step=4 1 .67 .33 0
+&v s=tri loop=C4 pan=.5
 &out map=sample [&t * &v * .4]
 ```
 

@@ -106,6 +106,7 @@ export function compile(written: ParseResult, env: Env, used: ReadonlySet<string
     performers,
     sections: declared.sections,
     ...(timed.mainMeter ? { mainMeter: timed.mainMeter } : {}),
+    ...(timed.meters.length > 1 ? { meters: timed.meters } : {}),
     ...(declared.mainKey ? { mainKey: declared.mainKey } : {}),
     ...(builtin ? { builtinCard: builtin } : {}),
   };

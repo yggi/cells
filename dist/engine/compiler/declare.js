@@ -1,8 +1,8 @@
-import { valueSumOf } from "../valuesum.js";
+import { numberCellOf, valueSumOf } from "../valuesum.js";
 import { refLabel } from "../ast.js";
 import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from "../program.js";
-import { SCALE_KEY } from "../parser/generators.js";
-import { PLAYED_AS, VOICE_PARAMS } from "../attributes.js";
+import { evenProblem, evenSteps, SCALE_KEY } from "../parser/generators.js";
+import { PLAYED_AS, VOICE_MAKERS } from "../attributes.js";
 import { IMPLICIT, isRootDecl, tableOf } from "./tables.js";
 import { leaves } from "../subseq.js";
 import { overdub } from "../parser/base.js";
@@ -20,6 +20,7 @@ export function declare(ctx) {
     const mainKey = mainKeyOf(ctx, decls);
     tonics(ctx, decls);
     modes(ctx, decls);
+    evens(ctx, decls);
     swings(ctx, decls);
     movingSwings(ctx, decls);
     movingDepths(ctx, decls);
@@ -144,6 +145,47 @@ function modes(ctx, decls) {
         decls.set(name, { ...d, braid: { ...d.braid, steps: diatonicSteps(phase) } });
     }
 }
+function evens(ctx, decls) {
+    for (const [name, d] of decls) {
+        if (d.braid.kind !== 'scan' || !d.braid.even)
+            continue;
+        const { even, span } = d.braid;
+        const read = (x, what) => {
+            if (typeof x === 'number')
+                return { value: x, word: false, at: span };
+            const c = decls.get(x.name);
+            if (!c) {
+                ctx.unknownCell(x.name, x.span);
+                return null;
+            }
+            const value = c.step ? null : numberCellOf(c);
+            if (value === null) {
+                ctx.error(c.step
+                    ? `&${c.name} is read as even(…)'s ${what}: a stepped one is not yet a form; write one number (&${c.name} 3)`
+                    : `&${c.name} is read as even(…)'s ${what}: a cell that is one number, filled as the piece is built (&${c.name} 3)`, c.span);
+                return null;
+            }
+            const t = c.braid.kind === 'list' ? c.braid.tokens[0].atom : null;
+            return { value, word: t?.kind === 'note' && t.mode === true, at: x.span };
+        };
+        const [k, n, phase] = [read(even.k, 'k'), read(even.n, 'n'), read(even.phase, 'phase')];
+        if (!k || !n || !phase)
+            continue;
+        const word = [k, n].find((a) => a.word) ?? (phase.word && !(k.value === 7 && n.value === 12) ? phase : null);
+        if (word) {
+            ctx.error(word === phase
+                ? `even(${k.value}, ${n.value}, …): a mode's name is a phase of the diatonic, even(7, 12); here write its number (${phase.value})`
+                : `even(…): a mode's name is a phase, not a size; write a number`, word.at);
+            continue;
+        }
+        const problem = evenProblem(k.value, n.value, phase.value);
+        if (problem) {
+            ctx.error(problem, span);
+            continue;
+        }
+        decls.set(name, { ...d, braid: { kind: 'scan', span, steps: evenSteps(k.value, n.value, phase.value) } });
+    }
+}
 function modeTable(m) {
     if (m.braid.kind === 'scan' && !m.braid.mode)
         return m.braid.steps.every((x) => x > 0) && m.braid.steps.reduce((a, b) => a + b, 0) === 12 ? [...m.braid.steps] : null;
@@ -256,7 +298,7 @@ function mainKeyOf(ctx, decls) {
 }
 export const VOICE_KIT = 'kit:voices';
 export function voiceGrooves(decls) {
-    const sounds = (d) => Object.keys(d?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+    const sounds = (d) => Object.keys(d?.params ?? {}).some((k) => VOICE_MAKERS.has(k));
     const isVoiceDecl = (n) => sounds(decls.get(n));
     const plain = (r) => !r.pick && !r.shift && !r.transpose && !r.degree && !r.values;
     const asTable = new Set([...decls.values()].flatMap((d) => (d.over ? [d.over.name] : [])));
@@ -506,7 +548,7 @@ function stackOf(decls, d, error) {
     const sound = (n) => {
         const x = decls.get(n);
         return (!!x &&
-            (!!x.gate || Object.keys(x.params).some((k) => VOICE_PARAMS.has(k)) || (x.braid.kind === 'list' && x.braid.tokens.length === 1 && x.braid.tokens[0].atom.kind === 'mix')));
+            (!!x.gate || Object.keys(x.params).some((k) => VOICE_MAKERS.has(k)) || (x.braid.kind === 'list' && x.braid.tokens.length === 1 && x.braid.tokens[0].atom.kind === 'mix')));
     };
     return members.map((m) => ({
         line: m.line,
@@ -528,7 +570,7 @@ function voicesIn(decls, name, seen = []) {
     const d = decls.get(name);
     if (!d || seen.includes(name) || d.braid.kind !== 'list')
         return [];
-    const sounds = (n) => Object.keys(decls.get(n)?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+    const sounds = (n) => Object.keys(decls.get(n)?.params ?? {}).some((k) => VOICE_MAKERS.has(k));
     const out = new Set();
     for (const a of d.braid.tokens.flatMap((t) => leaves(t.atom))) {
         const refs = a.kind === 'ref' ? [a.name] : a.kind === 'mix' ? a.exprs.flatMap((e) => (e.k === 'ref' ? [e.ref.name] : [])) : [];

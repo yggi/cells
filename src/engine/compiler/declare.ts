@@ -1,9 +1,9 @@
 /** Phase 1: the declarations — one per name, the default grid and scale() tables added, over= chains known and acyclic. */
-import { valueSumOf } from '../valuesum';
+import { numberCellOf, valueSumOf } from '../valuesum';
 import { refLabel, type Atom, type CellDecl, type Expr, type Ref, type Span, type Token } from '../ast';
 import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from '../program';
-import { SCALE_KEY } from '../parser/generators';
-import { PLAYED_AS, VOICE_PARAMS } from '../attributes';
+import { evenProblem, evenSteps, SCALE_KEY } from '../parser/generators';
+import { PLAYED_AS, VOICE_MAKERS } from '../attributes';
 import { IMPLICIT, isRootDecl, tableOf } from './tables';
 import { leaves } from '../subseq';
 import { overdub } from '../parser/base';
@@ -43,6 +43,7 @@ export function declare(ctx: Ctx): Declared {
   const mainKey = mainKeyOf(ctx, decls);
   tonics(ctx, decls);
   modes(ctx, decls);
+  evens(ctx, decls);
   swings(ctx, decls);
   movingSwings(ctx, decls);
   movingDepths(ctx, decls);
@@ -189,6 +190,58 @@ function modes(ctx: Ctx, decls: Map<string, CellDecl>): void {
 }
 
 /**
+ * `even(k, n, phase)` with arguments read from cells (decision 093, #531): each a cell that is one number (088), filled
+ * as the piece is built, so `even(7, 12, &mode)` with `&mode 3` is `even(7, 12, 3)`. A diatonic mode's name (`&mode
+ * dorian`) is its phase where the necklace is the diatonic, even(7, 12), and an error elsewhere: the language names no
+ * other necklace's modes. A stepped cell is not yet a form (its phase at each bar line is the next rung, 081's rule);
+ * anything else is an error that says what is read.
+ */
+function evens(ctx: Ctx, decls: Map<string, CellDecl>): void {
+  for (const [name, d] of decls) {
+    if (d.braid.kind !== 'scan' || !d.braid.even) continue;
+    const { even, span } = d.braid;
+    const read = (x: number | Ref, what: 'k' | 'n' | 'phase'): { value: number; word: boolean; at: Span } | null => {
+      if (typeof x === 'number') return { value: x, word: false, at: span };
+      const c = decls.get(x.name);
+      if (!c) {
+        ctx.unknownCell(x.name, x.span);
+        return null;
+      }
+      const value = c.step ? null : numberCellOf(c);
+      if (value === null) {
+        ctx.error(
+          c.step
+            ? `&${c.name} is read as even(…)'s ${what}: a stepped one is not yet a form; write one number (&${c.name} 3)`
+            : `&${c.name} is read as even(…)'s ${what}: a cell that is one number, filled as the piece is built (&${c.name} 3)`,
+          c.span,
+        );
+        return null;
+      }
+      const t = c.braid.kind === 'list' ? c.braid.tokens[0]!.atom : null;
+      return { value, word: t?.kind === 'note' && t.mode === true, at: x.span };
+    };
+    const [k, n, phase] = [read(even.k, 'k'), read(even.n, 'n'), read(even.phase, 'phase')];
+    if (!k || !n || !phase) continue;
+    const word = [k, n].find((a) => a.word) ?? (phase.word && !(k.value === 7 && n.value === 12) ? phase : null);
+    if (word) {
+      ctx.error(
+        word === phase
+          ? `even(${k.value}, ${n.value}, …): a mode's name is a phase of the diatonic, even(7, 12); here write its number (${phase.value})`
+          : `even(…): a mode's name is a phase, not a size; write a number`,
+        word.at,
+      );
+      continue;
+    }
+    const problem = evenProblem(k.value, n.value, phase.value);
+    if (problem) {
+      ctx.error(problem, span);
+      continue;
+    }
+    decls.set(name, { ...d, braid: { kind: 'scan', span, steps: evenSteps(k.value, n.value, phase.value) } });
+  }
+}
+
+/**
  * A mode written as its table: a scan's steps, or a list of two or more whole numbers from 0, rising, under 12 (the octave
  * closes it: `0 2 3 5 7 8 10` is the steps 2 1 2 2 1 2 2). Null for anything else (a word, a phase, which `modes` reads).
  */
@@ -331,7 +384,7 @@ export const VOICE_KIT = 'kit:voices';
  * numbers into them — or null when the piece has none.
  */
 export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Ref[]; cells: Map<string, Token[]> } | null {
-  const sounds = (d: CellDecl | undefined) => Object.keys(d?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+  const sounds = (d: CellDecl | undefined) => Object.keys(d?.params ?? {}).some((k) => VOICE_MAKERS.has(k));
   const isVoiceDecl = (n: string) => sounds(decls.get(n));
   const plain = (r: { pick: unknown; shift: number; transpose?: number; degree?: number; values?: unknown }) => !r.pick && !r.shift && !r.transpose && !r.degree && !r.values;
   const asTable = new Set([...decls.values()].flatMap((d) => (d.over ? [d.over.name] : [])));
@@ -607,7 +660,7 @@ function stackOf(decls: ReadonlyMap<string, CellDecl>, d: CellDecl | undefined, 
     const x = decls.get(n);
     return (
       !!x &&
-      (!!x.gate || Object.keys(x.params).some((k) => VOICE_PARAMS.has(k)) || (x.braid.kind === 'list' && x.braid.tokens.length === 1 && x.braid.tokens[0].atom.kind === 'mix'))
+      (!!x.gate || Object.keys(x.params).some((k) => VOICE_MAKERS.has(k)) || (x.braid.kind === 'list' && x.braid.tokens.length === 1 && x.braid.tokens[0].atom.kind === 'mix'))
     );
   };
   // (said here, and left out of what the gate plays, so the product isn't refused again as two sounds)
@@ -632,7 +685,7 @@ function kitMembers(d: CellDecl | undefined): string[] | null {
 function voicesIn(decls: ReadonlyMap<string, CellDecl>, name: string, seen: readonly string[] = []): string[] {
   const d = decls.get(name);
   if (!d || seen.includes(name) || d.braid.kind !== 'list') return [];
-  const sounds = (n: string) => Object.keys(decls.get(n)?.params ?? {}).some((k) => VOICE_PARAMS.has(k));
+  const sounds = (n: string) => Object.keys(decls.get(n)?.params ?? {}).some((k) => VOICE_MAKERS.has(k));
   const out = new Set<string>();
   for (const a of d.braid.tokens.flatMap((t) => leaves(t.atom))) {
     const refs = a.kind === 'ref' ? [a.name] : a.kind === 'mix' ? a.exprs.flatMap((e) => (e.k === 'ref' ? [e.ref.name] : [])) : [];

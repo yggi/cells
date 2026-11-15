@@ -1,12 +1,7 @@
 ---
 id: highpass
 association:
-  - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.5
-    weight: 0.25
-    facet: module
+  - facet: module
 source: seed
 ---
 
@@ -28,4 +23,4 @@ A resonant high-pass filter (decision 067 §3), the low-pass's mirror: it takes 
 
 **Its signature** (decision 065): `&highpass from (&cutoff, &res, &eg) &in`. A kind of filter is a word, and a parameter is a cell, so each kind is a fragment of its own (decision 067 §3), not one filter with a mode.
 
-Associated once, as the facet `module`, at the centre of style space, at a quarter weight; in a patch, the high-pass (HPF).
+Associated as the facet `module` with no point: no style's (#540); in a patch, the high-pass (HPF).

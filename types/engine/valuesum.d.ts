@@ -40,6 +40,17 @@ export declare function notesProductOf(name: string, decls: ReadonlyMap<string, 
     k: 'prod';
 }> | null;
 /**
+ * A cell that is one number and nothing else (decision 088): its value, or null. No clock, no table, no map, no move
+ * and no sound, its braid one plain number (a note by name is a pitch, not a number). Named in a mix it is the number
+ * it holds: a gain in a product, semitones in a sum (law L18).
+ */
+export declare function numberCellOf(d: CellDecl | undefined): number | null;
+/**
+ * A mix's expression with every bare reference to a cell that is one number written as that number (decision 088):
+ * naming a number plays as the number. A reference that picks or moves it stays a reference, read as it was.
+ */
+export declare function inlineNumbers(e: Expr, decls: ReadonlyMap<string, CellDecl>): Expr;
+/**
  * A mix's expression with every bare reference to notes with their levels written as its product, as in parentheses
  * (decision 087), its own references in turn; `named` collects the cells inlined, `moved` the references that name
  * one but move or pick it (not yet: an error says so).

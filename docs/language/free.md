@@ -5,7 +5,7 @@ A number left to the performer: a slider on the node, and moving it rewrites the
 **`free(default, lo..hi)`** goes wherever a number is written ([decision 078](https://github.com/yggi/cells/blob/main/docs/decisions/078-every-number-may-be-free.md)): a rate, `step=free(90bpm, 60..240)` (the tempo); a shift, `shift=free(0, 0..6)` (a mode selector, which turning the wheel moves too); a gain in a mix, `&strings * free(.4, 0..1)` (a fader); an interval, `scan(free(2, 1..3) 1)` (the swing ratio of the Swing blues); a style's axis, `sync=free(.3, 0..1)` ([style.md](style.md); the example *Radio*); and a count, an index, a step.
 
 - **A number read as the piece is built** (`cycle=`, `x!n`, `&x[i]`, `euclid(k, n)`) is the number its slider holds now. Moving the slider compiles the piece again.
-- **A tempo moved keeps the beat** ([#56](https://github.com/yggi/cells/issues/56)): the piece compiled again goes on from where it was heard, its main meter's steps taken so far (the beat in progress, its fraction included) where they were, and only what follows at the new rate; the frontend passes the second it swaps at (the host's `load` with `anchor`, or `keepBeat`, `src/engine/keepbeat.ts`). A swing's share or a bend's depth moved so takes effect at once, mid-bar, not yet at the next bar line.
+- **A tempo moved keeps the beat** ([#56](https://github.com/yggi/cells/issues/56)): the piece compiled again goes on from where it was heard, its main meter's steps taken so far (the beat in progress, its fraction included) where they were, and only what follows at the new rate; the frontend passes the second it swaps at (the host's `load` with `anchor`, or `keepBeat`, `src/engine/keepbeat.ts`). A swing's share or a bend's depth moved so waits for the bar line, as a cell moving it does (decision 081, [#701](https://github.com/yggi/cells/issues/701)): the bar in progress plays as before, and the piece compiled again goes on from the next bar line of its main meter, anchored there (the host does it for an anchored `load`; a frontend swapping plans itself asks `keepBar`). A tempo moved with it waits too; a tempo moved alone doesn't.
 - **A whole place** (a count, an index, a turn) takes a whole range, and its value is rounded; its slider moves by ones.
 - **A range stays within the place's**: a count's at 1 or more, a probability's within 0 to 1.
 
@@ -40,7 +40,8 @@ The places, from the parser's own table:
 | scan(n …) (an interval) | ✓ | ✗ read as the piece is built | `&mode scan(2 2 free(1, 1..2) 2 2 2 1)` |
 | scan(n!k …) (an interval’s repeat) | ✓ whole | ✗ read as the piece is built | `&map scan(1!free(4, 1..8) 2)` |
 | geo(r, n, k …) | ✓ | ✗ read as the piece is built | `&series scan(geo(free(5, 2..8), 25, 0 10 5))` |
-| euclid(k, n, r) · even(k, n, r) · sin(n) … | ✓ whole | ✗ read as the piece is built | `&hits euclid(free(3, 0..8), 8) step=8` |
+| euclid(k, n, r) · sin(n) … | ✓ whole | ✗ read as the piece is built | `&hits euclid(free(3, 0..8), 8) step=8` |
+| even(k, n, phase) (an argument) | ✓ whole | `&k`, a cell that is one number, filled as the piece is built (decision 093); a mode’s name only as even(7, 12)’s phase; not stepped | `&key scale(even(7, 12, free(3, 0..6)), D)` |
 | fifths(n) | ✓ whole | ✗ read as the piece is built | `&circle fifths(free(1, 0..11))` |
 | scale(t, phase) (retired) | ✓ whole | ✗ read as the piece is built | `&key scale(2, free(3, 0..6))` |
 | meter(n, n) | ✓ | ✗ read as the piece is built | `&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm` |
@@ -63,7 +64,7 @@ A rate's unit can be an argument, its numbers then the core's (a second): `step=
 
 ```cells
 &bar meter("4/4") step=free(90bpm, 60..240) swing=&swing
-&slow meter("4/4") step=free(adagio)
+&slow step=free(adagio)                 # a tempo, a marking's range
 &swing swing=8n:free(2/3, 1/2..3/4)   # a share left free, its ends fractions
 ```
 

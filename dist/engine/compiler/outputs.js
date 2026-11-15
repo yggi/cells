@@ -109,7 +109,7 @@ export function outputsOf(ctx, decls, cells, clocks, { sinks, cards, bindings, s
             continue;
         }
         const isEnvelope = (x) => x.c.map?.kind === 'adsr';
-        const isLevel = (x) => x.c.map?.kind === 'amp' || x.c.map?.kind === 'db' || (x.c.map?.kind === 'lin' && !x.t.inSum);
+        const isLevel = (x) => x.c.map?.kind === 'amp' || x.c.map?.kind === 'db' || ((x.c.map?.kind === 'lin' || !!x.c.sum) && !x.t.inSum);
         const envelopes = terms.filter(isEnvelope);
         const pitches = terms.filter((x) => !isLevel(x) && !isEnvelope(x));
         const levels = terms.filter((x) => isLevel(x));

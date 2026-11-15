@@ -95,6 +95,26 @@ describe('pan= on a voice: where it sits in stereo (#10 F3)', () => {
     const e = eventsBetween(plan(r, codeShifts(r)), 0, 1.4);
     expect(e.map((x) => Object.keys(x.params ?? {}))).toEqual([['lpf'], ['lpf'], ['lpf']]);
   });
+  // #739: pan= on a line, as legato= is a line's: the place of the notes it plays, a balance after its voice's
+  it('a line’s pan= places the notes it plays, fixed or moving, and makes it no voice', () => {
+    expect(gains(tune + '&space map=lin step=2 0 .25 .75\n&t2 step=2 pan=&space 0 4 7\n&v s=sine loop=C4\n&out map=sample [&t2 * &v * .5]')).toEqual([
+      'v 0.5000,0.0000',
+      'v 0.5000,0.2500',
+      'v 0.2500,0.5000',
+    ]);
+    // (a fixed one: the same as the voice's, where the voice has none)
+    expect(gains('&t step=2 pan=.25 0 4 7\n&v s=sine loop=C4\n&out map=sample [&t * &v * .5]')).toEqual(gains(tune + '&v s=sine loop=C4 pan=.25\n&out map=sample [&t * &v * .5]'));
+  });
+  it('a line’s place and its voice’s are two balances in series', () => {
+    const at = (line: string, voice: string) => gains(`&t step=2 ${line} 0 4 7\n&v s=sine loop=C4 ${voice}\n&out map=sample [&t * &v * .5]`)[0];
+    expect(at('pan=0', 'pan=.5')).toBe('v 0.5000,0.0000');
+    expect(at('pan=.5', 'pan=.25')).toBe('v 0.5000,0.2500');
+    expect(at('pan=.25', 'pan=.25')).toBe('v 0.5000,0.1250');
+  });
+  it('a cell that plays no notes says its pan= does nothing there', () => {
+    const r = compileSource('&s pan=.2 scan(2 2 1)\n&t over=&s step=2 0 1 2\n&v s=sine loop=C4\n&out map=sample [&t * &v * .5]');
+    expect(r.diagnostics.map((d) => d.message)).toEqual([expect.stringMatching(/pan= acts on a voice, a meter .* on &s it does nothing/)]);
+  });
   it('a voice alone reads it once, where it starts; a resonator that rings without notes says it is not read', () => {
     expect(gains('&space map=lin step=2 0 1\n&v s=sine loop=C4 pan=&space\n&out map=sample [&v * .5]')).toEqual(['v 0.5000,0.0000']);
     const r = compileSource('&space map=lin step=2 0 1\n&strings body=wire loop=C2 pan=&space\n&out map=sample [&strings * .3]');

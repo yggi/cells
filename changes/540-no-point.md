@@ -1,0 +1,3 @@
+### Changed
+
+- **A fragment of no style has no point** (#540, the owner, 2026-11-13): the eight modules and the two expressions stood at `.5 .5 .5` (three axes, a quarter weight) for "any style". Their associations now name a facet and no point (`- facet: module` in a fragment file), and a query finds such a fragment at `ANY_DISTANCE` (1, the farthest a placed point can be) from every style: behind every fragment placed nearer, ahead of none placed farther, alike at every style. `ANY_DISTANCE` and `isAnyStyle` are exported from `repository/fragments`; an empty point is no longer a malformed one, and `Fragment`'s type doesn't change.

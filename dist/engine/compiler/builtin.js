@@ -21,6 +21,10 @@ export function otherReadsOf(d) {
     ])
         if (r)
             out.push(r.name);
+    if (d.braid.kind === 'scan' && d.braid.even)
+        for (const x of Object.values(d.braid.even))
+            if (typeof x !== 'number')
+                out.push(x.name);
     for (const pc of Object.values(d.paramCells ?? {}))
         out.push(...pc.factors.map((f) => f.name));
     for (const st of Object.values(d.paramClocks ?? {}))

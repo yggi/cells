@@ -64,7 +64,9 @@
     "structure": "node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/structure.ts",
     "render": "node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/render.ts",
     "types": "tsc -p tsconfig.types.json",
-    "dist": "node --experimental-strip-types --no-warnings tools/dist.ts"
+    "dist": "node --experimental-strip-types --no-warnings tools/dist.ts",
+    "batch": "node --experimental-strip-types --no-warnings tools/batch.ts",
+    "sync": "node --experimental-strip-types --no-warnings tools/sync.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

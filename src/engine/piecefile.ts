@@ -37,7 +37,7 @@
  * ```
  * uses:
  *   - id: gm_kit
- *     hash: e1:6de2201770fbb2d7
+ *     hash: e2:6de2201770fbb2d7
  * ```
  */
 import { readBlocks, rewrite, writeBody, type CodeLine, type Layout } from './literate';
@@ -91,7 +91,7 @@ function keyProblems(root: YamlNode & { kind: 'map' }): YamlProblem[] {
     if (key === 'tier' && !(typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= 9999))
       problems.push({ line, message: `the tier is ${JSON.stringify(v)}: a tier of the tutorial is a whole number, 1 to 9999` });
     if (key === 'uses' && !(Array.isArray(v) && v.every(isLocked)))
-      problems.push({ line, message: `the uses are ${JSON.stringify(v)}, not a lockfile: uses: a list of - id: gm_kit, hash: e1:…` });
+      problems.push({ line, message: `the uses are ${JSON.stringify(v)}, not a lockfile: uses: a list of - id: gm_kit, hash: e2:…` });
   }
   return problems;
 }

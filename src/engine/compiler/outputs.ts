@@ -138,7 +138,8 @@ export function outputsOf(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, cells:
     // volume streams: map=amp cells in the product are levels, not pitches
     // amp: a volume; lin: a volume as a bare factor, a pitch inside a pitch sum (a smooth vibrato)
     const isEnvelope = (x: (typeof terms)[number]) => x.c.map?.kind === 'adsr';
-    const isLevel = (x: (typeof terms)[number]) => x.c.map?.kind === 'amp' || x.c.map?.kind === 'db' || (x.c.map?.kind === 'lin' && !x.t.inSum);
+    // (a sum of values, decision 079, is plain as map=lin is: a level as a bare factor, decision 088)
+    const isLevel = (x: (typeof terms)[number]) => x.c.map?.kind === 'amp' || x.c.map?.kind === 'db' || ((x.c.map?.kind === 'lin' || !!x.c.sum) && !x.t.inSum);
     const envelopes = terms.filter(isEnvelope);
     const pitches = terms.filter((x) => !isLevel(x) && !isEnvelope(x));
     const levels = terms.filter((x) => isLevel(x));

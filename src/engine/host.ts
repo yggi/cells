@@ -10,7 +10,10 @@
  *                                        second of the piece loaded before (as windows are asked: the first the new
  *                                        piece will be asked for), the new piece goes on from where the old one was
  *                                        there, its beat kept (#56, `keepbeat.ts`): every second asked after is that
- *                                        far into the new piece; without, the new piece is asked from its own start
+ *                                        far into the new piece; without, the new piece is asked from its own start.
+ *                                        A load that places the bar otherwise (a swing's share or a bend's depth
+ *                                        moved) waits for the bar line (#701, `keepBar`): the old piece answers up
+ *                                        to the next one, the new piece from there, anchored at it
  *   window { id, from, length, begins }  → { type: 'window', id, window }   (engine/schedule.ts; begins: where play began)
  *   grab   { cell, t, speed }            a hand on a physical cell at transport second t (null lets go)
  *   reset                                every hand forgotten (Reset)
@@ -23,7 +26,7 @@ import { grab, resetPhysics } from './physics';
 import { physicsOf } from './clocking';
 import { plan, type Plan } from './realize';
 import { retime, windowAt, type Window } from './schedule';
-import { keepBeat } from './keepbeat';
+import { keepBar, keepBeat } from './keepbeat';
 
 export type ToEngine =
   | { type: 'load'; code: string; env?: Env; locked?: readonly Locked[]; anchor?: number }
@@ -54,6 +57,20 @@ function shiftedWindow(p: Plan, from: number, length: number, begins: number | u
   return { from, to: from + length, ...retime(w, from, 1) };
 }
 
+/** Two windows that meet, one after the other, as one: their notes, each tape's speeds and the MIDI clock's ticks in turn. */
+function joined(a: Window, b: Window): Window {
+  const tapes = [...a.tapes];
+  for (const t of b.tapes) {
+    const i = tapes.findIndex((u) => u.tape === t.tape);
+    if (i < 0) tapes.push(t);
+    else tapes[i] = { tape: t.tape, points: [...tapes[i]!.points.filter((x) => x.at < b.from), ...t.points] };
+  }
+  const x = a.clock;
+  const y = b.clock;
+  const clock = x && y ? (x.at.length ? { first: x.first, at: [...x.at, ...y.at], before: x.before } : y) : (x ?? y ?? null);
+  return { from: a.from, to: b.to, events: [...a.events, ...b.events], tapes, clock };
+}
+
 /** What a host is made with: the resolver its pieces' `from` lines read through (it can't cross `postMessage`, so isn't in `load`). */
 export interface HostOptions {
   readonly resolve?: Resolve;
@@ -63,24 +80,46 @@ export function createHost(now: () => number = () => performance.now(), { resolv
   let p: Plan | null = null;
   // (the piece's own second at each second asked, less that: 0 unless a load was anchored, #56)
   let offset = 0;
+  // (the piece loaded before, while it keeps its bar: it answers every second asked before `until`, #701)
+  let kept: { plan: Plan; offset: number; until: number } | null = null;
   return (m: ToEngine): FromEngine | null => {
     switch (m.type) {
       case 'load': {
         const t0 = now();
-        const before = p;
+        const anchored = m.anchor !== undefined && Number.isFinite(m.anchor) ? m.anchor : null;
+        // (the piece heard at the anchor: the one still keeping its bar there, else the last loaded)
+        const heard = kept && anchored !== null && anchored < kept.until ? kept : p ? { plan: p, offset } : null;
+        kept = null;
         p = planOf(m.code, m.env, { ...(resolve ? { resolve } : {}), ...(m.locked ? { locked: m.locked } : {}) });
-        offset = before && m.anchor !== undefined && Number.isFinite(m.anchor) ? keepBeat(before, p, m.anchor + offset) - m.anchor : 0;
+        if (!heard || anchored === null) offset = 0;
+        else {
+          const bar = keepBar(heard.plan, p, anchored + heard.offset);
+          if (bar) {
+            const until = bar.line - heard.offset;
+            kept = { plan: heard.plan, offset: heard.offset, until };
+            offset = bar.at - until;
+          } else offset = keepBeat(heard.plan, p, anchored + heard.offset) - anchored;
+        }
         return { type: 'loaded', ms: now() - t0, ok: p.result.ok };
       }
       case 'window': {
         const t0 = now();
-        const window = p ? shiftedWindow(p, m.from, m.length, m.begins, offset) : emptyWindow(m.from, m.length);
+        const to = m.from + m.length;
+        const window = !p
+          ? emptyWindow(m.from, m.length)
+          : kept && m.from < kept.until
+            ? to <= kept.until
+              ? shiftedWindow(kept.plan, m.from, m.length, m.begins, kept.offset)
+              : joined(shiftedWindow(kept.plan, m.from, kept.until - m.from, m.begins, kept.offset), shiftedWindow(p, kept.until, to - kept.until, m.begins, offset))
+            : shiftedWindow(p, m.from, m.length, m.begins, offset);
         return { type: 'window', id: m.id, window, ms: now() - t0 };
       }
       case 'grab':
-        if (p) grabIn(p, m.cell, m.t + offset, m.speed);
+        if (kept && m.t < kept.until) grabIn(kept.plan, m.cell, m.t + kept.offset, m.speed);
+        else if (p) grabIn(p, m.cell, m.t + offset, m.speed);
         return null;
       case 'reset':
+        if (kept) resetPhysics(kept.plan.result);
         if (p) resetPhysics(p.result);
         return null;
     }

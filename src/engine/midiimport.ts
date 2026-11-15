@@ -6,10 +6,13 @@ const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
  * - **The grid**: the coarsest step (a quarter note, an eighth, a triplet … down to a 64th) that every start falls on,
  *   within a 96th of a quarter (and an eighth of the step); a file played in, whose starts fall on none, is laid on sixteenths and says how many
  *   notes moved.
- * - **The time**: one meter for the whole piece, `&tempo scan(…) pulse=16n step=free(…bpm) laps=1`, a step each grid
- *   step (`pulse=` its note value, so its bpm counts quarters: decision 040), each as long as the file's tempo map makes it (a
- *   scan's steps are its weights against their mean), so a tempo change is a change of weight, as BWV 847 writes its
- *   own; laps=1, so the piece ends. Every line taps it by the pulse (`step=pulse`, `step=pulse/2`).
+ * - **The time**: the file's meter where it has one (#760): one time signature at its start, a grid step that divides
+ *   the bar, and grid steps whose lengths repeat within a bar: `&bar meter("3/4") step=…bpm laps=…`, the steps' unequal
+ *   lengths as `swing=` (a pair, or pairs at the level above) or `bend=` (decision 080), laps= its bars, so the piece
+ *   ends; every line taps the grid by its note value (`step=8n`). It is kept only if it plays every note when the
+ *   scan below does (within a microsecond); otherwise, and for a file whose tempo changes, one scan for the whole
+ *   piece, `&tempo scan(…) pulse=16n step=free(…bpm) laps=1`, a step each grid step, each as long as the file's tempo
+ *   map makes it, so a tempo change is a change of weight, as BWV 847 writes its own; every line taps it by the pulse.
  * - **The lines**: a line a track and channel (a format 0 file's channels apart), named after the track. Notes that start
  *   and end together are a chord; one that overlaps another goes in a line of its own beside it (`&lead2`), so every
  *   note is written. A melodic note is its key in semitones from C4, on a voice at C4; channel 10 is drums, each note
@@ -125,7 +128,7 @@ function kitOf(name: string | undefined, notes: readonly SmfNote[]): Map<number,
 }
 
 /** Names a line can't take: the piece's own cells, and the drums'. */
-const TAKEN = new Set(['out', 'piece', 'tempo', ...Object.keys(DRUMS)]);
+const TAKEN = new Set(['out', 'piece', 'tempo', 'bar', ...Object.keys(DRUMS)]);
 
 /** A number written short: at most `digits` significant, no trailing zeros. */
 const short = (x: number, digits = 5) => String(Number(x.toPrecision(digits)));
@@ -260,6 +263,8 @@ export function cellsFromMidi(
   // (free: a slider; not, for a MIDI file played as it is, where nothing is kept)
   const rate = free ? `free(${short(bpm, 6)}bpm, ${Math.floor(bpm * 0.6)}..${Math.ceil(bpm * 1.5)})` : `${short(bpm, 6)}bpm`;
   const tempo = `&tempo scan(${runs.join(' ')})${pulse} step=${rate} laps=1`;
+  // (the meter the file has, where its tempo map is a rate and a lean that repeats: #760)
+  const metered = meterOf(smf, perQuarter, weights.map(Number), Number(short(bpm, 6)), length, free);
 
   // the lines: chords where notes start and end together, a line beside for a note that overlaps
   const taken = new Set(TAKEN);
@@ -317,7 +322,8 @@ export function cellsFromMidi(
     if (!layers.length) continue;
     const voice = p.drums ? null : unique(`${p.name}Voice`);
     const names = layers.map(() => unique(p.name));
-    layers.forEach((chords, i) => lines.push({ name: names[i]!, chords, length }));
+    // (under a meter, as long as its bars: a line shorter than its last bar would come round again in it)
+    layers.forEach((chords, i) => lines.push({ name: names[i]!, chords, length: metered ? metered.steps : length }));
     if (voice) voices.push(`&${voice} s=tri loop=C4${legato ? ` glide=${legato.glide}` : ''} env=&(map=adsr .005 .2 .6 .15)`);
     for (const n of names) mix.push(voice ? `&${n} * &${voice} * .25` : `&${n} * .4`);
   }
@@ -328,8 +334,9 @@ export function cellsFromMidi(
     const text = [
       // (where the file came from and on what terms: comments the piece keeps)
       ...(credit.length ? [...credit.map((l) => `# ${l}`), ''] : []),
-      `# the file's tempo map: a step each ${perQuarter === 4 ? 'sixteenth' : `1/${perQuarter} of a quarter note`}; laps=1, so the piece ends`,
-      tempo,
+      ...(time.lines.length
+        ? time.lines
+        : [`# the file's tempo map: a step each ${perQuarter === 4 ? 'sixteenth' : `1/${perQuarter} of a quarter note`}; laps=1, so the piece ends`, tempo]),
       '',
       ...body,
       '',
@@ -342,13 +349,27 @@ export function cellsFromMidi(
     describing.set(text, label);
     return text;
   };
-  const flat = write(
-    [
-      '# every note, a line a track (and one beside for notes that overlap); melodies as semitones from C4',
-      ...lines.map((l) => `&${l.name} step=pulse ${braidOf(l.chords, l.length)}`),
-    ],
-    'written out in full: Shorten folds it',
-  );
+  const flatWith = () =>
+    write(
+      [
+        '# every note, a line a track (and one beside for notes that overlap); melodies as semitones from C4',
+        ...lines.map((l) => `&${l.name} step=${time.tap} ${braidOf(l.chords, l.length)}`),
+      ],
+      'written out in full: Shorten folds it',
+    );
+  // (the meter where it plays the notes the file's tempo map does, every one: else the tempo map as it is)
+  const time: { lines: string[]; tap: string } = { lines: [], tap: 'pulse' };
+  const asMapped = flatWith();
+  let flat = asMapped;
+  for (const option of metered?.options ?? []) {
+    Object.assign(time, { lines: option, tap: metered!.tap });
+    const asMetered = flatWith();
+    if (sameTimes(asMapped, asMetered)) {
+      flat = asMetered;
+      break;
+    }
+    Object.assign(time, { lines: [], tap: 'pulse' });
+  }
   let source = flat;
   let folded = false;
   let inKey: string | null = null;
@@ -358,14 +379,14 @@ export function cellsFromMidi(
     const label = (tool: string, round: number, how: string) => (tool === 'done' ? 'folded' : round ? `${tool}, ${how}` : tool);
     // (the folder, engine/fold: its symbols as cells above the lines; taken only if it plays the same notes, and is shorter)
     const printed = (f: Folded, fixed?: ReadonlyMap<string, string>) => {
-      const { defs, lines: braids, scales } = printFolded(f, 'm', 'pulse', '^$', fixed);
+      const { defs, lines: braids, scales } = printFolded(f, 'm', time.tap, '^$', fixed);
       return write(
         [
           '# what comes back, as cells of its own (a phrase, a phrase made of phrases, …); ^$n: n semitones up',
           ...defs,
           '',
           '# every note, a line a track; melodies as semitones from C4',
-          ...lines.map((l) => `&${l.name} step=pulse${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`} ${braids.get(l.name)}`),
+          ...lines.map((l) => `&${l.name} step=${time.tap}${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`} ${braids.get(l.name)}`),
         ],
         'folded (engine/fold)',
       );
@@ -382,7 +403,7 @@ export function cellsFromMidi(
     if (pitches !== 'semitones' && key && lines.some((l) => l.chords.some((c) => c.values.some((v) => !v.startsWith('&'))))) {
       const name = unique('key');
       const printedIn = (f: Folded, fixed?: ReadonlyMap<string, string>) => {
-        const { defs, lines: braids, scales } = printFolded(f, 'm', 'pulse', '^', fixed);
+        const { defs, lines: braids, scales } = printFolded(f, 'm', time.tap, '^', fixed);
         return write(
           [
             `# the key: the lines read through it, a note its degree (0 the tonic; 6# the seventh raised a semitone)`,
@@ -394,7 +415,7 @@ export function cellsFromMidi(
             `# every note, a line a track; melodies as degrees of ${keyName(key)}`,
             ...lines.map(
               (l) =>
-                `&${l.name} step=pulse${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`}${l.chords.some((c) => c.values.some((v) => !v.startsWith('&'))) ? ` over=&${name}` : ''} ${braids.get(l.name)}`,
+                `&${l.name} step=${time.tap}${scales.get(l.name) === 1 ? '' : `/${scales.get(l.name)}`}${l.chords.some((c) => c.values.some((v) => !v.startsWith('&'))) ? ` over=&${name}` : ''} ${braids.get(l.name)}`,
             ),
           ],
           `folded in degrees of ${keyName(key)} (engine/fold)`,
@@ -418,7 +439,7 @@ export function cellsFromMidi(
         const keyNames = new Map(keys.map((k, i) => [k, unique(`key${i + 1}`)]));
         const partNames = new Map<string, string>();
         const printedSections = (f: Folded, fixed?: ReadonlyMap<string, string>) => {
-          const { defs, lines: braids, scales } = printFolded(f, 'm', 'pulse', '^', fixed);
+          const { defs, lines: braids, scales } = printFolded(f, 'm', time.tap, '^', fixed);
           // (a part as a cell read through its section's key, spliced as slow as its clock; one written alike, the same cell)
           const cells = new Map<string, string>();
           const sectionDefs: string[] = [];
@@ -460,7 +481,7 @@ export function cellsFromMidi(
               '',
               '# every note, a line a track: its sections in order',
               // (a section's cell, then the same again: x!n, as the printer writes a run)
-              ...lines.map((l) => `&${l.name} step=pulse ${runsOf(spliced.get(l.name)!)}`),
+              ...lines.map((l) => `&${l.name} step=${time.tap} ${runsOf(spliced.get(l.name)!)}`),
             ],
             `folded in ${sections.length} sections by key (engine/fold)`,
           );
@@ -614,4 +635,84 @@ function sameNotes(a: string, b: string): boolean {
   };
   const [x, y] = [notes(a), notes(b)];
   return !!x && !!y && x.length === y.length && x.every((n, i) => n === y[i]);
+}
+
+/**
+ * Two texts play the same notes, each its voice, its pitch and its length, at the same times within a microsecond: the
+ * meter's guard (#760), where `sameNotes`'s three decimals would part two times a rounding apart.
+ */
+function sameTimes(a: string, b: string): boolean {
+  const notes = (s: string) => {
+    const r = compileSource(s);
+    if (!r.ok) return null;
+    const p = plan(r, codeShifts(r), r.off);
+    return eventsBetween(p, 0, p.end).sort((x, y) => x.at - y.at || x.freq - y.freq || x.voice.localeCompare(y.voice));
+  };
+  const [x, y] = [notes(a), notes(b)];
+  const near = (u: number, v: number) => Math.abs(u - v) <= 1e-6;
+  return !!x && !!y && x.length === y.length && x.every((n, i) => n.voice === y[i]!.voice && near(n.at, y[i]!.at) && near(n.dur, y[i]!.dur) && near(n.freq, y[i]!.freq));
+}
+
+/** The note value a grid of `perQuarter` steps a quarter steps by, as a tap: 4 → `16n`, 3 → `8t`; null where none is. */
+const TAPS: Readonly<Record<number, string>> = { 0.5: '2n', 1: '4n', 2: '8n', 3: '8t', 4: '16n', 6: '16t', 8: '32n', 12: '32t', 16: '64n' };
+
+/** A share or a weight, written short: `.666667`, `2`. */
+const shortly = (x: number, digits = 6) => String(Number(x.toFixed(digits))).replace(/^0\./, '.');
+
+/**
+ * The meter a file has, where its time is one (#760): its signature (its one time signature, from its start), its rate,
+ * and the lean its tempo map repeats. A file whose tempo map repeats one pattern over the bar's grid steps (a swung file
+ * as cells exports one, #558: its ticks straight, its tempo long and short) is that pattern as the meter's warp, a pair's
+ * lean as `swing=` (at the grid's level, or the level above where each pair's halves are alike), any other as `bend=` over
+ * the grid (decision 080); a tempo map that doesn't repeat (a tempo that changes) is no meter here, and stays a scan.
+ * The bpm counts the signature's beats (decision 040); `laps=` its bars, so the piece ends. The lines tap the grid's note
+ * value. Null where the file has no one signature, its grid no note value, or its tempo map no repeat.
+ */
+function meterOf(
+  smf: Smf,
+  perQuarter: number,
+  weights: readonly number[],
+  quarters: number,
+  length: number,
+  free: boolean,
+): { options: string[][]; tap: string; steps: number } | null {
+  const tap = TAPS[perQuarter];
+  const sigs = [...new Set(smf.meters.map((m) => `${m.num}/${m.den}`))];
+  if (!tap || sigs.length !== 1 || smf.meters[0]!.tick !== 0) return null;
+  const sig = sigs[0]!;
+  const { num, den } = smf.meters[0]!;
+  const bar = (perQuarter * 4 * num) / den;
+  const meter = compileSource(`&bar meter("${sig}") step=60bpm`).cells.get('bar')?.meter;
+  if (!meter || !Number.isInteger(bar) || bar < 1 || length < bar) return null;
+  // (the shortest period of the tempo map's weights that divides the bar: the lean it repeats)
+  const same = (a: number, b: number) => Math.abs(a - b) <= 1e-4 * Math.max(a, b);
+  const period = [...Array(bar).keys()].map((i) => i + 1).find((p) => bar % p === 0 && weights.every((w, k) => same(w, weights[k % p]!)));
+  if (!period) return null;
+  const w = weights.slice(0, period);
+  const level = TAPS[perQuarter / 2];
+  // (each lean written short, to three digits, and as the weights give it, to six: the caller keeps the first that
+  // plays the file's notes, so a swing exported at .6 reads .6, not the .599999 its tempo map's rounded weights make)
+  const warpTo = (digits: number) =>
+    period === 1
+      ? ''
+      : period === 2
+        ? ` swing=${tap}:${shortly(w[0]! / (w[0]! + w[1]!), digits)}`
+        : period === 4 && level && same(w[0]!, w[1]!) && same(w[2]!, w[3]!)
+          ? ` swing=${level}:${shortly((w[0]! + w[1]!) / (w[0]! + w[1]! + w[2]! + w[3]!), digits)}`
+          : ` bend=${tap}:&(${w.map((x) => shortly(x, digits)).join(' ')})`;
+  const warps = [...new Set([warpTo(3), warpTo(6)])];
+  // (the rate the scan writes, its quarters a minute as it rounds them, counted in the signature's beats: a bar is
+  // num/den whole notes, 4·num/den quarters, its beats as many as the meter has)
+  const bpm = (quarters * meter.beats.length) / ((4 * num) / den);
+  // (to nine digits: a bpm that counts dotted quarters is a third of a whole, and six would drift a note over a piece)
+  const rate = free ? `free(${short(bpm, 9)}bpm, ${Math.floor(bpm * 0.6)}..${Math.ceil(bpm * 1.5)})` : `${short(bpm, 9)}bpm`;
+  return {
+    tap,
+    steps: Math.ceil(length / bar) * bar,
+    options: warps.map((warp) => [
+      `# the file's meter, ${sig}${warp ? `, its lean repeating each ${period === bar ? 'bar' : `${period} ${tap} steps`}` : ''}; laps=, its bars, so the piece ends`,
+      // (its rate on the meter's own line, as the scan wrote its own: one line, no cell more than the file's time needs)
+      `&bar meter("${sig}") step=${rate}${warp} laps=${Math.ceil(length / bar)}`,
+    ]),
+  };
 }

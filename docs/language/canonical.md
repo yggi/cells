@@ -90,7 +90,7 @@ A line of the piece that is a library fragment's line word for word, its comment
 | the General MIDI kit's `&bd`, `&sd` and `&hh` lines, word for word | `&bd, &sd, &hh from gm_kit` |
 | `pitch=&(map=lin loop=5 0 .1 0 -.1 0)`, the `vibrato` fragment's cell written inline | `pitch=&vibrato` and `&vibrato from vibrato` |
 
-A fragment's cell written inline, `&(…)` word for word, is taken the same way: every place it is written becomes the cell by name, and one `from` line of it joins the piece's (after its own `from` lines, or first). Not where the piece defines the name itself. A fragment's own file is normalised against the rest of the library, never as a `from` line of itself.
+A fragment's cell written inline, `&(…)` word for word, is taken the same way: every place it is written becomes the cell by name, and one `from` line of it joins the piece's (a line of that fragment already written, or a new one before the first line that reads the cell). Not where the piece defines the name itself, and not inside a line that is a fragment's own, word for word: that line is taken whole. A fragment's own file is normalised against the rest of the library, never as a `from` line of itself.
 
 
 ## A second clock: the main meter's tap

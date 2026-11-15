@@ -30,8 +30,6 @@ describe('a malformed entry fails', () => {
     ['a weight below 0', { ...good, association: [{ point: { x: 0 }, weight: -1 }] }],
     ['a weight that is no number', { ...good, association: [{ point: { x: 0 }, weight: NaN }] }],
     ['a weight missing', { ...good, association: [{ point: { x: 0 } }] }],
-    ['an empty point', { ...good, association: [{ point: {}, weight: 1 }] }],
-    ['an empty point after a good one', { ...good, association: [...good.association, { point: {}, weight: 1 }] }],
     ['an axis that is no number', { ...good, association: [{ point: { x: Infinity }, weight: 1 }] }],
     ['no style point', { ...good, association: [] }],
     ['no id', { ...good, id: '' }],
@@ -299,5 +297,31 @@ describe('the pull, a query option', () => {
   it('refuses a pull that isn’t a number ≥ 0', () => {
     for (const pull of [-0.1, -Infinity, Infinity, NaN, '0.1' as unknown as number, null as unknown as number])
       expect(() => ask({ pull }), String(pull)).toThrow(/query: pull is .*, not a number ≥ 0/);
+  });
+});
+
+describe('a fragment of no style (#540)', () => {
+  const at = (id: string, point: Record<string, number>, weight = 1) => ({ id, text: `&${id} 0`, association: [{ point, weight, facet: 'module' }] });
+
+  it('is well formed with no point: an empty point is no style, not a malformed one', () => {
+    expect(fragmentProblems(at('osc', {}))).toEqual([]);
+  });
+
+  // decision 090 (the owner, 2026-11-14): no style, no query; it is taken by its name
+  it('is found by no query, of its facet or of none, and every other result is as it was', () => {
+    const styled = [at('near', { sync: 0.2 }), at('far', { sync: 0, harm: 0, bite: 0, mood: 0 }, 0.5)];
+    const repo = createRepository([at('none', {}), ...styled]);
+    const without = createRepository(styled);
+    for (const point of [
+      { sync: 0.2, harm: 1, bite: 1, mood: 1 },
+      { sync: 1, harm: 1, bite: 1, mood: 1 },
+    ])
+      for (const facet of ['module', undefined]) {
+        const found = repo.query(point, 3, {}, { facet });
+        expect(found.map((f) => f.fragment.id)).not.toContain('none');
+        expect(found).toEqual(without.query(point, 3, {}, { facet }));
+      }
+    // (it still says what kind of fragment it is: a frontend finds it by that, Cell studio's modules)
+    expect(repo.fragments.find((f) => f.id === 'none')?.association).toEqual([{ point: {}, weight: 1, facet: 'module' }]);
   });
 });

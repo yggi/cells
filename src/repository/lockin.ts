@@ -12,7 +12,7 @@ const RHYTHM_FRAGMENTS = seedFragments('rhythms');
  */
 import { renameCell } from '../engine/edit';
 import { chanceOf } from '../engine/realize';
-import { createRepository, EMPTY_LAYER, type LearnedLayer, type StylePoint } from './fragments';
+import { createRepository, EMPTY_LAYER, type Fragment, type LearnedLayer, type Repository, type StylePoint } from './fragments';
 import { fileFragment, useFragments, type Use } from './learned';
 import { LIBRARY } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
@@ -100,21 +100,21 @@ export interface LearnedRun {
   readonly layer: LearnedLayer;
 }
 
-const repository = createRepository(LIBRARY);
+const seedRepository = createRepository(LIBRARY);
 
 function baseline(start: StylePoint, seed: number): Baseline {
   const alone: Record<Facet, string[]> = { meter: [], rhythm: [] };
   const missed: Record<Facet, boolean[]> = { meter: [], rhythm: [] };
   for (const point of walk(start, seed))
     for (const facet of FACETS) {
-      const first = repository.query(point, 1, {}, { facet })[0]!;
+      const first = seedRepository.query(point, 1, {}, { facet })[0]!;
       alone[facet].push(first.fragment.id);
       missed[facet].push(first.distance > MISS);
     }
   return { start: Object.keys(LOCK_IN_PRESETS)[STARTS.indexOf(start)]!, seed, alone, missed };
 }
 
-function learned(start: StylePoint, seed: number, learn: Learning): LearnedRun {
+function learned(start: StylePoint, seed: number, learn: Learning, repository: Repository = seedRepository, library: readonly Fragment[] = LIBRARY): LearnedRun {
   let layer = EMPTY_LAYER;
   const kept: Record<Facet, string[]> = { meter: [], rhythm: [] };
   const filedAt = new Map<string, number>();
@@ -125,7 +125,7 @@ function learned(start: StylePoint, seed: number, learn: Learning): LearnedRun {
     for (const facet of FACETS) {
       // (the first that ranks within the miss distance: a fragment pulled first by its uses but farther than that is no find)
       const chosen = learn.together ? uses.map((u) => u.id) : [];
-      const first = repository.query(point, LIBRARY.length + layer.filed.length, {}, { facet, chosen, layer }).find((f) => f.distance <= MISS);
+      const first = repository.query(point, library.length + layer.filed.length, {}, { facet, chosen, layer }).find((f) => f.distance <= MISS);
       if (first) {
         if ((filedAt.get(first.fragment.id) ?? section) < section) firstFoundAgain ??= section;
         uses.push({ id: first.fragment.id, facet, ...(learn.move ? { point } : {}) });
@@ -162,6 +162,16 @@ export function lockInDraws(from: number, to: number, learnings: readonly Learni
     learnings.forEach((learn, k) => learnedRuns[k]!.push(seeds.map(([start, seed]) => learned(start, seed, learn))));
   }
   return { baselines, learned: learnedRuns };
+}
+
+/**
+ * One draw's runs, learning as given, over another library than the seed's: a fixture, such as one with a known gap, where
+ * the walk must file fragments of its own whatever the seed library holds (#706). No baselines: a facet the library lacks
+ * has no first to read.
+ */
+export function lockInRunsOver(library: readonly Fragment[], draw: number, learn: Learning): LearnedRun[] {
+  const over = createRepository(library);
+  return STARTS.map((start, i) => learned(start, DRAW * draw + i, learn, over, library));
 }
 
 /** The share of sections whose fragment is among the 3 most used of the run. */

@@ -46,8 +46,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the thirteen meters, the thirty-two rhythms, the seventeen bass lines, the seventeen harmonies, the twenty-nine instruments, the vibrato and the envelopes, the nine modes, the five performers, the three stab lines, the fifty-six motifs, the six forms, the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: a hundred and ninety-nine (#572, #542, #540, #646)', () => {
-    expect(LIBRARY).toHaveLength(199);
+  it('is the law five_to_twelve (#772), the thirteen meters, the thirty-two rhythms, the seventeen bass lines, the seventeen harmonies, the twenty-nine instruments, the vibrato and the envelopes, the nine modes, the five performers, the three stab lines, the fifty-six motifs, the six forms, the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: a hundred and ninety-nine (#572, #542, #540, #646)', () => {
+    expect(LIBRARY).toHaveLength(200);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
@@ -182,7 +182,7 @@ describe('the points proposed for two more presets (#349)', () => {
   // 076's axes Swing jazz (ionian) and Spooky (harmonic minor) are told apart by their mood, so the dark cadence no
   // longer reaches it, and nothing moves, #572)
   it('change nothing Jambot’s eight presets find first, in any facet, nor how far it is', () => {
-    expect(facets).toHaveLength(14);
+    expect(facets).toHaveLength(15);
     const NAMES = ['Synth-pop', 'Techno', 'Deep house', 'Ambient', 'Lo-fi hip hop', 'Funk', 'Bossa nova', 'Swing jazz'];
     const first = (r: typeof library, point: StylePoint, facet: string) => ranked(r.query(point, 1, {}, { facet }));
     const moved = PRESETS.flatMap((point, i) =>

@@ -1,10 +1,13 @@
 // Lock-in, a witness (decision 048, point 6; #145, #151, #162): the walk of `lockin.ts` over draws 0–3, 32 runs of 1,250
 // sections (40,000), about 5 s. The bound itself is over draws 0–31 in `lockin.slow.test.ts` (`npm run test:all`): 32 runs
 // can't tell 40 % from 50 %, since a draw of 8 spreads by up to 20 % (#533). This one holds what 32 runs can say, and
-// that the walk files fragments of its own, finds them again, and keeps its layer small.
+// that the walk files fragments of its own, finds them again, and keeps its layer small. That it files is witnessed on a
+// fixture with a known gap, the library without its rhythms, not on the seed library: there a rhythm placed in an empty
+// corner of style space can remove every miss of these draws (#706).
 // `LOCKIN_REPORT=1 npx vitest run --silent=false src/repository/lockin.test.ts` prints the numbers.
 import { describe, expect, it } from 'vitest';
-import { DRAW, drift, FACETS, LOCK_IN_BOUND, LOCK_IN_PRESETS, lockIn, lockInDraws, SECTIONS, topThree } from './lockin';
+import { LIBRARY } from './library';
+import { DRAW, drift, FACETS, LOCK_IN_BOUND, LOCK_IN_PRESETS, lockIn, lockInDraws, lockInRunsOver, SECTIONS, topThree } from './lockin';
 
 /**
  * What a pool of 4 draws may read when the bound holds over 32: the bound plus twice the standard error of a pool of 4
@@ -64,10 +67,20 @@ describe('lock-in, a witness over 4 draws of 8 runs, 40,000 sections at entropy 
     },
   );
 
-  it('files fragments of its own where it misses, and finds them again within 3 sections', () => {
-    const filed = allRuns.filter((r) => r.firstFiled !== null);
-    expect(filed.length).toBeGreaterThan(0);
-    for (const r of filed) expect(r.firstFoundAgain! - r.firstFiled!).toBeLessThanOrEqual(3);
+  it('files fragments of its own where it misses, and finds them again within 3 sections: on a library with no rhythms, every run of draw 0', () => {
+    // (a gap no placement in the seed library fills: whatever rhythm is added there, the fixture leaves it out; #706)
+    const gap = LIBRARY.filter((f) => !f.association.some((p) => p.facet === 'rhythm'));
+    for (const learn of Object.values(LEARNINGS))
+      for (const r of lockInRunsOver(gap, 0, learn)) {
+        expect(r.filedNew).toBeGreaterThan(0);
+        expect(r.firstFiled).not.toBeNull();
+        expect(r.firstFoundAgain).not.toBeNull();
+        expect(r.firstFoundAgain! - r.firstFiled!).toBeLessThanOrEqual(3);
+      }
+  });
+
+  it('finds again within 3 sections whatever it files over the seed library (which may be nothing)', () => {
+    for (const r of allRuns.filter((r) => r.firstFiled !== null)) expect(r.firstFoundAgain! - r.firstFiled!).toBeLessThanOrEqual(3);
   });
 
   it('keeps the layer small: a few points and pairs, under 6 KB as JSON after 1,250 sections', () => {

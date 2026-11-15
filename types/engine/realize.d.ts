@@ -112,6 +112,14 @@ interface PlanTrack extends Series {
         readonly range: readonly [number, number] | null;
         readonly series: readonly Series[];
     };
+    /**
+     * Its line's `pan=` (#739, as `legato=` is a line's): where the notes it plays sit, read at each onset, a balance after
+     * its voice's own; null where the line writes none, or is the voice itself (a voice alone: its pan= is its voice's).
+     */
+    readonly place: number | {
+        readonly range: readonly [number, number] | null;
+        readonly series: readonly Series[];
+    } | null;
 }
 /** The static part of playback (braids flattened); pitches are resolved per moment. */
 export interface Plan {

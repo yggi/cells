@@ -71,9 +71,7 @@ export const PARAMS = {
         moves: true,
         form: 'legato=n · legato=free(n, lo..hi) · legato=&x · legato=lo..hi * &a * &b · on a meter, its lines’ default by level: legato=16n:r,4n:r',
     },
-    pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades; it can move, read at each note’s start (pan=&space, pan=0..1 * &lfo)', {
-        moves: true,
-    }),
+    pan: sound('where it sits in stereo: 0 left, .5 centre (as without it), 1 right — the far side fades; it can move, read at each note’s start (pan=&space, pan=0..1 * &lfo); on a line, as legato= is: the place of the notes it plays, after its voice’s own (#739)', { moves: true, on: ['voice', 'clock', 'driven'] }),
     distort: sound('distortion: 0 clean, .3 gritty, 1 and more harsh'),
     crush: sound('bit depth: 16 clean, 8 grainy, 3 and fewer: rubble'),
     fm: sound('frequency modulation: the voice that modulates this one (fm=&op); it may have its own fm=', { doc: 'physics.md', value: 'cell' }),
@@ -166,10 +164,10 @@ export const PARAMS = {
         form: 'part=bass (bass, pad, stab, lead or drums)',
     },
     role: {
-        help: 'a drum line’s role, as the default performer plays it (feel v3, decision 075): kick, backbeat, ghost, hat, pedal, euclid, clave or fill (&k role=kick step=16n &bd!4); a name gives none',
+        help: 'a drum line’s role, as the default performer plays it (feel v3, decision 075): kick, backbeat, ghost, hat, pedal, euclid, ostinato, clave or fill (&k role=kick step=16n &bd!4); a name gives none',
         doc: 'mix.md',
         value: 'word',
-        form: 'role=kick (kick, backbeat, ghost, hat, pedal, euclid, clave or fill)',
+        form: 'role=kick (kick, backbeat, ghost, hat, pedal, euclid, ostinato, clave or fill)',
     },
     trigger: { help: 'a gate, the old spelling of play=: the notes it plays (trigger=&tune)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'play=' },
     gate: { help: 'a gate, the old spelling: a level over time, one factor of level= (gate=&duck)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
@@ -201,7 +199,13 @@ export const PARAMS = {
         on: ['section', 'performer', 'selector'],
         stub: true,
     },
-    law: { help: 'a law that computes the notes (law=fiveto12: the 5 to 12 cycle, a day of music)', doc: 'time.md', value: 'word', on: ['law'] },
+    law: {
+        help: 'a law that computes the notes, the old spelling: &cycle from five_to_twelve &day takes it now (decision 085)',
+        doc: 'time.md',
+        value: 'word',
+        on: ['law'],
+        old: 'from five_to_twelve &day',
+    },
     anchor: {
         help: 'a clock (a day meter, loop=1d): the time of day it stands at when play starts (hours.minutes — 11.55); play begins where the clock stands',
         doc: 'time.md',
@@ -235,6 +239,7 @@ export const CELL_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].v
 export const TIME_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].clock));
 export const MOVING_PARAMS = new Set(Object.keys(ATTRIBUTES).filter((k) => ATTRIBUTES[k].moves));
 export const VOICE_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].voice));
+export const VOICE_MAKERS = new Set([...VOICE_PARAMS].filter((k) => k !== 'pan'));
 export const LINE_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].doc !== 'physics.md' && PARAMS[k].on?.every((r) => r === 'clock' || r === 'driven')));
 export const PLAYED_AS = new Set(['part', 'role']);
 export const memberParams = (params) => Object.keys(params).some((k) => !LINE_PARAMS.has(k) && !PLAYED_AS.has(k));

@@ -59,6 +59,11 @@ export declare const TIME_PARAMS: ReadonlySet<string>;
 export declare const MOVING_PARAMS: ReadonlySet<string>;
 /** Parameters that make a cell a voice; the rest are a physical cell's (motor=, write=, scope= …) and make none. */
 export declare const VOICE_PARAMS: ReadonlySet<string>;
+/**
+ * The sound parameters that make a cell a voice: all of a voice's but `pan=`, which a line may carry too, as `legato=`
+ * (#739): the place of the notes it plays. A cell with pan= alone is no voice.
+ */
+export declare const VOICE_MAKERS: ReadonlySet<string>;
 /** A line's own parameters, its timing (legato= swing= beat= …), acting on a clocked or driven line and never on a voice; not a motor's. */
 export declare const LINE_PARAMS: ReadonlySet<string>;
 /** What a line is played as by the default performer (part= role=, decision 075): a word about the line, which makes it no kit's member and keeps a stack a stack (#708). */

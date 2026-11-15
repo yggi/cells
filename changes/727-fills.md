@@ -1,0 +1,4 @@
+### Changed
+
+- Plugin-fragments' fills are called fills, not holes (#727): decision 047's holes are what a fragment uses and doesn't define (`repository/holes.ts`, `holesOf`), so one word had two meanings. `engine/holes.ts` is `engine/fills.ts`, `Hole` is `Fill`, and `PluginFragment.holes` is `fills`; `fill(name, lap, args)` as before. **Migration:** import from `@yggi/cells/engine/fills`. `engine/holes.ts` stays this minor as a deprecated re-export (`lawOf`, `BUILT_IN`, `Hole` as `Fill` …) and goes at the next; a frontend reading `PluginFragment.holes` reads `fills`.
+- `fiveto12` places its notes through its voice's `pan=`: its `space` fill writes shares as exact fractions, read by the voice its laps play on (`PluginFragment.voice`), where realize read its place by hand. It sounds the same; the event snapshots don't move.
