@@ -1,18 +1,10 @@
 ---
 id: arpeggio
-association:
-  - point:
-      sync: 0.5
-      harm: 0.3
-      bite: 0.5
-      mood: 0.5
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&arpeggio from &key
+&arpeggio from &key style=&(map=style sync=.5 harm=.3 bite=.5 mood=.5)
 &arpeggio over=&key step=8n 0 2 4 7 4 2 0 ~
 ```
 

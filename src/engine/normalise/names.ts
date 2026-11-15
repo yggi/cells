@@ -7,6 +7,7 @@
  *    its beats at 40 to 300 bpm (`BAR_BPM`, the owner's bounds), where a band plays; a clock that laps a day
  *    (fiveto12's `&day`) or a scan of slow durations (studie's `&time`, 24 bpm) is a meter and no bar;
  *  - `&tempo`: a bar's rate written as a value (`step=120bpm`) becomes a cell of its own, `step=&tempo` reading it;
+ *    and so where the bar is a template's copy, `&bar from meter 120bpm` → `&bar from meter &tempo`, `&tempo step=120bpm`;
  *  - `&key`: the piece's one key, the one cell of its own lines whose braid is `scale(…)` (`CompileResult.mainKey`);
  *  - `&tonic`: `&key`'s tonic written as a note (`scale(minor, A)`) becomes a cell of its own, `scale(minor, &tonic)`.
  *
@@ -17,6 +18,7 @@
  */
 import { attrsOf, declLine, declWords, renameCell, setAttr, spansLines, splitComment } from '../edit';
 import { parse } from '../parser';
+import { readFrom } from '../parser/use';
 import { clocking } from '../clocking';
 import { codeShifts, type CompileResult } from '../program';
 import { plan } from '../realize';
@@ -68,6 +70,27 @@ const named = (name: string) => WRITTEN.has(name);
 /** Is &name free in the piece: neither its own line nor a used one defines it? */
 const free = (source: string, result: CompileResult, name: string) => declLine(source, name) < 0 && !result.cells.has(name);
 
+/**
+ * The piece's `&bar from <template>(…) <rate>` line, where its main argument is a rate written in place (`120bpm`,
+ * `free(128bpm, 90..170)`, `free(andante)`) and not a cell: where it is, the rate, and the line with `&tempo` in its place.
+ */
+function takenTempo(source: string): { at: number; raw: string; rate: string; before: string; after: string; line: string } | null {
+  const lines = source.split('\n');
+  for (let at = 0; at < lines.length; at++) {
+    const raw = lines[at]!;
+    const [code, comment] = splitComment(raw);
+    const f = readFrom(code.trim());
+    if (f?.kind !== 'use' || f.names?.length !== 1 || f.names[0] !== '&bar' || !f.main || f.main.startsWith('&')) continue;
+    // (a rate: a number with or without its unit, or a slider)
+    if (!/^(?:free\(.*\)|[0-9.]+[a-z]*)$/.test(f.main)) return null;
+    const end = code.lastIndexOf(f.main);
+    if (end < 0 || code.slice(end + f.main.length).trim() !== '') return null;
+    const after = `${code.slice(0, end)}&tempo`;
+    return { at, raw, rate: f.main, before: code.trim(), after: after.trim(), line: `${after}${code.slice(end + f.main.length)}${comment}` };
+  }
+  return null;
+}
+
 /** Each interface name the piece's main meter and main key aren't written in yet, where they are unambiguous. */
 export function interfaceNames(source: string, result: CompileResult): Rewrite<Rule>[] {
   const own = new Set(parse(source).cells.map((d) => d.name));
@@ -85,6 +108,19 @@ export function interfaceNames(source: string, result: CompileResult): Rewrite<R
         ),
       );
   }
+  // (and where the piece's meter is a template's copy, `&bar from meter 120bpm`: its tempo is a cell too, the canonical
+  // spelling `&bar from meter &tempo` with `&tempo step=120bpm`, the owner's ruling of 2026-11-15 on #27)
+  const taken = takenTempo(source);
+  if (taken && meter === 'bar' && free(source, result, 'tempo'))
+    out.push(
+      rewrite('tempo', `&bar's rate is its tempo: ${taken.after}, &tempo step=${taken.rate}`, taken.before, taken.after, (src) => {
+        const lines = src.split('\n');
+        if (lines[taken.at] !== taken.raw) return src;
+        lines[taken.at] = taken.line;
+        lines.splice(taken.at + 1, 0, `&tempo step=${taken.rate}`);
+        return lines.join('\n');
+      }),
+    );
   const keys = [...own].filter((n) => declWords(source, n)?.braid[0]?.startsWith('scale('));
   const key = result.mainKey;
   if (key && own.has(key) && keys.length === 1 && !spansLines(source, key)) {

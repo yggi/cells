@@ -1,25 +1,11 @@
 ---
 id: sine_bass
-association:
-  - point:
-      sync: 0.1
-      harm: 0.12
-      bite: 0.5
-      mood: 0.95
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.05
-      harm: 0.3
-      bite: 0
-      mood: 0.9
-    weight: 0.125
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/kinderlied.md @ a8de625f
 ---
 
 ```cells
+* from style=(&kinderlied * .125 | &ambient * .125)
 &bassV s=sine loop=C2 env=&(map=adsr .005 .4 .4 .1)
 ```
 

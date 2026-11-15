@@ -8,7 +8,11 @@
  * performer of a band, a voice another's `fm=` names: those are relations between two cells, and a cell of any kind can
  * stand in them. Pure: the compiled piece in, a word out.
  */
+import type { Sort } from './algebra';
 import type { CompileResult, ResolvedCell } from './program';
+
+/** What the rules read of a piece: its cells, its clocks and its sections (each to its table). A compiled piece is one. */
+export type KindPiece = Pick<CompileResult, 'cells' | 'clocks' | 'sections'>;
 
 /** The kinds, in the order their rules are tried. */
 export const KINDS = [
@@ -26,11 +30,13 @@ export const KINDS = [
   'phrase',
   'mix',
   'resonator',
+  'wave',
   'voice',
   'kit',
   'band',
   'meter',
   'tempo',
+  'groove',
   'grid',
   'envelope',
   'ramp',
@@ -47,7 +53,7 @@ export type Kind = (typeof KINDS)[number];
 
 /** What a rule may look at beside the cell: the piece. */
 interface Seen {
-  readonly result: CompileResult;
+  readonly result: KindPiece;
   /** The tables of names that declare sections (decision 016). */
   readonly sectionTables: ReadonlySet<string>;
   /** The tables of performers (decision 061). */
@@ -70,7 +76,7 @@ const named = (c: ResolvedCell): readonly string[] | null => {
   return names.length && names.every((n) => n !== null) ? (names as string[]) : null;
 };
 /** A table of performers: an unstepped braid of gates and role cells (decision 061). */
-const isBand = (c: ResolvedCell, result: CompileResult): boolean => {
+const isBand = (c: ResolvedCell, result: KindPiece): boolean => {
   const names = named(c);
   if (!names || c.step || c.gate || c.map || result.clocks.has(c.name)) return false;
   return names.every((n) => {
@@ -168,8 +174,14 @@ export const KIND_RULES: readonly KindRule[] = [
     holds: (c) => has(c, 'body'),
   },
   {
+    kind: 'wave',
+    is: 'A braid turning at an audio rate with no sound parameter: alone in a product the sound, beside one a pitch (FM).',
+    example: ['&square loop=220 0 1'],
+    holds: (c) => c.sort === 'wave',
+  },
+  {
     kind: 'voice',
-    is: 'A sound parameter (s=, lpf= …), or a braid turning at an audio rate: it sounds.',
+    is: 'A sound parameter (s=, lpf= …): it sounds.',
     example: ['&lead s=saw loop=C4'],
     holds: (c) => c.voice,
   },
@@ -196,6 +208,12 @@ export const KIND_RULES: readonly KindRule[] = [
     is: 'A rate alone, no braid: a tempo a meter reads (step=&tempo), or a clock.',
     example: ['&tempo step=84bpm'],
     holds: (c, { result }) => result.clocks.has(c.name) && c.braid === 'blank',
+  },
+  {
+    kind: 'groove',
+    is: 'A line of hits: a pattern read through a kit, or a stepped braid of voices.',
+    example: ['&bd s=sine loop=A1', '&hh s=white', '&kit &bd &hh', '&drums over=&kit step=4 0 1 0 1'],
+    holds: (c) => c.sort === 'signal',
   },
   {
     kind: 'grid',
@@ -265,8 +283,48 @@ export const KIND_RULES: readonly KindRule[] = [
   },
 ];
 
+/**
+ * What a cell of each kind is in a mix, its sort (`compiler/sorts.ts`, decision 006): a sound, a volume, a plain value, a
+ * pitch, or a wave. `null` where the kind doesn't say: a read head is its tape's (a sound tape's a sound, a tape of notes'
+ * a pitch); a card and a meter are never a mix's factor. A test holds it over every cell of every example.
+ */
+export const SORT_OF_KIND: Readonly<Record<Kind, Sort | null>> = {
+  note: 'pitch',
+  card: null,
+  'midi card': null,
+  gate: 'signal',
+  role: 'pitch',
+  style: 'pitch',
+  scope: 'pitch',
+  fill: null,
+  tape: 'pitch',
+  head: null,
+  sum: 'plain',
+  phrase: 'pitch',
+  mix: 'signal',
+  resonator: 'signal',
+  wave: 'wave',
+  voice: 'signal',
+  kit: 'pitch',
+  band: 'pitch',
+  meter: null,
+  tempo: 'pitch',
+  groove: 'signal',
+  grid: 'pitch',
+  envelope: 'volume',
+  ramp: 'plain',
+  volume: 'volume',
+  sections: 'pitch',
+  selector: 'pitch',
+  number: 'plain',
+  line: 'pitch',
+  table: 'pitch',
+  blank: 'pitch',
+  steps: 'pitch',
+};
+
 /** kindOf(name): what each cell of a compiled piece is (`KIND_RULES`); null for a name the piece doesn't have. */
-export function kindsOf(result: CompileResult): (name: string) => Kind | null {
+export function kindsOf(result: KindPiece): (name: string) => Kind | null {
   const sectionTables = new Set(result.sections?.values() ?? []);
   const bands = new Set([...result.cells.values()].filter((c) => isBand(c, result)).map((c) => c.name));
   const seen: Seen = { result, sectionTables, bands };

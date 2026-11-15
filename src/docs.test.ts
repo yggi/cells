@@ -163,9 +163,9 @@ describe('docs: the README shows the language as it is', () => {
     expect(readme).toContain('](docs/language/overview.md)');
   });
 
-  it('what the package ships of docs/language/ is at most 275 KB unpacked (#76: the pages and the reference; 150 until #284, 200 until #518, 250 until #698)', () => {
+  it('what the package ships of docs/language/ is at most 325 KB unpacked (#76: the pages and the reference; 150 until #284, 200 until #518, 250 until #698, 275 until 2026-11-15)', () => {
     const bytes = readdirSync(join(DOCS, 'language')).reduce((n, f) => n + statSync(join(DOCS, 'language', f)).size, 0);
-    expect(bytes / 1000).toBeLessThanOrEqual(275);
+    expect(bytes / 1000).toBeLessThanOrEqual(325);
   });
 
   it("links every topic page it ships: docs/language/ is in package.json's files", () => {

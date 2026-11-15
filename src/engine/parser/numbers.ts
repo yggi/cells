@@ -155,7 +155,7 @@ export const NUMBER_PLACES = {
     form: 'even(k, n, phase) (an argument)',
     name: 'arg',
     whole: true,
-    cell: '`&k`, a cell that is one number, filled as the piece is built (decision 093); a mode’s name only as even(7, 12)’s phase; not stepped',
+    cell: '`&k`, a cell that is one number, filled as the piece is built (decision 093); a mode’s name only as even(7, 12)’s phase; a key’s phase may step, read at each bar line',
     moves: true,
     example: '&key scale(even(7, 12, free(3, 0..6)), D)',
   }),
@@ -182,7 +182,7 @@ export const NUMBER_PLACES = {
     example: '&tune step=2 &motif[free(0, 0..3)]',
   }),
   turn: place({ form: '&x[<<n] · &x[>>n]', name: 'turn', whole: true, min: 0, cell: BUILT, example: '&canon step=2 &theme[>>free(4, 0..7)]' }),
-  move: place({ form: '&x^n · &x^$n', name: 'move', whole: true, cell: BUILT, example: '&tune step=2 &motif &motif^free(1, -7..7)' }),
+  move: place({ form: '&x^n · &x^$n · degree(&x, n)', name: 'move', whole: true, cell: BUILT, example: '&tune step=2 &motif &motif^free(1, -7..7)' }),
   // a number left as it is
   tier: place({
     form: 'tier=n',

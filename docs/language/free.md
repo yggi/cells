@@ -41,7 +41,7 @@ The places, from the parser's own table:
 | scan(n!k …) (an interval’s repeat) | ✓ whole | ✗ read as the piece is built | `&map scan(1!free(4, 1..8) 2)` |
 | geo(r, n, k …) | ✓ | ✗ read as the piece is built | `&series scan(geo(free(5, 2..8), 25, 0 10 5))` |
 | euclid(k, n, r) · sin(n) … | ✓ whole | ✗ read as the piece is built | `&hits euclid(free(3, 0..8), 8) step=8` |
-| even(k, n, phase) (an argument) | ✓ whole | `&k`, a cell that is one number, filled as the piece is built (decision 093); a mode’s name only as even(7, 12)’s phase; not stepped | `&key scale(even(7, 12, free(3, 0..6)), D)` |
+| even(k, n, phase) (an argument) | ✓ whole | `&k`, a cell that is one number, filled as the piece is built (decision 093); a mode’s name only as even(7, 12)’s phase; a key’s phase may step, read at each bar line | `&key scale(even(7, 12, free(3, 0..6)), D)` |
 | fifths(n) | ✓ whole | ✗ read as the piece is built | `&circle fifths(free(1, 0..11))` |
 | scale(t, phase) (retired) | ✓ whole | ✗ read as the piece is built | `&key scale(2, free(3, 0..6))` |
 | meter(n, n) | ✓ | ✗ read as the piece is built | `&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm` |
@@ -53,7 +53,7 @@ The places, from the parser's own table:
 | x(k, n, r) | ✓ whole | ✗ read as the piece is built | `&groove step=1 0(free(3, 0..8),8)` |
 | &x[i] · &x[a:b:s] · &x[$i] | ✓ whole | ✗ read as the piece is built: picking while it plays is a selector's (#51) | `&tune step=2 &motif[free(0, 0..3)]` |
 | &x[<<n] · &x[>>n] | ✓ whole | ✗ read as the piece is built | `&canon step=2 &theme[>>free(4, 0..7)]` |
-| &x^n · &x^$n | ✓ whole | ✗ read as the piece is built | `&tune step=2 &motif &motif^free(1, -7..7)` |
+| &x^n · &x^$n · degree(&x, n) | ✓ whole | ✗ read as the piece is built | `&tune step=2 &motif &motif^free(1, -7..7)` |
 | tier=n | ✗ the tutorial's order, not the piece's | ✗ read as the piece is built | `&piece title="Steps" tags="tutorial" tier=1` |
 | &x:n (a hit’s number) | ✗ a pitched hit is not yet: it is 0 | ✗ read as the piece is built | `&beat step=8 &bd:0` |
 <!-- places:end -->

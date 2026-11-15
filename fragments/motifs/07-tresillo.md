@@ -1,18 +1,10 @@
 ---
 id: tresillo
-association:
-  - point:
-      sync: 0.75
-      harm: 0.85
-      bite: 0.45
-      mood: 0.9
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&tresillo from &key
+&tresillo from &key style=&bossaNova
 &tresillo over=&key step=8n 4@3 2@3 0@2
 ```
 

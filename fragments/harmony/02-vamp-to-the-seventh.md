@@ -1,33 +1,11 @@
 ---
 id: vamp_to_the_seventh
-association:
-  - point:
-      sync: 0.12
-      harm: 0
-      bite: 1
-      mood: 0.4
-    weight: 1
-    facet: harmony
-  - point:
-      sync: 1
-      harm: 0.12
-      bite: 0.85
-      mood: 0.65
-    weight: 1
-    facet: harmony
-  - point:
-      sync: 0.1
-      harm: 0.25
-      bite: 0.7
-      mood: 0.65
-    weight: 0.4
-    facet: harmony
 source: seed
 lifted: yggi/jambot packages/engine/src/themes.ts @ 0a56da9
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=(&techno | &funk | &seaShanty * .4)
 &harm over=&key step=1m cycle=8 [0,2,4]!4 [6,8,10]!4
 ```
 

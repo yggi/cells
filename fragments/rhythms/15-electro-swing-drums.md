@@ -1,18 +1,11 @@
 ---
 id: electro_swing_drums
-association:
-  - point:
-      sync: 0.55
-      harm: 0.75
-      bite: 0.6
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/cells examples/electroswing.md @ 2c120d4
 ---
 
 ```cells
-&kick, &clap, &hats, &ticks, &groove from (&bd, &sd, &cp, &hh, &oh)
+&kick, &clap, &hats, &ticks, &groove from (&bd, &sd, &cp, &hh, &oh) style=&(map=style sync=.55 harm=.75 bite=.6)
 &bd, &sd, &cp, &hh, &oh from gm_kit
 &kick role=kick step=4n &bd!4
 &clap step=4n ~ &cp:0:.6 ~ &cp:0:.6

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { writtenGraph } from './graph';
 import { pieceStats, spread } from './stats';
+import { EXAMPLES } from './examples';
+import { resolveSeed } from '../repository/library';
 
 describe('spread', () => {
   it('min, max, mean and median; an even count takes the middle two', () => {
@@ -45,5 +47,29 @@ describe('a piece’s numbers (pieceStats)', () => {
   it('counts the lines that say something, and every character', () => {
     expect(s.lines).toBe(6);
     expect(s.chars).toBe(text.length);
+  });
+});
+
+describe('the cells counted by kind, over every example (#782)', () => {
+  it('each kind the Stats page counts, summed over the examples', () => {
+    const sum: Record<string, number> = {};
+    for (const p of Object.values(EXAMPLES)) {
+      const r = compileSource(p.source, undefined, { resolve: resolveSeed });
+      const s = pieceStats(r, { ...writtenGraph(r), nets: [], alias: new Map(), bulbs: new Map() }, p.source);
+      for (const [k, n] of Object.entries(s.kinds)) sum[k] = (sum[k] ?? 0) + n;
+    }
+    expect(sum).toMatchInlineSnapshot(`
+      {
+        "card": 91,
+        "envelope": 488,
+        "gate": 20,
+        "line": 848,
+        "meter": 88,
+        "mix": 29,
+        "note": 196,
+        "table": 95,
+        "voice": 389,
+      }
+    `);
   });
 });

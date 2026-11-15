@@ -3,7 +3,8 @@
  * the size of its text. The sidebar's Stats page reads them; a conversion's story counts up through them. Pure: the
  * compiled piece, its graph and its text in, numbers out.
  */
-import type { CompileResult, ResolvedCell } from './program';
+import type { CompileResult } from './program';
+import { kindsOf, type Kind } from './kinds';
 import type { GraphModel } from './graph';
 
 /** What a cell is, for counting: the first that fits, in this order. */
@@ -52,27 +53,55 @@ export function spread(xs: readonly number[]): Spread {
   };
 }
 
-/** What a cell is: a card (sound or MIDI), a mix, a gate, a voice, a meter, a table (read through by another's over=), an
- * envelope or a curve (`map=adsr`, `amp`, `lin`, `db`: a level or a pitch over a note), a note, else a line. */
-function kindOf(c: ResolvedCell, meters: ReadonlySet<string>, tables: ReadonlySet<string>): CellKind {
-  if (c.sink || c.map?.kind === 'midi') return 'card';
-  if (c.mix) return 'mix';
-  if (c.gate) return 'gate';
-  if (c.voice) return 'voice';
-  if (meters.has(c.name)) return 'meter';
-  if (tables.has(c.name)) return 'table';
-  if (c.map && ['adsr', 'amp', 'lin', 'db'].includes(c.map.kind)) return 'envelope';
-  if (c.note) return 'note';
-  return 'line';
-}
+/**
+ * What the Stats page counts a cell of each kind as (`kinds.ts`, #782): the kinds that are sound as voices, the three
+ * maps of a level as envelopes, and what has no count of its own as a line.
+ */
+const COUNTED: Readonly<Record<Kind, CellKind>> = {
+  note: 'note',
+  card: 'card',
+  'midi card': 'card',
+  gate: 'gate',
+  role: 'line',
+  style: 'line',
+  scope: 'line',
+  fill: 'line',
+  tape: 'line',
+  head: 'line',
+  sum: 'line',
+  phrase: 'mix',
+  mix: 'mix',
+  resonator: 'voice',
+  wave: 'voice',
+  voice: 'voice',
+  kit: 'line',
+  band: 'line',
+  meter: 'meter',
+  tempo: 'line',
+  groove: 'line',
+  grid: 'line',
+  envelope: 'envelope',
+  ramp: 'envelope',
+  volume: 'envelope',
+  sections: 'line',
+  selector: 'line',
+  number: 'line',
+  line: 'line',
+  table: 'line',
+  blank: 'line',
+  steps: 'line',
+};
+
+/** What a cell is, for counting: its kind's count, and a line another reads through (its `over=`) a table. */
+const kindOf = (kind: Kind, readThrough: boolean): CellKind => (COUNTED[kind] === 'line' && readThrough ? 'table' : COUNTED[kind]);
 
 /** The piece's numbers: from its compiled cells, its graph (the wires and nets as drawn) and its text. */
 export function pieceStats(result: CompileResult, graph: GraphModel, text: string): PieceStats {
   const written = [...result.cells.values()].filter((c) => !c.implicit && c.name !== result.builtinCard);
-  const meters = new Set(graph.nodes.flatMap((n) => (n.kind === 'cell' && n.isMeter ? [n.cell.name] : [])));
   const tables = new Set(written.flatMap((c) => (c.over ? [c.over] : [])));
+  const kind = kindsOf(result);
   const kinds = Object.fromEntries(CELL_KINDS.map((k) => [k, 0])) as Record<CellKind, number>;
-  for (const c of written) kinds[kindOf(c, meters, tables)]++;
+  for (const c of written) kinds[kindOf(kind(c.name)!, tables.has(c.name))]++;
   // (a braid as written: a blank one is the grid's, a scan or a wave a generator, a mix's entries are its sounds)
   const braids = written.filter((c) => c.braid === 'list' && !c.mix);
   const perCell = braids.map((c) => c.units.length);

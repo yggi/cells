@@ -1,18 +1,10 @@
 ---
 id: wail
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.27
-      mood: 0.3
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&wail from &key
+&wail from &key style=&(map=style sync=.2 harm=.9 bite=.27 mood=.3)
 &wail over=&key step=8n 4@3 3#@2 3@3
 ```
 

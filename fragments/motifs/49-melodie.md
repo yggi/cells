@@ -1,19 +1,11 @@
 ---
 id: melodie
-association:
-  - point:
-      sync: 0.15
-      harm: 0.5
-      bite: 0.75
-      mood: 0.45
-    weight: 1
-    facet: motif
 source: seed
 lifted: yggi/cells examples/zell.md @ 014c4c73
 ---
 
 ```cells
-&melodie from &key
+&melodie from &key style=&(map=style sync=.15 harm=.5 bite=.75 mood=.45)
 &melodie over=&key step=8n 4@2 2 1 0@4
 ```
 

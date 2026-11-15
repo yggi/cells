@@ -4,12 +4,63 @@ import { SHOWS } from '../parser/cell';
 import { ATTRIBUTES, rolesText, VOICE_PARAMS, type Role } from '../attributes';
 import { PLUGIN_SYNTAX, type ShowPlugin } from '../plugins';
 import { isMidiCard, type Clock, type ResolvedCell } from '../program';
+import { kindsOf, type Kind } from '../kinds';
 import { streamClockOf } from '../fills';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
 
 /** What switching a part on does to its time (decision 032): from its top, where it stopped, or running on. */
 const RESTARTS: readonly string[] = ['restart', 'resume', 'free'];
+
+/** What `rolesOf` reads of a piece: its cells, its clocks, its sections (each to its table) and its bands (each with its entries). */
+export interface RolePiece {
+  readonly cells: ReadonlyMap<string, ResolvedCell>;
+  readonly clocks: ReadonlyMap<string, Clock>;
+  readonly sections: ReadonlyMap<string, string>;
+  readonly bands?: ReadonlyMap<string, readonly string[]>;
+}
+
+/**
+ * The roles that are kinds (`kinds.ts`, #782): what a cell is, read from the one table. The rest of a cell's roles are
+ * not what it is: how it is moved (`clock`, `driven`, `motor`), whether it sounds as a voice (`voice`: a module mix with
+ * sound parameters does, a wave that only bends another doesn't), and what stands in a relation to another cell
+ * (`carrier`, `modulator`, `section`, `selector`, `performer`, and `law`: a fill's cell or the mix that reads one, on
+ * its stream's clock).
+ */
+const KIND_ROLE: Partial<Record<Kind, Role>> = {
+  tape: 'tape',
+  head: 'head',
+  resonator: 'resonator',
+  scope: 'scope',
+  gate: 'gate',
+  card: 'card',
+  note: 'note',
+};
+
+/** roles(cell): what the cell is, as far as an attribute cares (`Role`, attributes.ts). A cell can be several. */
+export function rolesOf({ cells, clocks, sections, bands = new Map() }: RolePiece): (c: ResolvedCell) => Set<Role> {
+  const modulators = new Set([...cells.values()].flatMap((c) => (typeof c.params.fm === 'string' ? [c.params.fm] : [])));
+  const kind = kindsOf({ cells, clocks, sections });
+  return (c) => {
+    const r = new Set<Role>();
+    // what it is: its kind
+    const is = KIND_ROLE[kind(c.name) ?? 'steps'];
+    if (is) r.add(is);
+    // whether it sounds as a voice, and how it is moved
+    if (c.voice) r.add('voice');
+    if (clocks.get(c.name) && !clocks.get(c.name)!.belt) r.add('clock');
+    if (c.step) r.add('driven');
+    if (typeof c.params.motor === 'number') r.add('motor');
+    // what it is to another cell
+    if (typeof c.params.law === 'string' || streamClockOf(cells, c) !== undefined) r.add('law');
+    if (typeof c.params.fm === 'string') r.add('carrier');
+    if (modulators.has(c.name)) r.add('modulator');
+    if (sections.has(c.name)) r.add('section');
+    if (c.over && ([...sections.values()].includes(c.over) || bands.has(c.over))) r.add('selector');
+    if ([...bands.values()].some((es) => es.includes(c.name))) r.add('performer');
+    return r;
+  };
+}
 
 export function checkRoles(
   ctx: Ctx,
@@ -22,28 +73,7 @@ export function checkRoles(
 ): void {
   const { warn } = ctx;
   // ---- attributes where they do nothing: each acts on some roles only (attributes.ts)
-  const modulators = new Set([...cells.values()].flatMap((c) => (typeof c.params.fm === 'string' ? [c.params.fm] : [])));
-  const roles = (c: ResolvedCell): Set<Role> => {
-    const r = new Set<Role>();
-    if (c.voice) r.add('voice');
-    if (clocks.get(c.name) && !clocks.get(c.name)!.belt) r.add('clock');
-    if (c.step) r.add('driven');
-    if (typeof c.params.motor === 'number') r.add('motor');
-    if (typeof c.params.write === 'string') r.add('tape');
-    if (typeof c.params.play === 'string') r.add('head');
-    if (typeof c.params.body === 'string') r.add('resonator');
-    if (typeof c.params.scope === 'string') r.add('scope');
-    if (typeof c.params.law === 'string' || streamClockOf(cells, c) !== undefined) r.add('law');
-    if (c.gate) r.add('gate');
-    if (c.sink) r.add('card');
-    if (c.note) r.add('note');
-    if (typeof c.params.fm === 'string') r.add('carrier');
-    if (modulators.has(c.name)) r.add('modulator');
-    if (sections.has(c.name)) r.add('section');
-    if (c.over && ([...sections.values()].includes(c.over) || bands.has(c.over))) r.add('selector');
-    if ([...bands.values()].some((es) => es.includes(c.name))) r.add('performer');
-    return r;
-  };
+  const roles = rolesOf({ cells, clocks, sections, bands });
   // (a cell a meter reads its swing from, swing=&swing: its swing= is the meter's, #308)
   const swingHolders = new Set([...decls.values()].flatMap((d) => (d.swingFrom ? [d.swingFrom.name] : [])));
   for (const d of decls.values()) {

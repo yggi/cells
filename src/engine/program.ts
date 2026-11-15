@@ -156,6 +156,13 @@ export interface ResolvedCell {
    * stepped tonic (`&tonic step=1m/8 D F`, #301) turns it, the note in force its shift (`shiftsAt`).
    */
   readonly tonic?: string;
+  /**
+   * A scale whose phase steps (#531, decision 093 §5, `scale(even(7, 12, &mode), &tonic)` with `&mode step=1m dorian
+   * major`): the cell its phase is read from, its necklace (`k` places in `n`) and the key it reads through. Its steps are
+   * the first phase's mode; at each bar line of the main meter the phase in force turns it, and turns its key back, so the
+   * tonic stays (`shiftsAt`).
+   */
+  readonly phase?: { readonly cell: string; readonly k: number; readonly n: number; readonly key: string };
   /** `off` as written. */
   readonly off: boolean;
   /** `oneshot` as written: a voice's note lasts its envelope's attack and decay, not its step. */

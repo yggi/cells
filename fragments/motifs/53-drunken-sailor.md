@@ -1,19 +1,11 @@
 ---
 id: drunkenSailor
-association:
-  - point:
-      sync: 0.1
-      harm: 0.25
-      bite: 0.7
-      mood: 0.65
-    weight: 1
-    facet: motif
 source: seed
 lifted: yggi/cells examples/sailor.md @ 014c4c73
 ---
 
 ```cells
-&drunkenSailor from &key
+&drunkenSailor from &key style=&seaShanty
 &drunkenSailor over=&key step=8n 4 4 4 4 4 4 0 2
 ```
 

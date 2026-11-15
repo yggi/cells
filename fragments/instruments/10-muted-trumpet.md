@@ -1,32 +1,11 @@
 ---
 id: muted_trumpet
-association:
-  - point:
-      sync: 0.55
-      harm: 0.75
-      bite: 0.6
-      mood: 0.5
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.35
-      harm: 1
-      bite: 0.3
-      mood: 0.85
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.65
-      harm: 0.55
-      bite: 0.55
-      mood: 0.65
-    weight: 0.5
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/electroswing.md @ 6d1bfa7
 ---
 
 ```cells
+* from style=(&electroSwing * .125 | &swingJazz * .125 | &(map=style sync=.65 harm=.55 bite=.55 mood=.65) * .5)
 &leadV s=saw loop=C4 lpf=1400 lpq=6 env=&(map=adsr .03 .1 .6 .12) pitch=&(map=lin loop=4.5 0 .08 0 -.08 0)
 ```
 

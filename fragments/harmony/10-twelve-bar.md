@@ -1,19 +1,11 @@
 ---
 id: twelve_bar
-association:
-  - point:
-      sync: 0.65
-      harm: 0.55
-      bite: 0.45
-      mood: 0.65
-    weight: 0.4
-    facet: harmony
 source: seed
 lifted: yggi/cells examples/jazz.md @ b3c0acea
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=&bluesShuffle * .4
 &harm over=&key step=1m cycle=12 [0,2,4,6]!4 [3,5,7,9]!2 [0,2,4,6]!2 [4,6,8,10] [3,5,7,9] [0,2,4,6] [4,6,8,10]
 ```
 

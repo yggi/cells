@@ -3,7 +3,8 @@ import { KEPT } from '../src/engine/normalise/kept';
 import { readdirSync, readFileSync } from 'node:fs';
 import { normaliseFile } from './normalise';
 
-const PIECE = `&bar from meter 120bpm
+const PIECE = `&bar from meter &tempo
+&tempo step=120bpm
 &tune over=scale(major) step=4n 0 2 4 2
 &lead s=saw loop=C4 cutoff=800
 &mix [&tune * &lead]

@@ -1,17 +1,10 @@
 ---
 id: haunted_pad
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.25
-      mood: 0.3
-    weight: 0.125
-    facet: instrument
 source: seed
 ---
 
 ```cells
+* from style=&(map=style sync=.2 harm=.9 bite=.25 mood=.3) * .125
 &padV s=tri loop=C3 env=&(map=adsr 1.5 .5 .8 2) pitch=&(map=lin loop=3 0 .1 0 -.1 0)
 ```
 

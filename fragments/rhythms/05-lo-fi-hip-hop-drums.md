@@ -1,18 +1,11 @@
 ---
 id: lo_fi_hip_hop_drums
-association:
-  - point:
-      sync: 0.5
-      harm: 0.75
-      bite: 0.35
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8
 ---
 
 ```cells
-&kick, &backbeat, &fill, &ghost, &hat, &euclid, &euclidLevel, &groove from (&bd, &rim, &sd, &hh)
+&kick, &backbeat, &fill, &ghost, &hat, &euclid, &euclidLevel, &groove from (&bd, &rim, &sd, &hh) style=&(map=style sync=.5 harm=.75 bite=.35)
 &bd, &rim, &sd, &hh from gm_kit
 &kick role=kick step=16n &bd:0:.524769 ~ ~ &bd:0:.286689 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 &backbeat role=backbeat step=16n ~ ~ ~ ~ &sd:0:.458553 ~ ~ ~ ~ ~ ~ ~ &sd:0:.416889 ~ ~ ~

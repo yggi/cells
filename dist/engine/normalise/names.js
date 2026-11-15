@@ -1,5 +1,6 @@
 import { attrsOf, declLine, declWords, renameCell, setAttr, spansLines, splitComment } from "../edit.js";
 import { parse } from "../parser/index.js";
+import { readFrom } from "../parser/use.js";
 import { clocking } from "../clocking.js";
 import { codeShifts } from "../program.js";
 import { plan } from "../realize.js";
@@ -30,6 +31,24 @@ function isBar(result, meter) {
 const WRITTEN = new Set(['bar', 'tempo', 'key', 'tonic', 'harm', 'style']);
 const named = (name) => WRITTEN.has(name);
 const free = (source, result, name) => declLine(source, name) < 0 && !result.cells.has(name);
+function takenTempo(source) {
+    const lines = source.split('\n');
+    for (let at = 0; at < lines.length; at++) {
+        const raw = lines[at];
+        const [code, comment] = splitComment(raw);
+        const f = readFrom(code.trim());
+        if (f?.kind !== 'use' || f.names?.length !== 1 || f.names[0] !== '&bar' || !f.main || f.main.startsWith('&'))
+            continue;
+        if (!/^(?:free\(.*\)|[0-9.]+[a-z]*)$/.test(f.main))
+            return null;
+        const end = code.lastIndexOf(f.main);
+        if (end < 0 || code.slice(end + f.main.length).trim() !== '')
+            return null;
+        const after = `${code.slice(0, end)}&tempo`;
+        return { at, raw, rate: f.main, before: code.trim(), after: after.trim(), line: `${after}${code.slice(end + f.main.length)}${comment}` };
+    }
+    return null;
+}
 export function interfaceNames(source, result) {
     const own = new Set(parse(source).cells.map((d) => d.name));
     const out = [];
@@ -42,6 +61,16 @@ export function interfaceNames(source, result) {
         if (meter === 'bar' && rate && !rate.startsWith('&') && free(source, result, 'tempo'))
             out.push(rewrite('tempo', `&bar's rate is its tempo: step=&tempo, &tempo step=${rate}`, `step=${rate}`, 'step=&tempo', (src) => after(setAttr(src, 'bar', 'step', '&tempo'), 'bar', `&tempo step=${rate}`)));
     }
+    const taken = takenTempo(source);
+    if (taken && meter === 'bar' && free(source, result, 'tempo'))
+        out.push(rewrite('tempo', `&bar's rate is its tempo: ${taken.after}, &tempo step=${taken.rate}`, taken.before, taken.after, (src) => {
+            const lines = src.split('\n');
+            if (lines[taken.at] !== taken.raw)
+                return src;
+            lines[taken.at] = taken.line;
+            lines.splice(taken.at + 1, 0, `&tempo step=${taken.rate}`);
+            return lines.join('\n');
+        }));
     const keys = [...own].filter((n) => declWords(source, n)?.braid[0]?.startsWith('scale('));
     const key = result.mainKey;
     if (key && own.has(key) && keys.length === 1 && !spansLines(source, key)) {

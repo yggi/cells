@@ -1,7 +1,5 @@
 ---
 id: lfo
-association:
-  - facet: module
 source: seed
 ---
 

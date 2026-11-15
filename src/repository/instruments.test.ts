@@ -16,6 +16,7 @@ import { fitsAs } from './fit';
 import type { Resolve } from '../engine/program';
 import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
+import { isDeclaration } from './declarations';
 import { LIBRARY, resolveSeed, RETIRED } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { seedFragments } from './seed';
@@ -122,8 +123,19 @@ const linesAlone = (text: string) =>
 
 const hosted = (...fragments: string[]) => [setTiming(meterText('meter'), 'bar', 'step', `${BPM}bpm`), ...fragments.map(linesAlone)].join('\n');
 
-/** A text's lines as name → line, in the order written. */
-const linesOf = (text: string) => new Map(text.split('\n').map((l) => [/^&(\w+)/.exec(l)![1]!, l]));
+/** A text without a collection's declaration, `* from style=…` (decision 089): the lines it gives a piece. */
+const undeclared = (text: string) =>
+  text
+    .split('\n')
+    .filter((l) => !(l.startsWith('*') && isDeclaration(l)))
+    .join('\n');
+/** A text's lines as name → line, in the order written (a collection's declaration aside). */
+const linesOf = (text: string) =>
+  new Map(
+    undeclared(text)
+      .split('\n')
+      .map((l) => [/^&(\w+)/.exec(l)![1]!, l]),
+  );
 
 /** What a text sends on channel 10 in its first `steps` sixteenths: each hit's note, step and velocity, in time order. */
 function played(text: string, steps: number): { hits: { note: number; step: number; velocity: number }[]; diagnostics: string[] } {
@@ -266,7 +278,7 @@ describe('the instrument fragments', () => {
 });
 
 describe('the instruments for Electro swing and Spooky (#350)', () => {
-  const voiceOf = (text: string) => /^&(\w+)/.exec(text)![1]!;
+  const voiceOf = (text: string) => /^&(\w+)/.exec(undeclared(text))![1]!;
   const defaultFor = (voice: string) => INSTRUMENT_FRAGMENTS.find((f) => DEFAULTS.includes(f.id) && voiceOf(f.text) === voice)!;
   /** A line of the key's degrees played by a gate on the voice, on a MIDI card and a sound card: each note it sends over two bars, and the piece. */
   const piece = (instrument: string) =>
@@ -280,7 +292,7 @@ describe('the instruments for Electro swing and Spooky (#350)', () => {
   };
 
   it.each(Object.keys(AT_PRESET))('%s defines one voice a default instrument defines, with a sound of its own (s=)', (id) => {
-    const lines = byId(id).text.split('\n');
+    const lines = undeclared(byId(id).text).split('\n');
     expect(lines).toHaveLength(1);
     expect(defaultFor(voiceOf(lines[0]!)), voiceOf(lines[0]!)).toBeTruthy();
     expect(lines[0]).toMatch(/ s=(sine|tri|saw|square|pulse)\b/);
@@ -348,7 +360,8 @@ describe('the keys, the pad and the lead', () => {
     // (its voice, and the style it reads, declared: `&bassV from (&style)`, its default the centre)
     for (const id of ['bass', 'keys', 'pad', 'lead'])
       expect(byId(id).text.split('\n'), id).toEqual([
-        expect.stringMatching(/^&\w+V from \(&style\)$/),
+        // (its declaration on it, decision 089: where the default is found)
+        expect.stringMatching(/^&\w+V from \(&style\)(?: |$)/),
         expect.stringMatching(/^&\w+V s=/),
         '&style map=style sync=.5 harm=.5 bite=.5 mood=.5',
       ]);

@@ -62,8 +62,23 @@ export function parse(whole, { old = false } = {}) {
                 diagnostics.push({ severity: 'error', message: FROM_FORM, span });
             else if (from.kind === 'use')
                 takes.push({ id: from.id, names: from.names, span });
-            else
+            else if (from.kind === 'signature')
                 offers.push(...from.names.map((n) => n.slice(1)));
+            if (from && from.kind !== 'use')
+                for (const a of from.attributes ?? []) {
+                    const name = /^([A-Za-z_][A-Za-z0-9_]*)=/.exec(a)?.[1];
+                    if (!name || name === 'style' || name === 'facet')
+                        continue;
+                    const optional = from.kind === 'signature' ? from.optional.map((o) => o.slice(1)) : [];
+                    if (!optional.includes(name))
+                        diagnostics.push({
+                            severity: 'error',
+                            message: from.kind === 'declaration'
+                                ? `${name}=: a collection's declaration says where it is found, style= and facet= (decision 089)`
+                                : `${name}= is no optional parameter of this template: a declaration's arguments are its optional parameters (${optional.length ? optional.map((o) => `${o}=`).join(' ') : 'it has none'}), beside style= and facet=`,
+                            span,
+                        });
+                }
             return;
         }
         try {

@@ -1,19 +1,11 @@
 ---
 id: eighths_bass
-association:
-  - point:
-      sync: 0
-      harm: 0.3
-      bite: 0
-      mood: 0.45
-    weight: 1
-    facet: bass
 source: seed
 lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=&(map=style sync=0 harm=.3 bite=0 mood=.45)
 &bassline over=&harm step=8n 0!8
 ```
 

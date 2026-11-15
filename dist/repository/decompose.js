@@ -3,6 +3,7 @@ import { flatten, tapped } from "../engine/flatten.js";
 import { codeShifts } from "../engine/program.js";
 import { structureOf } from "../engine/measure.js";
 import { tapWhole } from "../engine/vary/lines.js";
+import { signatureOf } from "../engine/use.js";
 import { fromId, headOf, ofFacet, resolveSeed } from "./library.js";
 const MOTIF_FRAGMENTS = ofFacet('motif');
 const FORM_FRAGMENTS = ofFacet('form');
@@ -65,14 +66,10 @@ function motifsRead(motifs, meter) {
     return byMeter.get(meter);
 }
 function partsOf(form) {
-    const signature = /^&(\w+) from (?:\(([^)]*)\) )?&(\w+)\s*$/m.exec(form.text);
-    if (!signature)
+    const signature = signatureOf(form.text);
+    if (!signature || signature.names.length !== 1 || !signature.main)
         return null;
-    const helpers = (signature[2] ?? '')
-        .split(',')
-        .map((h) => h.trim().replace(/^&/, ''))
-        .filter(Boolean);
-    return { head: signature[1], helpers, hole: signature[3] };
+    return { head: signature.names[0].slice(1), helpers: signature.optional.map((h) => h.slice(1)), hole: signature.main.slice(1) };
 }
 export function decompose(line, cell, meter, options = {}) {
     const forms = options.forms ?? FORM_FRAGMENTS;

@@ -21,6 +21,7 @@ import { flatten, tapped } from '../engine/flatten';
 import { codeShifts } from '../engine/program';
 import { structureOf } from '../engine/measure';
 import { tapWhole } from '../engine/vary/lines';
+import { signatureOf } from '../engine/use';
 import type { Fragment } from './fragments';
 import { fromId, headOf, ofFacet, resolveSeed } from './library';
 
@@ -140,13 +141,10 @@ function motifsRead(motifs: readonly Fragment[], meter: string): ReadMotif[] {
 
 /** A form's parts: its head, its helpers (its optional parameters) and its hole, from its signature. */
 function partsOf(form: Fragment): { head: string; helpers: string[]; hole: string } | null {
-  const signature = /^&(\w+) from (?:\(([^)]*)\) )?&(\w+)\s*$/m.exec(form.text);
-  if (!signature) return null;
-  const helpers = (signature[2] ?? '')
-    .split(',')
-    .map((h) => h.trim().replace(/^&/, ''))
-    .filter(Boolean);
-  return { head: signature[1]!, helpers, hole: signature[3]! };
+  // (its signature as the parser reads it: its declaration's attributes, decision 089, aside)
+  const signature = signatureOf(form.text);
+  if (!signature || signature.names.length !== 1 || !signature.main) return null;
+  return { head: signature.names[0]!.slice(1), helpers: signature.optional.map((h) => h.slice(1)), hole: signature.main.slice(1) };
 }
 
 /**

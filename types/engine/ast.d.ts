@@ -147,8 +147,11 @@ export type Atom = {
 export interface Euclid {
     readonly k: number;
     readonly n: number;
+    /** The turn: Strudel's rotation; with `even`, even's phase. */
     readonly r: number;
     readonly hits: readonly number[];
+    /** `x(even(k, n, p))` (decision 093 §6): the hits even(k, n, p)'s places, `r` its phase. */
+    readonly even?: true;
 }
 /** An expression in a mix chord, as written: sums and products of cells and numbers. */
 export type Expr = {
@@ -251,6 +254,15 @@ export type Braid = {
      * Compile sets the steps (declare.ts); until then they are a placeholder.
      */
     readonly even?: EvenArgs;
+    /**
+     * A key's phase read from a stepped cell (#531, decision 093 §5): compile set `steps` to its first step's mode; the
+     * clocks turn the scale and its key to the phase in force at each bar line (`shiftsAt`).
+     */
+    readonly phaseCell?: {
+        readonly name: string;
+        readonly k: number;
+        readonly n: number;
+    };
 }
 /** One cycle of a waveform in n steps, −1 … 1, as Strudel's bipolar signals sampled at each step's start: sin(n) sin(2πi/n), saw(n) a ramp up, tri(n) up then down, square(n) −1 then 1. */
  | {
@@ -296,6 +308,14 @@ export interface StyleSpec {
     readonly to: StylePoint | null;
     /** `style=a..b * &curve`: where between the two ends, by a line from 0 to 1, in place of time through the scope. */
     readonly curve?: Ref;
+    /**
+     * `style=( a | b * w )`, a set found at each (decision 089 §2, §7): the cell's association or wish, each style with its
+     * weight; `from` is its first. No one value: a pick of it, and the section's `&style`, are errors.
+     */
+    readonly set?: readonly {
+        readonly point: StylePoint;
+        readonly weight: number;
+    }[];
     readonly span: Span;
 }
 export interface ParamCells {
@@ -492,6 +512,8 @@ export interface CellDecl {
     readonly about?: readonly Ref[];
     /** style= (decision 063): its style, or a range over its scope; on the note `&style`, the section's, which a pick reads by axis. */
     readonly style?: StyleSpec;
+    /** A style cell's reach on an axis, `bite=.55 ± .1` (decision 089 §6): how sure the point is there; its value is the centre. Read by no query yet. */
+    readonly reach?: Readonly<Record<string, number>>;
     /**
      * Sound parameters that move: lpf=&sweep (the cell's values are the parameter's),
      * lpf=200..3000 * &fenv * &accent (a range, scaled by cells from 0 to 1 — an

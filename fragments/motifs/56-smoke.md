@@ -1,18 +1,10 @@
 ---
 id: smoke
-association:
-  - point:
-      sync: 0.7
-      harm: 0.2
-      bite: 0.2
-      mood: 0.25
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&smoke from &key
+&smoke from &key style=&tripHop
 &smoke over=&key step=8n 4@3 3 2@2 0 ~
 ```
 

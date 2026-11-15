@@ -1,18 +1,10 @@
 ---
 id: octaves
-association:
-  - point:
-      sync: 0.12
-      harm: 0
-      bite: 1
-      mood: 0.4
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&octaves from &key
+&octaves from &key style=&techno
 &octaves over=&key step=8n 0 ~ 7 ~ 0 0 ~ 7
 ```
 

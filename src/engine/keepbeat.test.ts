@@ -207,9 +207,9 @@ describe('a window across the kept bar line is the two plans joined (#701)', () 
   it("each moving tape's speeds: the old plan's before the line, the new plan's from it", () => {
     // (worn: a tape on a reel with a motor, its speed sampled; its meter swung, the share moved from .5 to 2/3)
     const code = EXAMPLES.worn.source;
-    expect(code).toContain('&bar from meter 72bpm');
-    const before = code.replace('&bar from meter 72bpm', '&bar from meter(swing=8n:.5) 72bpm');
-    const after = code.replace('&bar from meter 72bpm', '&bar from meter(swing=8n:2/3) 72bpm');
+    expect(code).toContain('&bar from meter &tempo');
+    const before = code.replace('&bar from meter &tempo', '&bar from meter(swing=8n:.5) &tempo');
+    const after = code.replace('&bar from meter &tempo', '&bar from meter(swing=8n:2/3) &tempo');
     const t = 10.1;
     const { host, old, next, line, from } = spliced(before, after, t);
     const heard = windowOf(host, t, 4).tapes;

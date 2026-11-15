@@ -1,18 +1,10 @@
 ---
 id: shuffle
-association:
-  - point:
-      sync: 0.7
-      harm: 0.6
-      bite: 0
-      mood: 0.825
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&shuffle from &key
+&shuffle from &key style=&(map=style sync=.7 harm=.6 bite=0 mood=.825)
 &shuffle over=&key step=8n 0@2 2 3@2 4 4@2 2 0@2 ~
 ```
 

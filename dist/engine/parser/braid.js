@@ -4,7 +4,7 @@ import { MAX_NESTING, MAX_REPS } from "./scanner.js";
 import { parseFields } from "./level.js";
 import { isMixChord, parseMixChord } from "./mix.js";
 import { syntax } from "./syntax.js";
-import { MODE_WORDS } from "../../theory/modes.js";
+import { even as evenPlaces, MODE_WORDS } from "../../theory/modes.js";
 import { NUMBER_PLACES } from "./numbers.js";
 export const MODE_WORD = new RegExp(`(?:${Object.keys(MODE_WORDS).join('|')})(?![A-Za-z0-9_])`, 'y');
 export const STEP_SYNTAX = [
@@ -48,7 +48,8 @@ function parseRefOrOperation(s) {
     if (name === 'degree') {
         s.expect(',', `',' then the steps: degree(&${inner.name}, 1)`);
         s.skipSpace();
-        const n = s.match(/[-+]?\s*[0-9]+(?![0-9.])/y);
+        const f = s.freeNumber(NUMBER_PLACES.move);
+        const n = f === null ? s.match(/[-+]?\s*[0-9]+(?![0-9.])/y) : String(f);
         if (n === null)
             s.fail(`degree(&${inner.name}, n) moves it n whole steps of its table, a whole number: degree(&${inner.name}, 1), degree(&${inner.name}, -2)`, s.i);
         m = { mul: was.mul, add: was.add + parseInt(n.replace(/\s+/g, ''), 10) };
@@ -179,6 +180,9 @@ function parseAngle(s, depth) {
 function parseEuclidOn(s) {
     const at = s.i;
     s.i++;
+    s.skipSpace();
+    if (s.text.startsWith('even(', s.i))
+        return parseEvenOn(s, at);
     const args = [];
     for (;;) {
         s.skipSpace();
@@ -194,6 +198,25 @@ function parseEuclidOn(s) {
         s.fail('x(k, n, r): k hits spread evenly over n parts of the step (0 ≤ k ≤ n), turned right by r: 0(3,8), &bd(3,8,2)', at, s.i - at);
     const p = bjorklund(k, n);
     return { k, n, r, hits: Array.from({ length: n }, (_, j) => j).filter((j) => p[(((j - r) % n) + n) % n]) };
+}
+function parseEvenOn(s, at) {
+    s.i += 'even('.length;
+    const args = [];
+    for (;;) {
+        s.skipSpace();
+        args.push(s.int('a whole number in x(even(k, n, p))', NUMBER_PLACES.euclidOn));
+        s.skipSpace();
+        if (s.peek() !== ',')
+            break;
+        s.i++;
+    }
+    s.expect(')', `')' to close even(k, n, p)`);
+    s.skipSpace();
+    s.expect(')', `')' to close x(even(k, n, p))`);
+    const [k, n, p = 0] = args;
+    if (args.length < 2 || args.length > 3 || !(n >= 1 && n <= MAX_REPS) || !(k >= 1 && k <= n) || !(p >= 0 && p < k))
+        s.fail("x(even(k, n, p)): even(k, n)'s k places in n parts of the step (1 ≤ k ≤ n), at its phase p, 0 to k − 1: &claves(even(5,16,2))", at, s.i - at);
+    return { k, n, r: p, even: true, hits: evenPlaces(k, n, p) };
 }
 const MAX_LAPS = 10_000;
 export function pushStep(s, tokens, t) {
@@ -217,7 +240,7 @@ export const MODIFIERS = {
     '@': { field: 'elongate', syntax: syntax('modifier', 'x@n', 'Hold: the step lasts n steps.', ['&tune step=2 0@2 2 4@3'], 'cell.md') },
 };
 export const SLOW_SYNTAX = syntax('modifier', 'x/n', "Slow, as Strudel's x/n: the step plays its part of what it holds stretched over n laps — [0 2]/2 is 0 on one lap and 2 the next; a lone note, [0]/2, sounds every other lap, held as long as n steps (a number's own n/d is a fraction).", ['&tune step=2 [0 2]/2 4 [5 7 9]/3', '&tune step=2 [0]/2 2 <4 5>/2'], 'cell.md');
-export const EUCLID_SYNTAX = syntax('modifier', 'x(k,n,r)', "A euclid on a step, as Strudel's bd(3,8,2): k hits spread evenly over n parts of the step, turned right by r as euclid(k, n, r) is, each hit 1/n long, playing what the step holds as it begins. Straight after the step, before its other modifiers.", ['&groove step=1 &bd(3,8) &hh(5,8,2)', '&tune step=1 0(3,8) <0 2>(3,8,2) <0 [2 4]>(5,8)'], 'cell.md');
+export const EUCLID_SYNTAX = syntax('modifier', 'x(k,n,r)', "A euclid on a step, as Strudel's bd(3,8,2): k hits spread evenly over n parts of the step, turned right by r as euclid(k, n, r) is, each hit 1/n long, playing what the step holds as it begins. Straight after the step, before its other modifiers. x(even(k, n, p)) strikes even(k, n)'s places at its phase p instead, its mode (decision 093): &claves(even(5,16,2))@16 on sixteenths is the bossa nova clave.", ['&groove step=1 &bd(3,8) &hh(5,8,2)', '&tune step=1 0(3,8) <0 2>(3,8,2) <0 [2 4]>(5,8)', '&clave step=16n &rim(even(5,16,2))@16'], 'cell.md');
 export const CHANCE_SYNTAX = syntax('modifier', 'x? · x?p', "Chance, as Strudel's degradeBy: the step is dropped with probability p (x? alone: the cell's chance=, ½ unless set). Reproducible: the same every time the piece is played; seed= gives another sequence.", ['&hats step=4 0 0? 0?.3 0', '&ghost chance=.8 step=4 0? 0? 0? 0?'], 'cell.md');
 export const LEVEL_SYNTAX = syntax('modifier', '&x:0:gain', 'A hit\'s own gain, as Strudel spells a sound\'s fields (s("hh:0:.4")): its number in its table (0; a pitched hit is not yet), then its gain, linear (1 as it is). In a groove, and in its chords: [&bd, &hh:0:.4].', ['&beat step=8 [&bd,&hh] &hh:0:.4 [&sd,&hh] &hh:0:.4'], 'cell.md');
 export function parseToken(s, depth = 0) {

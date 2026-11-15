@@ -1,18 +1,10 @@
 ---
 id: dark_cadence
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.3
-      mood: 0.3
-    weight: 0.4
-    facet: harmony
 source: seed
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=&spooky * .4
 &harm over=&key step=1m cycle=4 [0,2,4] [5,7,9] [3,5,7] [4,6,8]
 ```
 

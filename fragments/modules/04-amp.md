@@ -1,7 +1,5 @@
 ---
 id: amp
-association:
-  - facet: module
 source: seed
 ---
 

@@ -1,19 +1,11 @@
 ---
 id: gypsy
-association:
-  - point:
-      sync: 0.55
-      harm: 0.75
-      bite: 0.6
-      mood: 0.5
-    weight: 1
-    facet: motif
 source: seed
 lifted: yggi/cells examples/electroswing.md @ 7622a87
 ---
 
 ```cells
-&gypsy from &key
+&gypsy from &key style=&electroSwing
 &gypsy over=&key step=8n 4 5 6 7@2 6 4@2
 ```
 

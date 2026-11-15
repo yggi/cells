@@ -1,18 +1,10 @@
 ---
 id: turnaround
-association:
-  - point:
-      sync: 0.35
-      harm: 1
-      bite: 0.3
-      mood: 0.85
-    weight: 1
-    facet: harmony
 source: seed
 ---
 
 ```cells
-&harm from &key
+&harm from &key style=&swingJazz
 &harm over=&key step=2n cycle=2 [0,2,4,6,8] [5,7,9,11,13] [1,3,5,7,9] [4,6,8,10,12]
 ```
 

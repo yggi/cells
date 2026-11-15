@@ -1,18 +1,11 @@
 ---
 id: synth_pop_drums
-association:
-  - point:
-      sync: 0.3
-      harm: 0.45
-      bite: 0.55
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8
 ---
 
 ```cells
-&kick, &backbeat, &fill, &ghost, &hat, &groove from (&bd, &sd, &hh)
+&kick, &backbeat, &fill, &ghost, &hat, &groove from (&bd, &sd, &hh) style=&(map=style sync=.3 harm=.45 bite=.55)
 &bd, &sd, &hh from gm_kit
 &kick role=kick step=16n &bd:0:.547833 ~ ~ ~ ~ ~ ~ ~ &bd:0:.536239 ~ ~ ~ ~ ~ ~ ~
 &backbeat role=backbeat step=16n ~ ~ ~ ~ &sd:0:.458553 ~ ~ ~ ~ ~ ~ ~ &sd:0:.469279 ~ ~ ~

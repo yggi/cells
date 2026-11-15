@@ -140,35 +140,7 @@ const SECONDS_HELD: Record<string, string> = {
  */
 const OUT_OF_REACH: Record<Exclude<Action, 'renaming'>, readonly string[]> = {
   transposition: ['drums', 'swing', 'midi-out', 'funk', 'twelve', 'aksak', 'patchbay', 'electroswing', 'spooky', 'kinderlied', 'radio'],
-  'time scaling': [
-    'transpose',
-    'twinkle',
-    'canon',
-    'waveforms',
-    'kalimba',
-    'sympathy',
-    'harmonograph',
-    'echotape',
-    'worn',
-    'play-in',
-    'midi-out',
-    'aksak',
-    'royal',
-    'pertonos',
-    'ricercar',
-    'bossa',
-    'pachelbel',
-    'pop',
-    'alpha',
-    'bwv847',
-    'onemore',
-    'electroswing',
-    'spooky',
-    'soundtape',
-    'testtones',
-    'forks',
-    'resonanz',
-  ],
+  'time scaling': ['aksak', 'royal', 'pertonos', 'ricercar', 'bossa', 'pachelbel', 'pop', 'alpha', 'bwv847', 'onemore', 'electroswing', 'spooky'],
 };
 
 /** Each tool's exceptions per action, by example, with why (none known). */
