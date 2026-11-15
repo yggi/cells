@@ -53,7 +53,7 @@ The places, from the parser's own table:
 | x(k, n, r) | ✓ whole | ✗ read as the piece is built | `&groove step=1 0(free(3, 0..8),8)` |
 | &x[i] · &x[a:b:s] · &x[$i] | ✓ whole | ✗ read as the piece is built: picking while it plays is a selector's (#51) | `&tune step=2 &motif[free(0, 0..3)]` |
 | &x[<<n] · &x[>>n] | ✓ whole | ✗ read as the piece is built | `&canon step=2 &theme[>>free(4, 0..7)]` |
-| &x^n · &x^$n | ✓ whole | ✗ read as the piece is built | `&tune step=2 &motif &motif^free(1, -7..7)` |
+| &x^n · &x^$n · degree(&x, n) | ✓ whole | ✗ read as the piece is built | `&tune step=2 &motif &motif^free(1, -7..7)` |
 | tier=n | ✗ the tutorial's order, not the piece's | ✗ read as the piece is built | `&piece title="Steps" tags="tutorial" tier=1` |
 | &x:n (a hit’s number) | ✗ a pitched hit is not yet: it is 0 | ✗ read as the piece is built | `&beat step=8 &bd:0` |
 <!-- places:end -->

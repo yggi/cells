@@ -28,7 +28,7 @@ Measured over the 89 examples (#778): 76 have one meter and 8 none; 3 hold a sec
 ## Consequences
 
 - **A text that compiled is an error** where it holds a second meter with a tempo of its own. Migrate derives it; it plays the same. What changes then is what a tempo moved does: the second follows the root, where it kept its own.
-- **Two tempo sliders** are one tempo and one ratio. A ratio left free in a tap's chain is not built yet (#778).
+- **Two tempo sliders** are one tempo and one ratio left free: `&waltz meter("3/4") step=beat*free(1.25, .5..2)`, a slider as any number of a tap's chain is (decision 078; checked 2026-11-15, it read so already).
 - **`breve`** writes `&sixteenths scan(1 1 1 1) pulse=16n step=pulse*4`; its events don't move, and its live view does (the scan is drawn as a tap of the bar). **`daytime`** is as it is: four clocks of the wall. No seed fragment changes.
 - **Normalise** derives a second meter last, after it folds a second clock into the root (#668), as it names a tap's clock last (091).
-- **Open:** a ratio left free; a derived meter's own swing and bend; a wall clock derived from another (`&hour step=&minute:1m` plays the same today, and is not asked for).
+- **Open:** a derived meter's own swing and bend; a wall clock derived from another (`&hour step=&minute:1m` plays the same today, and is not asked for).

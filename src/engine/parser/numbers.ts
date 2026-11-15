@@ -182,7 +182,7 @@ export const NUMBER_PLACES = {
     example: '&tune step=2 &motif[free(0, 0..3)]',
   }),
   turn: place({ form: '&x[<<n] · &x[>>n]', name: 'turn', whole: true, min: 0, cell: BUILT, example: '&canon step=2 &theme[>>free(4, 0..7)]' }),
-  move: place({ form: '&x^n · &x^$n', name: 'move', whole: true, cell: BUILT, example: '&tune step=2 &motif &motif^free(1, -7..7)' }),
+  move: place({ form: '&x^n · &x^$n · degree(&x, n)', name: 'move', whole: true, cell: BUILT, example: '&tune step=2 &motif &motif^free(1, -7..7)' }),
   // a number left as it is
   tier: place({
     form: 'tier=n',
