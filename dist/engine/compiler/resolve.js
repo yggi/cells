@@ -170,6 +170,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             ...(d.bend ? bentOf(d, warn, (n) => decls.get(n)) : {}),
             shift: d.shift ?? 0,
             ...(d.tonic ? { tonic: d.tonic.name } : {}),
+            ...(b.kind === 'scan' && b.phaseCell && d.over ? { phase: { cell: b.phaseCell.name, k: b.phaseCell.k, n: b.phaseCell.n, key: d.over.name } } : {}),
             off: d.off,
             oneshot: !!d.oneshot,
             ...(d.drumNote !== undefined ? { drumNote: d.drumNote } : ctx.parsed.old && gmDrumNote(d.name) !== null ? { drumNote: gmDrumNote(d.name) } : {}),
