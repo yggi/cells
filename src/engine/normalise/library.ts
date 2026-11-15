@@ -16,7 +16,7 @@
 import { MODE_WORDS } from '../../theory/modes';
 import { attrsOf, declLine, declWords, spansLines, splitComment } from '../edit';
 import { parse } from '../parser';
-import { isWordId, leftOf, readFrom } from '../parser/use';
+import { isWordId, leftOf, readFrom, topTokens } from '../parser/use';
 
 /** A line that takes names from a fragment by name: a `from` line with no argument (decision 065). */
 function taking(code: string): { readonly id: string; readonly names: readonly string[] | null; readonly takes: readonly string[] | null } | null {
@@ -98,8 +98,8 @@ export function libraryLines(source: string, library: readonly LibraryFragment[]
 /**
  * Each fragment cell the piece writes inline, word for word (`pitch=&(map=lin loop=5 0 .1 0 -.1 0)`), as the fragment's
  * cell by name (`pitch=&vibrato`) and a `from` line of it (#196): every place it is written, once; the line joins one of
- * that fragment already written, or goes after the piece's `from` lines (first, where it has none). Not where the piece
- * defines the name itself.
+ * that fragment already written, or goes before the first line that reads the cell. Not where the piece defines the
+ * name itself, and not in a line that is a fragment's own, word for word (`libraryLines` takes that line whole, #729).
  */
 export function libraryCells(source: string, library: readonly LibraryFragment[] | undefined): Rewrite<'library'>[] {
   if (!library?.length) return [];
@@ -109,13 +109,23 @@ export function libraryCells(source: string, library: readonly LibraryFragment[]
     if (body && !bodies.has(body)) bodies.set(body, h);
   }
   const declared = new Set(parse(source).cells.map((d) => d.name));
+  // (a line that is a fragment's own line, word for word, is that fragment's to take whole, `libraryLines`: its inline
+  // cells are left in it, so the line is the fragment's whichever rule runs first, #729)
+  const home = homes(library);
+  const whole = (line: string) => {
+    const h = home.get(codeOf(line));
+    return !!h && declared.has(h.name);
+  };
   const found = new Map<string, { id: string; name: string; inline: string[] }>();
-  for (const m of source.matchAll(/&\(([^()]*)\)/g)) {
-    const h = bodies.get(m[1]!.trim().replace(/\s+/g, ' '));
-    if (!h || declared.has(h.name)) continue;
-    const f = found.get(h.name) ?? { ...h, inline: [] };
-    if (!f.inline.includes(m[0])) f.inline.push(m[0]);
-    found.set(h.name, f);
+  for (const line of source.split('\n')) {
+    if (whole(line)) continue;
+    for (const m of splitComment(line)[0].matchAll(/&\(([^()]*)\)/g)) {
+      const h = bodies.get(m[1]!.trim().replace(/\s+/g, ' '));
+      if (!h || declared.has(h.name)) continue;
+      const f = found.get(h.name) ?? { ...h, inline: [] };
+      if (!f.inline.includes(m[0])) f.inline.push(m[0]);
+      found.set(h.name, f);
+    }
   }
   return [...found.values()].map(({ id, name, inline }) => ({
     id: `library-cell:${name}`,
@@ -126,6 +136,7 @@ export function libraryCells(source: string, library: readonly LibraryFragment[]
     after: `&${name}`,
     apply: (src: string) => {
       const lines = src.split('\n').map((l) => {
+        if (whole(l)) return l;
         const [code, comment] = splitComment(l);
         return inline.reduce((c, x) => c.split(x).join(`&${name}`), code) + comment;
       });
@@ -136,15 +147,54 @@ export function libraryCells(source: string, library: readonly LibraryFragment[]
           lines[at] = writeTaking(id, [...prior.names, `&${name}`], [...prior.takes!, `&${name}`]) + splitComment(lines[at]!)[1];
         return lines.join('\n');
       }
-      // (after the piece's own `from` lines, or first)
-      let last = -1;
-      lines.forEach((l, i) => {
-        if (readFrom(splitComment(l)[0].trim())?.kind === 'use') last = i;
-      });
-      lines.splice(last + 1, 0, writeTaking(id, [`&${name}`]));
+      // (before the first line that reads it: a place no other rule's work moves, so the text is one whichever ran
+      // first, #729; after the piece's `from` lines it was wherever they stood then)
+      const reads = new RegExp(`&${name}(?![A-Za-z0-9_])`);
+      const first = lines.findIndex((l) => reads.test(splitComment(l)[0]));
+      lines.splice(Math.max(0, first), 0, writeTaking(id, [`&${name}`]));
       return lines.join('\n');
     },
   }));
+}
+
+/**
+ * An argument that names a cell the piece takes from the library by that name, `from funk_drums(bd=&bd)` under
+ * `&bd from gm_kit`, is left out where the line plays the same without it (#729): the template's own default is that
+ * cell. Migrate writes such an argument where the piece wrote the cell itself (`migrate/arguments.ts`); once the cell is
+ * the library's, the line reads as it would had the library been taken first. Each only where it sounds identical
+ * (S1, `rewriteAll`); an argument the piece's own line fills stays.
+ */
+export function takenArguments(source: string): Rewrite<'library'>[] {
+  const lines = source.split('\n');
+  const taken = new Set(lines.flatMap((l) => taking(splitComment(l)[0])?.names ?? []));
+  return lines.flatMap((raw, i): Rewrite<'library'>[] => {
+    const [code, comment] = splitComment(raw);
+    const f = readFrom(code.trim());
+    if (f?.kind !== 'use' || !f.args?.length) return [];
+    const drop = f.args.filter((a) => a.value === `&${a.name}` && taken.has(a.value));
+    const tokens = topTokens(code);
+    const id = tokens[tokens.findIndex((t) => t.text === 'from') + 1];
+    const open = id?.text.indexOf('(') ?? -1;
+    if (!drop.length || !id || open < 0 || !id.text.endsWith(')')) return [];
+    const kept = f.args.filter((a) => !drop.includes(a));
+    const list = kept.length ? `(${kept.map((a) => `${a.name}=${a.value}`).join(', ')})` : '';
+    const after = `${code.slice(0, id.at)}${id.text.slice(0, open)}${list}${code.slice(id.at + id.text.length)}`;
+    return [
+      {
+        id: `taken-arguments:${i + 1}`,
+        tool: 'normalise',
+        rule: 'library',
+        title: `${JSON.stringify(f.id)} takes ${drop.map((a) => a.value).join(', ')} as the library gives ${drop.length > 1 ? 'them' : 'it'}: ${after.trim()}`,
+        before: code.trim(),
+        after: after.trim(),
+        apply: (src: string) =>
+          src
+            .split('\n')
+            .map((line, j) => (j === i && line === raw ? `${after}${comment}` : line))
+            .join('\n'),
+      },
+    ];
+  });
 }
 
 /** A template as the library gives it: its head, its parameters (each with its default value, if any), its main one, and its head's line. */
