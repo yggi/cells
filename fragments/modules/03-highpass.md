@@ -1,7 +1,5 @@
 ---
 id: highpass
-association:
-  - facet: module
 source: seed
 ---
 

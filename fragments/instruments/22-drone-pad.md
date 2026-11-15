@@ -1,25 +1,11 @@
 ---
 id: drone_pad
-association:
-  - point:
-      sync: 0.35
-      harm: 0.15
-      bite: 0.4
-      mood: 0.1
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.05
-      harm: 0.3
-      bite: 0.1
-      mood: 0.9
-    weight: 0.5
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/ghosts.md @ a8de625f
 ---
 
 ```cells
+* from style=(&darkAmbient * .125 | &(map=style sync=.05 harm=.3 bite=.1 mood=.9) * .5)
 &padV s=saw loop=C3 distort=.8 lpf=120..600 * &(map=lin loop=.0435 .15 .7 .3 .15) lpq=3 env=&(map=adsr 4 2 .9 6)
 ```
 

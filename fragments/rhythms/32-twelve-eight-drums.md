@@ -1,17 +1,10 @@
 ---
 id: twelve_eight_drums
-association:
-  - point:
-      sync: 0.7
-      harm: 0.6
-      bite: 0
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&kick, &backbeat, &hat, &groove from (&bd, &sd, &rd)
+&kick, &backbeat, &hat, &groove from (&bd, &sd, &rd) style=&(map=style sync=.7 harm=.6 bite=0)
 &bd, &sd, &rd from gm_kit
 &kick role=kick step=beat &bd:0:.6 ~ &bd:0:.45 ~
 &backbeat role=backbeat step=beat ~ &sd:0:.5 ~ &sd:0:.5

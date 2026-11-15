@@ -1,18 +1,10 @@
 ---
 id: dancer
-association:
-  - point:
-      sync: 0.6
-      harm: 0.9
-      bite: 0.8
-      mood: 0.5
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&dancer from &key
+&dancer from &key style=&(map=style sync=.6 harm=.9 bite=.8 mood=.5)
 &dancer over=&key step=8n 0 ~ 2 4 ~ 5 4 2 1 0
 ```
 

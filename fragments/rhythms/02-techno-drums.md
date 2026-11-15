@@ -1,18 +1,11 @@
 ---
 id: techno_drums
-association:
-  - point:
-      sync: 0.12
-      harm: 0
-      bite: 1
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8
 ---
 
 ```cells
-&kick, &backbeat, &fill, &hat, &groove from (&bd, &sd, &hh, &oh)
+&kick, &backbeat, &fill, &hat, &groove from (&bd, &sd, &hh, &oh) style=&(map=style sync=.12 harm=0 bite=1)
 &bd, &sd, &hh, &oh from gm_kit
 &kick role=kick step=16n &bd:0:.763904 ~ ~ ~ &bd:0:.536239 ~ ~ ~ ~ ~ ~ ~ &bd:0:.524769 ~ ~ ~
 &backbeat role=backbeat step=16n ~ ~ ~ ~ &sd:0:.607663 ~ ~ ~ ~ ~ ~ ~ &sd:0:.696633 ~ ~ ~

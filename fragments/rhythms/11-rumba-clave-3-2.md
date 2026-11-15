@@ -1,17 +1,10 @@
 ---
 id: rumba_clave_3_2
-association:
-  - point:
-      sync: 1
-      harm: 0.2
-      bite: 0.75
-    weight: 1
-    facet: rhythm
 source: seed
 ---
 
 ```cells
-&clave, &percussion from (&claves)
+&clave, &percussion from (&claves) style=&(map=style sync=1 harm=.2 bite=.75)
 &claves from gm_kit
 &clave role=clave step=16n cycle=2 &claves ~!5 &claves ~!7 &claves ~!5 &claves ~!3 &claves ~!7
 &percussion [&clave * .5]

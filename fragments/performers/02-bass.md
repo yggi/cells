@@ -1,59 +1,10 @@
 ---
 id: bass_performer
-association:
-  - point:
-      sync: 0.3
-      harm: 0.45
-      bite: 0.55
-    weight: 1
-    facet: performer
-  - point:
-      sync: 0.12
-      harm: 0
-      bite: 1
-    weight: 1
-    facet: performer
-  - point:
-      sync: 0.35
-      harm: 0.55
-      bite: 0.65
-    weight: 1
-    facet: performer
-  - point:
-      sync: 0.05
-      harm: 0.3
-      bite: 0
-    weight: 1
-    facet: performer
-  - point:
-      sync: 0.5
-      harm: 0.75
-      bite: 0.35
-    weight: 1
-    facet: performer
-  - point:
-      sync: 1
-      harm: 0.12
-      bite: 0.85
-    weight: 1
-    facet: performer
-  - point:
-      sync: 0.75
-      harm: 0.85
-      bite: 0.45
-    weight: 1
-    facet: performer
-  - point:
-      sync: 0.35
-      harm: 1
-      bite: 0.3
-    weight: 1
-    facet: performer
 source: seed
 ---
 
 ```cells
-&bass, &bassOut from (&bassLevel, &bassV, &style) &bassline
+&bass, &bassOut from (&bassLevel, &bassV, &style) &bassline style=(&(map=style sync=.3 harm=.45 bite=.55) | &(map=style sync=.12 harm=0 bite=1) | &(map=style sync=.35 harm=.55 bite=.65) | &(map=style sync=.05 harm=.3 bite=0) | &(map=style sync=.5 harm=.75 bite=.35) | &(map=style sync=1 harm=.12 bite=.85) | &(map=style sync=.75 harm=.85 bite=.45) | &(map=style sync=.35 harm=1 bite=.3))
 &bassV from bass(style=&style)
 &bassOut play=&bassline^$-12 level=&bassLevel &bassV
 &bass map=role part=bass &bassOut

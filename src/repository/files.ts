@@ -32,6 +32,9 @@
  */
 import type { Layout } from '../engine/literate';
 import { readPiece, writePiece } from '../engine/piecefile';
+import { parse } from '../engine/parser';
+import { AXIS_NAMES } from '../engine/style';
+import { associationOf, FOLDER_FACETS, type StyleNames } from './declarations';
 import { fragmentProblems, type Fragment, type WeightedPoint } from './fragments';
 import { readYaml, yamlValue, type YamlNode, type YamlProblem, type YamlValue } from './yaml';
 
@@ -107,7 +110,15 @@ function association(node: YamlNode, problems: YamlProblem[]): WeightedPoint[] {
 }
 
 /** A fragment file read: its fragment, metadata and prose, or what is wrong with it, each problem naming its line. */
-export function readFragment(markdown: string): FragmentFile | FragmentFileProblems {
+/** How a file's association is read from its text (decision 089): the facet its folder gives, and the styles a declaration names. */
+export interface ReadOptions {
+  /** The facet of the fragment's folder (`FOLDER_FACETS`), where it has one. */
+  readonly facet?: string;
+  /** The styles `&funk` names; none where the library has no `styles`. */
+  readonly styles?: StyleNames;
+}
+
+export function readFragment(markdown: string, options: ReadOptions = {}): FragmentFile | FragmentFileProblems {
   const lines = markdown.split(/\r?\n/);
   // (the piece reader's own reading, with the words of a fragment file; it takes a file with no frontmatter, a fragment can't)
   if (lines[0] !== '---') return { problems: [{ line: 1, message: 'no frontmatter: a fragment file starts with a line `---`' }] };
@@ -124,8 +135,15 @@ export function readFragment(markdown: string): FragmentFile | FragmentFileProbl
   if (!id) problems.push({ line: 1, message: 'no id in the frontmatter' });
   else if (typeof idValue !== 'string') problems.push({ line: id.line, message: `the id is ${JSON.stringify(yamlValue(id.value))}, not a string: quote it` });
   const assoc = entry(root, 'association');
-  if (!assoc) problems.push({ line: 1, message: 'no association in the frontmatter' });
-  const points = assoc ? association(assoc.value, problems) : [];
+  // (the association is the text's declarations, decision 089; a frontmatter's `association:` reads for a release, as `use` did)
+  const declared = associationOf(piece.text, { ...(options.facet === undefined ? {} : { facet: options.facet }), styles: options.styles ?? new Map() });
+  const firstLine = (piece.map?.[0]?.line ?? close + 2) - 1;
+  if (assoc && declared?.explicit)
+    problems.push({ line: assoc.line, message: 'the association is written twice: in the frontmatter and in the text’s declarations (decision 089): keep the declarations' });
+  else if (!assoc && !declared)
+    problems.push({ line: 1, message: 'no association: no declaration in the text (`* from style=…`, a signature with style=) and none in the frontmatter' });
+  if (declared && !assoc) problems.push(...declared.problems.map((message) => ({ line: firstLine, message })));
+  const points = assoc ? association(assoc.value, problems) : (declared?.association ?? []);
   if (problems.length) return { problems: problems.sort((a, b) => a.line - b.line) };
 
   const fragment: Fragment = { id: idValue as string, text: piece.text, association: points };
@@ -135,11 +153,12 @@ export function readFragment(markdown: string): FragmentFile | FragmentFileProbl
     return {
       problems: wrong.map((message) => {
         const point = /point (\d+)/.exec(message);
-        const line = point
-          ? (assoc!.value as YamlNode & { kind: 'list' }).items[Number(point[1]) - 1]!.line
-          : /no text/.test(message)
-            ? (piece.map?.[0]?.line ?? close + 2) - 1
-            : id!.line;
+        const line =
+          point && assoc
+            ? (assoc!.value as YamlNode & { kind: 'list' }).items[Number(point[1]) - 1]!.line
+            : /no text/.test(message)
+              ? (piece.map?.[0]?.line ?? close + 2) - 1
+              : id!.line;
         return { line, message };
       }),
     };
@@ -148,7 +167,7 @@ export function readFragment(markdown: string): FragmentFile | FragmentFileProbl
 }
 
 /** A fragment file's text: frontmatter (the entry, then the metadata), the cells block, the prose. */
-export function writeFragment({ fragment, meta, prose, layout }: FragmentFile): string {
+export function writeFragment({ fragment, meta, prose, layout }: FragmentFile, options: ReadOptions = {}): string {
   const clash = ENTRY_KEYS.filter((key) => Object.hasOwn(meta, key));
   if (clash.length) throw new Error(`writeFragment: the metadata has ${clash.join(' and ')}, which the entry writes`);
   const association = fragment.association.map(({ point, weight, facet, args }) => ({
@@ -157,7 +176,11 @@ export function writeFragment({ fragment, meta, prose, layout }: FragmentFile): 
     ...(facet === undefined ? {} : { facet }),
     ...(args === undefined ? {} : { args }),
   }));
-  return writePiece({ frontmatter: { id: fragment.id, association, ...meta }, text: fragment.text, prose, layout });
+  // (where the text declares its association, decision 089, the frontmatter doesn't repeat it: an explicit declaration,
+  // or a text whose declarations, read as `options` read them, give the association it has)
+  const derived = associationOf(fragment.text, { ...(options.facet === undefined ? {} : { facet: options.facet }), styles: options.styles ?? new Map() });
+  const declares = derived !== null && (derived.explicit || sameAssociation(derived.association, fragment.association));
+  return writePiece({ frontmatter: { id: fragment.id, ...(declares ? {} : { association }), ...meta }, text: fragment.text, prose, layout });
 }
 
 /** A fragment file read from a library of files, with the path it was read from. */
@@ -173,8 +196,10 @@ export function readFragments(files: Readonly<Record<string, string>>): { files:
   const read: LibraryFile[] = [];
   const problems: string[] = [];
   const firstPath = new Map<string, string>();
+  const styles = styleNamesIn(files);
   for (const [path, markdown] of Object.entries(files)) {
-    const file = readFragment(markdown);
+    const facet = FOLDER_FACETS[path.split('/')[0]!];
+    const file = readFragment(markdown, { ...(facet === undefined || !path.includes('/') ? {} : { facet }), styles });
     if ('problems' in file) {
       problems.push(...file.problems.map((p) => `${path}:${p.line}: ${p.message}`));
       continue;
@@ -187,3 +212,28 @@ export function readFragments(files: Readonly<Record<string, string>>): { files:
   }
   return problems.length ? { problems } : { files: read };
 }
+
+/**
+ * The styles a library's declarations name (decision 089 §2): the cells of its `styles`, each a `map=style` cell with a
+ * value on each axis, by name. Read from the file's text alone, before any association, since `styles` declares its own
+ * points by its cells' names.
+ */
+export function styleNamesIn(files: Readonly<Record<string, string>>): StyleNames {
+  for (const markdown of Object.values(files)) {
+    if (!/^id: styles$/m.test(markdown.slice(0, markdown.indexOf('\n---', 3) + 1))) continue;
+    const piece = readPiece(markdown);
+    if ('problems' in piece) return new Map();
+    return new Map(
+      parse(piece.text).cells.flatMap((cell) => {
+        const values = cell.braid.kind === 'list' ? cell.braid.tokens.map((t) => (t.atom.kind === 'note' ? t.atom.value : NaN)) : [];
+        return cell.map?.kind === 'style' && values.length === AXIS_NAMES.length && values.every(Number.isFinite)
+          ? [[cell.name, Object.fromEntries(AXIS_NAMES.map((a, i) => [a, values[i]!]))] as const]
+          : [];
+      }),
+    );
+  }
+  return new Map();
+}
+
+/** Whether two associations are one: the same points, weights, facets and arguments, in the same order. */
+const sameAssociation = (a: readonly WeightedPoint[], b: readonly WeightedPoint[]): boolean => JSON.stringify(a) === JSON.stringify(b);

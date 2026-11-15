@@ -1,47 +1,11 @@
 ---
 id: root_bass
-association:
-  - point:
-      sync: 0
-      harm: 0.3
-      bite: 0
-      mood: 0.9
-    weight: 1
-    facet: bass
-  - point:
-      sync: 0.3
-      harm: 0.45
-      bite: 0.55
-      mood: 0.5
-    weight: 1
-    facet: bass
-  - point:
-      sync: 0.35
-      harm: 0.55
-      bite: 0.65
-      mood: 0.65
-    weight: 1
-    facet: bass
-  - point:
-      sync: 0.05
-      harm: 0.3
-      bite: 0
-      mood: 0.9
-    weight: 1
-    facet: bass
-  - point:
-      sync: 0.1
-      harm: 0.12
-      bite: 0.5
-      mood: 0.95
-    weight: 1
-    facet: bass
 source: seed
 lifted: yggi/jambot packages/engine/src/bass.ts @ 1037a80
 ---
 
 ```cells
-&bassline from &harm
+&bassline from &harm style=(&(map=style sync=0 harm=.3 bite=0 mood=.9) | &synthPop | &deepHouse | &ambient | &kinderlied)
 &bassline over=&harm step=2n 0 0
 ```
 

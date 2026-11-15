@@ -1,18 +1,11 @@
 ---
 id: pulse_lead
-association:
-  - point:
-      sync: 0.3
-      harm: 0.7
-      bite: 1
-      mood: 0.55
-    weight: 0.125
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/korobeiniki.md @ a8de625f
 ---
 
 ```cells
+* from style=&chiptune * .125
 &leadV s=pulse loop=C4 env=&(map=adsr .002 .05 .8 .05)
 ```
 

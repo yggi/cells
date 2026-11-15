@@ -1,18 +1,10 @@
 ---
 id: reply
-association:
-  - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.5
-      mood: 0.45
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&reply from &key
+&reply from &key style=&(map=style sync=.5 harm=.5 bite=.5 mood=.45)
 &reply over=&key step=8n 4 3 2@2 0@4
 ```
 

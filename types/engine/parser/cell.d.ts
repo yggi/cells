@@ -21,6 +21,7 @@ interface Body {
     tier: number | null;
     about: Ref[] | null;
     style: StyleSpec | null;
+    reach: Record<string, number> | null;
     chance: number | null;
     seed: number | null;
     size: number | null;

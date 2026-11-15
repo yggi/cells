@@ -1,19 +1,11 @@
 ---
 id: spooky_stabs
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.3
-      mood: 0.3
-    weight: 0.4
-    facet: stab
 source: seed
 lifted: yggi/cells examples/spooky.md @ a8de625f
 ---
 
 ```cells
-&stabline from &harm
+&stabline from &harm style=&spooky * .4
 &stabline over=&harm step=8n ~ [0,1,2] ~ ~ ~ ~ [0,1,2] ~ ~ ~
 ```
 

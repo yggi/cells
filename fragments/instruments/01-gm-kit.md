@@ -1,80 +1,10 @@
 ---
 id: gm_kit
-association:
-  - point:
-      sync: 0.35
-      harm: 1
-      bite: 0.3
-      mood: 0.85
-    weight: 1
-    facet: instrument
-  - point:
-      sync: 0.75
-      harm: 0.85
-      bite: 0.45
-      mood: 0.9
-    weight: 1
-    facet: instrument
-  - point:
-      sync: 1
-      harm: 0.12
-      bite: 0.85
-      mood: 0.65
-    weight: 1
-    facet: instrument
-  - point:
-      sync: 0.65
-      harm: 0.55
-      bite: 0.45
-      mood: 0.65
-    weight: 1
-    facet: instrument
-  - point:
-      sync: 0
-      harm: 0.1
-      bite: 0.75
-      mood: 0.7
-    weight: 1
-    facet: instrument
-  - point:
-      sync: 0
-      harm: 0.7
-      bite: 0.3
-      mood: 0.9
-    weight: 1
-    facet: instrument
-  - point:
-      sync: 0.9
-      harm: 0.5
-      bite: 0.7
-      mood: 0.75
-    weight: 1
-    facet: instrument
-  - point:
-      sync: 0.1
-      harm: 0.12
-      bite: 0.5
-      mood: 0.95
-    weight: 1
-    facet: instrument
-  - point:
-      sync: 0.1
-      harm: 0.25
-      bite: 0.7
-      mood: 0.65
-    weight: 1
-    facet: instrument
-  - point:
-      sync: 0.5
-      harm: 0.75
-      bite: 0.35
-      mood: 0.5
-    weight: 1
-    facet: instrument
 source: seed
 ---
 
 ```cells
+* from style=(&swingJazz | &bossaNova | &funk | &bluesShuffle | &march | &waltz | &salsa | &kinderlied | &seaShanty | &lofi)
 &acousticbassdrum note=35 s=sine loop=G1 pitch=0..24 * &(map=adsr 0 .05 0 0) env=&(map=adsr 0 .4 0 .05)
 &bd note=36 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&(map=adsr 0 .3 0 .05)
 &rim note=37 s=sine loop=E5 env=&(map=adsr 0 .03 0 .02)

@@ -1,18 +1,10 @@
 ---
 id: blue
-association:
-  - point:
-      sync: 0.35
-      harm: 1
-      bite: 0.4
-      mood: 0.85
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&blue from &key
+&blue from &key style=&(map=style sync=.35 harm=1 bite=.4 mood=.85)
 &blue over=&key step=8n 4 3 2 1 0@2 -2@2
 ```
 

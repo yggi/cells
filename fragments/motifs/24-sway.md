@@ -1,18 +1,10 @@
 ---
 id: sway
-association:
-  - point:
-      sync: 0.2
-      harm: 0.9
-      bite: 0.22
-      mood: 0.3
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&sway from &key
+&sway from &key style=&(map=style sync=.2 harm=.9 bite=.22 mood=.3)
 &sway over=&key step=8n 0@3 -1 -2 -1
 ```
 

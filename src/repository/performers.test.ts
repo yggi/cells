@@ -133,7 +133,13 @@ describe('the performers', () => {
   it('leave the part to the score, their one hole: its main parameter; a level is an optional one, its default .8 (decision 065)', () => {
     const holes = PERFORMER_FRAGMENTS.map((f) => holesOf(f.text, (t) => compileSource(t, undefined, { resolve: resolveSeed }), resolveSeed).uses);
     expect(holes).toEqual([['&drumlines'], ['&bassline'], ['&padline'], ['&stabline'], ['&leadline']]);
-    expect(PERFORMER_FRAGMENTS.map((f) => signatureOf(f.text))).toEqual([
+    // (the signature, its declaration's attributes, decision 089, aside)
+    expect(
+      PERFORMER_FRAGMENTS.map((f) => {
+        const { attributes: _, ...s } = signatureOf(f.text)!;
+        return s;
+      }),
+    ).toEqual([
       { kind: 'signature', names: ['&drums', '&drumsOut'], optional: ['&kit'], main: '&drumlines' },
       { kind: 'signature', names: ['&bass', '&bassOut'], optional: ['&bassLevel', '&bassV', '&style'], main: '&bassline' },
       { kind: 'signature', names: ['&pad', '&padOut'], optional: ['&padLevel', '&padV', '&style'], main: '&padline' },

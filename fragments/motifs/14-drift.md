@@ -1,18 +1,10 @@
 ---
 id: drift
-association:
-  - point:
-      sync: 0.05
-      harm: 0.3
-      bite: 0.1
-      mood: 0.9
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&drift from &key
+&drift from &key style=&(map=style sync=.05 harm=.3 bite=.1 mood=.9)
 &drift over=&key step=8n 4@4 3@4
 ```
 

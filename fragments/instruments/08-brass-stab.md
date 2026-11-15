@@ -1,32 +1,11 @@
 ---
 id: brass_stab
-association:
-  - point:
-      sync: 0.55
-      harm: 0.75
-      bite: 0.6
-      mood: 0.5
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 1
-      harm: 0.12
-      bite: 0.85
-      mood: 0.65
-    weight: 0.125
-    facet: instrument
-  - point:
-      sync: 0.9
-      harm: 0.5
-      bite: 0.7
-      mood: 0.75
-    weight: 0.125
-    facet: instrument
 source: seed
 lifted: yggi/cells examples/electroswing.md @ 6d1bfa7
 ---
 
 ```cells
+* from style=(&electroSwing * .125 | &funk * .125 | &salsa * .125)
 &keysV s=saw loop=C3 lpf=1800 env=&(map=adsr .01 .12 .25 .1)
 ```
 

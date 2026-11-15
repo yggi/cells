@@ -1,18 +1,10 @@
 ---
 id: neighbour
-association:
-  - point:
-      sync: 0.5
-      harm: 0.5
-      bite: 0.3
-      mood: 0.5
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&neighbour from &key
+&neighbour from &key style=&(map=style sync=.5 harm=.5 bite=.3 mood=.5)
 &neighbour over=&key step=8n 0 1 0 -1 0@4
 ```
 

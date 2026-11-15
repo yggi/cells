@@ -90,8 +90,10 @@ Any cell may carry `style=`, its association or wish: a style cell, an unnamed o
 | `style=[&funk * .8, &bossa * .2]` | a mix: the weighted sum of the styles' points, exact by definition |
 | `style=&funk..&bossa` | a range: from one to the other over the cell's scope |
 | `style=&funk..&bossa * &curve` | a range, where between the two ends set by a line from 0 to 1 in place of time |
+| `style=(&funk \| &bossa * .5)` | a set, found at each (decision 089): it has no one value, so a pick of it (`&x[bite]`) and `&style` set to one are errors |
 
 Each end lies within the axes' ranges: a mix whose weights take it outside is an error.
+In a style cell, `bite=.55 ± .1` with nothing moving it is a reach, its value the centre (a pick reads .55), read by no query yet; `bite=.55 ± .1 * &walk` is decision 079's window.
 
 **The note `&style` is the section's style** ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md)).
 `&style` is the score's name for it by convention, as `&bar` and `&key` are, and only a name ([decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md)): the band declares the style and the score passes its own (`* from band(…, style=&style)`), so a band written once reads it in every section.
@@ -122,6 +124,17 @@ A held axis is its value; a moving one, a glide or a mix of styles is its value 
 `{ cell: 'mine' }` reads another style cell; the piece's other compile options (`resolve`, `env`) pass through, and the last text read is kept, so a score read at each section's start compiles once.
 It is null where the piece doesn't compile.
 Jambot reads a radio score so, a section at a time (#576).
+
+## A fragment's association, in its text
+
+A fragment's place is on its declaration line, a template's signature or a collection's `* from` with no id, which the compile never reads ([decision 089](https://github.com/yggi/cells/blob/main/docs/decisions/089-the-association-in-the-text.md)):
+
+```text
+&key from (&mode) &tonic style=(&deepHouse | &funk) mode=dorian
+* from style=(&synthPop | &(map=style sync=.35 bite=.75) * .5)
+```
+
+`style=` names a style of `styles` or an inline point (any axes, `± r` a reach); `* w` a weight; `( a | b )` a set. `facet=` where it isn't the folder's; other attributes are a template's arguments. No `style=`, no style.
 
 ## The library of styles: styles
 

@@ -38,6 +38,8 @@ export interface WeightedPoint {
    * own, `diatonic(mode=aeolian)`, the template with them bound (`seed.ts`, #387). A fragment as a repository holds it has none.
    */
   readonly args?: Readonly<Record<string, string>>;
+  /** How sure the point is on each axis it names, written `bite=.55 ± .1` (decision 089 §6): kept, read by no query yet (#644). */
+  readonly reach?: StylePoint;
 }
 
 /** A fragment: cells text and its index entry. */

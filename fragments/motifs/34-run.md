@@ -1,18 +1,10 @@
 ---
 id: run
-association:
-  - point:
-      sync: 0.5
-      harm: 0.7
-      bite: 0.5
-      mood: 0.5
-    weight: 1
-    facet: motif
 source: seed
 ---
 
 ```cells
-&run from &key
+&run from &key style=&(map=style sync=.5 harm=.7 bite=.5 mood=.5)
 &run over=&key step=8n 0 1 2 3 4 5 6 7
 ```
 

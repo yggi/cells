@@ -1,18 +1,11 @@
 ---
 id: ambient_drums
-association:
-  - point:
-      sync: 0.05
-      harm: 0.3
-      bite: 0
-    weight: 1
-    facet: rhythm
 source: seed
 lifted: yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8
 ---
 
 ```cells
-&kick, &backbeat, &fill, &hat, &groove from (&bd, &sd, &hh)
+&kick, &backbeat, &fill, &hat, &groove from (&bd, &sd, &hh) style=&(map=style sync=.05 harm=.3 bite=0)
 &bd, &sd, &hh from gm_kit
 &kick role=kick step=16n &bd:0:.513423 ~ ~ ~ ~ ~ ~ ~ &bd:0:.502201 ~ ~ ~ ~ ~ ~ ~
 &backbeat role=backbeat step=16n ~ ~ ~ ~ &sd:0:.386943 ~ ~ ~ ~ ~ ~ ~ &sd:0:.458553 ~ ~ ~
