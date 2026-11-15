@@ -1,7 +1,5 @@
 ---
 id: five_to_twelve
-association:
-  - facet: law
 runtime: builtin
 source: seed
 ---

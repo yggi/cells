@@ -8,6 +8,7 @@ export const FOLDER_FACETS = {
     forms: 'form',
     harmony: 'harmony',
     instruments: 'instrument',
+    laws: 'law',
     meters: 'meter',
     modes: 'mode',
     modules: 'module',

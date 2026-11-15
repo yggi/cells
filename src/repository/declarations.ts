@@ -35,6 +35,7 @@ export const FOLDER_FACETS: Readonly<Record<string, string>> = {
   forms: 'form',
   harmony: 'harmony',
   instruments: 'instrument',
+  laws: 'law',
   meters: 'meter',
   modes: 'mode',
   modules: 'module',
