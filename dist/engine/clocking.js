@@ -1,7 +1,7 @@
 import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from "./helix.js";
 import { footOf, leaves, slots } from "./subseq.js";
 import { beltWarp, onReset, warpOf } from "./physics.js";
-import { mod } from "../theory/modes.js";
+import { even, mod } from "../theory/modes.js";
 import { bentSteps, stepsPerPulse, swingAt, swungKnots, swungPlace, swungSteps, writtenPlace } from "./meter.js";
 export const EPS = 1e-9;
 export function timeMap(result, clock, shifts) {
@@ -482,7 +482,16 @@ export function shiftsAt(result, statics, seconds) {
     const played = playedCells(result);
     const read = readThrough(result);
     const steps = new Map();
+    const phased = phasedKeys(result);
     const shiftOf = (name) => {
+        const c = result.cells.get(name);
+        const scale = c?.phase ? c : phased.get(name);
+        if (!scale?.phase)
+            return turned(name);
+        const turn = phaseTurn(result, statics, scale, seconds, clk, turned);
+        return turned(name) + (scale === c ? turn.degrees : -turn.semitones);
+    };
+    const turned = (name) => {
         const base = statics(name);
         const c = result.cells.get(name);
         const tonic = c?.tonic ? result.cells.get(c.tonic) : undefined;
@@ -512,6 +521,44 @@ export function shiftsAt(result, statics, seconds) {
         return base + lap * own.entries + own.inForce(b - lap * own.length, Math.floor(at / own.length));
     };
     return shiftOf;
+}
+const phasedKeysOf = new WeakMap();
+function phasedKeys(result) {
+    let m = phasedKeysOf.get(result);
+    if (!m) {
+        m = new Map();
+        for (const c of result.cells.values())
+            if (c.phase)
+                m.set(c.phase.key, c);
+        phasedKeysOf.set(result, m);
+    }
+    return m;
+}
+function phaseTurn(result, statics, scale, seconds, clk, now) {
+    const { cell, k, n } = scale.phase;
+    const none = { degrees: 0, semitones: 0 };
+    const steps = scale.scan?.steps ?? [];
+    if (steps.length !== k)
+        return none;
+    const main = result.mainMeter;
+    const per = main ? Math.max(1, result.cells.get(main)?.meter?.levels.length ?? 0) : 0;
+    let line = seconds;
+    if (main && per) {
+        const map = clk.map(main);
+        line = map.q(Math.floor(map.stepAt(seconds) / per + EPS) * per);
+    }
+    const shift = Math.abs(line - seconds) < EPS ? now(cell) : shiftsAt(result, statics, line)(cell);
+    const atom = shiftedUnits(result, cell, shift)[0]?.atom;
+    if (atom?.kind !== 'note' || !Number.isInteger(atom.value) || atom.value < 0 || atom.value >= k)
+        return none;
+    const first = [0];
+    for (const x of steps.slice(0, -1))
+        first.push(first[first.length - 1] + x);
+    const want = even(k, n, atom.value);
+    for (let r = 0; r < k; r++)
+        if (want.every((p, d) => mod(first[(d + r) % k] - first[r], n) === p))
+            return { degrees: r, semitones: first[r] };
+    return none;
 }
 export const playing = (now, statics, cell) => (name) => name === cell ? statics(name) : now(name);
 export function turnLap(result, c) {

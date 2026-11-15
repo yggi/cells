@@ -214,6 +214,11 @@ export type Braid =
        * Compile sets the steps (declare.ts); until then they are a placeholder.
        */
       readonly even?: EvenArgs;
+      /**
+       * A key's phase read from a stepped cell (#531, decision 093 §5): compile set `steps` to its first step's mode; the
+       * clocks turn the scale and its key to the phase in force at each bar line (`shiftsAt`).
+       */
+      readonly phaseCell?: { readonly name: string; readonly k: number; readonly n: number };
     }
   /** One cycle of a waveform in n steps, −1 … 1, as Strudel's bipolar signals sampled at each step's start: sin(n) sin(2πi/n), saw(n) a ramp up, tri(n) up then down, square(n) −1 then 1. */
   | { readonly kind: 'wave'; readonly shape: WaveShape; readonly n: number; readonly span: Span };

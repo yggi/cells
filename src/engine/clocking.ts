@@ -9,7 +9,7 @@ import type { CompileResult, Clock, ResolvedCell, Shifts } from './program';
 import { isPicked, isRelativePick, period, shiftedUnits, tableUnits } from './helix';
 import { footOf, leaves, slots, type Laps } from './subseq';
 import { beltWarp, onReset, warpOf, type Warp } from './physics';
-import { mod } from '../theory/modes';
+import { even, mod } from '../theory/modes';
 import { bentSteps, stepsPerPulse, swingAt, swungKnots, swungPlace, swungSteps, writtenPlace, type Meter, type SwingLevel } from './meter';
 
 export const EPS = 1e-9;
@@ -597,7 +597,17 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
   const played = playedCells(result);
   const read = readThrough(result);
   const steps = new Map<string, number>();
+  // a key whose phase steps (#531, decision 093 §5): the scale turned to the mode in force at the bar line, its key turned
+  // back by as many semitones, so the tonic stays (every mode of a necklace is another turned)
+  const phased = phasedKeys(result);
   const shiftOf: Shifts = (name) => {
+    const c = result.cells.get(name);
+    const scale = c?.phase ? c : phased.get(name);
+    if (!scale?.phase) return turned(name);
+    const turn = phaseTurn(result, statics, scale, seconds, clk, turned);
+    return turned(name) + (scale === c ? turn.degrees : -turn.semitones);
+  };
+  const turned: Shifts = (name) => {
     const base = statics(name);
     const c = result.cells.get(name);
     // a key whose tonic steps (#301, `&tonic step=1m/8 D F`): its turn is the tonic's note in force, its pitch class, where its
@@ -636,6 +646,47 @@ export function shiftsAt(result: CompileResult, statics: Shifts, seconds: number
     return base + lap * own.entries + own.inForce(b - lap * own.length, Math.floor(at / own.length));
   };
   return shiftOf;
+}
+
+/** Each key a stepped phase turns (#531), to the scale that reads through it. */
+const phasedKeysOf = new WeakMap<CompileResult, Map<string, ResolvedCell>>();
+function phasedKeys(result: CompileResult): Map<string, ResolvedCell> {
+  let m = phasedKeysOf.get(result);
+  if (!m) {
+    m = new Map();
+    for (const c of result.cells.values()) if (c.phase) m.set(c.phase.key, c);
+    phasedKeysOf.set(result, m);
+  }
+  return m;
+}
+
+/**
+ * How far a scale whose phase steps is turned at `seconds` (#531, decision 093 §5): the phase in force at the line of the
+ * main meter's bar it falls in, held through the bar (081's rule), as `degrees` the scale turns and `semitones` its key
+ * turns back. Phase p of even(k, 12) is the first phase's mode turned by the degree r where it starts, less that degree's
+ * place: `scale(major) shift=1` over a key turned −2 is dorian on the same tonic.
+ */
+function phaseTurn(result: CompileResult, statics: Shifts, scale: ResolvedCell, seconds: number, clk: Clocking, now: Shifts): { degrees: number; semitones: number } {
+  const { cell, k, n } = scale.phase!;
+  const none = { degrees: 0, semitones: 0 };
+  const steps = scale.scan?.steps ?? [];
+  if (steps.length !== k) return none;
+  // (the bar's line: its first step through the main meter, where the piece has one)
+  const main = result.mainMeter;
+  const per = main ? Math.max(1, result.cells.get(main)?.meter?.levels.length ?? 0) : 0;
+  let line = seconds;
+  if (main && per) {
+    const map = clk.map(main);
+    line = map.q(Math.floor(map.stepAt(seconds) / per + EPS) * per);
+  }
+  const shift = Math.abs(line - seconds) < EPS ? now(cell) : shiftsAt(result, statics, line)(cell);
+  const atom = shiftedUnits(result, cell, shift)[0]?.atom;
+  if (atom?.kind !== 'note' || !Number.isInteger(atom.value) || atom.value < 0 || atom.value >= k) return none;
+  const first: number[] = [0];
+  for (const x of steps.slice(0, -1)) first.push(first[first.length - 1]! + x);
+  const want = even(k, n, atom.value);
+  for (let r = 0; r < k; r++) if (want.every((p, d) => mod(first[(d + r) % k]! - first[r]!, n) === p)) return { degrees: r, semitones: first[r]! };
+  return none;
 }
 
 /**
