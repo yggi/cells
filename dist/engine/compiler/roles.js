@@ -71,7 +71,7 @@ export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, pl
             if (instruments.has(d.name) && VOICE_PARAMS.has(k))
                 continue;
             if (k === 'anchor' && has.has('law'))
-                warn(`anchor= sets the clock a law reads, not the law: write it on ${c.over ? `&${c.over}` : 'its day (over=&day, a clock loop=1d)'} — the law on &${d.name} doesn't read it`, span);
+                warn(`anchor= sets the clock a law reads, not the law: write it on ${c.over ? `&${c.over}` : streamClockOf(cells, c) ? `&${streamClockOf(cells, c)}` : 'its day (over=&day, a clock loop=1d)'} — the law on &${d.name} doesn't read it`, span);
             else if (k === 'pan' && (c.mix || c.sink || isMidiCard(c)))
                 warn(`pan= places a voice: on ${c.sink ? 'the sound card' : isMidiCard(c) ? 'a MIDI card' : `the mix &${d.name}`} it does nothing — put it on the voice (&voice pan=${d.params.pan})`, span);
             else if (k === 'pan' && typeof d.params.pan === 'number' && (d.params.pan < 0 || d.params.pan > 1))
