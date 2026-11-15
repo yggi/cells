@@ -5,7 +5,7 @@
  * on the language pages (docs/language/overview.md).
  */
 import { pickLabel } from './ast';
-import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, RateOp, Span, GateSpec, Move } from './ast';
+import type { Atom, Binding, Braid, Diagnostic, FreeSpec, Pick, RateOp, Span, GateSpec, Move, CellDecl } from './ast';
 import type { ShowPlugin } from './plugins';
 import type { Meter } from './meter';
 import type { Sort } from './algebra';
@@ -225,6 +225,8 @@ export interface ResolvedCell {
   /** Parameters that move: a range scaled by cells (or, no range, one cell's values as they are). */
   /** Its moving parameters: a range and the cells that move it; `to`, a blend's second wave (`s=tri..square * &x`, #411); on a map=adsr cell, its moving slots (`attack=.3..0.01 * &x`). */
   readonly paramCells: Readonly<Record<string, { readonly range: readonly [number, number] | null; readonly factors: readonly string[]; readonly to?: string }>>;
+  /** A fill a plugin-fragment's code writes (decision 085, #792): its fragment, its name there, the clock its call site gave. */
+  readonly fill?: CellDecl['fill'];
   /** Used as the voice of an out(…), or has sound parameters. */
   readonly voice: boolean;
   /** Voice: turns of its braid per second at pitch 0 (loop=f, or step=r over its k steps). */
@@ -520,6 +522,8 @@ export interface CompileResult {
   readonly takes?: readonly Take[];
   /** Where each cell its `from` lines gave came from, by its name as compiled (`hh`, a copy's `bar_grouping`); absent for none. */
   readonly origins?: ReadonlyMap<string, readonly Origin[]>;
+  /** Each cell's line of code, where the text has fills (decision 085, #792): what realize compiles a stream's laps from. */
+  readonly codes?: ReadonlyMap<string, string>;
   /** Its gates, the performers (decision 058), in the order written: who plays which part, on what. */
   readonly performers: readonly Performer[];
 }

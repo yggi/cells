@@ -10,7 +10,7 @@
  */
 import type { CompileResult, ResolvedCell } from './program';
 /** The kinds, in the order their rules are tried. */
-export declare const KINDS: readonly ["note", "card", "midi card", "gate", "role", "style", "scope", "law", "tape", "head", "sum", "phrase", "mix", "resonator", "voice", "kit", "band", "meter", "tempo", "grid", "envelope", "ramp", "volume", "sections", "selector", "number", "line", "table", "blank", "steps"];
+export declare const KINDS: readonly ["note", "card", "midi card", "gate", "role", "style", "scope", "fill", "tape", "head", "sum", "phrase", "mix", "resonator", "voice", "kit", "band", "meter", "tempo", "grid", "envelope", "ramp", "volume", "sections", "selector", "number", "line", "table", "blank", "steps"];
 export type Kind = (typeof KINDS)[number];
 /** What a rule may look at beside the cell: the piece. */
 interface Seen {

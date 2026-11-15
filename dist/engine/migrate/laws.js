@@ -2,7 +2,7 @@ import { splitComment } from "../edit.js";
 import { signatureHeads } from "../use.js";
 import { BUILT_IN } from "../fills.js";
 const words = (code) => code.match(/(?:[^\s"]+|"[^"]*")+/g) ?? [];
-export function laws(source, resolve) {
+export function laws(source) {
     const defined = new Set(signatureHeads(source));
     return source.split('\n').flatMap((raw, i) => {
         const [code, comment] = splitComment(raw);
@@ -15,11 +15,8 @@ export function laws(source, resolve) {
         const fragment = law ? BUILT_IN.get(law) : undefined;
         if (!law || !fragment || !over || ws.includes('from') || defined.has(head))
             return [];
-        const own = (resolve?.(fragment.fragment) ?? '')
-            .split('\n')
-            .find((l) => /^&\w/.test(l) && !/\sfrom(\s|$)/.test(l))
-            ?.split(/\s+/) ?? [];
-        const rest = ws.slice(1).filter((w) => !w.startsWith('law=') && !w.startsWith('over=') && !(w.startsWith('step=') && own.includes(w)));
+        const own = `step=${+(60 / fragment.stepSeconds).toFixed(6)}bpm`;
+        const rest = ws.slice(1).filter((w) => !w.startsWith('law=') && !w.startsWith('over=') && w !== own);
         const indent = /^\s*/.exec(code)[0];
         const after = `${indent}${[head, ...rest, 'from', fragment.fragment, over].join(' ')}`;
         const tail = comment ? `${/\s*$/.exec(code)[0] || ' '}${comment.trimStart()}` : '';

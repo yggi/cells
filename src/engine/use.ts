@@ -38,6 +38,7 @@ import { STYLE } from './style';
 import { MOVED, RENAMED_IDS } from './renamed';
 import { BOUND_BY_NAME, byNameMessage } from './byname';
 import type { CompileOptions, Origin, Resolve, Take } from './program';
+import { BY_FRAGMENT } from './fills';
 
 /** How deep `from` lines nest: a kit in a groove in a section in a piece is 3. */
 export const FROM_DEPTH = 8;
@@ -727,6 +728,12 @@ function instantiate(
     const p = l.name!;
     if (byReference.has(p) || !reached.has(p) || overridden.includes(p)) continue;
     let code = renamed(l.code, names);
+    // (a plugin-fragment's fill, decision 085: stamped with its fragment, its name there, and the clock the call site gave)
+    if (/(^|\s)fill\(\s*\)/.test(code)) {
+      // (its answer its braid: a built-in's first lap, so every reader sees steps; an external one's the host gives, #792 6e)
+      const answer = BY_FRAGMENT.get(id)?.fill(p, 0, {}) ?? '';
+      code = code.replace(/(^|\s)fill\(\s*\)/, `$1fill(${id}, ${p}${main && names.has(main) ? `, &${names.get(main)}` : ''})${answer ? ` ${answer}` : ''}`);
+    }
     if (values.has(p)) code = inherited(names.get(p)!, code, asCell(values.get(p)!, p, own));
     if (heads.includes(p) && from.head.length && one) code = withAttributes(code, from.head);
     copy.push({ ...lineOf(code), ...(l.origin ? { origin: l.origin } : {}) });

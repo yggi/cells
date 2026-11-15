@@ -44,8 +44,8 @@ export interface CoreOptions extends NormaliseOptions {
     readonly skip?: readonly string[];
 }
 /**
- * The names an interface keeps, bare: the ones it names that the text defines, and the gates a kept role lists (what reads
- * a gate by name keeps it a cell).
+ * The names an interface keeps, bare: the ones it names that the text defines, the gates a kept role lists (what reads
+ * a gate by name keeps it a cell), and every fill (a plugin-fragment's code writes it by its name).
  */
 export declare function interfaceOf(text: string, spec?: Interface): Set<string>;
 /** The core of a text (decision 069), up to its interface (077): the passes again until the text stops changing, so the core of a core is itself. */
