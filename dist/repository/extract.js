@@ -24,7 +24,7 @@ function groupsOf(text) {
         const form = readFrom(whole);
         const defines = form ? (form.kind === 'use' ? (form.names ?? []) : []).map((n) => n.replace(/^&/, '')) : HEAD.exec(whole) ? [HEAD.exec(whole)[1]] : [];
         if (whole)
-            out.push({ first, last: i, defines, reads: readsOf(whole).filter((n) => !defines.includes(n)), code: whole });
+            out.push({ first, last: i, defines, reads: readsOf(whole).filter((n) => !defines.includes(n)), code: whole, takes: form?.kind === 'use' });
         first = -1;
         code = [];
     });
@@ -58,7 +58,7 @@ export function extract(text, lines, options) {
     if (!heads.length)
         return { why: 'nothing else in the piece reads what these lines define' };
     const outside = [...new Set(chosen.flatMap((g) => g.reads))].filter((n) => !defined.includes(n));
-    const inputs = outside.filter((n) => chosen.some((g) => g.reads.includes(n) && readsAsValue(g.code, n))).map((n) => `&${n}`);
+    const inputs = outside.filter((n) => chosen.some((g) => g.reads.includes(n) && (g.takes || readsAsValue(g.code, n)))).map((n) => `&${n}`);
     const sounds = outside.filter((n) => !inputs.includes(`&${n}`)).map((n) => `&${n}`);
     if (inputs.length > 1)
         return { why: `the lines read ${inputs.join(', ')}, which they don't define: a fragment takes one main argument (take the others' lines in too)` };

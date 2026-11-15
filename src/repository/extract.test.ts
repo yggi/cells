@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { extract } from './extract';
 import { resolveSeed } from './library';
+import { EXAMPLES } from '../engine/examples';
 
 const O = { id: 'my_vamp_bass', resolve: resolveSeed };
 /** Kinderlieder's vamp and bass, written out (the plan's mock-up, yggi/cell-studio docs/notes/fragments.md). */
@@ -31,6 +32,21 @@ describe('extract', () => {
     });
     if ('why' in r) throw new Error(r.why);
     expect(r.piece.split('\n')).toEqual([...PIECE.split('\n').slice(0, 3), r.line, ...PIECE.split('\n').slice(5)]);
+  });
+
+  it('takes what a from line passes as its main parameter: Kinderlieder’s vamp and bass, as it takes them today', () => {
+    const k = EXAMPLES.kinderlied.source;
+    const at = (head: string) => k.split('\n').findIndex((l) => l.startsWith(head)) + 1;
+    const r = extract(k, [at('&harm '), at('&bassline ')], O);
+    if ('why' in r) throw new Error(r.why);
+    // (`&harm from vamp_to_the_fifth &key` passes &key: an argument, a value, never a sound read by name)
+    expect([r.main, r.sounds, r.same]).toEqual(['&key', [], true]);
+    expect(r.fragment.split('\n')[0]).toBe('&harm, &bassline from &key');
+    expect(r.line).toBe('&harm, &bassline from my_vamp_bass &key');
+    // (the bass alone: what its from line passes, &harm, is its main parameter)
+    const bass = extract(k, [at('&bassline ')], O);
+    if ('why' in bass) throw new Error(bass.why);
+    expect([bass.main, bass.sounds, bass.same]).toEqual(['&harm', [], true]);
   });
 
   it('says when the library holds the fragment already', () => {

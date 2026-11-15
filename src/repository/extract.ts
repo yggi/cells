@@ -60,6 +60,8 @@ interface Group {
   readonly reads: readonly string[];
   /** Its code, comments aside, its lines joined. */
   readonly code: string;
+  /** A `from` line: what it reads it passes, as its arguments, to a fragment's parameters. */
+  readonly takes: boolean;
 }
 
 const CONTINUES = /[+*,[]\s*$/;
@@ -80,7 +82,7 @@ function groupsOf(text: string): Group[] {
     const whole = code.join(' ').trim().split(/\s+/).join(' ');
     const form = readFrom(whole);
     const defines = form ? (form.kind === 'use' ? (form.names ?? []) : []).map((n) => n.replace(/^&/, '')) : HEAD.exec(whole) ? [HEAD.exec(whole)![1]!] : [];
-    if (whole) out.push({ first, last: i, defines, reads: readsOf(whole).filter((n) => !defines.includes(n)), code: whole });
+    if (whole) out.push({ first, last: i, defines, reads: readsOf(whole).filter((n) => !defines.includes(n)), code: whole, takes: form?.kind === 'use' });
     first = -1;
     code = [];
   });
@@ -118,9 +120,10 @@ export function extract(text: string, lines: readonly number[], options: Extract
   const heads = defined.filter((n) => rest.some((g) => g.reads.includes(n)));
   if (!heads.length) return { why: 'nothing else in the piece reads what these lines define' };
   // (what the lines read and don't define: an input where a line reads it as a value, as the expansion asks a fragment to
-  // declare it (`readsAsValue`); a sound, read by name, where every line reads it as one)
+  // declare it (`readsAsValue`), and wherever a `from` line passes it, an argument binding a parameter; a sound, read by
+  // name, where every line reads it as one)
   const outside = [...new Set(chosen.flatMap((g) => g.reads))].filter((n) => !defined.includes(n));
-  const inputs = outside.filter((n) => chosen.some((g) => g.reads.includes(n) && readsAsValue(g.code, n))).map((n) => `&${n}`);
+  const inputs = outside.filter((n) => chosen.some((g) => g.reads.includes(n) && (g.takes || readsAsValue(g.code, n)))).map((n) => `&${n}`);
   const sounds = outside.filter((n) => !inputs.includes(`&${n}`)).map((n) => `&${n}`);
   if (inputs.length > 1) return { why: `the lines read ${inputs.join(', ')}, which they don't define: a fragment takes one main argument (take the others' lines in too)` };
   const main = inputs[0] ?? null;
