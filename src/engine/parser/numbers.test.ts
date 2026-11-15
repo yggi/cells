@@ -49,6 +49,7 @@ const ROWS: Readonly<Record<keyof typeof NUMBER_PLACES, readonly [string, string
   intervals: ['&map scan(1!X 2)', '4', 'free(4, 1..8)', BUILT, BUILT],
   geo: ['&series scan(geo(X, 25, 0 10 5))', '5', 'free(5, 2..8)', BUILT, BUILT],
   args: ['&hits euclid(X, 8) step=8', '3', 'free(3, 0..8)', BUILT, BUILT],
+  evenArg: ['&key scale(even(7, 12, X), D)', '3', 'free(3, 0..6)', 'ok', NOT_HERE],
   fifths: ['&circle fifths(X)', '1', 'free(1, 0..11)', BUILT, BUILT],
   phase: ['&key scale(2, X)', '3', 'free(3, 0..6)', BUILT, BUILT],
   meter: ['&bar meter(X) step=90bpm', '"4/4"', 'free(2, 0..3, "2/4 3/4 4/4 6/8")', BUILT, BUILT],

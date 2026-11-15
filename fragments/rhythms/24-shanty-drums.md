@@ -8,7 +8,7 @@ lifted: yggi/cells examples/sailor.md @ 014c4c73
 &kick, &snare, &hat, &groove from (&bd, &sd, &hh) style=&(map=style sync=.1 harm=.25 bite=.7)
 &bd, &sd, &hh from gm_kit
 &kick role=kick step=2n &bd:0:.8
-&snare step=2n [~ &sd:0:.5]
+&snare role=backbeat step=2n [~ &sd:0:.5]
 &hat role=hat step=8n [~ &hh:0:.3]
 &groove [&kick, &snare, &hat]
 ```

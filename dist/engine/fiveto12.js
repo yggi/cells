@@ -147,10 +147,18 @@ function fill(name, lap) {
 }
 export const FIVETO12 = {
     id: 'fiveto12',
+    fragment: 'five_to_twelve',
     fills: { mode: { lap: KEY }, tonic: { lap: KEY }, notes: { lap: BAR }, level: { lap: BAR }, space: { lap: BAR }, block: { lap: BLOCK, mark: true } },
-    block: ['&notes over=&key step=1 fill()', '&level map=amp step=1 fill()', '&space map=lin step=1 fill()', '&key scale(&mode, &tonic)', '&mode fill()', '&tonic fill()'].join('\n'),
-    plays: '&notes * &level',
-    voice: 'pan=&space',
+    block: [
+        '&cycle [&notes * &level]',
+        '&notes over=&key pan=&space step=1 fill()',
+        '&level map=amp step=1 fill()',
+        '&space map=lin step=1 fill()',
+        '&key scale(&mode, &tonic)',
+        '&mode fill()',
+        '&tonic fill()',
+    ].join('\n'),
+    head: 'cycle',
     origin: 11.55,
     cycle: DAY,
     stepSeconds: SECONDS_PER_STEP,

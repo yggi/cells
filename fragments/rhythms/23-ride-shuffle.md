@@ -7,7 +7,7 @@ lifted: yggi/cells examples/jazz.md @ b3c0acea
 ```cells
 &ride, &kick, &groove from (&bd, &rd) style=&(map=style sync=.65 harm=.55 bite=.45)
 &bd, &rd from gm_kit
-&ride step=8n &rd:0:.9 ~ &rd:0:.6 &rd:0:.5 &rd:0:.9 ~ &rd:0:.6 &rd:0:.5
+&ride role=hat step=8n &rd:0:.9 ~ &rd:0:.6 &rd:0:.5 &rd:0:.9 ~ &rd:0:.6 &rd:0:.5
 &kick role=kick step=2n &bd:0:.5
 &groove [&ride, &kick]
 ```

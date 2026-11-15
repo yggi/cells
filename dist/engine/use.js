@@ -101,6 +101,10 @@ function pickPart(id, text, from, say) {
     return { text: part, part: asked };
 }
 export const hasFrom = (text) => /^\s*(?:\*|&[A-Za-z_][A-Za-z0-9_]*)(?=[\s,=]).*\sfrom(?:\s|$)/m.test(text);
+export const signatureHeads = (text) => text.split('\n').flatMap((line) => {
+    const form = readFrom(splitComment(line)[0].trim());
+    return form?.kind === 'signature' ? form.names : [];
+});
 export function signatureOf(text) {
     for (const l of linesOf(text))
         if (l.from?.kind === 'signature')
@@ -164,7 +168,18 @@ export function identityText(text) {
         .map((code) => code.replace(WRITTEN, (written, name) => (index.has(name) ? `&#${index.get(name)}` : written)))
         .join('\n');
 }
-export const fragmentHash = (text) => `e2:${hash64(identityText(text))}`;
+const hashes = new Map();
+const HASHES = 4096;
+export const fragmentHash = (text) => {
+    const known = hashes.get(text);
+    if (known !== undefined)
+        return known;
+    const hash = `e2:${hash64(identityText(text))}`;
+    if (hashes.size >= HASHES)
+        hashes.clear();
+    hashes.set(text, hash);
+    return hash;
+};
 export const hashIs = (recorded, text) => recorded === (recorded.startsWith('e1:') ? fragmentHashE1(text) : fragmentHash(text));
 const quoted = (id) => JSON.stringify(id);
 const pathOf = (path) => path.map(quoted).join(' → ');

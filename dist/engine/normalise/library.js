@@ -1,6 +1,7 @@
+import { MODE_WORDS } from "../../theory/modes.js";
 import { attrsOf, declLine, declWords, spansLines, splitComment } from "../edit.js";
 import { parse } from "../parser/index.js";
-import { isWordId, leftOf, readFrom } from "../parser/use.js";
+import { isWordId, leftOf, readFrom, topTokens } from "../parser/use.js";
 function taking(code) {
     const f = readFrom(code.trim());
     return f?.kind === 'use' && !f.args && f.main === null && !f.head.length ? { id: f.id, names: f.names, takes: f.takes } : null;
@@ -71,15 +72,24 @@ export function libraryCells(source, library) {
             bodies.set(body, h);
     }
     const declared = new Set(parse(source).cells.map((d) => d.name));
+    const home = homes(library);
+    const whole = (line) => {
+        const h = home.get(codeOf(line));
+        return !!h && declared.has(h.name);
+    };
     const found = new Map();
-    for (const m of source.matchAll(/&\(([^()]*)\)/g)) {
-        const h = bodies.get(m[1].trim().replace(/\s+/g, ' '));
-        if (!h || declared.has(h.name))
+    for (const line of source.split('\n')) {
+        if (whole(line))
             continue;
-        const f = found.get(h.name) ?? { ...h, inline: [] };
-        if (!f.inline.includes(m[0]))
-            f.inline.push(m[0]);
-        found.set(h.name, f);
+        for (const m of splitComment(line)[0].matchAll(/&\(([^()]*)\)/g)) {
+            const h = bodies.get(m[1].trim().replace(/\s+/g, ' '));
+            if (!h || declared.has(h.name))
+                continue;
+            const f = found.get(h.name) ?? { ...h, inline: [] };
+            if (!f.inline.includes(m[0]))
+                f.inline.push(m[0]);
+            found.set(h.name, f);
+        }
     }
     return [...found.values()].map(({ id, name, inline }) => ({
         id: `library-cell:${name}`,
@@ -90,6 +100,8 @@ export function libraryCells(source, library) {
         after: `&${name}`,
         apply: (src) => {
             const lines = src.split('\n').map((l) => {
+                if (whole(l))
+                    return l;
                 const [code, comment] = splitComment(l);
                 return inline.reduce((c, x) => c.split(x).join(`&${name}`), code) + comment;
             });
@@ -100,15 +112,45 @@ export function libraryCells(source, library) {
                     lines[at] = writeTaking(id, [...prior.names, `&${name}`], [...prior.takes, `&${name}`]) + splitComment(lines[at])[1];
                 return lines.join('\n');
             }
-            let last = -1;
-            lines.forEach((l, i) => {
-                if (readFrom(splitComment(l)[0].trim())?.kind === 'use')
-                    last = i;
-            });
-            lines.splice(last + 1, 0, writeTaking(id, [`&${name}`]));
+            const reads = new RegExp(`&${name}(?![A-Za-z0-9_])`);
+            const first = lines.findIndex((l) => reads.test(splitComment(l)[0]));
+            lines.splice(Math.max(0, first), 0, writeTaking(id, [`&${name}`]));
             return lines.join('\n');
         },
     }));
+}
+export function takenArguments(source) {
+    const lines = source.split('\n');
+    const taken = new Set(lines.flatMap((l) => taking(splitComment(l)[0])?.names ?? []));
+    return lines.flatMap((raw, i) => {
+        const [code, comment] = splitComment(raw);
+        const f = readFrom(code.trim());
+        if (f?.kind !== 'use' || !f.args?.length)
+            return [];
+        const drop = f.args.filter((a) => a.value === `&${a.name}` && taken.has(a.value));
+        const tokens = topTokens(code);
+        const id = tokens[tokens.findIndex((t) => t.text === 'from') + 1];
+        const open = id?.text.indexOf('(') ?? -1;
+        if (!drop.length || !id || open < 0 || !id.text.endsWith(')'))
+            return [];
+        const kept = f.args.filter((a) => !drop.includes(a));
+        const list = kept.length ? `(${kept.map((a) => `${a.name}=${a.value}`).join(', ')})` : '';
+        const after = `${code.slice(0, id.at)}${id.text.slice(0, open)}${list}${code.slice(id.at + id.text.length)}`;
+        return [
+            {
+                id: `taken-arguments:${i + 1}`,
+                tool: 'normalise',
+                rule: 'library',
+                title: `${JSON.stringify(f.id)} takes ${drop.map((a) => a.value).join(', ')} as the library gives ${drop.length > 1 ? 'them' : 'it'}: ${after.trim()}`,
+                before: code.trim(),
+                after: after.trim(),
+                apply: (src) => src
+                    .split('\n')
+                    .map((line, j) => (j === i && line === raw ? `${after}${comment}` : line))
+                    .join('\n'),
+            },
+        ];
+    });
 }
 const kindOf = (v) => /^([a-z]\w*)\(/.exec(v)?.[1] ?? (/^[a-z]\w*$/.test(v) ? 'word' : 'other');
 function templates(library, resolve) {
@@ -191,7 +233,9 @@ export function libraryTemplates(source, library, resolve) {
             const pattern = t.braid
                 .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
                 .replace(/&(\w+)/g, (_, p) => (!(t.params.has(p) || p === t.main) ? `&${p}` : seen.has(p) ? `\\k<${p}>` : (seen.add(p), `(?<${p}>.+?)`)));
-            const m = new RegExp(`^${pattern}$`).exec(braid.replace(/\s+/g, ' '));
+            const flat = braid.replace(/\s+/g, ' ');
+            const sugar = flat.replace(/^scale\(([a-z]+),/, (all, w) => (Object.hasOwn(MODE_WORDS, w) ? `scale(even(7, 12, ${w}),` : all));
+            const m = new RegExp(`^${pattern}$`).exec(flat) ?? new RegExp(`^${pattern}$`).exec(sugar);
             if (!m)
                 fits = false;
             else

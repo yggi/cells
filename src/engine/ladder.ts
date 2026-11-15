@@ -329,7 +329,6 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'rate nd',
       'rate nwk',
       'parameter anchor',
-      'parameter law',
     ],
   },
   {
