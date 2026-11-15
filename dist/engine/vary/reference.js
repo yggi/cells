@@ -15,7 +15,7 @@ function tokensOf(braid, steps) {
 }
 const DISPLAY = /^(label|tags|show|about|title)=/;
 export function referenceOf(line, braid, attrs, operator, notes, pinned, amount) {
-    if (line.form !== 'steps' || line.levels || line.euclid || !notes.length)
+    if (line.form !== 'steps' || line.levels || line.euclid || line.struck || !notes.length)
         return null;
     const tokens = tokensOf(braid, line.steps);
     if (!tokens)

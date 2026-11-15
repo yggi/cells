@@ -6,7 +6,7 @@ import { MAX_NESTING, MAX_REPS, type LineScanner } from './scanner';
 import { parseFields } from './level';
 import { isMixChord, parseMixChord } from './mix';
 import { syntax, type Syntax } from './syntax';
-import { MODE_WORDS } from '../../theory/modes';
+import { even as evenPlaces, MODE_WORDS } from '../../theory/modes';
 import { NUMBER_PLACES } from './numbers';
 
 /** A diatonic mode's name as a step (`&mode dorian`), a word on its own. */
@@ -253,6 +253,8 @@ function parseAngle(s: LineScanner, depth: number): Atom {
 function parseEuclidOn(s: LineScanner): Euclid {
   const at = s.i;
   s.i++;
+  s.skipSpace();
+  if (s.text.startsWith('even(', s.i)) return parseEvenOn(s, at);
   const args: number[] = [];
   for (;;) {
     s.skipSpace();
@@ -267,6 +269,30 @@ function parseEuclidOn(s: LineScanner): Euclid {
     s.fail('x(k, n, r): k hits spread evenly over n parts of the step (0 ≤ k ≤ n), turned right by r: 0(3,8), &bd(3,8,2)', at, s.i - at);
   const p = bjorklund(k, n);
   return { k, n, r, hits: Array.from({ length: n }, (_, j) => j).filter((j) => p[(((j - r) % n) + n) % n]) };
+}
+
+/**
+ * `x(even(k, n, p))` after a step (decision 093 §6, #531's third rung): its hits even(k, n, p)'s places, k of n parts of
+ * the step, each 1/n long, as `x(k, n, r)` strikes Bjorklund's turned by r; the phase is even's, its mode (decision 072),
+ * not Strudel's rotation. `&claves(even(5,16,2))@16` on sixteenths is the bossa nova clave. The scanner is at `even(`.
+ */
+function parseEvenOn(s: LineScanner, at: number): Euclid {
+  s.i += 'even('.length;
+  const args: number[] = [];
+  for (;;) {
+    s.skipSpace();
+    args.push(s.int('a whole number in x(even(k, n, p))', NUMBER_PLACES.euclidOn));
+    s.skipSpace();
+    if (s.peek() !== ',') break;
+    s.i++;
+  }
+  s.expect(')', `')' to close even(k, n, p)`);
+  s.skipSpace();
+  s.expect(')', `')' to close x(even(k, n, p))`);
+  const [k, n, p = 0] = args;
+  if (args.length < 2 || args.length > 3 || !(n >= 1 && n <= MAX_REPS) || !(k >= 1 && k <= n) || !(p >= 0 && p < k))
+    s.fail("x(even(k, n, p)): even(k, n)'s k places in n parts of the step (1 ≤ k ≤ n), at its phase p, 0 to k − 1: &claves(even(5,16,2))", at, s.i - at);
+  return { k, n, r: p, even: true, hits: evenPlaces(k, n, p) };
 }
 
 /** How many laps a step's alternations and slowings may take to come round, at most (lapsOf). */
@@ -307,8 +333,8 @@ export const SLOW_SYNTAX = syntax(
 export const EUCLID_SYNTAX = syntax(
   'modifier',
   'x(k,n,r)',
-  "A euclid on a step, as Strudel's bd(3,8,2): k hits spread evenly over n parts of the step, turned right by r as euclid(k, n, r) is, each hit 1/n long, playing what the step holds as it begins. Straight after the step, before its other modifiers.",
-  ['&groove step=1 &bd(3,8) &hh(5,8,2)', '&tune step=1 0(3,8) <0 2>(3,8,2) <0 [2 4]>(5,8)'],
+  "A euclid on a step, as Strudel's bd(3,8,2): k hits spread evenly over n parts of the step, turned right by r as euclid(k, n, r) is, each hit 1/n long, playing what the step holds as it begins. Straight after the step, before its other modifiers. x(even(k, n, p)) strikes even(k, n)'s places at its phase p instead, its mode (decision 093): &claves(even(5,16,2))@16 on sixteenths is the bossa nova clave.",
+  ['&groove step=1 &bd(3,8) &hh(5,8,2)', '&tune step=1 0(3,8) <0 2>(3,8,2) <0 [2 4]>(5,8)', '&clave step=16n &rim(even(5,16,2))@16'],
   'cell.md',
 );
 export const CHANCE_SYNTAX = syntax(

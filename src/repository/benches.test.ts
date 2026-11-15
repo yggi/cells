@@ -40,7 +40,8 @@ const SENT: Record<string, [string, number]> = {
   son_clave_3_2: ['e26ed209', 20],
   son_clave_2_3: ['59aedae1', 20],
   rumba_clave_3_2: ['9c8b2f29', 20],
-  bossa_nova_clave: ['58b2f541', 20],
+  // (its strokes an eighth since #531: struck from even on its own grid, the same places)
+  bossa_nova_clave: ['cce6ce5d', 20],
   bossa_nova_clave_one_bar: ['6fe7442d', 40],
   root_bass: ['73332dc6', 16],
   pumping_bass: ['70f9f848', 32],
