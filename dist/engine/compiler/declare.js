@@ -162,6 +162,8 @@ function evens(ctx, decls) {
                 ctx.unknownCell(x.name, x.span);
                 return null;
             }
+            if (c.fill && c.braid.kind === 'blank')
+                return null;
             const value = c.step ? null : numberCellOf(c);
             if (value === null) {
                 ctx.error(c.step

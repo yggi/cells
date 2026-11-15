@@ -41,7 +41,7 @@ describe('a built-in plugin-fragment answers the contract (decision 085 §3, #69
       '&cycle_mode fill(five_to_twelve, mode, &day) ionian',
       '&cycle_tonic fill(five_to_twelve, tonic, &day) C',
       // (its key the diatonic fragment's, `&key from diatonic(mode=&mode) &tonic`, expanded after the copy's own lines)
-      '&cycle_key scale(&cycle_mode, &cycle_tonic)',
+      '&cycle_key scale(even(7, 12, &cycle_mode), &cycle_tonic)',
     ]);
     expect(unitOf(law)).toBe(BAR);
     expect(lawOf({ law: 'fiveto12' })).toBe(law);

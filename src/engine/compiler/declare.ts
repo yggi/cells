@@ -211,6 +211,8 @@ function evens(ctx: Ctx, decls: Map<string, CellDecl>): void {
         ctx.unknownCell(x.name, x.span);
         return null;
       }
+      // (a fill not answered yet, a fragment read alone: its plugin answers it in a piece, #792)
+      if (c.fill && c.braid.kind === 'blank') return null;
       const value = c.step ? null : numberCellOf(c);
       if (value === null) {
         ctx.error(
