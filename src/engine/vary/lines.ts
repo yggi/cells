@@ -83,6 +83,10 @@ export interface Line {
   /** Its trigger cell's name, bare. */
   readonly trigger: string;
   readonly form: Form;
+  /** Written as one Euclid struck at even's places (`&claves(even(5,16,2))@16`): its steps read, but none of them written, so no reference picks them. */
+  readonly struck?: boolean;
+  /** Its one step held over as many of the line's (`@n`), where it isn't read as its steps written out. */
+  readonly hold?: number;
   /** Its Euclid as written (its form `euclid`): k hits in n, turned right by r. */
   readonly euclid?: { readonly voice: string; readonly k: number; readonly n: number; readonly r: number };
   /** The card it is an entry of, bare, and that card's entries as written (`&euclid * &euclidLevel`), its own among them. */
@@ -114,7 +118,7 @@ const CHORD = /^\[([^[\]]*,[^[\]]*)\]$/;
 const SEQ = /^\[([^[\],]*)\]$/;
 const EUCLID = /^&([A-Za-z_][A-Za-z0-9_]*)\((\d+),\s*(\d+)(?:,\s*(-?\d+))?\)$/;
 /** `&claves(even(5,16,2))` (decision 093 §6): a euclid struck at even's places, by its phase. */
-const EUCLID_EVEN = /^&([A-Za-z_][A-Za-z0-9_]*)\(even\((\d+),\s*(\d+)(?:,\s*(\d+))?\)\)$/;
+const EUCLID_EVEN = /^&([A-Za-z_][A-Za-z0-9_]*)\(even\((\d+),\s*(\d+)(?:,\s*(\d+))?\)\)(?:@(\d+))?$/;
 const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
 const DEGREE = /^(-?\d+)[#b]?(?:!(\d+))?$/;
 /** A degree held for n steps (`7@2`, `4b@3`): one note, n steps long. */
@@ -264,10 +268,16 @@ function lineOf(source: string, result: CompileResult, trigger: string, levelCel
   let form: Form = 'steps';
   let steps: Step[] | null;
   let euclid: Line['euclid'];
+  let hold = 1;
+  let struck = false;
   if (words.braid.length === 1 && EUCLID_EVEN.test(words.braid[0]!)) {
     // (even's places by phase: its hits written back as the steps of n where a variation moves them, the phase no turn)
-    const [, voice, k, n, p] = EUCLID_EVEN.exec(words.braid[0]!)!;
-    form = 'euclid';
+    // (held over as many steps as it has parts, `&claves(even(5,16,2))@16`, each part is a step of the line, read as its
+    //  steps written out; else its parts divide its step, as a Euclid's)
+    const [, voice, k, n, p, held] = EUCLID_EVEN.exec(words.braid[0]!)!;
+    hold = Number(held ?? 1);
+    struck = true;
+    form = hold === Number(n) ? 'steps' : 'euclid';
     const hits = new Set(even(Number(k), Number(n), Number(p ?? 0)));
     steps = Array.from({ length: Number(n) }, (_, j) => (hits.has(j) ? [{ voice: `&${voice}`, own: null }] : []));
   } else if (words.braid.length === 1 && EUCLID.test(words.braid[0]!)) {
@@ -301,7 +311,9 @@ function lineOf(source: string, result: CompileResult, trigger: string, levelCel
     ...(levels ? { levels } : {}),
     steps: steps.length,
     notes,
-    stepWhole: tap === null ? null : form === 'steps' ? tap : tap / steps.length,
+    ...(hold > 1 && form !== 'steps' ? { hold } : {}),
+    ...(struck ? { struck } : {}),
+    stepWhole: tap === null ? null : form === 'steps' ? tap : (tap * hold) / steps.length,
     meter,
   };
 }
@@ -399,7 +411,7 @@ export function written(line: Line, notes: readonly LineNote[], levels?: readonl
     out.set(line.trigger, [`${voice}(${k},${n},${(r + 1) % n})`]);
   } else {
     const tokens = stepTokens(line, notes).filter((t): t is string => t !== null);
-    out.set(line.trigger, line.form === 'steps' ? tokens : [`[${tokens.join(' ')}]`]);
+    out.set(line.trigger, line.form === 'steps' ? tokens : [`[${tokens.join(' ')}]${line.hold ? `@${line.hold}` : ''}`]);
   }
   if (line.levels && levels) out.set(line.levels.cell, [...levels]);
   return out;

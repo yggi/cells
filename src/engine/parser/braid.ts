@@ -274,7 +274,7 @@ function parseEuclidOn(s: LineScanner): Euclid {
 /**
  * `x(even(k, n, p))` after a step (decision 093 §6, #531's third rung): its hits even(k, n, p)'s places, k of n parts of
  * the step, each 1/n long, as `x(k, n, r)` strikes Bjorklund's turned by r; the phase is even's, its mode (decision 072),
- * not Strudel's rotation. `&claves(even(5,16,2))` on a bar is the bossa nova clave. The scanner is at `even(`.
+ * not Strudel's rotation. `&claves(even(5,16,2))@16` on sixteenths is the bossa nova clave. The scanner is at `even(`.
  */
 function parseEvenOn(s: LineScanner, at: number): Euclid {
   s.i += 'even('.length;
@@ -333,8 +333,8 @@ export const SLOW_SYNTAX = syntax(
 export const EUCLID_SYNTAX = syntax(
   'modifier',
   'x(k,n,r)',
-  "A euclid on a step, as Strudel's bd(3,8,2): k hits spread evenly over n parts of the step, turned right by r as euclid(k, n, r) is, each hit 1/n long, playing what the step holds as it begins. Straight after the step, before its other modifiers. x(even(k, n, p)) strikes even(k, n)'s places at its phase p instead, its mode (decision 093): &claves(even(5,16,2)) on a bar is the bossa nova clave.",
-  ['&groove step=1 &bd(3,8) &hh(5,8,2)', '&tune step=1 0(3,8) <0 2>(3,8,2) <0 [2 4]>(5,8)', '&clave step=1m &rim(even(5,16,2))'],
+  "A euclid on a step, as Strudel's bd(3,8,2): k hits spread evenly over n parts of the step, turned right by r as euclid(k, n, r) is, each hit 1/n long, playing what the step holds as it begins. Straight after the step, before its other modifiers. x(even(k, n, p)) strikes even(k, n)'s places at its phase p instead, its mode (decision 093): &claves(even(5,16,2))@16 on sixteenths is the bossa nova clave.",
+  ['&groove step=1 &bd(3,8) &hh(5,8,2)', '&tune step=1 0(3,8) <0 2>(3,8,2) <0 [2 4]>(5,8)', '&clave step=16n &rim(even(5,16,2))@16'],
   'cell.md',
 );
 export const CHANCE_SYNTAX = syntax(

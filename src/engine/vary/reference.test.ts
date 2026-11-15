@@ -81,7 +81,7 @@ const WITH = ALL.filter(({ v }) => v.reference);
 const byOperator = (list: typeof ALL) => Object.fromEntries([...new Set(ALL.map(({ v }) => v.rule))].map((op) => [op, list.filter(({ v }) => v.rule === op).length]));
 
 describe("the seeds' variations by reference", () => {
-  it('gives 679 of the 818 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter (#572 and #542: the twelve new beats and ten bass lines among the seeds; #646: the beats for 7/8 and 12/8; #531: the even claves struck as Euclids, `&claves(even(5,16,2))`, on their own grids)', () => {
+  it('gives 679 of the 818 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter (#572 and #542: the twelve new beats and ten bass lines among the seeds; #646: the beats for 7/8 and 12/8; #531: the even claves struck as Euclids, `&claves(even(5,16,2))@16`, the cinquillo and the two-bar clave on their eighths)', () => {
     expect(ALL.length).toBe(818);
     expect(WITH.length).toBe(679);
     expect(byOperator(ALL)).toEqual({ rotate: 43, drop: 176, add: 359, transpose: 120, reverse: 12, bend: 76, trim: 18, invert: 14 });
