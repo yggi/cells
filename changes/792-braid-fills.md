@@ -1,0 +1,3 @@
+### Added
+
+- A plugin-fragment's braid fills are answered when the piece is expanded (#792, rung 6b of #691): a fill with no lap gets its code's text in place of `fill()`, once, with the `from` line's arguments (each parameter as written, or its default line's), so compile, the folder and the core read plain steps. **For a host:** `CompileOptions.plugins` hands plugin-fragments beside the built-ins, by their fragment's id (decision 085 §6); `expand(text, resolve, locked, plugins)` writes them out. Without its code, a braid fill stays unanswered and is written `fill(<id>, <name>)`. Nothing ships one yet: no piece sounds different.

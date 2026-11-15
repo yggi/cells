@@ -38,7 +38,10 @@ import { STYLE } from './style';
 import { MOVED, RENAMED_IDS } from './renamed';
 import { BOUND_BY_NAME, byNameMessage } from './byname';
 import type { CompileOptions, Origin, Resolve, Take } from './program';
-import { BY_FRAGMENT } from './fills';
+import { BY_FRAGMENT, type PluginFragment } from './fills';
+
+/** The plugin-fragments a text's `from` lines may name, by fragment id: the built-ins, and the host's (`CompileOptions.plugins`). */
+type Plugins = ReadonlyMap<string, PluginFragment>;
 
 /** How deep `from` lines nest: a kit in a groove in a section in a piece is 3. */
 export const FROM_DEPTH = 8;
@@ -576,6 +579,7 @@ function give(
   path: readonly string[],
   text: string,
   resolve: Resolve,
+  plugins: Plugins,
   say: (message: string) => void,
   taken: Set<string>,
   old?: OldBinding,
@@ -588,7 +592,7 @@ function give(
       say(
         `${quoted(id)} has no signature, so it takes no arguments: a collection gives the cells it defines by name (${entry.names ? entry.names.join(', ') : '*'} from ${from.id})`,
       );
-    const lines = sharedLines(fragmentLines(path, text, resolve, say));
+    const lines = sharedLines(fragmentLines(path, text, resolve, plugins, say));
     const renames = renamesOf(from, lines, id, say);
     if (!renames) return { taken: { id, names: namesOf(entry), lines, resolved: true }, copy: [] };
     // (a line that renames, `&kick=bd`: the fragment's lines with each name it takes renamed, wherever they write it)
@@ -600,7 +604,7 @@ function give(
     return { taken: { id, names: asked, lines: sharedLines(theirs), resolved: true }, copy: [] };
   }
   if (signatures.length > 1) say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
-  return instantiate(from, id, signatures[0]!, path, text, resolve, say, taken, old, level);
+  return instantiate(from, id, signatures[0]!, path, text, resolve, plugins, say, taken, old, level);
 }
 
 /**
@@ -616,12 +620,13 @@ function instantiate(
   path: readonly string[],
   text: string,
   resolve: Resolve,
+  plugins: Plugins,
   say: (message: string) => void,
   taken: Set<string>,
   old?: OldBinding,
   level?: Level,
 ): Given {
-  const full = fragmentLines(path, text, resolve, say);
+  const full = fragmentLines(path, text, resolve, plugins, say);
   const own = full.filter((l) => !l.shared && l.name);
   const shared = full.filter((l) => l.shared && l.name);
   const definesOwn = new Set(own.map((l) => l.name!));
@@ -723,6 +728,19 @@ function instantiate(
       for (const r of byName.get(n)?.reads ?? []) if (byName.has(r)) queue.push(r);
     }
   }
+  // (a braid fill's arguments, as written: each parameter's value, or its default line's braid; 6d writes their core, #749)
+  const argsOf = (): Record<string, string> =>
+    Object.fromEntries(
+      [...optional, ...(main ? [main] : [])].flatMap((o) => {
+        const v =
+          values.get(o) ??
+          byName
+            .get(o)
+            ?.code.replace(new RegExp(`^&${o}\\s*`), '')
+            .trim();
+        return v !== undefined ? [[o, v]] : [];
+      }),
+    );
   const copy: Line[] = [];
   for (const l of own) {
     const p = l.name!;
@@ -730,8 +748,13 @@ function instantiate(
     let code = renamed(l.code, names);
     // (a plugin-fragment's fill, decision 085: stamped with its fragment, its name there, and the clock the call site gave)
     if (/(^|\s)fill\(\s*\)/.test(code)) {
-      // (its answer its braid: a built-in's first lap, so every reader sees steps; an external one's the host gives, #792 6e)
-      const answer = BY_FRAGMENT.get(id)?.fill(p, 0, {}) ?? '';
+      const plugin = plugins.get(id);
+      // (a braid fill, no lap: answered here, once, its text in place of fill(), so everything after reads steps, 085 §4)
+      if (plugin && plugin.fills[p] && plugin.fills[p].lap === undefined) code = code.replace(/(^|\s)fill\(\s*\)/, `$1${plugin.fill(p, 0, argsOf())}`);
+    }
+    if (/(^|\s)fill\(\s*\)/.test(code)) {
+      // (a stream fill: its answer its braid, its first lap's, so every reader sees steps, realize the rest, #792 6a)
+      const answer = plugins.get(id)?.fill(p, 0, {}) ?? '';
       code = code.replace(/(^|\s)fill\(\s*\)/, `$1fill(${id}, ${p}${main && names.has(main) ? `, &${names.get(main)}` : ''})${answer ? ` ${answer}` : ''}`);
     }
     if (values.has(p)) code = inherited(names.get(p)!, code, asCell(values.get(p)!, p, own));
@@ -753,7 +776,7 @@ function instantiate(
 }
 
 /** A used fragment's lines, its own uses expanded (`path`: the ids that led here, this one last), or none where it can't be. */
-function fragmentLines(path: readonly string[], text: string, resolve: Resolve, say: (message: string) => void): readonly Line[] {
+function fragmentLines(path: readonly string[], text: string, resolve: Resolve, plugins: Plugins, say: (message: string) => void): readonly Line[] {
   const here = path.at(-1)!;
   const own = linesOf(text).map((l) => ({ ...l, origin: [{ id: here, line: l.line }] }));
   const where = ` (in ${pathOf(path)})`;
@@ -777,7 +800,7 @@ function fragmentLines(path: readonly string[], text: string, resolve: Resolve, 
       const theirs = whole === null ? null : (pickPart(id, whole, entry.from, sayHere)?.text ?? null);
       if (whole === null) sayHere(`No fragment ${quoted(id)} to use`);
       else if (theirs !== null) {
-        const g = give(entry, next, theirs, resolve, say, taken);
+        const g = give(entry, next, theirs, resolve, plugins, say, taken);
         const step = { id: here, line: l.line };
         copies.push(...via(g.copy, step));
         return [{ ...g.taken, lines: via(g.taken.lines, step) }];
@@ -818,7 +841,8 @@ export interface Expansion {
 }
 
 /** The expansion of a text (see the module's comment), its `use` and `from` lines resolved by `options`. */
-export function expansion(text: string, { resolve, locked = [], old = false }: CompileOptions = {}): Expansion {
+export function expansion(text: string, { resolve, locked = [], old = false, plugins: theirs = [] }: CompileOptions = {}): Expansion {
+  const plugins: Plugins = theirs.length ? new Map([...BY_FRAGMENT, ...theirs.map((f) => [f.fragment, f] as const)]) : BY_FRAGMENT;
   const own = linesOf(text);
   const uses = own.flatMap((l) => {
     const entry = entryOf(l);
@@ -875,7 +899,7 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
     const binding = old
       ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) }
       : undefined;
-    const g = give(u, [id], theirs, resolve!, say, taken, binding, { ...level, warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) });
+    const g = give(u, [id], theirs, resolve!, plugins, say, taken, binding, { ...level, warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) });
     const step = { id: null, line: u.line.line };
     copies.push(via(g.copy, step));
     args.push(g.args);
@@ -928,9 +952,9 @@ export function expansion(text: string, { resolve, locked = [], old = false }: C
  * A piece's expansion written out (decision 054; #177's `inline`, Cell studio's "write out"): its own lines, its `use`
  * lines gone, then the used lines it doesn't define. A `use` that doesn't resolve stays, so nothing is lost.
  */
-export function expand(text: string, resolve: Resolve, locked?: CompileOptions['locked']): string {
+export function expand(text: string, resolve: Resolve, locked?: CompileOptions['locked'], plugins?: CompileOptions['plugins']): string {
   if (!hasFrom(text)) return text;
-  const x = expansion(text, { resolve, ...(locked ? { locked } : {}) });
+  const x = expansion(text, { resolve, ...(locked ? { locked } : {}), ...(plugins ? { plugins } : {}) });
   const kept = new Set(x.takes.filter((u) => u.hash === null).map((u) => u.span.line));
   const own = text
     .split('\n')

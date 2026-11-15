@@ -3,6 +3,7 @@ import type { ShowPlugin } from './plugins';
 import type { Meter } from './meter';
 import type { Sort } from './algebra';
 import type { ValueSum } from './valuesum';
+import type { PluginFragment } from './fills';
 export declare const ROOT = "fifths12TET";
 /**
  * What a bare `over=key` names until compile reads it as the piece's main key (#124, declare.ts): no cell can be called
@@ -535,6 +536,12 @@ export interface CompileOptions {
      * and Normalise compile so, to rewrite them; without it a retired form is an error, and the text doesn't play.
      */
     readonly old?: boolean;
+    /**
+     * The host's plugin-fragments (decision 085 §6, #792): code a `from` line's copy runs for its fills, by its fragment's id,
+     * beside the built-ins (a host's of the same id stands in for one). Cells runs no foreign code: a host hands it here,
+     * behind the same interface as the built-ins (`PluginFragment`). Since 6b, a braid fill's.
+     */
+    readonly plugins?: readonly PluginFragment[];
 }
 /**
  * One step of where a given cell came from (#639): a fragment's id and a line of it (1-based), or the piece's own line

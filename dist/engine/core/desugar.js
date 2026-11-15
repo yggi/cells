@@ -37,7 +37,7 @@ export const FAMILIES = [
     {
         key: 'from',
         rows: '7 `from`',
-        rewrite: (text, options) => (options.resolve ? inPlace(text, options.resolve) : text),
+        rewrite: (text, options) => (options.resolve ? inPlace(text, options.resolve, options.plugins) : text),
     },
     {
         key: 'units',
@@ -296,8 +296,8 @@ function taps(text, options) {
     }
     return lines.join('\n');
 }
-function inPlace(text, resolve) {
-    const x = expansion(text, { resolve });
+function inPlace(text, resolve, plugins) {
+    const x = expansion(text, { resolve, ...(plugins ? { plugins } : {}) });
     const own = text.split('\n');
     const added = x.text.split('\n').slice(own.length);
     const kept = new Set(x.takes.filter((u) => u.hash === null).map((u) => u.span.line));

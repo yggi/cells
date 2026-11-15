@@ -67,7 +67,7 @@ export const FAMILIES: readonly Family[] = [
     key: 'from',
     rows: '7 `from`',
     // (a `from` line's fragment written in, read through the caller's library: none, and the line stays)
-    rewrite: (text, options) => (options.resolve ? inPlace(text, options.resolve) : text),
+    rewrite: (text, options) => (options.resolve ? inPlace(text, options.resolve, options.plugins) : text),
   },
   {
     key: 'units',
@@ -361,8 +361,8 @@ function taps(text: string, options: CompileOptions): string {
  * lines in the place of the line that took them, so writing a line as its fragment's and back lands where it was (and
  * the core of a text and of its normal form agree). A line that doesn't resolve stays.
  */
-function inPlace(text: string, resolve: Resolve): string {
-  const x = expansion(text, { resolve });
+function inPlace(text: string, resolve: Resolve, plugins?: CompileOptions['plugins']): string {
+  const x = expansion(text, { resolve, ...(plugins ? { plugins } : {}) });
   const own = text.split('\n');
   const added = x.text.split('\n').slice(own.length);
   const kept = new Set(x.takes.filter((u) => u.hash === null).map((u) => u.span.line));
