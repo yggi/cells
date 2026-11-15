@@ -127,19 +127,14 @@ Jambot reads a radio score so, a section at a time (#576).
 
 ## A fragment's association, in its text
 
-Where the repository finds a fragment is written on its declaration line ([decision 089](https://github.com/yggi/cells/blob/main/docs/decisions/089-the-association-in-the-text.md)): a template's signature, or a collection's `* from` with no id. The compile reads neither, and no copy or take carries one into a piece.
+Where the repository finds a fragment is on its declaration line, a template's signature or a collection's `* from` with no id, which the compile never reads ([decision 089](https://github.com/yggi/cells/blob/main/docs/decisions/089-the-association-in-the-text.md)):
 
 ```text
-&key from (&mode) &tonic style=(&deepHouse | &funk | &seaShanty) mode=dorian
-* from style=(&synthPop | &(map=style sync=.35 harm=.55 bite=.75 mood=.65) * .5)
-* from facet=module
+&key from (&mode) &tonic style=(&deepHouse | &funk) mode=dorian
+* from style=(&synthPop | &(map=style sync=.35 bite=.75) * .5)
 ```
 
-- `style=` is a style of `styles` by name, followed wherever it is placed, or an inline point naming any of the axes (`&(map=style sync=.75 harm=.35 bite=.65)`, decision 041), with `± r` its reach on an axis; `* w` a weight, 1 where left out; `( a | b )` a set, found at each.
-- The facet is the fragment's folder's in the seed library (`fragments/modes/` is `mode`); `facet=` where it differs, or where there is no folder. A declaration with neither counts for every facet.
-- A template's other attributes are its arguments at those points, its optional parameters (`mode=dorian`), one declaration line per set; `style` and `facet` are reserved.
-- No `style=` is no style: found at the same distance from every style (`ANY_DISTANCE`). A template's bare signature is so, where nothing else says where it is.
-- A fragment file whose frontmatter has `association:` still reads, for a release; Normalise will move it.
+`style=` names a style of `styles` or an inline point (any axes, `± r` a reach); `* w` a weight; `( a | b )` a set. `facet=` where it differs from the folder's; a template's other attributes are its arguments. No `style=` is no style. A frontmatter `association:` still reads, for a release.
 
 ## The library of styles: styles
 
