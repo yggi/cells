@@ -499,3 +499,21 @@ describe('a continued line: a span is on the line it is written on (#764)', () =
     expect(errors[0]!.span.col).toBe(lines[4]!.indexOf('7x') + 2);
   });
 });
+
+describe('degree(&x, n) takes what &x^n takes: a number left free (decision 078)', () => {
+  it('a slider, a whole one, and the move it stands at', () => {
+    const named = parse('&m 0 2 4\n&t step=2 degree(&m, free(1, -7..7))');
+    const caret = parse('&m 0 2 4\n&t step=2 &m^free(1, -7..7)');
+    expect(named.diagnostics).toEqual([]);
+    // (the same slider but for where it is written)
+    const slider = (r: typeof named) => r.cells[1]!.frees!.map(({ span: _span, ...f }) => f);
+    expect(slider(named)).toEqual(slider(caret));
+    expect(named.cells[1]!.frees).toHaveLength(1);
+    const move = (r: typeof named) => {
+      const b = r.cells[1]!.braid;
+      return b.kind === 'list' && b.tokens[0]!.atom.kind === 'ref' ? b.tokens[0]!.atom.values : null;
+    };
+    expect(move(named)).toEqual(move(caret));
+    expect(move(named)).toEqual({ mul: 1, add: 1 });
+  });
+});

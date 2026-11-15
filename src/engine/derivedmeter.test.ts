@@ -42,6 +42,15 @@ describe('a meter derived from another (#778, rung 1)', () => {
     expect(soundsIdentical(piece('step=90bpm', derived), piece('step=90bpm', 'meter("3/4") step=60bpm'), undefined, OLD)).toBe(false);
   });
 
+  it('its ratio may be left free: a slider, read as the number it stands at (decisions 078, 095)', () => {
+    const free = piece('step=120bpm', 'meter("3/4") step=beat*free(1.25, .5..2)');
+    const result = compileSource(free);
+    expect(result.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    expect(result.cells.get('second')!.frees).toHaveLength(1);
+    expect(soundsIdentical(free, piece('step=120bpm', 'meter("3/4") step=beat*1.25'))).toBe(true);
+    expect(soundsIdentical(free, piece('step=120bpm', 'meter("3/4") step=beat'))).toBe(false);
+  });
+
   it('is not the piece’s main meter, wherever it is written', () => {
     const lines = piece('step=120bpm', 'meter("3/4") step=beat/2').split('\n');
     const swapped = [lines[1]!, lines[0]!, ...lines.slice(2)].join('\n');

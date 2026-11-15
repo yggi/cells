@@ -48,7 +48,8 @@ function parseRefOrOperation(s) {
     if (name === 'degree') {
         s.expect(',', `',' then the steps: degree(&${inner.name}, 1)`);
         s.skipSpace();
-        const n = s.match(/[-+]?\s*[0-9]+(?![0-9.])/y);
+        const f = s.freeNumber(NUMBER_PLACES.move);
+        const n = f === null ? s.match(/[-+]?\s*[0-9]+(?![0-9.])/y) : String(f);
         if (n === null)
             s.fail(`degree(&${inner.name}, n) moves it n whole steps of its table, a whole number: degree(&${inner.name}, 1), degree(&${inner.name}, -2)`, s.i);
         m = { mul: was.mul, add: was.add + parseInt(n.replace(/\s+/g, ''), 10) };

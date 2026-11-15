@@ -51,7 +51,7 @@ leaves it for the author.
 The names Normalise writes where the piece names each unambiguously (`normalise/names.ts`, #196), so a reader finds the meter, its tempo, the key and its tonic by the same names in every piece. A convention of the tool's, which nothing reads: a piece that names its meter `&m` plays as one that names it `&bar` ([decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md)).
 
 - **`&bar`** is the piece's one meter, of its own lines (the compile's main meter, and no other meter beside it), where it is a bar: its first four beats at 40 to 300 bpm (`BAR_BPM`). A clock that laps a day (fiveto12's `&day`) or a scan of slow durations (studie's `&time`) is a meter and no bar, and keeps its name.
-- **`&tempo`** is a bar's rate written as a value: `step=120bpm` becomes `step=&tempo` and a cell `&tempo step=120bpm`, a slider (`free(…)`) with it.
+- **`&tempo`** is a bar's rate written as a value: `step=120bpm` becomes `step=&tempo` and a cell `&tempo step=120bpm`, a slider (`free(…)`) with it. The same where the bar is a template's copy: `&bar from meter 120bpm` becomes `&bar from meter &tempo` and `&tempo step=120bpm`, the one spelling of a piece's tempo (the owner's ruling, 2026-11-15).
 - **`&key`** is the piece's one key, the one cell of its own lines whose braid is `scale(…)` (the compile's main key).
 - **`&tonic`** is the key's tonic written as a note: `scale(minor, A)` becomes `scale(minor, &tonic)` and a cell `&tonic A`; a key with none (`scale(major)`, the voice's `loop=` its tonic) has no `&tonic`.
 
