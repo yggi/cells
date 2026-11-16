@@ -160,6 +160,10 @@ export interface ResolvedCell {
   readonly tonic?: string;
   /** The cells its `style=` names (the ends of a range, a set's members, a curve): a read the graph draws as a wire into this cell. */
   readonly styleReads?: readonly string[];
+  /** A cell made for a style's slot read (`lpf=… * &style[bite]`): the style it reads, and the slot's position. The graph draws the style into it. */
+  readonly readsSlot?: { readonly cell: string; readonly slot: number };
+  /** Cells whose one number the compile read into this cell's table, leaving no reference (`scale(&mode, …)`, `even(&k, &n, &mode)`): the graph draws each into it. */
+  readonly valueReads?: readonly string[];
   /**
    * A scale whose phase steps (#531, decision 093 §5, `scale(even(7, 12, &mode), &tonic)` with `&mode step=1m dorian
    * major`): the cell its phase is read from, its necklace (`k` places in `n`) and the key it reads through. Its steps are

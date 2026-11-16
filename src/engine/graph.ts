@@ -503,6 +503,29 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
     for (const name of c.styleReads ?? [])
       if (result.cells.has(name))
         link({ id: edgeId(cellId(name), id), source: cellId(name), target: id, count: 1, transforms: AS_IS, ...wire('style', 'cv', cellId(name), id, 1, false, true) });
+    // the cells a table was read from by value (`scale(&mode, &tonic)`, `even(7, 12, &mode)`): the compile left no reference, so
+    // each is a wire into the cell, as a spliced cell's is (#618)
+    for (const name of c.valueReads ?? [])
+      if (result.cells.has(name) && shown(name))
+        link({
+          id: edgeId(id, cellId(name)),
+          source: id,
+          target: cellId(name),
+          count: 1,
+          transforms: AS_IS,
+          ...wire('braid', 'cv', id, cellId(name), 1, true, true),
+        });
+    // a cell made for a style's slot read (`lpf=… * &style[bite]`): the style it reads, into it; the cell goes on into what
+    // reads the slot, as any parameter's does (#618)
+    if (c.readsSlot && result.cells.has(c.readsSlot.cell) && shown(c.readsSlot.cell))
+      link({
+        id: edgeId(cellId(c.readsSlot.cell), id),
+        source: cellId(c.readsSlot.cell),
+        target: id,
+        count: 1,
+        transforms: AS_IS,
+        ...wire('style', 'cv', cellId(c.readsSlot.cell), id, 1, false, true),
+      });
     // a note's links: what it explains
     for (const target of c.about)
       if (result.cells.has(target))

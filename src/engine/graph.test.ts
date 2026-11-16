@@ -224,3 +224,32 @@ describe('a name written in a form that reads it is one wire (#737, #618)', () =
     }
   });
 });
+
+describe('a cell the compile reads by value, or makes for a slot, is still a wire (#618)', () => {
+  const edges = (text: string) => {
+    const r = compileSource(text);
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    return { r, edges: writtenGraph(r).edges };
+  };
+  const TAIL = '&t over=&key step=8n 0 1 2\n&v s=sine loop=C4\n&o [&t * &v]';
+  const BAR = '&bar meter("4/4") step=100bpm\n&tonic D\n&mode 2\n&k 7\n&n 12';
+
+  it("a key's mode cell is a wire into the key: scale(&mode, …) and even(7, 12, &mode), and each argument of even that is a cell", () => {
+    const into = (key: string, from: string) => edges(`${BAR}\n${key}\n${TAIL}`).edges.filter((e) => e.from === cellId(from) && e.to === cellId('key'));
+    expect(into('&key scale(&mode, &tonic)', 'mode').map((e) => e.port)).toEqual(['braid']);
+    expect(into('&key scale(even(7, 12, &mode), &tonic)', 'mode')).toHaveLength(1);
+    const arguments_ = '&key scale(even(&k, &n, &mode), &tonic)';
+    for (const name of ['k', 'n', 'mode']) expect(into(arguments_, name), name).toHaveLength(1);
+    expect(into('&key scale(dorian, &tonic)', 'mode')).toEqual([]);
+  });
+
+  it('a style read by slot is a wire from the style into the cell made for it, and that cell goes on into the reader', () => {
+    const text = `&calm map=style .3 .45 .55 .55\n&style style=&calm\n&bar meter("4/4") step=100bpm\n&t step=8n 0 1 2\n&v s=sine loop=C4 lpf=250..1600 * &style[bite]\n&o [&t * &v]`;
+    const { r, edges: all } = edges(text);
+    const made = [...r.cells.values()].filter((c) => c.readsSlot?.cell === 'style');
+    expect(made).toHaveLength(1);
+    const name = made[0]!.name;
+    expect(all.filter((e) => e.from === cellId('style') && e.to === cellId(name)).map((e) => e.port)).toEqual(['style']);
+    expect(all.filter((e) => e.from === cellId(name) && e.to === cellId('v')).map((e) => e.port)).toEqual(['lpf']);
+  });
+});

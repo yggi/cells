@@ -170,6 +170,8 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             units,
             scan: b.kind === 'scan' ? { lap: scanOf(b.steps).lap, steps: b.steps } : null,
             ...(d.bend ? bentOf(d, warn, (n) => decls.get(n)) : {}),
+            ...(d.readsSlot ? { readsSlot: d.readsSlot } : {}),
+            ...(d.valueReads ? { valueReads: d.valueReads } : {}),
             ...(d.style ? { styleReads: [...new Set(styleRefs(d.style).map((r) => r.name))] } : {}),
             shift: d.shift ?? 0,
             ...(d.tonic ? { tonic: d.tonic.name } : {}),
