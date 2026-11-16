@@ -42,7 +42,7 @@ Each step of the plan moves a count in the ledger: the symbols a frontend reache
 
 Modules: `engine/ast`, `engine/audioexport`, `engine/compile`, `engine/host`, `engine/keepbeat`, `engine/parser/index`, `engine/program`, `engine/realize`, `engine/render`, `engine/schedule`, `engine/span`, `engine/styleat`, `engine/wavfile`.
 
-On the root index today (45): `AudioOptions`, `CompileOptions`, `CompileResult`, `DEFAULT_RATE`, `Diagnostic`, `FromEngine`, `KeptBar`, `LONGEST`, `Locked`, `Origin`, `Performer`, `PieceAudio`, `PieceMeta`, `Plan`, `Played`, `RenderDiagnostic`, `RenderOptions`, `Rendered`, `Renderer`, `Resolve`, `Span`, `SpanOptions`, `TAIL`, `Take`, `ToEngine`, `Tracks`, `UNBOUNDED`, `WavFormat`, `Window`, `compileSource`, `createHost`, `createRenderer`, `keepBar`, `keepBeat`, `loudness`, `parse`, `pieceAudio`, `pieceMeta`, `plan`, `planOf`, `spanOf`, `styleAt`, `swingOfBar`, `windowAt`, `writeWav`.
+On the root index today (56): `Atom`, `AudioOptions`, `AudioTape`, `Braid`, `CompileOptions`, `CompileResult`, `DEFAULT_RATE`, `Diagnostic`, `Env`, `FreeSpec`, `FromEngine`, `KeptBar`, `LONGEST`, `Locked`, `Origin`, `Output`, `Performer`, `Pick`, `PieceAudio`, `PieceMeta`, `Plan`, `Played`, `RenderDiagnostic`, `RenderOptions`, `Rendered`, `Renderer`, `Resolve`, `ResolvedCell`, `Shifts`, `Span`, `SpanOptions`, `TAIL`, `Take`, `ToEngine`, `Token`, `Tracks`, `UNBOUNDED`, `Unit`, `WavFormat`, `Window`, `compileSource`, `createHost`, `createRenderer`, `keepBar`, `keepBeat`, `loudness`, `parse`, `pieceAudio`, `pieceMeta`, `plan`, `planOf`, `spanOf`, `styleAt`, `swingOfBar`, `windowAt`, `writeWav`.
 
 #### `@yggi/cells/edit`
 
