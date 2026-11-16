@@ -9,6 +9,8 @@ import { compileSource } from './compile';
 import type { PluginFragment } from './fills';
 import { toCore } from './core';
 import { expand } from './use';
+import { eventsBetween, plan } from './realize';
+import { codeShifts } from './program';
 
 /** The fragment the stand-in's code answers: its signature, k its main argument, n and phase optional with defaults. */
 const NECKLACE = '&places from (&n, &phase) &k\n&places fill()\n&n 12\n&phase 0';
@@ -18,12 +20,15 @@ const resolve = (id: string) => (id === 'necklace' ? NECKLACE : null);
 const necklace: PluginFragment = {
   id: 'necklace',
   fragment: 'necklace',
-  fills: { places: {} },
+  // (its work a place a slot: n, refused past its fuel, 085 §8)
+  fills: { places: { fuel: 64 } },
   origin: 0,
   cycle: 0,
   stepSeconds: 0,
-  fill: (_name, _lap, args) => {
+  fill: (_name, _lap, args, fuel = 0) => {
     const [k, n, phase] = [Number(args.k), Number(args.n), Number(args.phase)];
+    if (n > fuel) return { refused: `${n} slots need more than its fuel, ${fuel}` };
+    if (k > n) throw new Error(`k ${k} > n ${n}`);
     const at = Array.from({ length: k }, (_, j) => Math.floor((j * n + phase) / k));
     return `scan(${at.map((p, j) => (at[j + 1] ?? at[0]! + n) - p).join(' ')})`;
   },
@@ -59,5 +64,45 @@ describe('a braid fill is answered at expansion (#792 6b)', () => {
     expect(r.cells.get('scale')?.fill).toEqual({ fragment: 'necklace', name: 'places', clock: 'scale_k' });
     // (written out, it says which fill it is, for a host that has the code)
     expect(expand('&scale from necklace 7', resolve)).toBe('\n&scale fill(necklace, places, &scale_k)\n&scale_k 7');
+  });
+});
+
+describe('a braid fill refuses (decision 085 §8, #747, #748)', () => {
+  const piece = (from: string) => `${from}\n&v s=sine loop=C4\n&tune step=1 0 4 7\n&out map=sample [&tune * &v * .3]`;
+  const warnings = (r: ReturnType<typeof compileSource>) => r.diagnostics.map((d) => `${d.severity} ${d.span.line}: ${d.message}`);
+
+  it('past its fuel: a warning on the from line, the same on every run, and the rest of the piece plays', () => {
+    const text = piece('&scale from necklace(n=100) 7');
+    const r = compileSource(text, undefined, options);
+    expect(warnings(r)).toEqual(['warning 1: "necklace" refused: 100 slots need more than its fuel, 64']);
+    expect(warnings(compileSource(text, undefined, options))).toEqual(warnings(r));
+    expect(r.ok).toBe(true);
+    // (the fill plays nothing: unanswered, its marker kept; the tune plays)
+    expect(r.cells.get('scale')?.fill?.fragment).toBe('necklace');
+    expect(eventsBetween(plan(r, codeShifts(r)), 0, 2).length).toBeGreaterThan(0);
+  });
+
+  it('the core writes no braid for a refused fill', () => {
+    const core = toCore('&scale from necklace(n=100) 7', { ...options, interface: ['&scale'] }).source;
+    expect(core).not.toMatch(/scan\(|\d \d/);
+    expect(core).toMatch(/&scale fill\(necklace, places/);
+  });
+
+  it('a braid fill must declare its fuel: one that doesn’t refuses', () => {
+    const unfuelled: PluginFragment = { ...necklace, fills: { places: {} } };
+    const r = compileSource(piece('&scale from necklace 7'), undefined, { resolve, plugins: [unfuelled] });
+    expect(warnings(r)).toEqual(['warning 1: "necklace" refused: its fill places declares no fuel, and a braid fill must (decision 085 §8)']);
+  });
+
+  it('a thrown error is no refusal: a bug in its code, an error on the from line', () => {
+    const r = compileSource(piece('&scale from necklace(n=4) 7'), undefined, options);
+    expect(warnings(r)).toEqual(['error 1: "necklace"\'s code failed on its fill places: k 7 > n 4']);
+  });
+
+  it('from a fragment that takes it: the warning on the piece’s from line, saying where', () => {
+    const resolveBoth = (id: string) => (id === 'modes' ? '&key from &tonic\n&key from necklace(n=100) 7' : resolve(id));
+    // (an argument by reference is 6d's, #749: its core; a number here)
+    const r = compileSource(piece('&k from modes C'), undefined, { resolve: resolveBoth, plugins: [necklace] });
+    expect(warnings(r).filter((w) => w.includes('refused'))).toEqual(['warning 1: "necklace" refused: 100 slots need more than its fuel, 64 (in "modes")']);
   });
 });
