@@ -127,7 +127,8 @@ export function valueSumOf(name: string, decls: ReadonlyMap<string, CellDecl>, s
   }
   // (no cell left: a sum of numbers alone is a value where it names one, `[&song + -.45]` with `&song .55`, decision 096)
   if (!terms.length) return names(written) ? { terms, constant } : null;
-  if (terms.length === 1 && terms[0]!.weight === 1 && constant === 0) return null;
+  // (a bare cell alone, `[&a]`, names what it mixes; a sum written out, `[&song + 0]`, is a sum)
+  if (written.k !== 'sum' && terms.length === 1 && terms[0]!.weight === 1 && constant === 0) return null;
   const inner = new Set([...seen, name]);
   return terms.every((t) => isValueLine(t.cell, decls, inner)) ? { terms, constant } : null;
 }

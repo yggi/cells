@@ -32,6 +32,8 @@ export function entryOf(result, head, tap) {
         return { entry: `&${HOST.line} * &${head}` };
     if (c.map?.kind === 'sample' || c.sort === 'signal')
         return { entry: `&${head}` };
+    if (c.sum)
+        return { entry: `&${HOST.line} * &${HOST.voice} * &${head}` };
     if (c.meter && result.clocks.get(head)?.cell === head)
         return { entry: `&${HOST.read} * &${HOST.voice}`, line: `&${HOST.read} step=&${head}:pulse 0 2 4 5` };
     if (c.meter || c.scan || !c.clock)

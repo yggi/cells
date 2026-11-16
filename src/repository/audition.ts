@@ -56,6 +56,8 @@ export function entryOf(result: CompileResult, head: string, tap: string): { ent
   if (c.voice) return { entry: `&${HOST.line} * &${head}` };
   // (a mix, a sound of sounds: played as it is)
   if (c.map?.kind === 'sample' || c.sort === 'signal') return { entry: `&${head}` };
+  // (a sum of values, decision 079: a value, heard as the level of the host's line, as a score's &intensity drives a part)
+  if (c.sum) return { entry: `&${HOST.line} * &${HOST.voice} * &${head}` };
   // (a meter that keeps time, tapped; a table, a key or a mode, read by a line over it)
   if (c.meter && result.clocks.get(head)?.cell === head) return { entry: `&${HOST.read} * &${HOST.voice}`, line: `&${HOST.read} step=&${head}:pulse 0 2 4 5` };
   if (c.meter || c.scan || !c.clock) return { entry: `&${HOST.read} * &${HOST.voice}`, line: `&${HOST.read} over=&${head} step=${tap}pulse*2 0 1 2 3` };

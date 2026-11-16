@@ -42,6 +42,7 @@ export const FOLDER_FACETS: Readonly<Record<string, string>> = {
   motifs: 'motif',
   performers: 'performer',
   rhythms: 'rhythm',
+  sections: 'section',
   stab: 'stab',
   styles: 'style',
 };

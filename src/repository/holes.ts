@@ -23,12 +23,13 @@
  *   (`resolve`): a used fragment's holes, sounds and clock needs are the text's, less what the text and the other used
  *   fragments define, and it defines what they give (`CompileResult.uses`). Without one, only its own lines are read.
  */
-import type { Atom, CellDecl, Tap } from '../engine/ast';
+import type { Atom, CellDecl, Expr, Tap } from '../engine/ast';
 import { braidReadsOf, otherReadsOf } from '../engine/compiler/builtin';
 import { parse } from '../engine/parser';
 import { tapPositions, type Meter } from '../engine/meter';
 import { MAIN_KEY, type CompileResult, type Resolve } from '../engine/program';
 import { expansion, hasFrom, signatureOf } from '../engine/use';
+import { isValueLine } from '../engine/valuesum';
 
 /** What a line's clock needs of the meter it taps: its lap of `bars` bars holds its `steps` a whole number of times. */
 export interface ClockNeed {
@@ -122,12 +123,34 @@ export const readAsLine = (decls: readonly CellDecl[]): ReadonlySet<string> =>
   new Set(decls.flatMap((d) => (d.braid.kind === 'list' ? d.braid.tokens.flatMap((t) => atomLineReads(t.atom)) : [])).map((n) => `&${n}`));
 
 /**
+ * The cells a mix's sum names beside a value (`[&song + -.3]`, `[&song + &fall * -.45]`, `(&theme + 12)`): a number
+ * added, or a line of values the text declares, makes it a sum of values or a pitch sum, never a sum of sounds.
+ */
+const addedToValue = (e: Expr, value: (name: string) => boolean): string[] => {
+  if (e.k === 'prod') return e.factors.flatMap((f) => addedToValue(f, value));
+  if (e.k !== 'sum') return [];
+  const refs = (x: Expr): string[] => (x.k === 'ref' ? [x.ref.name] : x.k === 'prod' ? x.factors.flatMap(refs) : x.k === 'sum' ? x.items.flatMap((i) => refs(i.e)) : []);
+  const isValue = (x: Expr): boolean =>
+    x.k === 'num' || (x.k === 'ref' && value(x.ref.name)) || (x.k === 'prod' && x.factors.every((f) => f.k === 'num' || (f.k === 'ref' && value(f.ref.name))));
+  return e.items.some((i) => isValue(i.e)) ? e.items.flatMap((i) => refs(i.e)) : e.items.flatMap((i) => addedToValue(i.e, value));
+};
+const atomAdded = (a: Atom, value: (name: string) => boolean): string[] =>
+  a.kind === 'mix' ? a.exprs.flatMap((e) => addedToValue(e, value)) : a.kind === 'seq' ? a.layers.flatMap((l) => l.flatMap((t) => atomAdded(t.atom, value))) : [];
+
+/** The names declarations' mixes add a value to: a line or a value (decisions 079, 096), which a sound isn't. */
+export const readAsAdded = (decls: readonly CellDecl[]): ReadonlySet<string> => {
+  const byName = new Map(decls.map((d) => [d.name, d]));
+  const value = (name: string) => byName.has(name) && isValueLine(name, byName);
+  return new Set(decls.flatMap((d) => (d.braid.kind === 'list' ? d.braid.tokens.flatMap((t) => atomAdded(t.atom, value)) : [])).map((n) => `&${n}`));
+};
+
+/**
  * Whether declarations read a name (`&bd`) only as a sound: a step of a braid or a term of a mix, never a table, a clock,
  * a parameter, or through an operator on a step (a line: a form's `&call^-2`).
  */
 export function readOnlyAsSound(decls: readonly CellDecl[]): (name: string) => boolean {
   const inBraid = new Set(decls.flatMap((d) => braidReadsOf(d)).map((n) => `&${n}`));
-  const elsewhere = new Set([...decls.flatMap((d) => otherReadsOf(d)).map((n) => `&${n}`), ...readAsLine(decls)]);
+  const elsewhere = new Set([...decls.flatMap((d) => otherReadsOf(d)).map((n) => `&${n}`), ...readAsLine(decls), ...readAsAdded(decls)]);
   return (name) => inBraid.has(name) && !elsewhere.has(name);
 }
 
