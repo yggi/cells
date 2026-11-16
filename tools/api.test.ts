@@ -33,8 +33,15 @@ describe('the entry points', () => {
 describe('the entry point files written', () => {
   const written = ENTRIES.filter((e) => e.name !== '@yggi/cells' && entryExports(e.name).size > 0);
 
-  it('include edit and midi', () => {
-    expect(written.map((e) => e.name)).toEqual(expect.arrayContaining(['@yggi/cells/edit', '@yggi/cells/midi']));
+  it('include edit, midi and inspect', () => {
+    expect(written.map((e) => e.name)).toEqual(expect.arrayContaining(['@yggi/cells/edit', '@yggi/cells/midi', '@yggi/cells/inspect']));
+  });
+
+  it('never give one name to two things: a name on two entry points comes from one module', () => {
+    const from = new Map<string, Set<string>>();
+    for (const e of ENTRIES) for (const [module, list] of entryExports(e.name)) for (const n of list) from.set(n, new Set([...(from.get(n) ?? []), module]));
+    for (const [module, list] of rootExports()) for (const n of list) from.set(n, new Set([...(from.get(n) ?? []), module]));
+    expect([...from].filter(([, modules]) => modules.size > 1).map(([n, modules]) => `${n}: ${[...modules].join(', ')}`)).toEqual([]);
   });
 
   it('export only from the modules planned for them, by name, none twice', () => {

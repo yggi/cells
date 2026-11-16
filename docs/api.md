@@ -56,7 +56,7 @@ On the root index today (45): `Anchor`, `CodeLine`, `Core`, `CoreOptions`, `Inte
 
 Planned modules: `engine/attributes`, `engine/clocking`, `engine/duration`, `engine/flatten`, `engine/flows`, `engine/fm`, `engine/graph`, `engine/helix`, `engine/ids`, `engine/meter`, `engine/outs`, `engine/plays`, `engine/readers`, `engine/series`, `engine/stats`, `engine/subseq`, `engine/transform`, `engine/values`, `engine/valuesum`, `engine/wave`.
 
-Its entry point is not written yet.
+Exported by its entry point, `src/inspect.ts` (89): `ATTRIBUTES`, `CELL_KINDS`, `CORE`, `CellKind`, `EPS`, `EdgeTransform`, `Flow`, `GraphEdge`, `GraphModel`, `GraphNode`, `Leaf`, `Meter`, `ParamTrack`, `PieceTime`, `SwingLevel`, `TIME_PARAMS`, `WrittenGraph`, `anchoredAt`, `beatCount`, `canonicalParam`, `cellId`, `clockTapId`, `clockText`, `clocking`, `durationText`, `edgeId`, `edgeLabel`, `entries`, `feeds`, `filterModel`, `flatten`, `flows`, `fmLines`, `fmWave`, `footOf`, `gridName`, `harmonics`, `heldAt`, `isAttribute`, `isCellNode`, `isJunction`, `isPicked`, `isTurntable`, `kitOf`, `lapOf`, `lastNoteAt`, `leaves`, `lookup`, `mainLength`, `mainTempo`, `meterOfFrame`, `netsOf`, `noteValue`, `notesAt`, `outs`, `ownRate`, `period`, `physicsOf`, `pieceStats`, `pieceTime`, `playedCells`, `positionOf`, `readThrough`, `refsOf`, `resolveIn`, `resolvePitch`, `sections`, `selects`, `semitones`, `shiftedUnits`, `shiftsAt`, `slots`, `soundRole`, `stepEdgeId`, `stepsAt`, `stepsOf`, `stepsPerSecond`, `structureKey`, `swungPlace`, `tableChain`, `tapShare`, `tapeMotion`, `tapped`, `transformLabel`, `valueAt`, `valuesAt`, `waveform`, `writtenGraph`, `writtenPlace`.
 
 On the root index today (3): `meterOfFrame`, `swungPlace`, `writtenPlace`.
 
@@ -96,8 +96,8 @@ On the root index today (24): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example
 
 | frontend | pin | app: modules / symbols deep | of them, symbols an entry point exports | app: symbols from the root | tests and tools: modules / symbols deep |
 |---|---|---|---|---|---|
-| jambot (`bbb1cb6`) | v0.26.1 | 31 / 93 | 55 | 16 | 20 / 37 |
-| cell-studio (`9216e32`) | v0.26.1 | 82 / 313 | 144 | 0 | 64 / 162 |
+| jambot (`bbb1cb6`) | v0.26.1 | 31 / 93 | 58 | 16 | 20 / 37 |
+| cell-studio (`9216e32`) | v0.26.1 | 82 / 313 | 223 | 0 | 64 / 162 |
 
 Reached by an app and planned for no entry point (the work left): `engine/compiler/declare` (cell-studio), `engine/fills` (cell-studio), `engine/fiveto12` (cell-studio), `engine/parser/use` (cell-studio), `engine/physics` (cell-studio).
 

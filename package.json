@@ -15,6 +15,11 @@
       "module": "./src/edit.ts",
       "default": "./dist/edit.js"
     },
+    "./inspect": {
+      "types": "./types/inspect.d.ts",
+      "module": "./src/inspect.ts",
+      "default": "./dist/inspect.js"
+    },
     "./midi": {
       "types": "./types/midi.d.ts",
       "module": "./src/midi.ts",
