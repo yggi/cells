@@ -44,7 +44,9 @@ describe('readsOf finds every cell a line names, by the form that reads it', () 
 
 /**
  * The reads of a text the written graph draws no wire for, by form: a read is drawn when its two cells have an edge
- * between them, either way. A read inside an unnamed cell (`&key:λ19_5`) is its owner's.
+ * between them, either way. A read inside an unnamed cell (`&key:λ19_5`) is its owner's. A gate read in a mix
+ * (`&out [&leadOut, &drumOut]`) is drawn through the voices it plays (#234: each in from its own wheel, no wire from the
+ * gate): it counts as drawn when every one of its voices is wired into the reader, and not otherwise.
  */
 function undrawn(source: string): Record<string, number> {
   const text = expansion(source, O).text;
@@ -63,6 +65,8 @@ function undrawn(source: string): Record<string, number> {
       const to = result.cells.get(r.name);
       if (r.name === d.name || r.name === owner || !to || to.implicit) continue;
       if (wired.has(`cell:${d.name}|cell:${r.name}`) || wired.has(`cell:${owner}|cell:${r.name}`)) continue;
+      const voices = to.gate?.receivers ?? [];
+      if (voices.length && voices.every((v) => wired.has(`cell:${v}|cell:${d.name}`) || wired.has(`cell:${v}|cell:${owner}`))) continue;
       gaps[r.form] = (gaps[r.form] ?? 0) + 1;
     }
   }
@@ -72,16 +76,16 @@ function undrawn(source: string): Record<string, number> {
 /** The reads no wire is drawn for, over every example, by form. Fewer is better: draw the form, and its line goes. */
 const UNDRAWN: Readonly<Record<string, number>> = {
   // (a meter's swing cell, `swing=&swing`: the cell is read, and no wire is drawn from it, yggi/cells#618, #737)
-  'paramCells.swing': 62,
-  // (a cell spliced in a mix of values, a fill's clock: daytime's `&day`, a performer's outs in a mix through a gate)
-  'braid.tokens': 26,
+  'paramCells.swing': 63,
+  // (a fill's cells, `&cycle [&cycle_notes * &cycle_level]`, and a law's, in daytime and fiveto12: they wait on #792)
+  'braid.tokens': 6,
   // (a mode read from a cell, `scale(&mode, &tonic)`: `even(k, n, &mode)`)
   'braid.even': 11,
   // (the section's style read through the cells a band's instruments hold: `lpf=… * &style`, `attack=…`)
-  'paramCells.lpf': 4,
-  'paramCells.attack': 3,
-  'paramCells.release': 2,
-  'paramCells.s': 1,
+  'paramCells.lpf': 6,
+  'paramCells.attack': 6,
+  'paramCells.release': 4,
+  'paramCells.s': 2,
   // (a key's tonic, written in a scale the key holds)
   tonic: 2,
 };
