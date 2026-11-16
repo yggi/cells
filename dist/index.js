@@ -25,6 +25,7 @@ export { movedCard } from "./engine/shorten/card.js";
 export { jacksOf, patch, unpatch, PatchError } from "./engine/patch.js";
 export { bodyOf, expand, fragmentHash, signatureOf } from "./engine/use.js";
 export { fromLine, references } from "./engine/references.js";
+export { formOf, readsOf } from "./engine/reads.js";
 export { outlineOf } from "./engine/outline.js";
 export { takeIn } from "./engine/takein.js";
 export { createRepository, EMPTY_LAYER, layerProblems, pointDistance, } from "./repository/fragments.js";
