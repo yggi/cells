@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ENTRIES, ENTRY_POINTS, ROOT, entryOf, exportsOfModules, importsOf, modules, readLedger, render, rootExports, withGenerated } from './api';
+import { ENTRIES, ENTRY_POINTS, ROOT, entryExports, entryOf, exportsOfModules, importsOf, modules, readLedger, render, rootExports, withGenerated } from './api';
 
 describe('the entry points', () => {
   const all = modules();
@@ -27,6 +27,37 @@ describe('the entry points', () => {
 
   it('give every root export a module that exists', () => {
     for (const module of rootExports().keys()) expect(all, module).toContain(module);
+  });
+});
+
+describe('the entry point files written', () => {
+  const written = ENTRIES.filter((e) => e.name !== '@yggi/cells' && entryExports(e.name).size > 0);
+
+  it('include edit', () => {
+    expect(written.map((e) => e.name)).toContain('@yggi/cells/edit');
+  });
+
+  it('export only from the modules planned for them, by name, none twice', () => {
+    for (const e of written) {
+      const names: string[] = [];
+      for (const [module, list] of entryExports(e.name)) {
+        expect(entryOf(module), `${e.name}: ${module}`).toBe(e.name);
+        names.push(...list);
+      }
+      expect(
+        names.filter((n, i) => names.indexOf(n) !== i),
+        e.name,
+      ).toEqual([]);
+    }
+  });
+
+  it('are in package.json exports, with types, module and default', () => {
+    const exports = (JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { exports: Record<string, Record<string, string>> }).exports;
+    for (const e of written) {
+      const key = `./${e.name.replace('@yggi/cells/', '')}`;
+      const file = key.slice(2);
+      expect(exports[key], key).toEqual({ types: `./types/${file}.d.ts`, module: `./src/${file}.ts`, default: `./dist/${file}.js` });
+    }
   });
 });
 
@@ -81,5 +112,6 @@ describe('docs/api.md', () => {
     const page = readFileSync(join(ROOT, 'docs/api.md'), 'utf8');
     const listed = new Set([...page.matchAll(/`([A-Za-z_$][\w$]*)`/g)].map((m) => m[1]));
     for (const [module, names] of rootExports()) for (const name of names) expect(listed.has(name), `${name} (${module})`).toBe(true);
+    for (const e of ENTRIES) for (const [module, names] of entryExports(e.name)) for (const name of names) expect(listed.has(name), `${name} (${module}, ${e.name})`).toBe(true);
   });
 });

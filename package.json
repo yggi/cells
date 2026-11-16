@@ -10,6 +10,11 @@
       "module": "./src/index.ts",
       "default": "./dist/index.js"
     },
+    "./edit": {
+      "types": "./types/edit.d.ts",
+      "module": "./src/edit.ts",
+      "default": "./dist/edit.js"
+    },
     "./engine/*": {
       "types": "./types/engine/*.d.ts",
       "module": "./src/engine/*.ts",

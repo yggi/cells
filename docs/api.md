@@ -40,52 +40,64 @@ Each step of the plan moves a count in the ledger: the symbols a frontend reache
 
 #### `@yggi/cells`
 
-Modules: `engine/ast`, `engine/audioexport`, `engine/compile`, `engine/host`, `engine/keepbeat`, `engine/parser/index`, `engine/program`, `engine/realize`, `engine/render`, `engine/schedule`, `engine/span`, `engine/styleat`, `engine/wavfile`.
+Planned modules: `engine/ast`, `engine/audioexport`, `engine/compile`, `engine/host`, `engine/keepbeat`, `engine/parser/index`, `engine/program`, `engine/realize`, `engine/render`, `engine/schedule`, `engine/span`, `engine/styleat`, `engine/wavfile`.
 
 On the root index today (56): `Atom`, `AudioOptions`, `AudioTape`, `Braid`, `CompileOptions`, `CompileResult`, `DEFAULT_RATE`, `Diagnostic`, `Env`, `FreeSpec`, `FromEngine`, `KeptBar`, `LONGEST`, `Locked`, `Origin`, `Output`, `Performer`, `Pick`, `PieceAudio`, `PieceMeta`, `Plan`, `Played`, `RenderDiagnostic`, `RenderOptions`, `Rendered`, `Renderer`, `Resolve`, `ResolvedCell`, `Shifts`, `Span`, `SpanOptions`, `TAIL`, `Take`, `ToEngine`, `Token`, `Tracks`, `UNBOUNDED`, `Unit`, `WavFormat`, `Window`, `compileSource`, `createHost`, `createRenderer`, `keepBar`, `keepBeat`, `loudness`, `parse`, `pieceAudio`, `pieceMeta`, `plan`, `planOf`, `spanOf`, `styleAt`, `swingOfBar`, `windowAt`, `writeWav`.
 
 #### `@yggi/cells/edit`
 
-Modules: `engine/capture`, `engine/core/desugar`, `engine/core/fold`, `engine/core/index`, `engine/core/interface`, `engine/core/minify`, `engine/edit`, `engine/held`, `engine/literate`, `engine/migrate/arguments`, `engine/migrate/axes`, `engine/migrate/beats`, `engine/migrate/forwarded`, `engine/migrate/gates`, `engine/migrate/grids`, `engine/migrate/index`, `engine/migrate/laps`, `engine/migrate/laws`, `engine/migrate/mainkey`, `engine/migrate/mainmeter`, `engine/migrate/moved`, `engine/migrate/notes`, `engine/migrate/oneroot`, `engine/migrate/oneshot`, `engine/migrate/pairs`, `engine/migrate/parts`, `engine/migrate/renamed`, `engine/migrate/swing`, `engine/migrate/taps`, `engine/normalise/aliases`, `engine/normalise/index`, `engine/normalise/kept`, `engine/normalise/library`, `engine/normalise/meter`, `engine/normalise/names`, `engine/normalise/narrowest`, `engine/outline`, `engine/patch`, `engine/piecefile`, `engine/rewrite`, `engine/shorten/aliases`, `engine/shorten/card`, `engine/shorten/defaults`, `engine/shorten/fractions`, `engine/shorten/harness`, `engine/shorten/index`, `engine/shorten/phrases`, `engine/shorten/progressions`, `engine/shorten/runs`, `engine/shorten/same`, `engine/shorten/stereo`, `engine/shorten/wrappers`, `engine/vary/anchors`, `engine/vary/index`, `engine/vary/lines`, `engine/vary/reference`.
+Planned modules: `engine/capture`, `engine/core/desugar`, `engine/core/fold`, `engine/core/index`, `engine/core/interface`, `engine/core/minify`, `engine/edit`, `engine/held`, `engine/literate`, `engine/migrate/arguments`, `engine/migrate/axes`, `engine/migrate/beats`, `engine/migrate/forwarded`, `engine/migrate/gates`, `engine/migrate/grids`, `engine/migrate/index`, `engine/migrate/laps`, `engine/migrate/laws`, `engine/migrate/mainkey`, `engine/migrate/mainmeter`, `engine/migrate/moved`, `engine/migrate/notes`, `engine/migrate/oneroot`, `engine/migrate/oneshot`, `engine/migrate/pairs`, `engine/migrate/parts`, `engine/migrate/renamed`, `engine/migrate/swing`, `engine/migrate/taps`, `engine/normalise/aliases`, `engine/normalise/index`, `engine/normalise/kept`, `engine/normalise/library`, `engine/normalise/meter`, `engine/normalise/names`, `engine/normalise/narrowest`, `engine/outline`, `engine/patch`, `engine/piecefile`, `engine/rewrite`, `engine/shorten/aliases`, `engine/shorten/card`, `engine/shorten/defaults`, `engine/shorten/fractions`, `engine/shorten/harness`, `engine/shorten/index`, `engine/shorten/phrases`, `engine/shorten/progressions`, `engine/shorten/runs`, `engine/shorten/same`, `engine/shorten/stereo`, `engine/shorten/wrappers`, `engine/vary/anchors`, `engine/vary/index`, `engine/vary/lines`, `engine/vary/reference`.
+
+Exported by its entry point, `src/edit.ts` (81): `Anchor`, `CodeLine`, `Core`, `CoreOptions`, `Interface`, `Jack`, `Layout`, `Literate`, `LiterateProblems`, `LockChange`, `MOVING`, `Operator`, `Outline`, `OutlineNode`, `OutlineOptions`, `OutlinePart`, `PITCHED_OPERATORS`, `PatchError`, `PieceFile`, `PieceFileProblems`, `PieceFrontmatter`, `RHYTHM_OPERATORS`, `RecordTarget`, `ShortenOptions`, `Suggestion`, `Take`, `Variation`, `VaryOptions`, `Written`, `addCell`, `anchorsOf`, `attrValue`, `attrsOf`, `declLine`, `declWords`, `deleteCell`, `drawn`, `fileLine`, `freeIndex`, `freeList`, `isPieceFile`, `jacksOf`, `linesOf`, `lockChanges`, `lockfileOf`, `migrate`, `movedCard`, `nameProblem`, `normalise`, `offProblem`, `outlineOf`, `patch`, `readLiterate`, `readPiece`, `readVariations`, `recordTarget`, `renameCell`, `rewrite`, `setAttr`, `setBraid`, `setFree`, `setOff`, `setShift`, `setTiming`, `shorten`, `shortenAll`, `spansLines`, `splitComment`, `splitToken`, `splitWords`, `tableReader`, `tapWhole`, `textLockfile`, `toCore`, `unpatch`, `usersOf`, `variations`, `varied`, `withHeld`, `withLockfile`, `writePiece`.
 
 On the root index today (45): `Anchor`, `CodeLine`, `Core`, `CoreOptions`, `Interface`, `Jack`, `Layout`, `Literate`, `LiterateProblems`, `LockChange`, `Operator`, `Outline`, `OutlineNode`, `OutlineOptions`, `OutlinePart`, `PatchError`, `PieceFile`, `PieceFileProblems`, `PieceFrontmatter`, `ShortenOptions`, `Variation`, `VaryOptions`, `anchorsOf`, `fileLine`, `isPieceFile`, `jacksOf`, `lockChanges`, `lockfileOf`, `migrate`, `movedCard`, `normalise`, `outlineOf`, `patch`, `readLiterate`, `readPiece`, `rewrite`, `shorten`, `shortenAll`, `textLockfile`, `toCore`, `unpatch`, `variations`, `varied`, `withLockfile`, `writePiece`.
 
 #### `@yggi/cells/inspect`
 
-Modules: `engine/attributes`, `engine/clocking`, `engine/duration`, `engine/flatten`, `engine/flows`, `engine/fm`, `engine/graph`, `engine/helix`, `engine/ids`, `engine/meter`, `engine/outs`, `engine/plays`, `engine/readers`, `engine/series`, `engine/stats`, `engine/subseq`, `engine/transform`, `engine/values`, `engine/valuesum`, `engine/wave`.
+Planned modules: `engine/attributes`, `engine/clocking`, `engine/duration`, `engine/flatten`, `engine/flows`, `engine/fm`, `engine/graph`, `engine/helix`, `engine/ids`, `engine/meter`, `engine/outs`, `engine/plays`, `engine/readers`, `engine/series`, `engine/stats`, `engine/subseq`, `engine/transform`, `engine/values`, `engine/valuesum`, `engine/wave`.
+
+Its entry point is not written yet.
 
 On the root index today (3): `meterOfFrame`, `swungPlace`, `writtenPlace`.
 
 #### `@yggi/cells/midi`
 
-Modules: `engine/fold/beta`, `engine/fold/degrees`, `engine/fold/dilate`, `engine/fold/figure`, `engine/fold/hints`, `engine/fold/index`, `engine/fold/ir`, `engine/fold/midiRatchet`, `engine/fold/pairs`, `engine/fold/print`, `engine/fold/score`, `engine/fold/sections`, `engine/fold/story`, `engine/fold/stretch`, `engine/fold/transpose`, `engine/fold/variants`, `engine/fold/voices`, `engine/keys`, `engine/midi`, `engine/midiclock`, `engine/midiexport`, `engine/midifile`, `engine/midiimport`, `engine/miditext`, `engine/perform/feel`, `engine/perform/perform`.
+Planned modules: `engine/fold/beta`, `engine/fold/degrees`, `engine/fold/dilate`, `engine/fold/figure`, `engine/fold/hints`, `engine/fold/index`, `engine/fold/ir`, `engine/fold/midiRatchet`, `engine/fold/pairs`, `engine/fold/print`, `engine/fold/score`, `engine/fold/sections`, `engine/fold/story`, `engine/fold/stretch`, `engine/fold/transpose`, `engine/fold/variants`, `engine/fold/voices`, `engine/keys`, `engine/midi`, `engine/midiclock`, `engine/midiexport`, `engine/midifile`, `engine/midiimport`, `engine/miditext`, `engine/perform/feel`, `engine/perform/perform`.
+
+Its entry point is not written yet.
 
 On the root index today (28): `CONTRACT_WIDTHS`, `DrumRole`, `FeelEvent`, `FeelFrame`, `FeelPart`, `Hint`, `HintSpan`, `MIN_NOTES`, `Performance`, `Reading`, `RepeatHint`, `SectionType`, `TextBar`, `Transform`, `Widths`, `cellsFromMidi`, `feelOf`, `fold`, `hints`, `isMidi`, `perform`, `pieceMidi`, `played`, `readMidi`, `readerOf`, `readingOf`, `widthsOf`, `writeMidi`.
 
 #### `@yggi/cells/time`
 
-Modules: `engine/time/boundaries`, `engine/time/cycles`, `engine/time/fft`, `engine/time/motifs`, `engine/time/necklace`, `engine/time/signals`, `engine/time/span`, `engine/time/spectrogram`, `engine/time/splices`, `engine/time/structure`, `engine/time/wavelet`.
+Planned modules: `engine/time/boundaries`, `engine/time/cycles`, `engine/time/fft`, `engine/time/motifs`, `engine/time/necklace`, `engine/time/signals`, `engine/time/span`, `engine/time/spectrogram`, `engine/time/splices`, `engine/time/structure`, `engine/time/wavelet`.
+
+Its entry point is not written yet.
 
 Nothing on the root index today.
 
 #### `@yggi/cells/repository`
 
-Modules: `engine/reading/chords`, `engine/reading/mood`, `engine/reading/point`, `engine/reading/style`, `engine/reading/voice`, `engine/references`, `engine/renamed`, `engine/takein`, `engine/use`, `repository/audition`, `repository/catalogue`, `repository/corefragment`, `repository/decompose`, `repository/extract`, `repository/files`, `repository/fit`, `repository/fragments`, `repository/holes`, `repository/learned`, `repository/recognise`.
+Planned modules: `engine/reading/chords`, `engine/reading/mood`, `engine/reading/point`, `engine/reading/style`, `engine/reading/voice`, `engine/references`, `engine/renamed`, `engine/takein`, `engine/use`, `repository/audition`, `repository/catalogue`, `repository/corefragment`, `repository/decompose`, `repository/extract`, `repository/files`, `repository/fit`, `repository/fragments`, `repository/holes`, `repository/learned`, `repository/recognise`.
+
+Its entry point is not written yet.
 
 On the root index today (74): `ALL_OPERATORS`, `Audition`, `AuditionOptions`, `CatalogueEntry`, `ClockNeed`, `DecomposeOptions`, `Decomposition`, `EMPTY_LAYER`, `ExtractOptions`, `Extraction`, `Filed`, `Filing`, `FitAs`, `Found`, `Fragment`, `FragmentCore`, `FragmentFile`, `FragmentFileProblems`, `FromLine`, `Holes`, `LearnedLayer`, `LearnedPoint`, `LibraryFile`, `LineNote`, `Merged`, `Meta`, `NoExtraction`, `PathStep`, `QueryOptions`, `RENAMED_IDS`, `RecogniseOptions`, `Recognised`, `Recogniser`, `Reference`, `Repository`, `StylePoint`, `TakenIn`, `Use`, `UseOn`, `UseOnOptions`, `UsedPair`, `WeightedPoint`, `audition`, `bodyOf`, `canonicalText`, `catalogue`, `coreFragment`, `createRecogniser`, `createRepository`, `decompose`, `expand`, `extract`, `fileFragment`, `fitsAs`, `fragmentHash`, `fromLine`, `headsOf`, `holesOf`, `layerProblems`, `playedHeadsOf`, `pointDistance`, `readFragment`, `readFragments`, `references`, `renamedLayer`, `sameText`, `signatureOf`, `takeIn`, `useFragments`, `useOn`, `usedTogether`, `wordOf`, `writeFragment`, `writtenOut`.
 
 #### `@yggi/cells/library`
 
-Modules: `engine/dough-params`, `engine/examples`, `engine/order`, `engine/parser/generators`, `engine/style`, `engine/tags`, `repository/band`, `repository/library`, `repository/seed`, `repository/styles`, `theory/modes`, `theory/tonal`.
+Planned modules: `engine/dough-params`, `engine/examples`, `engine/order`, `engine/parser/generators`, `engine/style`, `engine/tags`, `repository/band`, `repository/library`, `repository/seed`, `repository/styles`, `theory/modes`, `theory/tonal`.
+
+Its entry point is not written yet.
 
 On the root index today (24): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example`, `ExampleKey`, `FoundInstrument`, `LIBRARY`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SLOTS`, `STYLES`, `Style`, `VoicedPart`, `bandAt`, `instrumentsAt`, `nearestStyle`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `usesOf`.
 
 ### What the frontends reach by a module path
 
-| frontend | pin | app: modules / symbols deep | app: symbols from the root | tests and tools: modules / symbols deep |
-|---|---|---|---|---|
-| jambot (`bbb1cb6`) | v0.26.1 | 31 / 93 | 16 | 20 / 37 |
-| cell-studio (`9216e32`) | v0.26.1 | 82 / 313 | 0 | 64 / 162 |
+| frontend | pin | app: modules / symbols deep | of them, symbols an entry point exports | app: symbols from the root | tests and tools: modules / symbols deep |
+|---|---|---|---|---|---|
+| jambot (`bbb1cb6`) | v0.26.1 | 31 / 93 | 50 | 16 | 20 / 37 |
+| cell-studio (`9216e32`) | v0.26.1 | 82 / 313 | 109 | 0 | 64 / 162 |
 
 Reached by an app and planned for no entry point (the work left): `engine/compiler/declare` (cell-studio), `engine/fills` (cell-studio), `engine/fiveto12` (cell-studio), `engine/parser/use` (cell-studio), `engine/physics` (cell-studio).
 

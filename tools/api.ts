@@ -113,9 +113,9 @@ export function modules(root = ROOT): string[] {
   return out.sort();
 }
 
-/** The names `src/index.ts` exports, by the module each comes from (`engine/compile`), types included, aliases as written. */
-export function rootExports(root = ROOT): Map<string, string[]> {
-  const text = readFileSync(join(root, 'src/index.ts'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+/** The names `src/<file>` re-exports, by the module each comes from (`engine/compile`), types included, aliases as written. */
+export function exportsOfFile(file: string, root = ROOT): Map<string, string[]> {
+  const text = readFileSync(join(root, 'src', file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const out = new Map<string, string[]>();
   for (const m of text.matchAll(/export\s+(?:type\s+)?\{([^}]*)\}\s*from\s*'\.\/([^']+)'/g)) {
     const names = m[1]
@@ -188,6 +188,15 @@ export function reachOf(dir: string): Reach {
   return { app: sorted(app), tests: sorted(tests) };
 }
 
+/** The names `src/index.ts` exports, by module. */
+export const rootExports = (root = ROOT) => exportsOfFile('index.ts', root);
+
+/** The file of an entry point under `src/`: `@yggi/cells` is `index.ts`, `@yggi/cells/edit` is `edit.ts`. */
+export const entryFile = (name: EntryName) => (name === '@yggi/cells' ? 'index.ts' : `${name.replace('@yggi/cells/', '')}.ts`);
+
+/** What an entry point exports today, by module: its file, if it is written yet. */
+export const entryExports = (name: EntryName, root = ROOT) => (existsSync(join(root, 'src', entryFile(name))) ? exportsOfFile(entryFile(name), root) : new Map<string, string[]>());
+
 export const LEDGER = join(ROOT, 'tools/api.ledger.json');
 export const readLedger = (): Ledger => JSON.parse(readFileSync(LEDGER, 'utf8')) as Ledger;
 
@@ -225,19 +234,32 @@ export function render(root = ROOT, ledger: Ledger = readLedger()): string {
   lines.push(`| (leaves for Cell studio, decision 086) | | the view: drawing only | ${(byEntry.get('view') ?? []).length} |`);
   lines.push(`| (internal) | | named by no entry point | ${(byEntry.get('internal') ?? []).length} |`, '');
   for (const e of ENTRIES) {
-    lines.push(`#### \`${e.name}\``, '', `Modules: ${list(byEntry.get(e.name) ?? [])}.`, '');
-    const names = [...exported].filter(([m]) => entryOf(m) === e.name).flatMap(([, n]) => n);
-    lines.push(names.length ? `On the root index today (${names.length}): ${list([...names].sort())}.` : 'Nothing on the root index today.', '');
+    lines.push(`#### \`${e.name}\``, '', `Planned modules: ${list(byEntry.get(e.name) ?? [])}.`, '');
+    if (e.name !== '@yggi/cells') {
+      const names = [...entryExports(e.name, root)].flatMap(([, n]) => n);
+      lines.push(
+        names.length ? `Exported by its entry point, \`src/${entryFile(e.name)}\` (${names.length}): ${list([...names].sort())}.` : 'Its entry point is not written yet.',
+        '',
+      );
+    }
+    const there = [...exported].filter(([m]) => entryOf(m) === e.name).flatMap(([, n]) => n);
+    lines.push(there.length ? `On the root index today (${there.length}): ${list([...there].sort())}.` : 'Nothing on the root index today.', '');
   }
   const stray = [...exported].filter(([m]) => entryOf(m) === 'view' || entryOf(m) === 'internal').flatMap(([m, n]) => n.map((x) => `${x} (${m})`));
   if (stray.length) lines.push('#### On the root index, planned for no entry point', '', `${list(stray)}.`, '');
 
   lines.push('### What the frontends reach by a module path', '');
-  lines.push('| frontend | pin | app: modules / symbols deep | app: symbols from the root | tests and tools: modules / symbols deep |', '|---|---|---|---|---|');
+  const have = new Map<string, Set<string>>();
+  for (const e of ENTRIES) for (const [m, names] of e.name === '@yggi/cells' ? exported : entryExports(e.name, root)) have.set(m, new Set([...(have.get(m) ?? []), ...names]));
+  lines.push(
+    '| frontend | pin | app: modules / symbols deep | of them, symbols an entry point exports | app: symbols from the root | tests and tools: modules / symbols deep |',
+    '|---|---|---|---|---|---|',
+  );
   for (const [name, f] of Object.entries(ledger)) {
     const deep = (r: Record<string, string[]>) => Object.fromEntries(Object.entries(r).filter(([m]) => m !== '.'));
+    const covered = Object.entries(deep(f.app)).reduce((n, [m, names]) => n + names.filter((x) => have.get(m)?.has(x)).length, 0);
     lines.push(
-      `| ${name} (\`${f.commit.slice(0, 7)}\`) | ${f.pin} | ${Object.keys(deep(f.app)).length} / ${count(deep(f.app))} | ${f.app['.']?.length ?? 0} | ${Object.keys(deep(f.tests)).length} / ${count(deep(f.tests))} |`,
+      `| ${name} (\`${f.commit.slice(0, 7)}\`) | ${f.pin} | ${Object.keys(deep(f.app)).length} / ${count(deep(f.app))} | ${covered} | ${f.app['.']?.length ?? 0} | ${Object.keys(deep(f.tests)).length} / ${count(deep(f.tests))} |`,
     );
   }
   lines.push('');
