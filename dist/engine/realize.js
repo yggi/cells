@@ -1,4 +1,4 @@
-import { BY_FRAGMENT, unitOf } from "./fills.js";
+import { BY_FRAGMENT, textOf, unitOf } from "./fills.js";
 import { parse } from "./parser/index.js";
 import { compile } from "./compiler/index.js";
 import { adsrOf, balance, codeShifts, CV_LAPS, DEFAULT_ENV } from "./program.js";
@@ -464,7 +464,7 @@ function lawLap(st, lap) {
         const lapOf = fill === null ? undefined : st.law.fills[fill]?.lap;
         if (fill === null)
             return code;
-        const answer = st.law.fill(fill, lapOf ? Math.floor((k * unit) / lapOf) : 0, {});
+        const answer = textOf(st.law.fill(fill, lapOf ? Math.floor((k * unit) / lapOf) : 0, {}));
         const timed = code.replace(/(^|\s)step=\S+/, '$1step=1');
         return timed.replace(/(^|\s)fill\([^)]*\).*$/, `$1${answer}`);
     });

@@ -4,7 +4,7 @@
 // in bars, through the lead performer; and recognition reads the answer of a call and answer as the call transposed two
 // degrees down, by one operator.
 import { describe, expect, it } from 'vitest';
-import { compileSource as compiledWithOldUse } from '../engine/compile';
+import { compileSource } from '../engine/compile';
 import { bodyOf } from '../engine/use';
 import { codeShifts } from '../engine/program';
 import { eventsBetween, plan } from '../engine/realize';
@@ -28,15 +28,6 @@ const takenOn = (text: string, bench: string, main?: string) => {
   const resolve: Resolve = (id) => (id === 'x' ? text : resolveSeed(id));
   const fit = fitsAs('x', bench, { resolve, ...(main ? { main } : {}) });
   return { ...fit, union: { text: expand(fit.text, resolve) } };
-};
-
-// (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
-// decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
-const OLD_USE = /^use is the old way/;
-const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
-  const r = compiledWithOldUse(...args);
-  const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));
-  return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
 };
 
 // (the points as they were placed, on the axes before decision 076, sync harm artic energy, held as the library holds

@@ -573,6 +573,11 @@ export interface CompileOptions {
    * The host's plugin-fragments (decision 085 §6, #792): code a `from` line's copy runs for its fills, by its fragment's id,
    * beside the built-ins (a host's of the same id stands in for one). Cells runs no foreign code: a host hands it here,
    * behind the same interface as the built-ins (`PluginFragment`). Since 6b, a braid fill's.
+   *
+   * The host's side of 085 §8: a braid fill runs in a worker for at most **10 s** of wall clock; past it, the host answers
+   * a refusal (`{ refused: 'took longer than 10 s' }`) and drops the instance, never a partial answer. While a fill is
+   * filling, nothing plays (cells' default); a host may keep playing the previous answer, marked stale, and never writes
+   * the core from it. A refusal is said as a warning on the piece's `from` line, and the fill plays nothing.
    */
   readonly plugins?: readonly PluginFragment[];
 }

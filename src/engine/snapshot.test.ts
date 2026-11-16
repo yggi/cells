@@ -36,12 +36,23 @@ function plain(x: unknown): unknown {
  * bend, parameters and envelope (which are audible): a change in `events` alone needs a look, one in `notes` is a
  * change in what plays.
  */
-const notesOf = (events: ReturnType<typeof eventsBetween>) => events.map((e) => [e.voice, e.at, e.dur, e.freq]);
+const notesOf = (events: ReturnType<typeof eventsBetween>) => sorted(events).map((e) => [e.voice, e.at, e.dur, e.freq]);
 const hash = (x: unknown) =>
   createHash('sha256')
     .update(JSON.stringify(plain(x)))
     .digest('hex')
     .slice(0, 16);
+
+/**
+ * The events as a set, not in the plan's order (#344): by onset to the snapshot's 9 digits, then voice, then pitch,
+ * then the event's own canonical text, so the order is total over what an event holds. A respelling that places a
+ * moment 1e-15 s apart can swap two simultaneous events in the plan, and the hashes must not move for that alone.
+ */
+function sorted<E extends { readonly at: number; readonly voice: string; readonly freq: number }>(events: readonly E[]): E[] {
+  const keyed = events.map((e) => ({ e, at: plain(e.at) as number, freq: plain(e.freq) as number, text: JSON.stringify(plain(e)) }));
+  const by = <T>(a: T, b: T) => (a < b ? -1 : a > b ? 1 : 0);
+  return keyed.sort((a, b) => by(a.at, b.at) || by(a.e.voice, b.e.voice) || by(a.freq, b.freq) || by(a.text, b.text)).map((k) => k.e);
+}
 
 const VALUE_TIMES = [0.5, 3.3, 11.7, 29.1];
 const LIVE_TIMES = [2.1, 13.3, 37.9];
@@ -58,7 +69,7 @@ describe('every example plays what it played (snapshot.txt)', () => {
       const events = eventsBetween(played, 0, 40);
       const names = [...result.cells.keys()].sort();
       const values = VALUE_TIMES.map((t) => names.map((n) => [n, valuesAt(result, shifts, n, t), notesAt(result, shifts, n, t)]));
-      return `${key}  ${events.length} notes  notes ${hash(notesOf(events))}  events ${hash(events)}  values ${hash(values)}`;
+      return `${key}  ${events.length} notes  notes ${hash(notesOf(events))}  events ${hash(sorted(events))}  values ${hash(values)}`;
     });
     await expect(lines.join('\n') + '\n').toMatchFileSnapshot('./snapshot.txt');
   });
@@ -81,6 +92,27 @@ describe('the notes column holds what is heard, not how the tables spell it', ()
   it('another pitch is another note', () => {
     const events = eventsBetween(pieces[0].played, 0, 10);
     expect(hash(notesOf(events.map((e) => ({ ...e, freq: e.freq * 2 }))))).not.toBe(hash(notesOf(events)));
+  });
+});
+
+describe('simultaneous events: the order the plan gives them moves no hash (#344)', () => {
+  // a piece with moments where several voices sound at once
+  const events = eventsBetween(pieces.find((p) => p.key === 'jazz')!.played, 0, 40);
+  const at = new Map<number, number>();
+  for (const e of events) at.set(plain(e.at) as number, (at.get(plain(e.at) as number) ?? 0) + 1);
+
+  it('the piece has simultaneous events to reorder', () => {
+    expect([...at.values()].some((n) => n > 1)).toBe(true);
+  });
+  it('the same events in the opposite order, and each onset a relative 1e-13 apart, hash alike', () => {
+    const respelled = [...events].reverse().map((e, i) => ({ ...e, at: e.at * (1 + (i % 2 ? 1e-13 : -1e-13)) }));
+    expect(hash(sorted(respelled))).toBe(hash(sorted(events)));
+    expect(hash(notesOf(respelled))).toBe(hash(notesOf(events)));
+  });
+  it('a different event is still a different hash', () => {
+    const changed = events.map((e, i) => (i === 3 ? { ...e, freq: e.freq * 1.01 } : e));
+    expect(hash(notesOf(changed))).not.toBe(hash(notesOf(events)));
+    expect(hash(sorted(changed))).not.toBe(hash(sorted(events)));
   });
 });
 

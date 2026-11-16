@@ -5,7 +5,7 @@
 // plays a stack of lines, one per drum role, and each hit still names its line: the role the feel reads.
 import { wordOf } from '../engine/renamed';
 import { describe, expect, it } from 'vitest';
-import { compileSource as compiledWithOldUse } from '../engine/compile';
+import { compileSource } from '../engine/compile';
 import { signatureOf } from '../engine/use';
 import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
@@ -17,17 +17,7 @@ import { LIBRARY, resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { seedFragments } from './seed';
 
-// (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
-// decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
-
 const PERFORMER_FRAGMENTS = seedFragments('performers');
-const OLD_USE = /^use is the old way/;
-const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
-  const r = compiledWithOldUse(...args);
-  const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));
-  return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
-};
-
 const BPM = 120;
 // (a host as Jambot's section text writes one: the meter, the key, the harmony)
 /** Jambot's section text's head: it offers its band the key and the harmony (decision 075), which a lead leaves unread. */
@@ -47,7 +37,7 @@ function sent(text: string, bars = 2): { notes: string[]; diagnostics: string[] 
   );
   return {
     notes: notes.sort((a, b) => a.at - b.at || a.channel - b.channel || a.note - b.note).map((n) => `${n.channel} ${n.note} ${n.velocity} ${n.at} ${n.dur}`),
-    diagnostics: plan.result.diagnostics.filter((d) => !OLD_USE.test(d.message)).map((d) => d.message),
+    diagnostics: plan.result.diagnostics.map((d) => d.message),
   };
 }
 
