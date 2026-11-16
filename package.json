@@ -66,6 +66,7 @@
     "types": "tsc -p tsconfig.types.json",
     "dist": "node --experimental-strip-types --no-warnings tools/dist.ts",
     "batch": "node --experimental-strip-types --no-warnings tools/batch.ts",
+    "api": "node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/api.ts",
     "sync": "node --experimental-strip-types --no-warnings tools/sync.ts"
   },
   "devDependencies": {
