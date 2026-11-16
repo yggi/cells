@@ -1,6 +1,6 @@
 # Style at every scale: what counts as a step, and how fast each axis moves
 
-Date: 2026-11-07 · Status: open (the frame for #571 and #576; when #571's decision is written, this frame moves into it) · Issues: [#571](https://github.com/yggi/cells/issues/571) (style across timescales), [#576](https://github.com/yggi/cells/issues/576) (a radio station as one cells piece), in the style epic [#536](https://github.com/yggi/cells/issues/536) · Grew from decision 076 (#573, the style axes) and continues [multiscale.md](multiscale.md) (the frequency tower, the meta-machines)
+Date: 2026-11-07 · Status: open (the frame for #571 and #576; #571's step 2 is [decision 096](../decisions/096-intensity-an-offset-the-levels-read.md), which took intensity and a section's offset from it; the rest, sections, songs and the walkers, moves into step 3's decision when it is written) · Issues: [#571](https://github.com/yggi/cells/issues/571) (style across timescales), [#576](https://github.com/yggi/cells/issues/576) (a radio station as one cells piece), in the style epic [#536](https://github.com/yggi/cells/issues/536) · Grew from decision 076 (#573, the style axes) and continues [multiscale.md](multiscale.md) (the frequency tower, the meta-machines)
 
 The owner's frame (2026-11-07), on #571:
 
@@ -46,7 +46,7 @@ The owner: "sections like break and buildup are 'filters' on these 'lfos'. break
 - a break is a low-pass on the intensity LFO, lowered;
 - a build is an envelope opening it over its 8 bars. Jambot's `barEnergy` ramp, −0.15 to +0.30 (`packages/engine/src/form.ts` there), is that envelope as constants.
 
-So the arrangement can be a patch on the style signal, read by an instrument as `&style[drive]` is read today. #571 tries that spelling before any new form.
+So the arrangement can be a patch on the style signal, read by an instrument as `&style[bite]` is read today. Decision 096 wrote the intensity half so: a section's `&intensity` is its song's plus its kind's offset, a sum, a build's envelope a line by its weight (`[&song + -.15 + &rise * .45]`), and the band's levels read it. Who plays when, and how, stays the score's (#571 step 3).
 
 ## Where it leads
 

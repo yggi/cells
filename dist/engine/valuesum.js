@@ -1,4 +1,5 @@
 import { VOICE_MAKERS } from "./attributes.js";
+import { MAX_SPLICE_DEPTH } from "./program.js";
 const chordOf = (d) => d && !d.gate && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix'
     ? d.braid.tokens[0].atom.exprs
     : null;
@@ -19,16 +20,47 @@ function itemOf(e, sign) {
     return null;
 }
 const names = (e) => (e.k === 'ref' ? true : e.k === 'sum' ? e.items.some((it) => names(it.e)) : e.k === 'prod' ? e.factors.some(names) : false);
-const numeric = (atom) => atom.kind === 'note' || atom.kind === 'rest' || atom.kind === 'choice' || (atom.kind === 'seq' && atom.layers.every((l) => l.every((t) => numeric(t.atom))));
+const valueAtom = (atom, decls, seen) => atom.kind === 'note' ||
+    atom.kind === 'rest' ||
+    atom.kind === 'choice' ||
+    (atom.kind === 'ref' && !atom.pick && !atom.slot && !atom.values && !atom.transpose && atom.shift === 0 && carriesValue(atom.name, decls, seen)) ||
+    (atom.kind === 'seq' && atom.layers.every((l) => l.every((t) => valueAtom(t.atom, decls, seen))));
+function carriesValue(name, decls, seen) {
+    const d = decls.get(name);
+    if (!d || seen.has(name) || seen.size > MAX_SPLICE_DEPTH)
+        return false;
+    if (numberCellOf(d) !== null)
+        return true;
+    if (chordOf(d))
+        return valueSumOf(name, decls, seen) !== null;
+    if (!isValueLine(name, decls, seen))
+        return false;
+    if (d.map && (d.map.kind === 'amp' || d.map.kind === 'db' || d.map.kind === 'lin'))
+        return true;
+    const inner = new Set([...seen, name]);
+    const splices = (atom) => atom.kind === 'ref' ? carriesValue(atom.name, decls, inner) : atom.kind === 'seq' && atom.layers.some((l) => l.some((t) => splices(t.atom)));
+    return d.braid.kind === 'list' && d.braid.tokens.some((t) => splices(t.atom));
+}
 export function isValueLine(name, decls, seen = new Set()) {
     const d = decls.get(name);
-    if (!d || d.gate || d.over || Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)))
+    if (!d || d.gate || d.over || Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)) || seen.size > MAX_SPLICE_DEPTH)
         return false;
     if (chordOf(d))
         return valueSumOf(name, decls, seen) !== null;
     if (d.map && d.map.kind !== 'lin' && d.map.kind !== 'amp' && d.map.kind !== 'db')
         return false;
-    return d.braid.kind === 'list' && d.braid.tokens.length > 0 && d.braid.tokens.every((t) => numeric(t.atom));
+    const inner = new Set([...seen, name]);
+    return d.braid.kind === 'list' && d.braid.tokens.length > 0 && d.braid.tokens.every((t) => valueAtom(t.atom, decls, inner));
+}
+export function splicesSum(name, decls, seen = new Set()) {
+    const d = decls.get(name);
+    if (!d || seen.has(name) || seen.size > MAX_SPLICE_DEPTH || chordOf(d) || d.braid.kind !== 'list')
+        return false;
+    const inner = new Set([...seen, name]);
+    const atomSplices = (atom) => atom.kind === 'ref'
+        ? valueSumOf(atom.name, decls) !== null || splicesSum(atom.name, decls, inner)
+        : atom.kind === 'seq' && atom.layers.some((l) => l.some((t) => atomSplices(t.atom)));
+    return d.braid.tokens.some((t) => atomSplices(t.atom));
 }
 export function valueSumOf(name, decls, seen = new Set()) {
     const exprs = chordOf(decls.get(name));

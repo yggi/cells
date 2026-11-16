@@ -4,7 +4,7 @@ import { CV_LAPS } from '../program';
 import type { Atom, Binding, CellDecl, Expr, Ref } from '../ast';
 import { memberParams, VOICE_MAKERS } from '../attributes';
 import { AlgebraError, distribute, type Sort } from '../algebra';
-import { inlineNotes, inlineNumbers, notesProductOf, numberCellOf, valueSumOf } from '../valuesum';
+import { inlineNotes, inlineNumbers, notesProductOf, numberCellOf, splicesSum, valueSumOf } from '../valuesum';
 import { syntax, type Syntax } from '../parser/syntax';
 import type { Ctx } from './context';
 import { noSound } from './band';
@@ -261,11 +261,18 @@ export function sorts(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>): Typed {
         const kit = bs.flatMap((b) => b.pitches).find((t) => isKitDecl(decls.get(t.ref.name), seen));
         // (a sum of values is a level in a product, decision 088; as semitones it has no reading yet, and says so)
         const added = bs.flatMap((b) => b.pitches).find((t) => t.inSum && valueSumOf(t.ref.name, decls) !== null);
+        // (a line that splices a sum of values reads it as a value while its step lasts: as notes it has none, decision 097)
+        const reading = bs.flatMap((b) => b.pitches).find((t) => sort(t.ref.name) !== 'volume' && !(sort(t.ref.name) === 'plain' && !t.inSum) && splicesSum(t.ref.name, decls));
         if (kit) error(`&${kit.ref.name} is a kit, a table of voices: a pattern read through it is the sound — mix the pattern alone`, kit.ref.span);
         else if (added)
           error(
             `&${added.ref.name} is a sum of values: in a product it is a level (&theme * &${added.ref.name} * &lead), and a pitch sum adds lines, not it — add its terms there (decision 088)`,
             added.ref.span,
+          );
+        else if (reading)
+          error(
+            `&${reading.ref.name} splices a sum of values: a step that does is the sum's value while it lasts, a level (&theme * &${reading.ref.name} * &lead) or a moving value (lpf=0..1000 * &${reading.ref.name}), not notes (decision 097)`,
+            reading.ref.span,
           );
         else out.push(...bs);
       } catch (x) {

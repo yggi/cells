@@ -40,6 +40,11 @@ export interface StepEvent {
     readonly chance?: number;
     /** &x:0:g: its gain, times every level it was spliced at. */
     readonly level?: number;
+    /**
+     * A sum of values spliced (decision 097): the cell its value is read from while the step lasts, a sum being one step
+     * that holds a value moving with its terms; `value` is 0 and says nothing.
+     */
+    readonly reads?: string;
     /** [a|b|c]: what it chooses from (value is the first, for drawing). */
     readonly options?: readonly {
         readonly value: number;

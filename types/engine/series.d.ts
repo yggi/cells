@@ -30,6 +30,8 @@ export interface Series {
         }[];
         readonly constant: number;
     };
+    /** The sums of values its steps splice, each by name (decision 097): a step that reads one is its value while it lasts. */
+    readonly reads?: ReadonlyMap<string, Series>;
 }
 export interface VoiceParam {
     readonly range: readonly [number, number] | null;

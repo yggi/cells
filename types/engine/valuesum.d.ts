@@ -16,11 +16,16 @@ export interface ValueSum {
     readonly constant: number;
 }
 /**
- * Is the cell a line of values: a line of numbers alone, read through no table, a level (map=lin, amp, db), or a sum of
- * values? Anything that splices a cell, sounds, names a sound or reads through a table is not (a pattern of drum hits is
- * a sound, read through its kit).
+ * Is the cell a line of values: a line of numbers and of cells spliced that carry a value (decision 097), read through
+ * no table, a level (map=lin, amp, db), or a sum of values? Anything that splices a sound or a plain line, sounds, names
+ * a sound or reads through a table is not (a pattern of drum hits is a sound, read through its kit).
  */
 export declare function isValueLine(name: string, decls: ReadonlyMap<string, CellDecl>, seen?: ReadonlySet<string>): boolean;
+/**
+ * Does a line splice a sum of values, itself or through a line it splices (decision 097)? Such a step is the sum's value
+ * while it lasts, a level or a moving value; as a note it has no pitch to play, and a pitch reading says so.
+ */
+export declare function splicesSum(name: string, decls: ReadonlyMap<string, CellDecl>, seen?: ReadonlySet<string>): boolean;
 /**
  * A declaration as a sum of values, or null: one chord, a sum (or one weighted term) of cells and numbers, each cell a
  * line of values (`isValueLine`), and not a bare cell alone (`[&a]`, which names what it mixes). Anything else is a mix

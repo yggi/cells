@@ -2,7 +2,7 @@ import { leaves } from "../subseq.js";
 import { CV_LAPS } from "../program.js";
 import { memberParams, VOICE_MAKERS } from "../attributes.js";
 import { AlgebraError, distribute } from "../algebra.js";
-import { inlineNotes, inlineNumbers, notesProductOf, numberCellOf, valueSumOf } from "../valuesum.js";
+import { inlineNotes, inlineNumbers, notesProductOf, numberCellOf, splicesSum, valueSumOf } from "../valuesum.js";
 import { syntax } from "../parser/syntax.js";
 import { noSound } from "./band.js";
 const isMixDecl = (d) => !!d && d.map?.kind !== 'sample' && d.map?.kind !== 'midi' && d.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
@@ -207,10 +207,13 @@ export function sorts(ctx, decls) {
                 }
                 const kit = bs.flatMap((b) => b.pitches).find((t) => isKitDecl(decls.get(t.ref.name), seen));
                 const added = bs.flatMap((b) => b.pitches).find((t) => t.inSum && valueSumOf(t.ref.name, decls) !== null);
+                const reading = bs.flatMap((b) => b.pitches).find((t) => sort(t.ref.name) !== 'volume' && !(sort(t.ref.name) === 'plain' && !t.inSum) && splicesSum(t.ref.name, decls));
                 if (kit)
                     error(`&${kit.ref.name} is a kit, a table of voices: a pattern read through it is the sound — mix the pattern alone`, kit.ref.span);
                 else if (added)
                     error(`&${added.ref.name} is a sum of values: in a product it is a level (&theme * &${added.ref.name} * &lead), and a pitch sum adds lines, not it — add its terms there (decision 088)`, added.ref.span);
+                else if (reading)
+                    error(`&${reading.ref.name} splices a sum of values: a step that does is the sum's value while it lasts, a level (&theme * &${reading.ref.name} * &lead) or a moving value (lpf=0..1000 * &${reading.ref.name}), not notes (decision 097)`, reading.ref.span);
                 else
                     out.push(...bs);
             }

@@ -148,6 +148,8 @@ export function levelSeries(p, m, from, to, written) {
     const val = (e) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : m.bipolar ? Math.max(0, (1 + e.value + e.alter) / 2) : Math.max(0, e.value + e.alter));
     if (m.events.length === 0)
         return [{ at: from, level: 0 }];
+    if (m.reads?.size)
+        return readingSeries(p, m, from, to, written, val);
     if (!m.clock)
         return [{ at: from, level: val(m.events[0]) }];
     if (m.lin)
@@ -184,6 +186,53 @@ export function levelSeries(p, m, from, to, written) {
         const level = levelAt(s + EPS * 10);
         if (level !== out[out.length - 1].level)
             out.push({ at: tm.q(s / m.rate), level });
+    }
+    return out;
+}
+function readingSeries(p, m, from, to, written, val) {
+    const read = new Map([...m.reads].map(([name, s]) => [name, levelSeries(p, s, from, to, written)]));
+    const held = (v) => Math.min(1, Math.max(0, v));
+    const tm = m.clock ? clocking(p.result, p.statics).map(m.clock) : null;
+    const stepAt = (t) => (tm ? tm.stepAt(Math.max(0, t)) * m.rate : 0);
+    const levelAt = (t) => {
+        const c = stepAt(t) + EPS * 10;
+        const lap = lapOf(c, m.period);
+        const local = c - lap * m.period;
+        let best = -1;
+        let ramp = false;
+        for (const e of tm ? m.events : m.events.slice(0, 1)) {
+            if (tm && !(local >= e.step - EPS && local < e.step + e.duration - EPS))
+                continue;
+            const d = drawnOf(m, e, lap);
+            if (!d)
+                continue;
+            const s = d.reads ? read.get(d.reads) : undefined;
+            const v = s ? held(valueThen(s, t, (x) => x.level)) : val(d);
+            if (v > best)
+                [best, ramp] = [v, !!s && s.some((x) => x.ramp && Math.abs(x.at - t) < EPS)];
+        }
+        return { level: best < 0 ? 0 : best, ramp };
+    };
+    const times = new Set([from]);
+    for (const s of read.values())
+        for (const x of s)
+            if (x.at > from + EPS && x.at < to - EPS)
+                times.add(x.at);
+    if (tm) {
+        const c0 = stepAt(from);
+        const c1 = stepAt(to);
+        for (let lap = Math.floor(c0 / m.period); lap * m.period < c1; lap++)
+            for (const e of m.events)
+                for (const s of [lap * m.period + e.step, lap * m.period + e.step + e.duration])
+                    if (s > c0 + EPS && s < c1 - EPS)
+                        times.add(tm.q(s / m.rate));
+    }
+    const out = [];
+    for (const at of [...times].sort((a, b) => a - b)) {
+        const { level, ramp } = levelAt(at);
+        const last = out[out.length - 1];
+        if (!last || level !== last.level || ramp)
+            out.push({ at, level, ...(ramp ? { ramp: true } : {}) });
     }
     return out;
 }

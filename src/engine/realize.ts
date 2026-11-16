@@ -423,6 +423,8 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     const db = m.map?.kind === 'db';
     const bipolar = !db && events.some((e) => e.value + e.alter < 0 || (e.options ?? []).some((o) => o.value + o.alter < 0));
     const period = Math.max(1, stepsOf(result, cell, pick));
+    // (the sums of values its steps splice, each read while its step lasts: decision 097)
+    const readNames = [...new Set(events.flatMap((e) => (e.reads ? [e.reads] : [])))];
     // (a tapped line with cycle= comes round with its tap, every cycle= bars, #116: decision 040)
     const lap = turnLap(result, m).per;
     return {
@@ -434,6 +436,7 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
       ...(lap ? comeRound(events, period, lap) : { period, events }),
       ...(drawn ? { drawn } : {}),
       ...(bipolar ? { bipolar: true as const } : {}),
+      ...(readNames.length ? { reads: new Map(readNames.map((n) => [n, series(n, null, 0, 1)])) } : {}),
     };
   };
   // (a CV turning faster than CV_LAPS laps a second is read turning at that: #427, the compiler's warning says so)

@@ -97,6 +97,19 @@ describe('the default band (#391)', () => {
     expect(theirs[0]).toBeLessThan(own[0]!);
   });
 
+  it('plays a section plan of named kinds through its drives, bar by bar: the drums at Jambot’s 0.65 + 0.35 e (decisions 096, 097)', () => {
+    const style = '&(map=style sync=.5 harm=.5 bite=.5 mood=.5)';
+    const kinds = ['&song .55', '&groove [&song + 0]', '&breakdown [&song + -.45]', '&drop [&song + .3]', '&intensity step=1m &groove &breakdown &drop &groove'];
+    const text = score(style, undefined, kinds);
+    const plan = planOf(text, undefined, { resolve: resolveSeed });
+    const route = router(plan.result, channelTable(plan.result));
+    // (each bar's loudest kick: the drums' written 127 driven by the bar's intensity)
+    const kicks = [0, 1, 2, 3].map((b) =>
+      Math.max(...windowAt(plan, b * 2, 2 - 1e-9).events.flatMap((e) => (e.voice === 'bd' ? routesOf(route(e)).flatMap((x) => [midiNote(e, x)?.velocity ?? 0]) : []))),
+    );
+    expect(kicks).toEqual([0.55, 0.1, 0.85, 0.55].map((e) => Math.round(127 * (0.65 + 0.35 * e))));
+  });
+
   it('drives the drums, the bass and the stab by the score’s &intensity, Jambot’s dynamics; a score that writes none plays as written (decision 096)', () => {
     const style = '&(map=style sync=.5 harm=.5 bite=.5 mood=.5)';
     /** Each voice's velocities, over the first two seconds. */
