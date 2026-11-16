@@ -33,8 +33,8 @@ describe('the entry points', () => {
 describe('the entry point files written', () => {
   const written = ENTRIES.filter((e) => e.name !== '@yggi/cells' && entryExports(e.name).size > 0);
 
-  it('include edit', () => {
-    expect(written.map((e) => e.name)).toContain('@yggi/cells/edit');
+  it('include edit and midi', () => {
+    expect(written.map((e) => e.name)).toEqual(expect.arrayContaining(['@yggi/cells/edit', '@yggi/cells/midi']));
   });
 
   it('export only from the modules planned for them, by name, none twice', () => {

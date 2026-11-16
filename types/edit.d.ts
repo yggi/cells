@@ -5,12 +5,12 @@
  * hold a `free()` still (`withHeld`), vary a fragment (`variations`, `varied`, `anchorsOf`), write a piece shorter
  * (`shorten`), canonical (`normalise`), in the core grammar (`toCore`) or as the current version (`migrate`), and read
  * and write a piece's file (`readPiece`, `writePiece`, `readLiterate`). Nothing here is new: each name is what a frontend
- * reached by a module path (`docs/api.md` lists them), now from one place. A `Take` here is a recording
- * (`engine/capture`); the root's `Take` is a score's take, a different type.
+ * reached by a module path (`docs/api.md` lists them), now from one place. A `Recording` here is
+ * `engine/capture`'s `Take`, renamed: the root's `Take` is a score's take, a different type.
  */
 export { addCell, attrValue, attrsOf, declLine, declWords, deleteCell, nameProblem, offProblem, renameCell, setAttr, setBraid, setFree, setOff, setShift, setTiming, spansLines, splitComment, splitToken, splitWords, usersOf, } from './engine/edit';
 export { freeIndex, freeList, withHeld } from './engine/held';
-export { recordTarget, tableReader, type RecordTarget, type Take, type Written } from './engine/capture';
+export { recordTarget, tableReader, type RecordTarget, type Take as Recording, type Written } from './engine/capture';
 export { jacksOf, MOVING, patch, PatchError, unpatch, type Jack } from './engine/patch';
 export { anchorsOf, drawn, PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS, varied, variations, type Anchor, type Operator, type Variation, type VaryOptions, } from './engine/vary';
 export { linesOf, tapWhole } from './engine/vary/lines';

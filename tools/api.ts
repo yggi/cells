@@ -114,7 +114,7 @@ export function modules(root = ROOT): string[] {
 }
 
 /** The names `src/<file>` re-exports, by the module each comes from (`engine/compile`), types included, aliases as written. */
-export function exportsOfFile(file: string, root = ROOT): Map<string, string[]> {
+export function exportsOfFile(file: string, root = ROOT, original = false): Map<string, string[]> {
   const text = readFileSync(join(root, 'src', file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const out = new Map<string, string[]>();
   for (const m of text.matchAll(/export\s+(?:type\s+)?\{([^}]*)\}\s*from\s*'\.\/([^']+)'/g)) {
@@ -122,7 +122,7 @@ export function exportsOfFile(file: string, root = ROOT): Map<string, string[]> 
       .split(',')
       .map((n) => n.trim().replace(/^type\s+/, ''))
       .filter(Boolean)
-      .map((n) => n.split(/\s+as\s+/).pop()!);
+      .map((n) => n.split(/\s+as\s+/)[original ? 0 : 1] ?? n.split(/\s+as\s+/)[0]);
     const module = existsSync(join(root, 'src', `${m[2]}.ts`)) ? m[2] : `${m[2]}/index`;
     out.set(module, [...(out.get(module) ?? []), ...names]);
   }
@@ -195,7 +195,8 @@ export const rootExports = (root = ROOT) => exportsOfFile('index.ts', root);
 export const entryFile = (name: EntryName) => (name === '@yggi/cells' ? 'index.ts' : `${name.replace('@yggi/cells/', '')}.ts`);
 
 /** What an entry point exports today, by module: its file, if it is written yet. */
-export const entryExports = (name: EntryName, root = ROOT) => (existsSync(join(root, 'src', entryFile(name))) ? exportsOfFile(entryFile(name), root) : new Map<string, string[]>());
+export const entryExports = (name: EntryName, root = ROOT, original = false) =>
+  existsSync(join(root, 'src', entryFile(name))) ? exportsOfFile(entryFile(name), root, original) : new Map<string, string[]>();
 
 export const LEDGER = join(ROOT, 'tools/api.ledger.json');
 export const readLedger = (): Ledger => JSON.parse(readFileSync(LEDGER, 'utf8')) as Ledger;
@@ -250,7 +251,9 @@ export function render(root = ROOT, ledger: Ledger = readLedger()): string {
 
   lines.push('### What the frontends reach by a module path', '');
   const have = new Map<string, Set<string>>();
-  for (const e of ENTRIES) for (const [m, names] of e.name === '@yggi/cells' ? exported : entryExports(e.name, root)) have.set(m, new Set([...(have.get(m) ?? []), ...names]));
+  for (const e of ENTRIES)
+    for (const [m, names] of e.name === '@yggi/cells' ? exportsOfFile('index.ts', root, true) : entryExports(e.name, root, true))
+      have.set(m, new Set([...(have.get(m) ?? []), ...names]));
   lines.push(
     '| frontend | pin | app: modules / symbols deep | of them, symbols an entry point exports | app: symbols from the root | tests and tools: modules / symbols deep |',
     '|---|---|---|---|---|---|',

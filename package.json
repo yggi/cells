@@ -15,6 +15,11 @@
       "module": "./src/edit.ts",
       "default": "./dist/edit.js"
     },
+    "./midi": {
+      "types": "./types/midi.d.ts",
+      "module": "./src/midi.ts",
+      "default": "./dist/midi.js"
+    },
     "./engine/*": {
       "types": "./types/engine/*.d.ts",
       "module": "./src/engine/*.ts",
