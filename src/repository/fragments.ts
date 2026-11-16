@@ -173,7 +173,7 @@ export const coUseScore = (distance: number, uses: number, pull: number = CO_USE
 
 const isFiniteNumber = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);
 
-/** What is wrong with a style point: an axis whose value isn't a finite number. A point with no axes is no style (`ANY_DISTANCE`). */
+/** What is wrong with a style point: an axis whose value isn't a finite number. A point with no axes is no style (`isAnyStyle`: no query finds it, decision 090). */
 function pointProblems(point: unknown, where: string): string[] {
   if (typeof point !== 'object' || point === null) return [`${where}: not a style point`];
   return Object.entries(point).flatMap(([axis, value]) => (isFiniteNumber(value) ? [] : [`${where}: ${axis} is ${String(value)}, not a number`]));

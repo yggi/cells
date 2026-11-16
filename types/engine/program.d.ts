@@ -137,6 +137,8 @@ export interface ResolvedCell {
         readonly positions: readonly number[];
         readonly lap: number;
         readonly bars: number;
+        /** The cell whose numbers are the table (`&rubato` in `bend=4n:&rubato`): a read the graph draws as a wire into the meter. */
+        readonly tableCell: string;
         /**
          * Its depth moved by cells (decision 081, `bend=4n:&rubato:&k`): the range (null: a bare cell, its values the depth) and
          * the cells, read at each line of the table's span (`bars` bars) by the plan's reader; and the table, its nodes' steps
@@ -157,6 +159,8 @@ export interface ResolvedCell {
      * stepped tonic (`&tonic step=1m/8 D F`, #301) turns it, the note in force its shift (`shiftsAt`).
      */
     readonly tonic?: string;
+    /** The cells its `style=` names (the ends of a range, a set's members, a curve): a read the graph draws as a wire into this cell. */
+    readonly styleReads?: readonly string[];
     /**
      * A scale whose phase steps (#531, decision 093 §5, `scale(even(7, 12, &mode), &tonic)` with `&mode step=1m dorian
      * major`): the cell its phase is read from, its necklace (`k` places in `n`) and the key it reads through. Its steps are
@@ -552,6 +556,11 @@ export interface CompileOptions {
      * The host's plugin-fragments (decision 085 §6, #792): code a `from` line's copy runs for its fills, by its fragment's id,
      * beside the built-ins (a host's of the same id stands in for one). Cells runs no foreign code: a host hands it here,
      * behind the same interface as the built-ins (`PluginFragment`). Since 6b, a braid fill's.
+     *
+     * The host's side of 085 §8: a braid fill runs in a worker for at most **10 s** of wall clock; past it, the host answers
+     * a refusal (`{ refused: 'took longer than 10 s' }`) and drops the instance, never a partial answer. While a fill is
+     * filling, nothing plays (cells' default); a host may keep playing the previous answer, marked stale, and never writes
+     * the core from it. A refusal is said as a warning on the piece's `from` line, and the fill plays nothing.
      */
     readonly plugins?: readonly PluginFragment[];
 }

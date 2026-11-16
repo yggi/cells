@@ -15,7 +15,7 @@
  *   neither counts for every facet.
  * - Every other attribute is a template's argument at these points (§4): its optional parameter, a value as a line
  *   writes it. `style` and `facet` are reserved.
- * - No `style=` is no style: found at `ANY_DISTANCE` from every style (§5).
+ * - No `style=` is no style: no query returns it, it is taken by its name (§5, as 090 amends it).
  *
  * Pure.
  */

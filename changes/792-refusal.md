@@ -1,0 +1,4 @@
+### Added
+
+- A plugin-fragment may refuse a fill (#792, rung 6c of #691; decision 085 §8). Its code answers `{ refused: string }`, and the piece's `from` line gets a warning, `"<id>" refused: <why>` (with `(in "<fragment>")` when it came through another fragment). The fill stays unanswered and plays nothing; the rest of the piece plays. A thrown error is a bug in its code, said as an error on the `from` line.
+- **Fuel:** a fill's manifest declares `fuel`, the work one call may do, passed to its code as `fill(name, lap, args, fuel)`. A braid fill must declare it, and one that doesn't refuses. **For a host:** `PluginFragment.fill` returns `string | Refusal` now (`textOf` reads an answer as text), and `CompileOptions.plugins` says the host's side: a 10 s deadline per braid fill, refused past it, and stale answers only as a host's choice. No piece sounds different: `five_to_twelve` never refuses.

@@ -117,6 +117,17 @@ export function extract(text: string, lines: readonly number[], options: Extract
   // (a card is where the piece is heard: the piece's, never a fragment's, #291)
   const cards = defined.filter((n) => ['sample', 'midi'].includes(whole.cells.get(n)?.map?.kind ?? ''));
   if (cards.length) return { why: `the lines hold a card, &${cards[0]}, where the piece is heard: a fragment carries none (leave its line in the piece)` };
+  // (a selector over a band switches the piece's own players, decision 061: in a fragment's copy it switches none)
+  const players = new Set(whole.performers.flatMap((p) => (p.role ? [p.name, p.role] : [p.name])));
+  const selectors = defined.filter((n) => {
+    const over = whole.cells.get(n)?.over;
+    const table = over ? whole.cells.get(over) : undefined;
+    return !!table && table.units.length > 0 && table.units.every((u) => u.atom.kind === 'ref' && players.has(u.atom.name));
+  });
+  if (selectors.length)
+    return {
+      why: `the lines hold a selector over the band, &${selectors[0]}, which switches the piece's own players: a fragment's copy switches none (leave its line in the piece)`,
+    };
   const heads = defined.filter((n) => rest.some((g) => g.reads.includes(n)));
   if (!heads.length) return { why: 'nothing else in the piece reads what these lines define' };
   // (what the lines read and don't define: an input where a line reads it as a value, as the expansion asks a fragment to

@@ -282,7 +282,7 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
 export type Bound = ReturnType<typeof bindVoices>;
 
 /** The cells a style= names: its ends' cells (or their mixes' terms), and its curve. */
-function styleRefs(s: StyleSpec): Ref[] {
+export function styleRefs(s: StyleSpec): Ref[] {
   const of = (p: StylePoint): Ref[] => (p.kind === 'cell' ? [p.ref] : p.terms.map((t) => t.ref));
   return [...(s.set ? s.set.flatMap((m) => of(m.point)) : of(s.from)), ...(s.to ? of(s.to) : []), ...(s.curve ? [s.curve] : [])];
 }

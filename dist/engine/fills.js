@@ -10,8 +10,9 @@ export const lawIn = (result) => streamsIn(result)[0]?.law ?? null;
 export const lawAt = (result, clock) => streamsIn(result).find((x) => x.cell.fill?.clock === clock)?.law ?? null;
 export const unitOf = (f) => Math.min(...Object.values(f.fills).flatMap((x) => (x.lap !== undefined && !x.mark ? [x.lap] : [])));
 export function marksOf(f) {
-    return Object.entries(f.fills).flatMap(([name, x]) => x.mark && x.lap ? Array.from({ length: Math.round(f.cycle / x.lap) }, (_, k) => ({ at: k * x.lap * f.stepSeconds, label: f.fill(name, k, {}) })) : []);
+    return Object.entries(f.fills).flatMap(([name, x]) => x.mark && x.lap ? Array.from({ length: Math.round(f.cycle / x.lap) }, (_, k) => ({ at: k * x.lap * f.stepSeconds, label: textOf(f.fill(name, k, {})) })) : []);
 }
+export const textOf = (answer) => (typeof answer === 'string' ? answer : '');
 const namedIn = (e) => (e.k === 'ref' ? [e.ref.name] : e.k === 'sum' ? e.items.flatMap((x) => namedIn(x.e)) : e.k === 'prod' ? e.factors.flatMap(namedIn) : []);
 export function streamClockOf(cells, c) {
     if (c.fill?.fragment)

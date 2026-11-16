@@ -19,6 +19,21 @@ export interface Fill {
   readonly lap?: number;
   /** A section per lap, its text the label: not a cell. */
   readonly mark?: true;
+  /**
+   * The work one call may do, a count its code keeps (states expanded, steps), passed to it: past it, it refuses (decision
+   * 085 §8). The fragment file's frontmatter declares it (`fuel:`), a built-in's manifest here. A braid fill must; there
+   * is no default. It decides only whether the fill refuses, never which answer it gives.
+   */
+  readonly fuel?: number;
+}
+
+/**
+ * A fill refused (decision 085 §8): no text, and why. Said as a warning on the piece's `from` line, `<id> refused: <why>`,
+ * and the fill plays nothing, as a lap not filled in time does; the rest of the piece plays. At the WASM boundary, a
+ * negative length with the reason at the pointer. A thrown error is no refusal: it is a bug in the code.
+ */
+export interface Refusal {
+  readonly refused: string;
 }
 
 /** A plugin-fragment as cells reads it: its fills, the cells around them, and the code that fills them. */
@@ -35,8 +50,12 @@ export interface PluginFragment {
   readonly cycle: number;
   /** Seconds a step: its fills' `step=1` is one of these (`step=84bpm` as the old spelling wrote it). */
   readonly stepSeconds: number;
-  /** A fill's text at a lap: braid text (a mark's, a label). Pure: the same fill, lap and arguments answer the same text. */
-  fill(name: string, lap: number, args: Readonly<Record<string, string>>): string;
+  /**
+   * A fill's text at a lap (a braid's, lap 0): braid text (a mark's, a label), or a refusal. Pure: the same fill, lap,
+   * arguments and fuel answer the same. A call site's fills are called one after another in the order of `fills`, so a
+   * solver whose one search answers several may keep its last answer (085 §8.1).
+   */
+  fill(name: string, lap: number, args: Readonly<Record<string, string>>, fuel?: number): string | Refusal;
 }
 
 /** The plugin-fragments cells ships, by the word `law=` names them with. */
@@ -71,9 +90,12 @@ export const unitOf = (f: PluginFragment): number => Math.min(...Object.values(f
 /** Its sections: each lap of a mark, where it starts (seconds from the start of its cycle) and its label. */
 export function marksOf(f: PluginFragment): { at: number; label: string }[] {
   return Object.entries(f.fills).flatMap(([name, x]) =>
-    x.mark && x.lap ? Array.from({ length: Math.round(f.cycle / x.lap) }, (_, k) => ({ at: k * x.lap! * f.stepSeconds, label: f.fill(name, k, {}) })) : [],
+    x.mark && x.lap ? Array.from({ length: Math.round(f.cycle / x.lap) }, (_, k) => ({ at: k * x.lap! * f.stepSeconds, label: textOf(f.fill(name, k, {})) })) : [],
   );
 }
+
+/** A fill's answer as text: a refusal's is none (it plays nothing, 085 §8). */
+export const textOf = (answer: string | Refusal): string => (typeof answer === 'string' ? answer : '');
 
 /** The cells an expression of a mix names. */
 const namedIn = (e: Expr): string[] => (e.k === 'ref' ? [e.ref.name] : e.k === 'sum' ? e.items.flatMap((x) => namedIn(x.e)) : e.k === 'prod' ? e.factors.flatMap(namedIn) : []);
