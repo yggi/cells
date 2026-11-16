@@ -88,7 +88,7 @@ On the root index today (74): `ALL_OPERATORS`, `Audition`, `AuditionOptions`, `C
 
 Planned modules: `engine/dough-params`, `engine/examples`, `engine/order`, `engine/parser/generators`, `engine/style`, `engine/tags`, `repository/band`, `repository/library`, `repository/seed`, `repository/styles`, `theory/modes`, `theory/tonal`.
 
-Its entry point is not written yet.
+Exported by its entry point, `src/library.ts` (47): `AXES`, `AXIS_NAMES`, `Axis`, `CENTRE`, `DOUGH_PARAMS`, `DOUGH_SOURCES`, `EXAMPLES`, `Example`, `ExampleKey`, `FoundInstrument`, `INSTRUMENT_REACH`, `LIBRARY`, `MIDI_FILE`, `NOTE_NAMES`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SCALES`, `SLOTS`, `STYLES`, `Style`, `TONAL_SCALES`, `TUTORIAL`, `TagKind`, `VoicedPart`, `bandAt`, `bandLine`, `bjorklund`, `canonicalTags`, `fromId`, `headOf`, `instrumentsAt`, `midiOf`, `mod`, `modeBrightness`, `modeName`, `nearestStyle`, `noteName`, `parseTag`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `tagKind`, `tagName`, `usesOf`.
 
 On the root index today (24): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example`, `ExampleKey`, `FoundInstrument`, `LIBRARY`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SLOTS`, `STYLES`, `Style`, `VoicedPart`, `bandAt`, `instrumentsAt`, `nearestStyle`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `usesOf`.
 
@@ -96,8 +96,8 @@ On the root index today (24): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example
 
 | frontend | pin | app: modules / symbols deep | of them, symbols an entry point exports | app: symbols from the root | tests and tools: modules / symbols deep |
 |---|---|---|---|---|---|
-| jambot (`bbb1cb6`) | v0.26.1 | 31 / 93 | 58 | 16 | 20 / 37 |
-| cell-studio (`9216e32`) | v0.26.1 | 82 / 313 | 223 | 0 | 64 / 162 |
+| jambot (`bbb1cb6`) | v0.26.1 | 31 / 93 | 66 | 16 | 20 / 37 |
+| cell-studio (`9216e32`) | v0.26.1 | 82 / 313 | 237 | 0 | 64 / 162 |
 
 Reached by an app and planned for no entry point (the work left): `engine/compiler/declare` (cell-studio), `engine/fills` (cell-studio), `engine/fiveto12` (cell-studio), `engine/parser/use` (cell-studio), `engine/physics` (cell-studio).
 

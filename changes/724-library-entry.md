@@ -1,0 +1,3 @@
+### Added
+
+- **`@yggi/cells/library`, the fourth entry point by role** (#724): what the language ships as data, from one place: the seed (`LIBRARY`, `resolveSeed`, `PARTS`, `usesOf`, `fromId`, `headOf`), the styles and the axes of style space (`STYLES`, `nearestStyle`, `AXES`, `SLOTS`), the band (`PERFORMER_VOICES`, `INSTRUMENT_REACH`, `instrumentsAt`, `bandAt`, `resolveBand`, `scoreStyle`), the examples and their tags, the modes and note names (`SCALES`, `NOTE_NAMES`, `TONAL_SCALES`), the sound parameters (`DOUGH_PARAMS`, `DOUGH_SOURCES`) and `bjorklund`. The hue of a pitch (`pitchHue`) is not here: it moves to Cell studio (decision 086). Each name is the one a module path already gave, and the module paths still work.

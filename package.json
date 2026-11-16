@@ -15,6 +15,11 @@
       "module": "./src/edit.ts",
       "default": "./dist/edit.js"
     },
+    "./library": {
+      "types": "./types/library.d.ts",
+      "module": "./src/library.ts",
+      "default": "./dist/library.js"
+    },
     "./inspect": {
       "types": "./types/inspect.d.ts",
       "module": "./src/inspect.ts",
