@@ -10,6 +10,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Entries not yet released are in [`changes/`](changes/), one file each; a release gathers them here (`npm run changelog -- gather`).
 
+## v0.26.1 — 2026-11-16
+
+### Added
+
+- **A section's intensity, `&intensity`** (decision 096, #571): the song's plus its kind's offset, a sum a score writes (`&intensity [&song + -.45]`, a build `[&song + -.15 + &rise * .45]`). The default `band` takes it as an optional parameter, its own 1, and drives the drums, the bass and the stab by it, Jambot's dynamics lifted (`[&intensity * .35 + .65]`, `[&intensity * .25 + .75]`, `[&intensity * .2222 + .7778]`). `drums_performer`, `bass_performer` and `stab_performer` take that drive (`&drumsDrive`, `&bassDrive`, `&stabDrive`, 1 by default), read twice by the gate's level, since a level's square root is the velocity sent. A score that writes no intensity plays as it did. The four fragments' hashes move.
+
+- A plugin-fragment's braid fills are answered when the piece is expanded (#792, rung 6b of #691): a fill with no lap gets its code's text in place of `fill()`, once, with the `from` line's arguments (each parameter as written, or its default line's), so compile, the folder and the core read plain steps. **For a host:** `CompileOptions.plugins` hands plugin-fragments beside the built-ins, by their fragment's id (decision 085 §6); `expand(text, resolve, locked, plugins)` writes them out. Without its code, a braid fill stays unanswered and is written `fill(<id>, <name>)`. Nothing ships one yet: no piece sounds different.
+
+- **A splice plays what the cell spliced is, a value its value** (decision 097, #810): a line of values may splice a cell that is one number, a level (`map=amp`, `db`, `lin`) or a sum of values, and is a line of values still. A spliced sum is read while its step lasts. So a section plan is one line, `&intensity step=1m/8 &groove &breakdown &build &drop`, each kind `[&song + offset]` (decision 096). Every reader of a value reads it alike: a level, a moving parameter, a style's axis, a term of a sum. A line that splices a sum and is read as notes is an error that says so. A plain line of numbers spliced carries no sort, so a melody of phrases plays as it did. No piece changes how it sounds.
+
+### Changed
+
+- A cell that is one number (decision 088) is a term of a sum of values: `[&song + &breakdown]` with `&song .55` and `&breakdown -.45` is .1, where a sum whose cells were all numbers was refused ("A number is a gain or a pitch: it needs a voice"). A product of numbers in a sum is a constant.
+
+### Fixed
+
+- **Extraction takes what a `from` line passes as the fragment's main parameter** (#807): lines that take from the library, as Kinderlieder's `&harm from vamp_to_the_fifth &key` does, extract with `&key` as the main parameter (`&harm, &bassline from my_vamp_bass &key`), and the piece plays the same. Before, it was left as a sound read by name and the piece played differently. Nothing a piece plays changes.
+
 ## v0.26.0 — 2026-11-15
 
 ### Added
