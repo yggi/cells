@@ -165,6 +165,8 @@ describe('sound', () => {
             hypercell: 75,
             onemore: 80,
             electroswing: 40, // the clarinet comes in at bar 9, 15.5 s at 124 bpm
+            radio: 30, // the lead comes in with the first verse, bar 9, 18.5 s at 104 bpm (#810)
+            song: 30, // the lead comes in with the first verse, bar 9, 17.1 s at 112 bpm (#810)
             spooky: 30, // the celesta comes in at bar 9, 24 s at 100 bpm in 5/4
             brothers: 120,
             ghosts: 60,
