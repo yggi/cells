@@ -3,6 +3,7 @@ import { parse } from "../engine/parser/index.js";
 import { tapPositions } from "../engine/meter.js";
 import { MAIN_KEY } from "../engine/program.js";
 import { expansion, hasFrom, signatureOf } from "../engine/use.js";
+import { isValueLine } from "../engine/valuesum.js";
 const WHOLE = 1e-9;
 const isWhole = (x) => Math.abs(x - Math.round(x)) < WHOLE;
 export const lapMeets = (need, taps) => need.steps > 0 && isWhole((taps * need.rate) / need.steps);
@@ -33,9 +34,24 @@ export function clockNeeds(text, result, of, own) {
 }
 const atomLineReads = (a) => a.kind === 'ref' ? (a.pick || a.shift || a.transpose || a.values ? [a.name] : []) : a.kind === 'seq' ? a.layers.flatMap((l) => l.flatMap((t) => atomLineReads(t.atom))) : [];
 export const readAsLine = (decls) => new Set(decls.flatMap((d) => (d.braid.kind === 'list' ? d.braid.tokens.flatMap((t) => atomLineReads(t.atom)) : [])).map((n) => `&${n}`));
+const addedToValue = (e, value) => {
+    if (e.k === 'prod')
+        return e.factors.flatMap((f) => addedToValue(f, value));
+    if (e.k !== 'sum')
+        return [];
+    const refs = (x) => (x.k === 'ref' ? [x.ref.name] : x.k === 'prod' ? x.factors.flatMap(refs) : x.k === 'sum' ? x.items.flatMap((i) => refs(i.e)) : []);
+    const isValue = (x) => x.k === 'num' || (x.k === 'ref' && value(x.ref.name)) || (x.k === 'prod' && x.factors.every((f) => f.k === 'num' || (f.k === 'ref' && value(f.ref.name))));
+    return e.items.some((i) => isValue(i.e)) ? e.items.flatMap((i) => refs(i.e)) : e.items.flatMap((i) => addedToValue(i.e, value));
+};
+const atomAdded = (a, value) => a.kind === 'mix' ? a.exprs.flatMap((e) => addedToValue(e, value)) : a.kind === 'seq' ? a.layers.flatMap((l) => l.flatMap((t) => atomAdded(t.atom, value))) : [];
+export const readAsAdded = (decls) => {
+    const byName = new Map(decls.map((d) => [d.name, d]));
+    const value = (name) => byName.has(name) && isValueLine(name, byName);
+    return new Set(decls.flatMap((d) => (d.braid.kind === 'list' ? d.braid.tokens.flatMap((t) => atomAdded(t.atom, value)) : [])).map((n) => `&${n}`));
+};
 export function readOnlyAsSound(decls) {
     const inBraid = new Set(decls.flatMap((d) => braidReadsOf(d)).map((n) => `&${n}`));
-    const elsewhere = new Set([...decls.flatMap((d) => otherReadsOf(d)).map((n) => `&${n}`), ...readAsLine(decls)]);
+    const elsewhere = new Set([...decls.flatMap((d) => otherReadsOf(d)).map((n) => `&${n}`), ...readAsLine(decls), ...readAsAdded(decls)]);
     return (name) => inBraid.has(name) && !elsewhere.has(name);
 }
 export const linesRead = (text, resolve) => (resolve && hasFrom(text) ? expansion(text, { resolve }).text : text);

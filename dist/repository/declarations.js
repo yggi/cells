@@ -15,6 +15,7 @@ export const FOLDER_FACETS = {
     motifs: 'motif',
     performers: 'performer',
     rhythms: 'rhythm',
+    sections: 'section',
     stab: 'stab',
     styles: 'style',
 };

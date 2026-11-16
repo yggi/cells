@@ -82,6 +82,8 @@ export interface TappedNeed {
 export declare function clockNeeds(text: string, result: CompileResult, of?: ReadonlySet<string>, own?: ReadonlySet<string>): TappedNeed[];
 /** The names declarations' braids read through an operator (`&call^-2`, `&call[::-1]`): as a line, which a sound isn't. */
 export declare const readAsLine: (decls: readonly CellDecl[]) => ReadonlySet<string>;
+/** The names declarations' mixes add a value to: a line or a value (decisions 079, 096), which a sound isn't. */
+export declare const readAsAdded: (decls: readonly CellDecl[]) => ReadonlySet<string>;
 /**
  * Whether declarations read a name (`&bd`) only as a sound: a step of a braid or a term of a mix, never a table, a clock,
  * a parameter, or through an operator on a step (a line: a form's `&call^-2`).

@@ -26,6 +26,9 @@ const WORKBENCH: Record<string, (head: string, use: string) => string> = {
   '&a': (head, use) => lines(METER, KEY, '&m over=&key step=8n 0 2 4 7', `${head} from ${use} &m`, '&heard step=8n &x', SOUND),
   // (a law, decision 085: the day it reads, and a voice it plays on)
   '&day': (head, use) => lines('&day scan(1!24) loop=1d', `${head} from ${use} &day`, '&glass s=tri loop=C4', `&out map=sample [${head} * &glass * .3]`),
+  // (a section kind, #810: the song's intensity in, its own read where a moving parameter reads a value)
+  '&song': (head, use) =>
+    lines(METER, '&song .55', `${head} from ${use} &song`, '&line step=8n 0 2 4', `&v s=saw loop=C4 lpf=300..2400 * ${head.split(',')[0]}`, '&out map=sample [&line * &v * .3]'),
 };
 const PERFORMER = (head: string, use: string, main: string) =>
   main === '&drumlines'
@@ -37,8 +40,8 @@ const templates = LIBRARY.filter((f) => signatureOf(f.text) && !f.association.so
 const NOTHING_PLAYS = 'Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])';
 
 describe('the seed library’s signatures', () => {
-  it('164 templates (#772: the law five_to_twelve; #572: ten more, two stabs, three bass lines, a harmony and four motifs; #542: ten more, three harmonies, three bass lines and four motifs, then eleven more, four beats, four bass lines, a harmony and two motifs; #540: five harmonies; #637: the 26 rhythms, now 32 with #646’s two): the meters, modes, harmonies, bass lines, motifs, forms, the stabs, the performers, the four instruments that read a style, the band and the rhythms; the rest collections', () => {
-    expect(templates).toHaveLength(164);
+  it('173 templates (#810: the nine section kinds; #772: the law five_to_twelve; #572: ten more, two stabs, three bass lines, a harmony and four motifs; #542: ten more, three harmonies, three bass lines and four motifs, then eleven more, four beats, four bass lines, a harmony and two motifs; #540: five harmonies; #637: the 26 rhythms, now 32 with #646’s two): the meters, modes, harmonies, bass lines, motifs, forms, section kinds, the stabs, the performers, the four instruments that read a style, the band and the rhythms; the rest collections', () => {
+    expect(templates).toHaveLength(173);
     const collections = LIBRARY.filter((f) => !signatureOf(f.text)).map((f) => f.id);
     expect(collections).toContain('gm_kit');
     expect(collections).toContain('upright_bass');
@@ -54,7 +57,7 @@ describe('the seed library’s signatures', () => {
     for (const f of RHYTHM_FRAGMENTS) expect(signatureOf(f.text)!.main, f.id).toBeNull();
     const rhythms = new Set(RHYTHM_FRAGMENTS.map((f) => f.id));
     for (const f of templates.filter((t) => !instruments.includes(t.id) && t.id !== 'band' && !rhythms.has(t.id)))
-      expect(signatureOf(f.text)!.main, f.id).toMatch(/^&(tempo|tonic|key|harm|call|a|drumlines|bassline|padline|stabline|leadline|day)$/);
+      expect(signatureOf(f.text)!.main, f.id).toMatch(/^&(tempo|tonic|key|harm|call|a|drumlines|bassline|padline|stabline|leadline|day|song)$/);
   });
 
   it.each(templates.map((f) => [f.id, f.text] as const))('%s: a copy over a workbench that gives its main argument compiles with no diagnostic', (id, text) => {

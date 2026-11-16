@@ -103,6 +103,8 @@ const benches: Readonly<Record<string, readonly string[]>> = {
   '&leadline': [...KEYED, STYLE, '&leadline over=&key step=8n 0 2 4 2'],
   // (a law, decision 085: the day it reads)
   '&day': ['&day scan(1!24) loop=1d'],
+  // (a section kind, #810: the song's intensity, a cell that is one number)
+  '&song': [METER, '&song .55'],
 };
 const meters = [
   'meter("16/8") step=120bpm',
