@@ -392,7 +392,7 @@ describe('a meter scan is a meter bent (decision 080)', () => {
   });
   it('a bend longer than the bar spans bars: a tempo map', () => {
     const r = compileSource(play('&bar meter("+") step=2 bend=4n:&b\n&b 2 1 1'));
-    expect(r.cells.get('bar')?.bend).toEqual({ positions: [0, 2, 3], lap: 4, bars: 3 });
+    expect(r.cells.get('bar')?.bend).toEqual({ positions: [0, 2, 3], lap: 4, bars: 3, tableCell: 'b' });
   });
   it('the family writes a scan so, its table a cell; with pulse=, the bar one beat and its laps counted', () => {
     const fam = family('meter scans');

@@ -7,7 +7,7 @@
  * it reads through and the cells it splices in; voices sit beyond what they play.
  */
 import { isMidiCard, keepsTime, type CompileResult, type Output, type ResolvedCell } from './program';
-import type { Atom, Binding, Pick, ValueMap } from './ast';
+import type { Atom, Binding, Expr, Pick, ValueMap } from './ast';
 import { leaves } from './subseq';
 import { cellId, clockTapId, edgeId, junctionId, stepEdgeId } from './ids';
 import { VOICE_KIT } from './compiler/declare';
@@ -137,8 +137,12 @@ export interface GraphEdge extends Wire {
   readonly bulbAt?: { readonly x: number; readonly y: number; readonly r: number };
 }
 
-/** The ports that make the graph's structure rather than feed what plays: a table read, a ref, a step, a mix's or a MIDI card's entry, a product's voice, a note's link, a copy's base. */
-const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about', 'base']);
+/**
+ * The ports that make the graph's structure rather than feed what plays: a table read, a ref, a step, a mix's or a MIDI
+ * card's entry, a product's voice, a note's link, a copy's base, a bend's table (how a meter places its steps) and a
+ * style (what a cell is, not what it sends).
+ */
+const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about', 'base', 'bend', 'style']);
 /**
  * A wire into what plays it: a melody into its voice, its envelope, levels, pitch, parameters, FM, what excites, couples,
  * writes or plays it. Not ticks: a parameter's clock (`delaytime=&bar*4/3`) is timing, as a step is.
@@ -480,6 +484,25 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
         transforms: AS_IS,
         ...wire('braid', 'cv', id, cellId(tonic), 1, true, true),
       });
+    // a meter's bend (decision 080, `bend=8n:&lean:&k`): its table and the cells moving its depth (decision 081) feed the
+    // meter, as a tonic or a swing's cells are read; the table is a read table, as `map=&curve` is (#737)
+    if (c.bend) {
+      for (const name of new Set([c.bend.tableCell, ...(c.bend.depth?.factors ?? [])]))
+        if (result.cells.has(name))
+          link({
+            id: edgeId(cellId(name), id),
+            source: cellId(name),
+            target: id,
+            count: 1,
+            transforms: AS_IS,
+            ...wire('bend', 'cv', cellId(name), id, name === c.bend.tableCell ? entries(result, name) : 1, false, name === c.bend.tableCell),
+          });
+    }
+    // a style (`style=&mine`, decision 063: the cells it names, its ends and its curve): each is read into the cell it
+    // places (#618)
+    for (const name of c.styleReads ?? [])
+      if (result.cells.has(name))
+        link({ id: edgeId(cellId(name), id), source: cellId(name), target: id, count: 1, transforms: AS_IS, ...wire('style', 'cv', cellId(name), id, 1, false, true) });
     // a note's links: what it explains
     for (const target of c.about)
       if (result.cells.has(target))
@@ -742,6 +765,26 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
     // (a MIDI card's products, numbered on from its own: their junctions are its entries)
     (c.chords ?? []).flatMap((bs) => bs ?? []).forEach((b, entry) => product(c, b, entry, 'midi'));
   }
+  // A sum of values (`&drift [&section * .5 + &song * .3]`, decision 079, a range moved by a cell): a mix that is no sound
+  // names its cells, each a wire as a spliced cell's is (#618). A name another rule has wired to this cell already (a gate's
+  // stack, a product) is not wired twice, in either direction.
+  for (const c of result.cells.values()) {
+    if (!shown(c.name) || c.mix || c.chords || c.gate || c.map?.kind === 'role') continue;
+    const id = cellId(c.name);
+    const read = new Map<string, number>();
+    for (const u of c.units) for (const name of valueSumRefs(u.atom)) read.set(name, (read.get(name) ?? 0) + 1);
+    for (const [name, count] of read) {
+      if (name === c.name || !result.cells.has(name) || seen.has(edgeId(id, cellId(name))) || seen.has(edgeId(cellId(name), id))) continue;
+      link({
+        id: edgeId(id, cellId(name)),
+        source: id,
+        target: cellId(name),
+        count,
+        transforms: Array.from({ length: count }, () => []),
+        ...wire('braid', 'cv', id, cellId(name), 1, true, true),
+      });
+    }
+  }
   // voices: where they sit in stereo, and in what order the mix names them
   // (an instrument — a mix used like a voice — is what sits in the stereo field, not the voices inside it)
   const sounding = (o: (typeof result.outputs)[number]) => o.through[0] ?? o.voice;
@@ -758,6 +801,13 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
   });
   return { nodes: [...placed, ...junctions], edges, through };
 }
+
+/** The cells a sum's terms and a product's factors name, however deep. */
+const exprRefs = (e: Expr): string[] => (e.k === 'ref' ? [e.ref.name] : e.k === 'prod' ? e.factors.flatMap(exprRefs) : e.k === 'sum' ? e.items.flatMap((i) => exprRefs(i.e)) : []);
+
+/** The cells the mixes in an atom name, a subsequence's too: a sum of values reads them (decision 079). */
+const valueSumRefs = (a: Atom): string[] =>
+  a.kind === 'mix' ? a.exprs.flatMap(exprRefs) : a.kind === 'seq' ? a.layers.flatMap((l) => l.flatMap((t) => valueSumRefs(t.atom))) : [];
 
 /** In a product, a volume rather than a pitch: map=amp or db, or map=lin as a bare factor (algebra.ts). */
 const isLevel = (c: ResolvedCell, inSum: boolean) => c.map?.kind === 'amp' || c.map?.kind === 'db' || ((c.map?.kind === 'lin' || !!c.sum) && !inSum);
