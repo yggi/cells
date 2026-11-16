@@ -10,6 +10,7 @@ export { cellId, clockTapId, edgeId, isJunction, stepEdgeId } from "./engine/ids
 export { beatCount, meterOfFrame, noteValue, swungPlace, tapShare, writtenPlace } from "./engine/meter.js";
 export { outs, soundRole } from "./engine/outs.js";
 export { kitOf } from "./engine/plays.js";
+export { formOf, readsOf } from "./engine/reads.js";
 export { lapOf, ownRate, refsOf, stepsAt, stepsPerSecond } from "./engine/readers.js";
 export { heldAt } from "./engine/series.js";
 export { CELL_KINDS, pieceStats } from "./engine/stats.js";

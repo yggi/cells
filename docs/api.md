@@ -30,7 +30,7 @@ Each step of the plan moves a count in the ledger: the symbols a frontend reache
 |---|---|---|---|
 | `@yggi/cells` | language | compile, plan, window; the shared types | 13 |
 | `@yggi/cells/edit` | language | edit, patch, capture, vary, shorten, normalise, migrate a text; a piece file | 56 |
-| `@yggi/cells/inspect` | language | read a compiled piece: its cells, pitches, clocks, values, written graph | 20 |
+| `@yggi/cells/inspect` | language | read a compiled piece: its cells, pitches, clocks, values, written graph | 21 |
 | `@yggi/cells/midi` | language | text to MIDI notes and hits, MIDI files, keys, the performer | 26 |
 | `@yggi/cells/time` | language | analysis of what plays: scalograms, structure, motifs | 11 |
 | `@yggi/cells/repository` | repository | query, fit, learn and migrate a layer; a fragment read as cells means it | 20 |
@@ -54,11 +54,11 @@ On the root index today (45): `Anchor`, `CodeLine`, `Core`, `CoreOptions`, `Inte
 
 #### `@yggi/cells/inspect`
 
-Planned modules: `engine/attributes`, `engine/clocking`, `engine/duration`, `engine/flatten`, `engine/flows`, `engine/fm`, `engine/graph`, `engine/helix`, `engine/ids`, `engine/meter`, `engine/outs`, `engine/plays`, `engine/readers`, `engine/series`, `engine/stats`, `engine/subseq`, `engine/transform`, `engine/values`, `engine/valuesum`, `engine/wave`.
+Planned modules: `engine/attributes`, `engine/clocking`, `engine/duration`, `engine/flatten`, `engine/flows`, `engine/fm`, `engine/graph`, `engine/helix`, `engine/ids`, `engine/meter`, `engine/outs`, `engine/plays`, `engine/readers`, `engine/reads`, `engine/series`, `engine/stats`, `engine/subseq`, `engine/transform`, `engine/values`, `engine/valuesum`, `engine/wave`.
 
-Exported by its entry point, `src/inspect.ts` (89): `ATTRIBUTES`, `CELL_KINDS`, `CORE`, `CellKind`, `EPS`, `EdgeTransform`, `Flow`, `GraphEdge`, `GraphModel`, `GraphNode`, `Leaf`, `Meter`, `ParamTrack`, `PieceTime`, `SwingLevel`, `TIME_PARAMS`, `WrittenGraph`, `anchoredAt`, `beatCount`, `canonicalParam`, `cellId`, `clockTapId`, `clockText`, `clocking`, `durationText`, `edgeId`, `edgeLabel`, `entries`, `feeds`, `filterModel`, `flatten`, `flows`, `fmLines`, `fmWave`, `footOf`, `gridName`, `harmonics`, `heldAt`, `isAttribute`, `isCellNode`, `isJunction`, `isPicked`, `isTurntable`, `kitOf`, `lapOf`, `lastNoteAt`, `leaves`, `lookup`, `mainLength`, `mainTempo`, `meterOfFrame`, `netsOf`, `noteValue`, `notesAt`, `outs`, `ownRate`, `period`, `physicsOf`, `pieceStats`, `pieceTime`, `playedCells`, `positionOf`, `readThrough`, `refsOf`, `resolveIn`, `resolvePitch`, `sections`, `selects`, `semitones`, `shiftedUnits`, `shiftsAt`, `slots`, `soundRole`, `stepEdgeId`, `stepsAt`, `stepsOf`, `stepsPerSecond`, `structureKey`, `swungPlace`, `tableChain`, `tapShare`, `tapeMotion`, `tapped`, `transformLabel`, `valueAt`, `valuesAt`, `waveform`, `writtenGraph`, `writtenPlace`.
+Exported by its entry point, `src/inspect.ts` (92): `ATTRIBUTES`, `CELL_KINDS`, `CORE`, `CellKind`, `EPS`, `EdgeTransform`, `Flow`, `GraphEdge`, `GraphModel`, `GraphNode`, `Leaf`, `Meter`, `ParamTrack`, `PieceTime`, `Read`, `SwingLevel`, `TIME_PARAMS`, `WrittenGraph`, `anchoredAt`, `beatCount`, `canonicalParam`, `cellId`, `clockTapId`, `clockText`, `clocking`, `durationText`, `edgeId`, `edgeLabel`, `entries`, `feeds`, `filterModel`, `flatten`, `flows`, `fmLines`, `fmWave`, `footOf`, `formOf`, `gridName`, `harmonics`, `heldAt`, `isAttribute`, `isCellNode`, `isJunction`, `isPicked`, `isTurntable`, `kitOf`, `lapOf`, `lastNoteAt`, `leaves`, `lookup`, `mainLength`, `mainTempo`, `meterOfFrame`, `netsOf`, `noteValue`, `notesAt`, `outs`, `ownRate`, `period`, `physicsOf`, `pieceStats`, `pieceTime`, `playedCells`, `positionOf`, `readThrough`, `readsOf`, `refsOf`, `resolveIn`, `resolvePitch`, `sections`, `selects`, `semitones`, `shiftedUnits`, `shiftsAt`, `slots`, `soundRole`, `stepEdgeId`, `stepsAt`, `stepsOf`, `stepsPerSecond`, `structureKey`, `swungPlace`, `tableChain`, `tapShare`, `tapeMotion`, `tapped`, `transformLabel`, `valueAt`, `valuesAt`, `waveform`, `writtenGraph`, `writtenPlace`.
 
-On the root index today (3): `meterOfFrame`, `swungPlace`, `writtenPlace`.
+On the root index today (6): `Read`, `formOf`, `meterOfFrame`, `readsOf`, `swungPlace`, `writtenPlace`.
 
 #### `@yggi/cells/midi`
 
@@ -80,7 +80,7 @@ Nothing on the root index today.
 
 Planned modules: `engine/reading/chords`, `engine/reading/mood`, `engine/reading/point`, `engine/reading/style`, `engine/reading/voice`, `engine/references`, `engine/renamed`, `engine/takein`, `engine/use`, `repository/audition`, `repository/catalogue`, `repository/corefragment`, `repository/decompose`, `repository/extract`, `repository/files`, `repository/fit`, `repository/fragments`, `repository/holes`, `repository/learned`, `repository/recognise`.
 
-Its entry point is not written yet.
+Exported by its entry point, `src/repository.ts` (103): `ALL_OPERATORS`, `Audition`, `AuditionOptions`, `BAR_4_4`, `Bar`, `CO_USE_PULL`, `CatalogueEntry`, `ClockNeed`, `DecomposeOptions`, `Decomposition`, `EMPTY_LAYER`, `ExtractOptions`, `Extraction`, `Filed`, `Filing`, `FitAs`, `Found`, `Fragment`, `FragmentCore`, `FragmentFile`, `FragmentFileProblems`, `FromLine`, `HarmReading`, `Holes`, `LearnedLayer`, `LearnedPoint`, `LibraryFile`, `LineNote`, `Merged`, `Meta`, `NoExtraction`, `PathStep`, `QUALITY_STACKS`, `QueryOptions`, `RENAMED_IDS`, `ReadChord`, `RecogniseOptions`, `Recognised`, `Recogniser`, `Reference`, `Repository`, `StylePoint`, `StyleReading`, `TakenIn`, `TimingReading`, `Use`, `UseOn`, `UseOnOptions`, `UsedPair`, `VOICES`, `Voice`, `VoiceLandmark`, `VoiceReading`, `WeightedPoint`, `audition`, `bodyOf`, `byId`, `cachedFit`, `canonicalText`, `catalogue`, `chordOf`, `coreFragment`, `createRecogniser`, `createRepository`, `declarations`, `decompose`, `expand`, `expansion`, `extract`, `fileFragment`, `fitsAs`, `fragmentDistance`, `fragmentHash`, `fromLine`, `hasFrom`, `headsOf`, `holesOf`, `layerProblems`, `partDistance`, `partOf`, `partsOf`, `playedHeadsOf`, `pointDistance`, `readChords`, `readFragment`, `readFragments`, `readHarm`, `readPoint`, `readStyle`, `readTiming`, `readVoice`, `references`, `renamedLayer`, `sameText`, `signatureOf`, `takeIn`, `useFragments`, `useOn`, `usedTogether`, `voiceOf`, `wordOf`, `writeFragment`, `writtenOut`.
 
 On the root index today (74): `ALL_OPERATORS`, `Audition`, `AuditionOptions`, `CatalogueEntry`, `ClockNeed`, `DecomposeOptions`, `Decomposition`, `EMPTY_LAYER`, `ExtractOptions`, `Extraction`, `Filed`, `Filing`, `FitAs`, `Found`, `Fragment`, `FragmentCore`, `FragmentFile`, `FragmentFileProblems`, `FromLine`, `Holes`, `LearnedLayer`, `LearnedPoint`, `LibraryFile`, `LineNote`, `Merged`, `Meta`, `NoExtraction`, `PathStep`, `QueryOptions`, `RENAMED_IDS`, `RecogniseOptions`, `Recognised`, `Recogniser`, `Reference`, `Repository`, `StylePoint`, `TakenIn`, `Use`, `UseOn`, `UseOnOptions`, `UsedPair`, `WeightedPoint`, `audition`, `bodyOf`, `canonicalText`, `catalogue`, `coreFragment`, `createRecogniser`, `createRepository`, `decompose`, `expand`, `extract`, `fileFragment`, `fitsAs`, `fragmentHash`, `fromLine`, `headsOf`, `holesOf`, `layerProblems`, `playedHeadsOf`, `pointDistance`, `readFragment`, `readFragments`, `references`, `renamedLayer`, `sameText`, `signatureOf`, `takeIn`, `useFragments`, `useOn`, `usedTogether`, `wordOf`, `writeFragment`, `writtenOut`.
 
@@ -96,8 +96,8 @@ On the root index today (24): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example
 
 | frontend | pin | app: modules / symbols deep | of them, symbols an entry point exports | app: symbols from the root | tests and tools: modules / symbols deep |
 |---|---|---|---|---|---|
-| jambot (`bbb1cb6`) | v0.26.1 | 31 / 93 | 66 | 16 | 20 / 37 |
-| cell-studio (`9216e32`) | v0.26.1 | 82 / 313 | 237 | 0 | 64 / 162 |
+| jambot (`bbb1cb6`) | v0.26.1 | 31 / 93 | 88 | 16 | 20 / 37 |
+| cell-studio (`9216e32`) | v0.26.1 | 82 / 313 | 241 | 0 | 64 / 162 |
 
 Reached by an app and planned for no entry point (the work left): `engine/compiler/declare` (cell-studio), `engine/fills` (cell-studio), `engine/fiveto12` (cell-studio), `engine/parser/use` (cell-studio), `engine/physics` (cell-studio).
 

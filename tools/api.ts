@@ -51,6 +51,7 @@ export const ENTRY_POINTS: readonly { readonly match: string; readonly entry: En
   // Inspect.
   ...[
     'readers',
+    'reads',
     'helix',
     'flatten',
     'clocking',
@@ -246,8 +247,8 @@ export function render(root = ROOT, ledger: Ledger = readLedger()): string {
     const there = [...exported].filter(([m]) => entryOf(m) === e.name).flatMap(([, n]) => n);
     lines.push(there.length ? `On the root index today (${there.length}): ${list([...there].sort())}.` : 'Nothing on the root index today.', '');
   }
-  const stray = [...exported].filter(([m]) => entryOf(m) === 'view' || entryOf(m) === 'internal').flatMap(([m, n]) => n.map((x) => `${x} (${m})`));
-  if (stray.length) lines.push('#### On the root index, planned for no entry point', '', `${list(stray)}.`, '');
+  const stray = [...exported].filter(([m]) => entryOf(m) === 'view' || entryOf(m) === 'internal').flatMap(([m, n]) => n.map((x) => `\`${x}\` (${m})`));
+  if (stray.length) lines.push('#### On the root index, planned for no entry point', '', `${stray.join(', ')}.`, '');
 
   lines.push('### What the frontends reach by a module path', '');
   const have = new Map<string, Set<string>>();

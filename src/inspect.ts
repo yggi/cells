@@ -19,6 +19,7 @@ export { cellId, clockTapId, edgeId, isJunction, stepEdgeId } from './engine/ids
 export { beatCount, meterOfFrame, noteValue, swungPlace, tapShare, writtenPlace, type Meter, type SwingLevel } from './engine/meter';
 export { outs, soundRole } from './engine/outs';
 export { kitOf } from './engine/plays';
+export { formOf, readsOf, type Read } from './engine/reads';
 export { lapOf, ownRate, refsOf, stepsAt, stepsPerSecond } from './engine/readers';
 export { heldAt, type ParamTrack } from './engine/series';
 export { CELL_KINDS, pieceStats, type CellKind } from './engine/stats';
