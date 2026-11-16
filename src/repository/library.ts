@@ -28,6 +28,7 @@ const FOLDERS = [
   'motifs',
   'forms',
   'sections',
+  'songs',
   'bands',
   'styles',
   'modules',

@@ -43,6 +43,7 @@ export const FOLDER_FACETS: Readonly<Record<string, string>> = {
   performers: 'performer',
   rhythms: 'rhythm',
   sections: 'section',
+  songs: 'song',
   stab: 'stab',
   styles: 'style',
 };

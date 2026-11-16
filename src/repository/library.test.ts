@@ -46,8 +46,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the law five_to_twelve (#772), the thirteen meters, the thirty-two rhythms, the seventeen bass lines, the seventeen harmonies, the twenty-nine instruments, the vibrato and the envelopes, the nine modes, the five performers, the three stab lines, the fifty-six motifs, the six forms, the nine section kinds (#810), the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: two hundred and eight (#572, #542, #540, #646)', () => {
-    expect(LIBRARY).toHaveLength(209);
+  it('is the law five_to_twelve (#772), the thirteen meters, the thirty-two rhythms, the seventeen bass lines, the seventeen harmonies, the twenty-nine instruments, the vibrato and the envelopes, the nine modes, the five performers, the three stab lines, the fifty-six motifs, the six forms, the nine section kinds and the seven song forms (#810), the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: two hundred and fifteen (#572, #542, #540, #646)', () => {
+    expect(LIBRARY).toHaveLength(216);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
@@ -147,6 +147,14 @@ describe('the points proposed for two more presets (#349)', () => {
   const same = (a: StylePoint, b: StylePoint) => AXES.every((axis) => !(axis in a) || a[axis] === b[axis]);
   // (and the ghost-house fragments near Spooky, added after: the presets' first finds are what they were before either)
   const NEW = new Set([
+    // (the song forms, #810: a facet of their own, which nothing found before)
+    'verse_chorus',
+    'build_drop',
+    'groove_breakdown',
+    'head_solos_head',
+    'strophic',
+    'vamp',
+    'binary',
     'spooky_drums',
     'creeping_bass',
     'dark_cadence',
@@ -182,12 +190,14 @@ describe('the points proposed for two more presets (#349)', () => {
   // 076's axes Swing jazz (ionian) and Spooky (harmonic minor) are told apart by their mood, so the dark cadence no
   // longer reaches it, and nothing moves, #572)
   it('change nothing Jambot’s eight presets find first, in any facet, nor how far it is', () => {
-    // (sixteen with the section kinds, #810, which no query returns: nothing they find moves)
-    expect(facets).toHaveLength(16);
+    // (seventeen with the section kinds, which no query returns, and the song forms, which are new: #810)
+    expect(facets).toHaveLength(17);
     const NAMES = ['Synth-pop', 'Techno', 'Deep house', 'Ambient', 'Lo-fi hip hop', 'Funk', 'Bossa nova', 'Swing jazz'];
     const first = (r: typeof library, point: StylePoint, facet: string) => ranked(r.query(point, 1, {}, { facet }));
     const moved = PRESETS.flatMap((point, i) =>
       facets
+        // (a facet new to the library, the song forms', had nothing to find before: nothing in it moved)
+        .filter((facet) => first(before, point, facet).length > 0)
         .filter((facet) => JSON.stringify(first(library, point, facet)) !== JSON.stringify(first(before, point, facet)))
         .map((facet) => [NAMES[i], facet, first(library, point, facet)[0]![0], first(before, point, facet)[0]![1], first(library, point, facet)[0]![1]]),
     );
