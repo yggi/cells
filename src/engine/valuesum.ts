@@ -6,6 +6,7 @@
  */
 import type { CellDecl, Expr, Token } from './ast';
 import { VOICE_MAKERS } from './attributes';
+import { MAX_SPLICE_DEPTH } from './program';
 
 /** One term of a sum: a cell and its weight. */
 export interface SumTerm {
@@ -43,22 +44,65 @@ function itemOf(e: Expr, sign: 1 | -1): { term: SumTerm } | { constant: number }
 /** Does an expression name a cell (a bare reference, alone or in a sum or a product)? */
 const names = (e: Expr): boolean => (e.k === 'ref' ? true : e.k === 'sum' ? e.items.some((it) => names(it.e)) : e.k === 'prod' ? e.factors.some(names) : false);
 
-/** Does an atom hold numbers alone: a note, a rest, a choice, or a subsequence of them (no cell spliced, no sound)? */
-const numeric = (atom: Token['atom']): boolean =>
-  atom.kind === 'note' || atom.kind === 'rest' || atom.kind === 'choice' || (atom.kind === 'seq' && atom.layers.every((l) => l.every((t) => numeric(t.atom))));
+/**
+ * Does an atom hold values alone: a number, a rest, a choice, a cell spliced that carries a value (`carriesValue`), or a
+ * subsequence of them? A splice plays what the cell spliced is, in its step, whatever its sort (decision 097): a melody
+ * its notes, a value its values. No sound, and nothing read through a table.
+ */
+const valueAtom = (atom: Token['atom'], decls: ReadonlyMap<string, CellDecl>, seen: ReadonlySet<string>): boolean =>
+  atom.kind === 'note' ||
+  atom.kind === 'rest' ||
+  atom.kind === 'choice' ||
+  (atom.kind === 'ref' && !atom.pick && !atom.slot && !atom.values && !atom.transpose && atom.shift === 0 && carriesValue(atom.name, decls, seen)) ||
+  (atom.kind === 'seq' && atom.layers.every((l) => l.every((t) => valueAtom(t.atom, decls, seen))));
 
 /**
- * Is the cell a line of values: a line of numbers alone, read through no table, a level (map=lin, amp, db), or a sum of
- * values? Anything that splices a cell, sounds, names a sound or reads through a table is not (a pattern of drum hits is
- * a sound, read through its kit).
+ * Does a cell spliced carry a value into the line that splices it (decision 097)? A cell that is one number (it is the
+ * number, law L18), a sum of values, a level (map=amp, db, lin), or a line of values that splices one of those. A plain
+ * line of numbers carries no sort of its own (what reads it decides: degrees or values), so a line that splices plain
+ * lines alone stays what it was, a pattern its reader reads (a melody of phrases, decision 087's notes).
+ */
+function carriesValue(name: string, decls: ReadonlyMap<string, CellDecl>, seen: ReadonlySet<string>): boolean {
+  const d = decls.get(name);
+  if (!d || seen.has(name) || seen.size > MAX_SPLICE_DEPTH) return false;
+  if (numberCellOf(d) !== null) return true;
+  if (chordOf(d)) return valueSumOf(name, decls, seen) !== null;
+  if (!isValueLine(name, decls, seen)) return false;
+  if (d.map && (d.map.kind === 'amp' || d.map.kind === 'db' || d.map.kind === 'lin')) return true;
+  const inner = new Set([...seen, name]);
+  const splices = (atom: Token['atom']): boolean =>
+    atom.kind === 'ref' ? carriesValue(atom.name, decls, inner) : atom.kind === 'seq' && atom.layers.some((l) => l.some((t) => splices(t.atom)));
+  return d.braid.kind === 'list' && d.braid.tokens.some((t) => splices(t.atom));
+}
+
+/**
+ * Is the cell a line of values: a line of numbers and of cells spliced that carry a value (decision 097), read through
+ * no table, a level (map=lin, amp, db), or a sum of values? Anything that splices a sound or a plain line, sounds, names
+ * a sound or reads through a table is not (a pattern of drum hits is a sound, read through its kit).
  */
 export function isValueLine(name: string, decls: ReadonlyMap<string, CellDecl>, seen: ReadonlySet<string> = new Set()): boolean {
   const d = decls.get(name);
   // (read through a table, over=, a line is a pattern: a kit's hits are a sound, compile reads drum hits so)
-  if (!d || d.gate || d.over || Object.keys(d.params).some((k) => VOICE_MAKERS.has(k))) return false;
+  if (!d || d.gate || d.over || Object.keys(d.params).some((k) => VOICE_MAKERS.has(k)) || seen.size > MAX_SPLICE_DEPTH) return false;
   if (chordOf(d)) return valueSumOf(name, decls, seen) !== null;
   if (d.map && d.map.kind !== 'lin' && d.map.kind !== 'amp' && d.map.kind !== 'db') return false;
-  return d.braid.kind === 'list' && d.braid.tokens.length > 0 && d.braid.tokens.every((t) => numeric(t.atom));
+  const inner = new Set([...seen, name]);
+  return d.braid.kind === 'list' && d.braid.tokens.length > 0 && d.braid.tokens.every((t) => valueAtom(t.atom, decls, inner));
+}
+
+/**
+ * Does a line splice a sum of values, itself or through a line it splices (decision 097)? Such a step is the sum's value
+ * while it lasts, a level or a moving value; as a note it has no pitch to play, and a pitch reading says so.
+ */
+export function splicesSum(name: string, decls: ReadonlyMap<string, CellDecl>, seen: ReadonlySet<string> = new Set()): boolean {
+  const d = decls.get(name);
+  if (!d || seen.has(name) || seen.size > MAX_SPLICE_DEPTH || chordOf(d) || d.braid.kind !== 'list') return false;
+  const inner = new Set([...seen, name]);
+  const atomSplices = (atom: Token['atom']): boolean =>
+    atom.kind === 'ref'
+      ? valueSumOf(atom.name, decls) !== null || splicesSum(atom.name, decls, inner)
+      : atom.kind === 'seq' && atom.layers.some((l) => l.some((t) => atomSplices(t.atom)));
+  return d.braid.tokens.some((t) => atomSplices(t.atom));
 }
 
 /**

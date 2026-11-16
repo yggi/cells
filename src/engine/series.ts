@@ -32,6 +32,8 @@ export interface Series {
   readonly bipolar?: true;
   /** A sum of values (decision 079): its terms' series, each by its weight, and a constant; read as their weighted sum. */
   readonly sum?: { readonly terms: readonly { readonly series: Series; readonly weight: number }[]; readonly constant: number };
+  /** The sums of values its steps splice, each by name (decision 097): a step that reads one is its value while it lasts. */
+  readonly reads?: ReadonlyMap<string, Series>;
 }
 
 /** A series' step on a lap, as drawn (a step that doesn't play: null). */
@@ -231,6 +233,8 @@ export function levelSeries(p: Plan, m: Series, from: number, to: number, writte
   }
   const val = (e: StepEvent) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : m.bipolar ? Math.max(0, (1 + e.value + e.alter) / 2) : Math.max(0, e.value + e.alter));
   if (m.events.length === 0) return [{ at: from, level: 0 }];
+  // (a line that splices sums of values, decision 097: each step that reads one is that sum while it lasts)
+  if (m.reads?.size) return readingSeries(p, m, from, to, written, val);
   if (!m.clock) return [{ at: from, level: val(m.events[0]) }];
   if (m.lin) return rampedSeries(p, m, from, to, (e) => val(e)).map((x) => ({ at: x.at, level: Math.max(0, x.v), ramp: x.ramp }));
   const tm = clocking(p.result, p.statics).map(m.clock);
@@ -261,6 +265,50 @@ export function levelSeries(p: Plan, m: Series, from: number, to: number, writte
   for (const s of [...edges].sort((a, b) => a - b)) {
     const level = levelAt(s + EPS * 10);
     if (level !== out[out.length - 1].level) out.push({ at: tm.q(s / m.rate), level });
+  }
+  return out;
+}
+
+/**
+ * A line whose steps splice sums of values (decision 097), over [from, to): at each of its edges and each change of a sum
+ * it reads, the level of the step sounding then, a step that reads a sum that sum's level at that moment. A step that
+ * holds a number is read as `levelSeries` reads it.
+ */
+function readingSeries(p: Plan, m: Series, from: number, to: number, written: number | undefined, val: (e: StepEvent) => number) {
+  const read = new Map([...m.reads!].map(([name, s]) => [name, levelSeries(p, s, from, to, written)]));
+  const held = (v: number) => Math.min(1, Math.max(0, v));
+  const tm = m.clock ? clocking(p.result, p.statics).map(m.clock) : null;
+  const stepAt = (t: number) => (tm ? tm.stepAt(Math.max(0, t)) * m.rate : 0);
+  // (the step sounding at a moment, as drawn on its lap: a chord's loudest, a step that reads a sum its sum's level)
+  const levelAt = (t: number) => {
+    const c = stepAt(t) + EPS * 10;
+    const lap = lapOf(c, m.period);
+    const local = c - lap * m.period;
+    let best = -1;
+    let ramp = false;
+    for (const e of tm ? m.events : m.events.slice(0, 1)) {
+      if (tm && !(local >= e.step - EPS && local < e.step + e.duration - EPS)) continue;
+      const d = drawnOf(m, e, lap);
+      if (!d) continue;
+      const s = d.reads ? read.get(d.reads) : undefined;
+      const v = s ? held(valueThen(s, t, (x) => x.level)) : val(d);
+      if (v > best) [best, ramp] = [v, !!s && s.some((x) => x.ramp && Math.abs(x.at - t) < EPS)];
+    }
+    return { level: best < 0 ? 0 : best, ramp };
+  };
+  const times = new Set<number>([from]);
+  for (const s of read.values()) for (const x of s) if (x.at > from + EPS && x.at < to - EPS) times.add(x.at);
+  if (tm) {
+    const c0 = stepAt(from);
+    const c1 = stepAt(to);
+    for (let lap = Math.floor(c0 / m.period); lap * m.period < c1; lap++)
+      for (const e of m.events) for (const s of [lap * m.period + e.step, lap * m.period + e.step + e.duration]) if (s > c0 + EPS && s < c1 - EPS) times.add(tm.q(s / m.rate));
+  }
+  const out: { at: number; level: number; ramp?: boolean }[] = [];
+  for (const at of [...times].sort((a, b) => a - b)) {
+    const { level, ramp } = levelAt(at);
+    const last = out[out.length - 1];
+    if (!last || level !== last.level || ramp) out.push({ at, level, ...(ramp ? { ramp: true } : {}) });
   }
   return out;
 }

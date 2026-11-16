@@ -48,6 +48,11 @@ export interface StepEvent {
   readonly chance?: number;
   /** &x:0:g: its gain, times every level it was spliced at. */
   readonly level?: number;
+  /**
+   * A sum of values spliced (decision 097): the cell its value is read from while the step lasts, a sum being one step
+   * that holds a value moving with its terms; `value` is 0 and says nothing.
+   */
+  readonly reads?: string;
   /** [a|b|c]: what it chooses from (value is the first, for drawing). */
   readonly options?: readonly { readonly value: number; readonly alter: number }[];
   /** `<a b>`, `x/n`: it plays on the laps (of the cell played) where lap mod `of` is `is`; absent, on every lap. */
@@ -112,7 +117,9 @@ export function flatten(
     const hit = memo.get(key);
     if (hit) return hit;
     const out: StepEvent[] = [];
-    if (!silent(name)) {
+    // (a sum of values is one step, its value read from it while the step lasts: decision 097)
+    if (cell.sum && !silent(name)) out.push({ step: 0, duration: 1, value: 0, alter: 0, cell: name, table, tableShift: tShift, reads: name });
+    else if (!silent(name)) {
       // a relative pick of plain numbers: which entry each is, looked up again as the cell turns (StepEvent.via)
       const reads = isRelativePick(result, name, pick) ? pickIndices(result.cells.get(name)!.units.length, pick) : null;
       const units = unitsFor(result, name, shifts, pick, table, extra);

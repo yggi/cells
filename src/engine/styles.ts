@@ -174,6 +174,26 @@ export function readStyles(parsed: ParseResult, scope: Scope | null): { parsed: 
     const laid = (cell: string, a: number, b: number, name: string, span: CellDecl['span']): string | null => {
       if (made.has(name)) return name;
       const sum = valueSumOf(cell, decls);
+      // (a sum of numbers alone, a cell that is one number among them: one number, laid, decision 096)
+      if (sum && !sum.terms.length) {
+        const at = decls.get(cell)!.span;
+        made.set(name, {
+          ...decls.get(cell)!,
+          name,
+          span: at,
+          params: {},
+          paramSpans: {},
+          paramCells: undefined,
+          paramClocks: undefined,
+          map: null,
+          step: null,
+          label: null,
+          about: undefined,
+          style: undefined,
+          braid: { kind: 'list', tokens: [{ atom: { kind: 'note', value: a + (b - a) * sum.constant, alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span: at }] },
+        } as CellDecl);
+        return name;
+      }
       if (sum) {
         const w = sum.terms.reduce((s, t) => s + t.weight, 0);
         const terms = sum.terms.map((t, k) => ({ cell: laid(t.cell, a, b, `${name}_${k}`, span), weight: t.weight }));
@@ -187,7 +207,21 @@ export function readStyles(parsed: ParseResult, scope: Scope | null): { parsed: 
         error(`${axis}=… * &${f.name}: an axis moves by a line of numbers from 0 to 1, like &${f.name} step=1m*8 [0|.25|.5|.75|1], or a sum of them`, span);
         return null;
       }
-      made.set(name, between(f, a, b, name, span));
+      // (a cell it splices is laid as it is, so a spliced value moves the axis as a written one does: decision 097)
+      const layRefs = (t: Token): Token | null => {
+        const x = t.atom;
+        if (x.kind === 'ref') {
+          if (x.pick || x.slot || x.values || x.transpose) return t;
+          const into = laid(x.name, a, b, `${name}_${x.name}`, span);
+          return into === null ? null : { ...t, atom: { ...x, name: into } };
+        }
+        if (x.kind !== 'seq') return t;
+        const layers = x.layers.map((l) => l.map(layRefs));
+        return layers.some((l) => l.some((u) => u === null)) ? null : { ...t, atom: { ...x, layers: layers as Token[][] } };
+      };
+      const tokens = f.braid.tokens.map(layRefs);
+      if (tokens.some((t) => t === null)) return null;
+      made.set(name, between({ ...f, braid: { ...f.braid, tokens: tokens as Token[] } }, a, b, name, span));
       return name;
     };
     /** A style cell's moving axis laid within its range, made under `name`; null (an error says why) where it can't be. */

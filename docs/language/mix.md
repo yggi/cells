@@ -87,6 +87,31 @@ In a product with a voice, a sum of values is a level (decision 088): its weight
 
 In a pitch sum it is an error that says what it is.
 
+### A value spliced
+
+**A splice plays what the cell spliced is, in its step, whatever its sort** ([decision 097](https://github.com/yggi/cells/blob/main/docs/decisions/097-a-splice-plays-what-it-splices.md)). A melody spliced plays its notes, as it always has. A cell that carries a value plays its value:
+- a cell that is one number plays its number (law L18);
+- a level (`map=amp`, `db`, `lin`) plays its levels;
+- a sum of values plays its sum, read while the step lasts, so a term that moves moves it there.
+
+A line of values may splice such cells and is a line of values still. Every reader of a value reads it alike: a level, a moving parameter, a style's axis, a term of a sum. So a plan names what each section holds and lists them, one step a section:
+
+```cells
+&bar meter("4/4") step=120bpm
+&song .55
+&rise step=1m 0 .143 .286 .429 .571 .714 .857 1
+&groove [&song + 0]
+&breakdown [&song + -.45]
+&build [&song + -.15 + &rise * .45]
+&drop [&song + .3]
+&intensity step=1m/8 &groove &breakdown &build &drop
+&line step=8n 0 2 4 7
+&pad s=saw loop=C3 lpf=300..2400 * &intensity
+&out map=sample [&line * &pad * .3]
+```
+
+A plain line of numbers carries no sort of its own: what reads it decides, degrees or values. So a line that splices plain lines alone stays what it was, a pattern its reader reads (a melody of phrases). A line that splices a sum of values has no notes to play: as a melody or in a pitch sum it says so.
+
 ## Notes with their levels: a product with no voice, named
 
 A product with no voice in it and a pitch, given a cell of its own, is **notes with their levels** ([decision 087](https://github.com/yggi/cells/blob/main/docs/decisions/087-a-named-product-is-its-parentheses.md)): what a voice plays, named. In a product with a voice it is its own product, as written in parentheses, so naming a group of factors plays what the group plays in place (law L17):

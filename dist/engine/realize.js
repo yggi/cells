@@ -242,6 +242,7 @@ export function plan(result, statics, muted = new Set()) {
         const db = m.map?.kind === 'db';
         const bipolar = !db && events.some((e) => e.value + e.alter < 0 || (e.options ?? []).some((o) => o.value + o.alter < 0));
         const period = Math.max(1, stepsOf(result, cell, pick));
+        const readNames = [...new Set(events.flatMap((e) => (e.reads ? [e.reads] : [])))];
         const lap = turnLap(result, m).per;
         return {
             sign,
@@ -252,6 +253,7 @@ export function plan(result, statics, muted = new Set()) {
             ...(lap ? comeRound(events, period, lap) : { period, events }),
             ...(drawn ? { drawn } : {}),
             ...(bipolar ? { bipolar: true } : {}),
+            ...(readNames.length ? { reads: new Map(readNames.map((n) => [n, series(n, null, 0, 1)])) } : {}),
         };
     };
     const capped = (m, cell) => {

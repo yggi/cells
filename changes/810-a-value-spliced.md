@@ -1,0 +1,3 @@
+### Added
+
+- **A splice plays what the cell spliced is, a value its value** (decision 097, #810): a line of values may splice a cell that is one number, a level (`map=amp`, `db`, `lin`) or a sum of values, and is a line of values still. A spliced sum is read while its step lasts. So a section plan is one line, `&intensity step=1m/8 &groove &breakdown &build &drop`, each kind `[&song + offset]` (decision 096). Every reader of a value reads it alike: a level, a moving parameter, a style's axis, a term of a sum. A line that splices a sum and is read as notes is an error that says so. A plain line of numbers spliced carries no sort, so a melody of phrases plays as it did. No piece changes how it sounds.

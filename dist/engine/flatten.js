@@ -49,7 +49,9 @@ export function flatten(result, root, shifts, rootPick = null, silent = () => fa
         if (hit)
             return hit;
         const out = [];
-        if (!silent(name)) {
+        if (cell.sum && !silent(name))
+            out.push({ step: 0, duration: 1, value: 0, alter: 0, cell: name, table, tableShift: tShift, reads: name });
+        else if (!silent(name)) {
             const reads = isRelativePick(result, name, pick) ? pickIndices(result.cells.get(name).units.length, pick) : null;
             const units = unitsFor(result, name, shifts, pick, table, extra);
             const unit = (x) => (x.kind === 'ref' ? stepsOf(result, x.name, x.pick) || 1 : 1);

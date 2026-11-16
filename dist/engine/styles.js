@@ -139,6 +139,25 @@ export function readStyles(parsed, scope) {
             if (made.has(name))
                 return name;
             const sum = valueSumOf(cell, decls);
+            if (sum && !sum.terms.length) {
+                const at = decls.get(cell).span;
+                made.set(name, {
+                    ...decls.get(cell),
+                    name,
+                    span: at,
+                    params: {},
+                    paramSpans: {},
+                    paramCells: undefined,
+                    paramClocks: undefined,
+                    map: null,
+                    step: null,
+                    label: null,
+                    about: undefined,
+                    style: undefined,
+                    braid: { kind: 'list', tokens: [{ atom: { kind: 'note', value: a + (b - a) * sum.constant, alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span: at }] },
+                });
+                return name;
+            }
             if (sum) {
                 const w = sum.terms.reduce((s, t) => s + t.weight, 0);
                 const terms = sum.terms.map((t, k) => ({ cell: laid(t.cell, a, b, `${name}_${k}`, span), weight: t.weight }));
@@ -153,7 +172,23 @@ export function readStyles(parsed, scope) {
                 error(`${axis}=… * &${f.name}: an axis moves by a line of numbers from 0 to 1, like &${f.name} step=1m*8 [0|.25|.5|.75|1], or a sum of them`, span);
                 return null;
             }
-            made.set(name, between(f, a, b, name, span));
+            const layRefs = (t) => {
+                const x = t.atom;
+                if (x.kind === 'ref') {
+                    if (x.pick || x.slot || x.values || x.transpose)
+                        return t;
+                    const into = laid(x.name, a, b, `${name}_${x.name}`, span);
+                    return into === null ? null : { ...t, atom: { ...x, name: into } };
+                }
+                if (x.kind !== 'seq')
+                    return t;
+                const layers = x.layers.map((l) => l.map(layRefs));
+                return layers.some((l) => l.some((u) => u === null)) ? null : { ...t, atom: { ...x, layers: layers } };
+            };
+            const tokens = f.braid.tokens.map(layRefs);
+            if (tokens.some((t) => t === null))
+                return null;
+            made.set(name, between({ ...f, braid: { ...f.braid, tokens: tokens } }, a, b, name, span));
             return name;
         };
         const movingCell = (pc, name) => {
