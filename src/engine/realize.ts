@@ -7,7 +7,7 @@
  * numbers in `flatten.ts`, streams of values over a note in `series.ts`.
  */
 import type { Pick } from './ast';
-import { BY_FRAGMENT, unitOf, type PluginFragment } from './fills';
+import { BY_FRAGMENT, textOf, unitOf, type PluginFragment } from './fills';
 import { parse } from './parser';
 import { compile } from './compiler';
 import { adsrOf, balance, codeShifts, CV_LAPS, DEFAULT_ENV, type CompileResult, type Output, type Shifts } from './program';
@@ -702,7 +702,7 @@ function lawLap(st: Stream, lap: number): readonly LapNote[] {
   const lines = st.cells.map(({ code, fill }) => {
     const lapOf = fill === null ? undefined : st.law.fills[fill]?.lap;
     if (fill === null) return code;
-    const answer = st.law.fill(fill, lapOf ? Math.floor((k * unit) / lapOf) : 0, {});
+    const answer = textOf(st.law.fill(fill, lapOf ? Math.floor((k * unit) / lapOf) : 0, {}));
     // (a timed fill steps once a step of the law's own, its code's time, whatever rate its line writes: so no action
     // on the text, a tempo scaled, reaches it, as the wall clock it reads doesn't scale, decision 085's 1a)
     // (a line that steps steps at the law's own rate, step=1; one that doesn't, a mode or a tonic per key, stays so)

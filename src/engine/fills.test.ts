@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BUILT_IN, lawAt, lawIn, lawOf, marksOf, unitOf } from './fills';
+import { BUILT_IN, lawAt, lawIn, lawOf, marksOf, textOf, unitOf } from './fills';
 import * as deprecated from './holes';
 import { BAR, BLOCK_NAMES, DAY_MODES, KEY, MODE_NAMES, notesBetween, SECONDS_PER_STEP, START } from './fiveto12';
 import { compileSource } from './compile';
@@ -26,7 +26,7 @@ describe('a built-in plugin-fragment answers the contract (decision 085 §3, #69
       const lines = copy.map((l) => {
         const m = /fill\(five_to_twelve, (\w+), &day\).*$/.exec(l);
         const x = m ? law.fills[m[1]!] : undefined;
-        return m && x?.lap ? l.replace(m[0], law.fill(m[1]!, Math.floor((lap * BAR) / x.lap), {})) : l;
+        return m && x?.lap ? l.replace(m[0], textOf(law.fill(m[1]!, Math.floor((lap * BAR) / x.lap), {}))) : l;
       });
       const r = compileSource(`${lines.join('\n')}\n&v s=sine loop=C4\n&out map=sample [&cycle * &v]`);
       expect(r.diagnostics, `lap ${lap}`).toEqual([]);

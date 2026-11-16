@@ -5,6 +5,7 @@ import { STYLE } from "./style.js";
 import { MOVED, RENAMED_IDS } from "./renamed.js";
 import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
 import { BY_FRAGMENT } from "./fills.js";
+const FILL = /(^|\s)fill\(\s*\)/;
 export const FROM_DEPTH = 8;
 const via = (lines, step) => lines.map((l) => ({ ...l, origin: [step, ...(l.origin ?? [])] }));
 const HEAD = /^&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
@@ -385,13 +386,13 @@ function renamesOf(from, lines, id, say) {
     return { names, lacking };
 }
 const sharedLines = (lines) => lines.map((l) => (l.shared ? l : { ...l, shared: true }));
-function give(entry, path, text, resolve, plugins, say, taken, old, level) {
+function give(entry, path, text, resolve, run, say, taken, old, level) {
     const { id, from } = entry;
     const signatures = oneSignatureEach(linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : [])));
     if (!signatures.length) {
         if (from.head.length || from.args || from.main !== null)
             say(`${quoted(id)} has no signature, so it takes no arguments: a collection gives the cells it defines by name (${entry.names ? entry.names.join(', ') : '*'} from ${from.id})`);
-        const lines = sharedLines(fragmentLines(path, text, resolve, plugins, say));
+        const lines = sharedLines(fragmentLines(path, text, resolve, run, say));
         const renames = renamesOf(from, lines, id, say);
         if (!renames)
             return { taken: { id, names: namesOf(entry), lines, resolved: true }, copy: [] };
@@ -402,10 +403,10 @@ function give(entry, path, text, resolve, plugins, say, taken, old, level) {
     }
     if (signatures.length > 1)
         say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
-    return instantiate(from, id, signatures[0], path, text, resolve, plugins, say, taken, old, level);
+    return instantiate(from, id, signatures[0], path, text, resolve, run, say, taken, old, level);
 }
-function instantiate(from, id, signature, path, text, resolve, plugins, say, taken, old, level) {
-    const full = fragmentLines(path, text, resolve, plugins, say);
+function instantiate(from, id, signature, path, text, resolve, run, say, taken, old, level) {
+    const full = fragmentLines(path, text, resolve, run, say);
     const own = full.filter((l) => !l.shared && l.name);
     const shared = full.filter((l) => l.shared && l.name);
     const definesOwn = new Set(own.map((l) => l.name));
@@ -531,14 +532,21 @@ function instantiate(from, id, signature, path, text, resolve, plugins, say, tak
         if (byReference.has(p) || !reached.has(p) || overridden.includes(p))
             continue;
         let code = renamed(l.code, names);
-        if (/(^|\s)fill\(\s*\)/.test(code)) {
-            const plugin = plugins.get(id);
-            if (plugin && plugin.fills[p] && plugin.fills[p].lap === undefined)
-                code = code.replace(/(^|\s)fill\(\s*\)/, `$1${plugin.fill(p, 0, argsOf())}`);
-        }
-        if (/(^|\s)fill\(\s*\)/.test(code)) {
-            const answer = plugins.get(id)?.fill(p, 0, {}) ?? '';
-            code = code.replace(/(^|\s)fill\(\s*\)/, `$1fill(${id}, ${p}${main && names.has(main) ? `, &${names.get(main)}` : ''})${answer ? ` ${answer}` : ''}`);
+        if (FILL.test(code)) {
+            const plugin = run.plugins.get(id);
+            const fill = plugin?.fills[p];
+            if (plugin && fill && fill.lap === undefined) {
+                const answer = answered(id, p, () => (fill.fuel === undefined ? { refused: `its fill ${p} declares no fuel, and a braid fill must (decision 085 §8)` } : plugin.fill(p, 0, argsOf(), fill.fuel)), say);
+                if (typeof answer === 'string')
+                    code = code.replace(FILL, `$1${answer}`);
+                else if (answer)
+                    run.warn(`${quoted(id)} refused: ${answer.refused}`);
+            }
+            if (FILL.test(code)) {
+                const first = plugin && fill?.lap !== undefined ? answered(id, p, () => plugin.fill(p, 0, {}), say) : null;
+                const answer = typeof first === 'string' ? first : '';
+                code = code.replace(FILL, `$1fill(${id}, ${p}${main && names.has(main) ? `, &${names.get(main)}` : ''})${answer ? ` ${answer}` : ''}`);
+            }
         }
         if (values.has(p))
             code = inherited(names.get(p), code, asCell(values.get(p), p, own));
@@ -558,7 +566,16 @@ function instantiate(from, id, signature, path, text, resolve, plugins, say, tak
     const given = { id, names: new Set(sharing.map((l) => l.name)), lines: sharing, resolved: true };
     return { taken: given, copy, args: Object.fromEntries(values) };
 }
-function fragmentLines(path, text, resolve, plugins, say) {
+function answered(id, fill, call, say) {
+    try {
+        return call();
+    }
+    catch (e) {
+        say(`${quoted(id)}'s code failed on its fill ${fill}: ${e instanceof Error ? e.message : String(e)}`);
+        return null;
+    }
+}
+function fragmentLines(path, text, resolve, run, say) {
     const here = path.at(-1);
     const own = linesOf(text).map((l) => ({ ...l, origin: [{ id: here, line: l.line }] }));
     const where = ` (in ${pathOf(path)})`;
@@ -586,7 +603,7 @@ function fragmentLines(path, text, resolve, plugins, say) {
             if (whole === null)
                 sayHere(`No fragment ${quoted(id)} to use`);
             else if (theirs !== null) {
-                const g = give(entry, next, theirs, resolve, plugins, say, taken);
+                const g = give(entry, next, theirs, resolve, { ...run, warn: (message) => run.warn(`${message}${where}`) }, say, taken);
                 const step = { id: here, line: l.line };
                 copies.push(...via(g.copy, step));
                 return [{ ...g.taken, lines: via(g.taken.lines, step) }];
@@ -660,7 +677,10 @@ export function expansion(text, { resolve, locked = [], old = false, plugins: th
         const binding = old
             ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message) => diagnostics.push({ severity: 'warning', message, span }) }
             : undefined;
-        const g = give(u, [id], theirs, resolve, plugins, say, taken, binding, { ...level, warn: (message) => diagnostics.push({ severity: 'warning', message, span }) });
+        const g = give(u, [id], theirs, resolve, { plugins, warn: (message) => diagnostics.push({ severity: 'warning', message, span }) }, say, taken, binding, {
+            ...level,
+            warn: (message) => diagnostics.push({ severity: 'warning', message, span }),
+        });
         const step = { id: null, line: u.line.line };
         copies.push(via(g.copy, step));
         args.push(g.args);
