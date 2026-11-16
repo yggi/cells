@@ -3,7 +3,7 @@
 // velocity over 16 s, recorded with the cards still in, at cells bbb9eb2); no seed holds a card; and a bass line fills
 // the bass performer's hole (#285).
 import { describe, expect, it } from 'vitest';
-import { compileSource as compiledWithOldUse } from '../engine/compile';
+import { compileSource } from '../engine/compile';
 import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
@@ -13,19 +13,10 @@ import { bassCards, drumCard } from './benches';
 import { LIBRARY, resolveSeed } from './library';
 import { seedFragments } from './seed';
 
-// (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
-// decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
-
 const METER_FRAGMENTS = seedFragments('meters');
 const RHYTHM_FRAGMENTS = seedFragments('rhythms');
 const BASS_FRAGMENTS = seedFragments('bass');
 const MODE_FRAGMENTS = seedFragments('modes');
-const OLD_USE = /^use is the old way/;
-const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
-  const r = compiledWithOldUse(...args);
-  const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));
-  return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
-};
 
 /** What each sent with its own card, on its bench: the hash of its notes, and how many. */
 const SENT: Record<string, [string, number]> = {
@@ -141,10 +132,7 @@ describe('a pattern fragment heard through the tests’ cards (#291, #640)', () 
     '%s, heard on its bench, says nothing: the bass’s sound is heard on a sound card as well as sent (#391)',
     (id, text) => {
       const bench = benchOf(id, text);
-      const said = (cards: string) =>
-        compiledWithOldUse(`${bench}\n${text}\n${cards}`, undefined, { resolve: resolveSeed, old: true })
-          .diagnostics.filter((d) => !OLD_USE.test(d.message))
-          .map((d) => d.message);
+      const said = (cards: string) => compileSource(`${bench}\n${text}\n${cards}`, undefined, { resolve: resolveSeed, old: true }).diagnostics.map((d) => d.message);
       expect(said(bassCards(text))).toEqual([]);
       // (it fires: the MIDI card alone says the sound isn't sent)
       expect(said(bassCards(text).replace(/\n&bassSound .*$/m, ''))).toEqual([expect.stringMatching(/^&bassV is only on a MIDI card: its sound/)]);
