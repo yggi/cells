@@ -1,5 +1,5 @@
 /** Phase 3: who plays what — kits, the sound card's channels, MIDI cards' channels, mixes expanded (instruments, sends), voices marked. */
-import type { Binding, CellDecl, Span } from '../ast';
+import type { Binding, CellDecl, Ref, Span, StyleSpec } from '../ast';
 import { type MidiDest, type Output, type ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
 import { type Typed } from './sorts';
@@ -24,3 +24,5 @@ export declare function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl
     playings: ReadonlyMap<string, readonly (readonly string[])[]>;
 };
 export type Bound = ReturnType<typeof bindVoices>;
+/** The cells a style= names: its ends' cells (or their mixes' terms), and its curve. */
+export declare function styleRefs(s: StyleSpec): Ref[];
