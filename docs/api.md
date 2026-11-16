@@ -72,7 +72,7 @@ On the root index today (28): `CONTRACT_WIDTHS`, `DrumRole`, `FeelEvent`, `FeelF
 
 Planned modules: `engine/time/boundaries`, `engine/time/cycles`, `engine/time/fft`, `engine/time/motifs`, `engine/time/necklace`, `engine/time/signals`, `engine/time/span`, `engine/time/spectrogram`, `engine/time/splices`, `engine/time/structure`, `engine/time/wavelet`.
 
-Its entry point is not written yet.
+Exported by its entry point, `src/time.ts` (40): `Boundary`, `Folding`, `FoundMeter`, `Grid`, `Level`, `MOST_RATE`, `Motif`, `Necklace`, `Onset`, `PER_OCTAVE`, `SIGNALS`, `Scalogram`, `Signal`, `Sounding`, `Splice`, `StructureNode`, `Waterfall`, `alike`, `cones`, `findMeter`, `foldScalogram`, `foldings`, `grid`, `levelsOf`, `listening`, `meterText`, `motifs`, `multiscale`, `novelty`, `owners`, `peaks`, `pulseOf`, `reach`, `ridges`, `scalograms`, `sectionsOver`, `splices`, `structure`, `swells`, `waterfall`.
 
 Nothing on the root index today.
 
@@ -97,7 +97,7 @@ On the root index today (24): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example
 | frontend | pin | app: modules / symbols deep | of them, symbols an entry point exports | app: symbols from the root | tests and tools: modules / symbols deep |
 |---|---|---|---|---|---|
 | jambot (`bbb1cb6`) | v0.26.1 | 31 / 93 | 88 | 16 | 20 / 37 |
-| cell-studio (`9216e32`) | v0.26.1 | 82 / 313 | 241 | 0 | 64 / 162 |
+| cell-studio (`9216e32`) | v0.26.1 | 82 / 313 | 268 | 0 | 64 / 162 |
 
 Reached by an app and planned for no entry point (the work left): `engine/compiler/declare` (cell-studio), `engine/fills` (cell-studio), `engine/fiveto12` (cell-studio), `engine/parser/use` (cell-studio), `engine/physics` (cell-studio).
 

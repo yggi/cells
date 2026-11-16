@@ -15,6 +15,11 @@
       "module": "./src/edit.ts",
       "default": "./dist/edit.js"
     },
+    "./time": {
+      "types": "./types/time.d.ts",
+      "module": "./src/time.ts",
+      "default": "./dist/time.js"
+    },
     "./repository": {
       "types": "./types/repository.d.ts",
       "module": "./src/repository.ts",
