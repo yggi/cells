@@ -5,6 +5,7 @@ description: A bossa nova whose guitar strums on the clave's five strokes, over 
 ---
 
 ```cells
+* from style=&bossaNova
 &vibrato from vibrato
 # Bossa nova. The clave is a meter: five strokes over a bar of sixteenths,
 # scan(3 3 4 3 3) — x..x..x...x..x.. — and the guitar strums on its strokes.

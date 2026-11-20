@@ -215,6 +215,20 @@ export function associationOf(
 }
 
 /**
+ * A piece's own place in style space (#543): the points its `* from style=…` lines declare, read as a collection's
+ * declaration is (§1). Only those lines count: a piece's other signatures declare its parts, which are taken apart.
+ * Null for a piece that declares none (a piece may have no style, decision 090).
+ */
+export function placeOf(text: string, options: { readonly styles: StyleNames }): { association: WeightedPoint[]; problems: string[] } | null {
+  const own = text
+    .split('\n')
+    .filter((raw) => splitComment(raw)[0].trim().startsWith('*'))
+    .join('\n');
+  const read = associationOf(own, options);
+  return read?.explicit ? { association: read.association, problems: read.problems } : null;
+}
+
+/**
  * A text without its association (decision 089): each signature once, its attributes dropped, and a collection's
  * `* from` lines gone. The lines a piece takes from it, as they were before the association moved into the text.
  */

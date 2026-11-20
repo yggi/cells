@@ -5,6 +5,7 @@ description: "A waltz in G: oom on one, pah-pah on two and three, a flute above.
 ---
 
 ```cells
+* from style=&waltz
 # scan(28 37 35) pulls beat 2 early: short – long – long
 &bar scan(28 37 35) step=&tempo
 &tempo step=free(168bpm, 140..200)
