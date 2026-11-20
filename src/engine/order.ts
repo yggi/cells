@@ -80,6 +80,7 @@ export const ORDER = [
   'spooky',
   'kinderlied',
   'radio',
+  'song',
   'brothers',
   'ghosts',
   'tines',

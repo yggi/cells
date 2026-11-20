@@ -208,7 +208,8 @@ describe('a named use of a collection (decision 059)', () => {
     // template since #560: `*` takes the heads the piece doesn't write, and the kit is the copy's, `&band_drums_kit`,
     // as the expansion writes it out)
     const radio = EXAMPLES.radio.source;
-    const written = radio.replace(/^\* from band.*$/m, (line) => `${line}\n&drumsOut play=&drumlines &band_drums_kit`);
+    // (and its level, the band's drive, decision 096: the radio writes an intensity since #810, so the drive moves)
+    const written = radio.replace(/^\* from band.*$/m, (line) => `${line}\n&drumsOut play=&drumlines level=&band_drumsDrive*&band_drumsDrive &band_drums_kit`);
     expect(errors(written)).toEqual([]);
     expect(soundsIdentical(radio, written, 8, seed)).toBe(true);
   });

@@ -80,12 +80,14 @@ describe('outlineOf', () => {
   });
 
   it('nests from the outputs: the card, then each instrument, its performer and the line it plays', () => {
+    // (the style is read by the instruments through the cells compile makes for its slots, `lpf=… * &style[bite]`, and each
+    // of those is a wire from it, #618: so it sits under the first instrument that reads it, the bass, not apart at the root)
     expect(drawn(outline.outputs)).toEqual([
-      '7 &style',
       '8 band',
       '  8/3 drums_performer',
       '    6 &drumlines',
       '  8/8 bass',
+      '    7 &style',
       '    8/4 bass_performer',
       '      4 funk_bass',
       '        3 vamp_to_the_seventh',

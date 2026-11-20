@@ -5,7 +5,7 @@ import { VOICE_KIT } from "./compiler/declare.js";
 import { refsOf } from "./readers.js";
 import { gatePairs, gateVoices, productOutputs, termPairs } from "./plays.js";
 export const isCellNode = (n) => n.kind !== 'junction';
-const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about', 'base']);
+const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about', 'base', 'bend', 'style']);
 export const feeds = (e) => !STRUCTURE.has(e.port) && e.band !== 'sync';
 const AS_IS = [[]];
 function refTransform(r) {
@@ -267,6 +267,40 @@ export function writtenGraph(result, { card = false } = {}) {
                 transforms: AS_IS,
                 ...wire('braid', 'cv', id, cellId(tonic), 1, true, true),
             });
+        if (c.bend) {
+            for (const name of new Set([c.bend.tableCell, ...(c.bend.depth?.factors ?? [])]))
+                if (result.cells.has(name))
+                    link({
+                        id: edgeId(cellId(name), id),
+                        source: cellId(name),
+                        target: id,
+                        count: 1,
+                        transforms: AS_IS,
+                        ...wire('bend', 'cv', cellId(name), id, name === c.bend.tableCell ? entries(result, name) : 1, false, name === c.bend.tableCell),
+                    });
+        }
+        for (const name of c.styleReads ?? [])
+            if (result.cells.has(name))
+                link({ id: edgeId(cellId(name), id), source: cellId(name), target: id, count: 1, transforms: AS_IS, ...wire('style', 'cv', cellId(name), id, 1, false, true) });
+        for (const name of c.valueReads ?? [])
+            if (result.cells.has(name) && shown(name))
+                link({
+                    id: edgeId(id, cellId(name)),
+                    source: id,
+                    target: cellId(name),
+                    count: 1,
+                    transforms: AS_IS,
+                    ...wire('braid', 'cv', id, cellId(name), 1, true, true),
+                });
+        if (c.readsSlot && result.cells.has(c.readsSlot.cell) && shown(c.readsSlot.cell))
+            link({
+                id: edgeId(cellId(c.readsSlot.cell), id),
+                source: cellId(c.readsSlot.cell),
+                target: id,
+                count: 1,
+                transforms: AS_IS,
+                ...wire('style', 'cv', cellId(c.readsSlot.cell), id, 1, false, true),
+            });
         for (const target of c.about)
             if (result.cells.has(target))
                 link({ id: edgeId(id, cellId(target)), source: id, target: cellId(target), count: 1, transforms: AS_IS, ...wire('about', 'none', id, cellId(target)) });
@@ -495,6 +529,27 @@ export function writtenGraph(result, { card = false } = {}) {
             (c.mix ?? []).forEach((b, entry) => product(c, b, entry, 'mix'));
         (c.chords ?? []).flatMap((bs) => bs ?? []).forEach((b, entry) => product(c, b, entry, 'midi'));
     }
+    for (const c of result.cells.values()) {
+        if (!shown(c.name) || c.mix || c.chords || c.gate || c.map?.kind === 'role')
+            continue;
+        const id = cellId(c.name);
+        const read = new Map();
+        for (const u of c.units)
+            for (const name of valueSumRefs(u.atom))
+                read.set(name, (read.get(name) ?? 0) + 1);
+        for (const [name, count] of read) {
+            if (name === c.name || !result.cells.has(name) || seen.has(edgeId(id, cellId(name))) || seen.has(edgeId(cellId(name), id)))
+                continue;
+            link({
+                id: edgeId(id, cellId(name)),
+                source: id,
+                target: cellId(name),
+                count,
+                transforms: Array.from({ length: count }, () => []),
+                ...wire('braid', 'cv', id, cellId(name), 1, true, true),
+            });
+        }
+    }
     const sounding = (o) => o.through[0] ?? o.voice;
     const pans = new Map();
     result.outputs.forEach((o) => {
@@ -510,6 +565,8 @@ export function writtenGraph(result, { card = false } = {}) {
     });
     return { nodes: [...placed, ...junctions], edges, through };
 }
+const exprRefs = (e) => (e.k === 'ref' ? [e.ref.name] : e.k === 'prod' ? e.factors.flatMap(exprRefs) : e.k === 'sum' ? e.items.flatMap((i) => exprRefs(i.e)) : []);
+const valueSumRefs = (a) => a.kind === 'mix' ? a.exprs.flatMap(exprRefs) : a.kind === 'seq' ? a.layers.flatMap((l) => l.flatMap((t) => valueSumRefs(t.atom))) : [];
 const isLevel = (c, inSum) => c.map?.kind === 'amp' || c.map?.kind === 'db' || ((c.map?.kind === 'lin' || !!c.sum) && !inSum);
 const rateOf = (c) => rateTransform(c.step, typeof c.params.belt === 'number' ? c.params.belt : undefined);
 function rateTransform(s, belt) {

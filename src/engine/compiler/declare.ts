@@ -180,7 +180,8 @@ function modes(ctx: Ctx, decls: Map<string, CellDecl>): void {
     if (m.step && m.braid.kind === 'list') {
       // (a stepped mode, its phase at each bar line: as scale(even(7, 12, &mode), …), which it is the sugar of, decision 093)
       const first = steppedPhase(ctx, d, m, 7, 12, d.braid.mode.span);
-      if (first !== null) decls.set(name, { ...d, braid: { kind: 'scan', span: d.braid.span, steps: diatonicSteps(first), phaseCell: { name: m.name, k: 7, n: 12 } } });
+      if (first !== null)
+        decls.set(name, { ...d, valueReads: [m.name], braid: { kind: 'scan', span: d.braid.span, steps: diatonicSteps(first), phaseCell: { name: m.name, k: 7, n: 12 } } });
       continue;
     }
     const tokens = m.braid.kind === 'list' ? m.braid.tokens : [];
@@ -195,7 +196,7 @@ function modes(ctx: Ctx, decls: Map<string, CellDecl>): void {
       );
       continue;
     }
-    decls.set(name, { ...d, braid: { ...d.braid, steps: diatonicSteps(phase) } });
+    decls.set(name, { ...d, valueReads: [m.name], braid: { ...d.braid, steps: diatonicSteps(phase) } });
   }
 }
 
@@ -210,6 +211,8 @@ function evens(ctx: Ctx, decls: Map<string, CellDecl>): void {
   for (const [name, d] of decls) {
     if (d.braid.kind !== 'scan' || !d.braid.even) continue;
     const { even, span } = d.braid;
+    // (the cells it reads by value: its arguments that are cells, left no reference once the steps are set)
+    const readCells = [even.k, even.n, even.phase].flatMap((x) => (typeof x === 'number' ? [] : [x.name]));
     const read = (x: number | Ref, what: 'k' | 'n' | 'phase'): { value: number; word: boolean; at: Span } | null => {
       if (typeof x === 'number') return { value: x, word: false, at: span };
       const c = decls.get(x.name);
@@ -241,6 +244,7 @@ function evens(ctx: Ctx, decls: Map<string, CellDecl>): void {
       if (first !== null)
         decls.set(name, {
           ...d,
+          valueReads: readCells,
           braid: { kind: 'scan', span, steps: evenSteps(k.value, n.value, first), phaseCell: { name: steppedCell.name, k: k.value, n: n.value } },
         });
       continue;
@@ -262,7 +266,7 @@ function evens(ctx: Ctx, decls: Map<string, CellDecl>): void {
       ctx.error(problem, span);
       continue;
     }
-    decls.set(name, { ...d, braid: { kind: 'scan', span, steps: evenSteps(k.value, n.value, phase.value) } });
+    decls.set(name, { ...d, valueReads: readCells, braid: { kind: 'scan', span, steps: evenSteps(k.value, n.value, phase.value) } });
   }
 }
 

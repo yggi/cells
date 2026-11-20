@@ -74,6 +74,10 @@ describe('extract', () => {
 
   it('says why lines are no fragment yet', () => {
     expect(extract(PIECE, [7], O)).toEqual({ why: expect.stringMatching(/^the lines hold a card, &out/) });
+    // (a selector over the band, with the line the band reads beside it: the radio's &intensity and &form, #810)
+    const radio = EXAMPLES.radio.source;
+    const at = radio.split('\n').findIndex((l) => l.startsWith('&intensity ')) + 1;
+    expect(extract(radio, [at, at + 1], O)).toEqual({ why: expect.stringMatching(/^the lines hold a selector over the band, &form/) });
     expect(extract(`${PIECE}\n&spare s=sine loop=C5`, [8], O)).toEqual({ why: expect.stringMatching(/^nothing else in the piece reads/) });
     expect(extract(PIECE, [1], O)).toEqual({ why: expect.stringMatching(/^the lines define the piece's main meter, &bar/) });
     const twoInputs = PIECE.replace('&bassline over=&harm step=2n 0 0', '&bassline over=&harm step=&tempo 0 0');

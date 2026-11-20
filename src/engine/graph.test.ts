@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
+import { EXAMPLES } from './examples';
+import { resolveSeed } from '../repository/library';
 import { writtenGraph } from './graph';
 import { routing } from './routing';
 import { cellId, edgeId } from './ids';
@@ -168,5 +170,86 @@ describe('a performer that plays its part moved, play=&line^$-12 (decision 058):
   it('compiles', () => expect(r.diagnostics).toEqual([]));
   it('the part into the gate, the gate into its voice, the voice into the card', () => {
     expect([routed('line', 'bassOut'), routed('bassOut', 'bassV'), routed('bassV', 'out')]).toEqual([true, true, true]);
+  });
+});
+
+describe('a name written in a form that reads it is one wire (#737, #618)', () => {
+  const TAIL = '&t step=8n 0 1 2\n&v s=sine loop=C4\n&o [&t * &v]';
+  const edges = (text: string) => {
+    const r = compileSource(text);
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    return writtenGraph(r).edges;
+  };
+  const wire = (text: string, from: string, to: string) => edges(text).filter((e) => e.from === cellId(from) && e.to === cellId(to));
+
+  it("a meter's bend table is a wire into the meter, and so is each cell moving its depth", () => {
+    const bar = '&bar meter("12/8") step=60bpm';
+    expect(wire(`${bar} bend=8n:&lean\n&lean 4 3 3\n${TAIL}`, 'lean', 'bar').map((e) => e.port)).toEqual(['bend']);
+    const moved = `${bar} bend=8n:&lean:&k\n&lean 4 3 3\n&k 1\n${TAIL}`;
+    expect(wire(moved, 'lean', 'bar')).toHaveLength(1);
+    expect(wire(moved, 'k', 'bar')).toHaveLength(1);
+    expect(wire(`${bar}\n&lean 4 3 3\n${TAIL}`, 'lean', 'bar')).toEqual([]);
+  });
+
+  it('a style= is a wire from each style it names into the cell it places', () => {
+    const text = '&calm map=style .3 .45 .55 .55\n&tense map=style .6 .5 .6 .4\n&x style=[&calm * .5, &tense * .5]\n&bar meter("4/4") step=100bpm\n' + TAIL;
+    expect(wire(text, 'calm', 'x').map((e) => e.port)).toEqual(['style']);
+    expect(wire(text, 'tense', 'x')).toHaveLength(1);
+  });
+
+  it('a sum of cells in a braid is a wire from each cell it names into the sum, a repeat counted', () => {
+    const text = `&bar meter("4/4") step=100bpm\n&a 1\n&b 1\n&drift [&a * .5 + &b * .3 + &a * .2]\n${TAIL}`;
+    const a = wire(text, 'a', 'drift');
+    expect(a.map((e) => [e.port, e.count])).toEqual([['braid', 2]]);
+    expect(wire(text, 'b', 'drift')).toHaveLength(1);
+  });
+
+  it('the radio and twelve draw what they write: the drift, the style, the bend', () => {
+    const graph = (key: string) => writtenGraph(compileSource(EXAMPLES[key as keyof typeof EXAMPLES].source, undefined, { resolve: resolveSeed }), { card: true }).edges;
+    const has = (key: string, from: string, to: string, port: string) => graph(key).some((e) => e.from === cellId(from) && e.to === cellId(to) && e.port === port);
+    for (const term of ['section', 'song', 'set']) expect(has('radio', term, 'drift', 'braid'), term).toBe(true);
+    expect(has('radio', 'mine', 'style', 'style')).toBe(true);
+    expect(has('twelve', 'lean', 'bar', 'bend')).toBe(true);
+  });
+
+  it('no two cells are wired both ways by their reads: a name another rule wired (a gate stack) is not wired again', () => {
+    for (const [key, { source }] of Object.entries(EXAMPLES)) {
+      const pairs = new Map<string, string>();
+      for (const e of writtenGraph(compileSource(source, undefined, { resolve: resolveSeed }), { card: true }).edges.filter((x) => x.port === 'braid')) {
+        const [a, b] = [e.source, e.target].sort();
+        const was = pairs.get(`${a}|${b}`);
+        expect(was === undefined || was === e.source, `${key}: ${e.source} and ${e.target} are wired both ways`).toBe(true);
+        pairs.set(`${a}|${b}`, e.source);
+      }
+    }
+  });
+});
+
+describe('a cell the compile reads by value, or makes for a slot, is still a wire (#618)', () => {
+  const edges = (text: string) => {
+    const r = compileSource(text);
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    return { r, edges: writtenGraph(r).edges };
+  };
+  const TAIL = '&t over=&key step=8n 0 1 2\n&v s=sine loop=C4\n&o [&t * &v]';
+  const BAR = '&bar meter("4/4") step=100bpm\n&tonic D\n&mode 2\n&k 7\n&n 12';
+
+  it("a key's mode cell is a wire into the key: scale(&mode, …) and even(7, 12, &mode), and each argument of even that is a cell", () => {
+    const into = (key: string, from: string) => edges(`${BAR}\n${key}\n${TAIL}`).edges.filter((e) => e.from === cellId(from) && e.to === cellId('key'));
+    expect(into('&key scale(&mode, &tonic)', 'mode').map((e) => e.port)).toEqual(['braid']);
+    expect(into('&key scale(even(7, 12, &mode), &tonic)', 'mode')).toHaveLength(1);
+    const arguments_ = '&key scale(even(&k, &n, &mode), &tonic)';
+    for (const name of ['k', 'n', 'mode']) expect(into(arguments_, name), name).toHaveLength(1);
+    expect(into('&key scale(dorian, &tonic)', 'mode')).toEqual([]);
+  });
+
+  it('a style read by slot is a wire from the style into the cell made for it, and that cell goes on into the reader', () => {
+    const text = `&calm map=style .3 .45 .55 .55\n&style style=&calm\n&bar meter("4/4") step=100bpm\n&t step=8n 0 1 2\n&v s=sine loop=C4 lpf=250..1600 * &style[bite]\n&o [&t * &v]`;
+    const { r, edges: all } = edges(text);
+    const made = [...r.cells.values()].filter((c) => c.readsSlot?.cell === 'style');
+    expect(made).toHaveLength(1);
+    const name = made[0]!.name;
+    expect(all.filter((e) => e.from === cellId('style') && e.to === cellId(name)).map((e) => e.port)).toEqual(['style']);
+    expect(all.filter((e) => e.from === cellId(name) && e.to === cellId('v')).map((e) => e.port)).toEqual(['lpf']);
   });
 });

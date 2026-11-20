@@ -7,16 +7,13 @@ import { resolveSeed } from '../repository/library';
 import { bodyOf, signatureOf } from './use';
 import { seedFragments } from '../repository/seed';
 
-// (these texts take fragments the old way, `use`, which still reads for a release and warns that it is the old way,
-// decision 065: what is tested here is what it reads, so that warning is set aside; `from.test.ts` tests the new way)
-
 const METER_FRAGMENTS = seedFragments('meters');
 const MODE_FRAGMENTS = seedFragments('modes');
-// (and, read the old way, that a name gave the default performer a part: these texts are about the tempo and the key)
-const OLD_USE = /^use is the old way|is named as the feel's (part|drum role)/;
+// (read the old way, a name gave the default performer a part, and says so: these texts are about the tempo and the key)
+const OLD_NAME = /is named as the feel's (part|drum role)/;
 const compileSource = (...args: Parameters<typeof compiledWithOldUse>): ReturnType<typeof compiledWithOldUse> => {
   const r = compiledWithOldUse(...args);
-  const diagnostics = r.diagnostics.filter((d) => !OLD_USE.test(d.message));
+  const diagnostics = r.diagnostics.filter((d) => !OLD_NAME.test(d.message));
   return { ...r, diagnostics, ok: !diagnostics.some((d) => d.severity === 'error') };
 };
 

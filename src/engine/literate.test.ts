@@ -161,7 +161,7 @@ describe('putting a rewritten code back', () => {
 });
 
 /** The examples written as literate cells (decision 051): prose between their blocks. */
-const LITERATE_EXAMPLES = new Set(['electroswing', 'spooky', 'kinderlied', 'swing', 'funk', 'aksak', 'twelve']);
+const LITERATE_EXAMPLES = new Set(['electroswing', 'spooky', 'kinderlied', 'radio', 'song', 'swing', 'funk', 'aksak', 'twelve']);
 
 describe('every example and fragment reads as before', () => {
   it('an example is its blocks joined, its prose between and after them; all but the literate ones are one block', () => {

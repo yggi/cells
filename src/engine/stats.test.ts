@@ -60,15 +60,15 @@ describe('the cells counted by kind, over every example (#782)', () => {
     }
     expect(sum).toMatchInlineSnapshot(`
       {
-        "card": 91,
-        "envelope": 496,
-        "gate": 20,
-        "line": 852,
-        "meter": 88,
-        "mix": 29,
+        "card": 93,
+        "envelope": 521,
+        "gate": 25,
+        "line": 912,
+        "meter": 89,
+        "mix": 31,
         "note": 196,
-        "table": 95,
-        "voice": 389,
+        "table": 101,
+        "voice": 406,
       }
     `);
   });

@@ -88,21 +88,25 @@ Each one's level is a two-bar step, `[.5 0]` for the clarinet and `[0 .45]` for 
 &dialogueNote label="The clarinet plays the odd bars, the trumpet the even ones: the call and its answer, traded between two players." about=(&leadOut &lead2)
 ```
 
-## The form, in levels
+## The form: who plays, bar by bar
 
 The song is 32 bars, four times round the vamp: the stabs and the hats alone, then the kick and the bass, the chorus, the break with the kick and the bass out, and the chorus again.
-It is written as each part's level, bar by bar, the clarinet's entry too (its line plays from the top, silent for the first eight bars), so every part keeps tapping the swung meter.
-The players' levels are holes their fragments leave; here they are the form.
-It is the form written six times over, and waits on #304: a selector over the performers, each step naming who plays, would write it once.
+It is written once, as a selector over the players (decision 061): `&players` lists the four gates, and each step of `&form` names who plays in that bar.
+The clarinet and the trumpet trade bars, so a bar of the chorus is `[0,1,2]` and the next `[0,1,3]`.
+A player switched off keeps its time (`restart=free`, a performer's default), so every part keeps tapping the swung meter and comes back in where it would have been.
+The levels say only how loud each plays when it does: the bass at .8, the clarinet at .5, the trumpet at .45, the stabs at .5 and a little louder, .6, in the last chorus.
+The kick and the clap are lines of the drummer's part, not players, so their entries stay levels of their own.
 
 ```cells
-&bassLevel map=amp step=1m 0!4 .8!12 0!8 .8!8
-&stabLevel map=amp step=1m .5!16 0!8 .6!8
-&leadLevel map=amp step=1m/2 0!4 [.5 0]!12
-&lead2Level map=amp step=1m/2 0!4 [0 .45]!12
+&players &bassOut &stabOut &leadOut &lead2
+&form over=&players step=1m 1!4 [0,1]!4 [[0,1,2] [0,1,3]]@2!4 [2 3]@2!4 [[0,1,2] [0,1,3]]@2!4
+&bassLevel map=amp .8
+&stabLevel map=amp step=1m .5!24 .6!8
+&leadLevel map=amp .5
+&lead2Level map=amp .45
 &kickForm map=amp step=1m 0!4 1!12 0!8 1!8
 &clapForm map=amp step=1m 0!8 1!8 .6!8 1!8
-&formNote label="The form: intro (4 bars), the band (4), the chorus (8), the break (8), the chorus (8)." about=(&bassLevel &stabLevel &leadLevel &lead2Level &kickForm &clapForm)
+&formNote label="The form: intro (4 bars), the band (4), the chorus (8), the break (8), the chorus (8)." about=(&form &kickForm &clapForm)
 ```
 
 ## The sound

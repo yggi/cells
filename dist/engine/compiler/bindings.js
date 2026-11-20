@@ -250,7 +250,7 @@ export function bindVoices(ctx, decls, given, typed) {
     }
     return { cells: cells, sinks, cards, bindings, soundHead, playings: playings };
 }
-function styleRefs(s) {
+export function styleRefs(s) {
     const of = (p) => (p.kind === 'cell' ? [p.ref] : p.terms.map((t) => t.ref));
     return [...(s.set ? s.set.flatMap((m) => of(m.point)) : of(s.from)), ...(s.to ? of(s.to) : []), ...(s.curve ? [s.curve] : [])];
 }

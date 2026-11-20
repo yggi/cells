@@ -8,6 +8,7 @@ import { scan as scanOf } from "../../theory/modes.js";
 import { beatCount, bentSteps, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel } from "../meter.js";
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from "./tables.js";
 import { notesCells } from "./sorts.js";
+import { styleRefs } from "./bindings.js";
 class Abort extends Error {
 }
 function meterOf(d) {
@@ -57,6 +58,7 @@ function bentOf(d, warn, declOf) {
             positions,
             lap,
             bars,
+            tableCell: bend.table.name,
             ...(moves ? { depth: { range: moves.range, factors: moves.factors.map((f) => f.name), table, per, nodes } } : {}),
         },
     };
@@ -168,6 +170,9 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             units,
             scan: b.kind === 'scan' ? { lap: scanOf(b.steps).lap, steps: b.steps } : null,
             ...(d.bend ? bentOf(d, warn, (n) => decls.get(n)) : {}),
+            ...(d.readsSlot ? { readsSlot: d.readsSlot } : {}),
+            ...(d.valueReads ? { valueReads: d.valueReads } : {}),
+            ...(d.style ? { styleReads: [...new Set(styleRefs(d.style).map((r) => r.name))] } : {}),
             shift: d.shift ?? 0,
             ...(d.tonic ? { tonic: d.tonic.name } : {}),
             ...(b.kind === 'scan' && b.phaseCell && d.over ? { phase: { cell: b.phaseCell.name, k: b.phaseCell.k, n: b.phaseCell.n, key: d.over.name } } : {}),
