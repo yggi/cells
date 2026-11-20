@@ -1,0 +1,3 @@
+### Added
+
+- **`@yggi/cells/time`, the sixth entry point by role** (#724): the analysis of what plays, from one place: a piece's boundaries (`cones`, `swells`, `novelty`, `sectionsOver`), its motifs and structure (`motifs`, `multiscale`, `structure`, `splices`), how it moves at every scale (`scalograms`, `SIGNALS`, the wavelet's `grid`, `ridges`, `reach`), its meter and rhythm as necklaces (`levelsOf`, `foldings`, `alike`, `pulseOf`, `findMeter`), a render's spectrum (`waterfall`, `owners`, `peaks`) and `listening`. The wavelet's `fold` is exported as `foldScalogram` and the found meter's `Found` as `FoundMeter`, so neither is taken for the folder's `fold` or the repository's `Found`. Each name is the one a module path already gave, and the module paths still work.

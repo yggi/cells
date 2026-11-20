@@ -10,6 +10,36 @@
       "module": "./src/index.ts",
       "default": "./dist/index.js"
     },
+    "./edit": {
+      "types": "./types/edit.d.ts",
+      "module": "./src/edit.ts",
+      "default": "./dist/edit.js"
+    },
+    "./time": {
+      "types": "./types/time.d.ts",
+      "module": "./src/time.ts",
+      "default": "./dist/time.js"
+    },
+    "./repository": {
+      "types": "./types/repository.d.ts",
+      "module": "./src/repository.ts",
+      "default": "./dist/repository.js"
+    },
+    "./library": {
+      "types": "./types/library.d.ts",
+      "module": "./src/library.ts",
+      "default": "./dist/library.js"
+    },
+    "./inspect": {
+      "types": "./types/inspect.d.ts",
+      "module": "./src/inspect.ts",
+      "default": "./dist/inspect.js"
+    },
+    "./midi": {
+      "types": "./types/midi.d.ts",
+      "module": "./src/midi.ts",
+      "default": "./dist/midi.js"
+    },
     "./engine/*": {
       "types": "./types/engine/*.d.ts",
       "module": "./src/engine/*.ts",
@@ -66,6 +96,7 @@
     "types": "tsc -p tsconfig.types.json",
     "dist": "node --experimental-strip-types --no-warnings tools/dist.ts",
     "batch": "node --experimental-strip-types --no-warnings tools/batch.ts",
+    "api": "node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/api.ts",
     "sync": "node --experimental-strip-types --no-warnings tools/sync.ts"
   },
   "devDependencies": {
