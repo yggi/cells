@@ -282,6 +282,25 @@ export function writtenGraph(result, { card = false } = {}) {
         for (const name of c.styleReads ?? [])
             if (result.cells.has(name))
                 link({ id: edgeId(cellId(name), id), source: cellId(name), target: id, count: 1, transforms: AS_IS, ...wire('style', 'cv', cellId(name), id, 1, false, true) });
+        for (const name of c.valueReads ?? [])
+            if (result.cells.has(name) && shown(name))
+                link({
+                    id: edgeId(id, cellId(name)),
+                    source: id,
+                    target: cellId(name),
+                    count: 1,
+                    transforms: AS_IS,
+                    ...wire('braid', 'cv', id, cellId(name), 1, true, true),
+                });
+        if (c.readsSlot && result.cells.has(c.readsSlot.cell) && shown(c.readsSlot.cell))
+            link({
+                id: edgeId(cellId(c.readsSlot.cell), id),
+                source: cellId(c.readsSlot.cell),
+                target: id,
+                count: 1,
+                transforms: AS_IS,
+                ...wire('style', 'cv', cellId(c.readsSlot.cell), id, 1, false, true),
+            });
         for (const target of c.about)
             if (result.cells.has(target))
                 link({ id: edgeId(id, cellId(target)), source: id, target: cellId(target), count: 1, transforms: AS_IS, ...wire('about', 'none', id, cellId(target)) });

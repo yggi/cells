@@ -271,6 +271,7 @@ export function readStyles(parsed, scope) {
         }
         return made.has(name) ? name : null;
     };
+    const slotReads = new Map();
     let changed = false;
     const cells = parsed.cells.map((d) => {
         if (!d.paramCells)
@@ -279,6 +280,8 @@ export function readStyles(parsed, scope) {
         for (const [key, pc] of Object.entries(d.paramCells)) {
             const factors = pc.factors.map((f) => {
                 const name = cellOf(f);
+                if (name && f.pick?.kind === 'at')
+                    slotReads.set(name, { cell: f.name, slot: f.pick.i });
                 return name ? { name, pick: null, shift: 0, span: f.span } : f;
             });
             if (factors.some((f, k) => f !== pc.factors[k]))
@@ -291,5 +294,12 @@ export function readStyles(parsed, scope) {
     });
     if (!changed && !diagnostics.length)
         return { parsed, glides };
-    return { parsed: { ...parsed, cells: [...cells, ...made.values()], diagnostics: [...parsed.diagnostics, ...diagnostics] }, glides };
+    return {
+        parsed: {
+            ...parsed,
+            cells: [...cells, ...[...made].map(([name, d]) => (slotReads.has(name) ? { ...d, readsSlot: slotReads.get(name) } : d))],
+            diagnostics: [...parsed.diagnostics, ...diagnostics],
+        },
+        glides,
+    };
 }

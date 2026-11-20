@@ -46,7 +46,9 @@ describe('readsOf finds every cell a line names, by the form that reads it', () 
  * The reads of a text the written graph draws no wire for, by form: a read is drawn when its two cells have an edge
  * between them, either way. A read inside an unnamed cell (`&key:λ19_5`) is its owner's. A gate read in a mix
  * (`&out [&leadOut, &drumOut]`) is drawn through the voices it plays (#234: each in from its own wheel, no wire from the
- * gate): it counts as drawn when every one of its voices is wired into the reader, and not otherwise.
+ * gate): it counts as drawn when every one of its voices is wired into the reader, and not otherwise. A style's slot
+ * (`lpf=… * &style[bite]`) is read through the cell compile makes for it: drawn when the style is wired into that cell
+ * and that cell into the reader.
  */
 function undrawn(source: string): Record<string, number> {
   const text = expansion(source, O).text;
@@ -67,6 +69,8 @@ function undrawn(source: string): Record<string, number> {
       if (wired.has(`cell:${d.name}|cell:${r.name}`) || wired.has(`cell:${owner}|cell:${r.name}`)) continue;
       const voices = to.gate?.receivers ?? [];
       if (voices.length && voices.every((v) => wired.has(`cell:${v}|cell:${d.name}`) || wired.has(`cell:${v}|cell:${owner}`))) continue;
+      const made = [...result.cells.values()].filter((m) => m.readsSlot?.cell === r.name);
+      if (made.some((m) => wired.has(`cell:${r.name}|cell:${m.name}`) && (wired.has(`cell:${m.name}|cell:${d.name}`) || wired.has(`cell:${m.name}|cell:${owner}`)))) continue;
       gaps[r.form] = (gaps[r.form] ?? 0) + 1;
     }
   }
@@ -79,13 +83,6 @@ const UNDRAWN: Readonly<Record<string, number>> = {
   'paramCells.swing': 63,
   // (a fill's cells, `&cycle [&cycle_notes * &cycle_level]`, and a law's, in daytime and fiveto12: they wait on #792)
   'braid.tokens': 6,
-  // (a mode read from a cell, `scale(&mode, &tonic)`: `even(k, n, &mode)`)
-  'braid.even': 11,
-  // (the section's style read through the cells a band's instruments hold: `lpf=… * &style`, `attack=…`)
-  'paramCells.lpf': 6,
-  'paramCells.attack': 6,
-  'paramCells.release': 4,
-  'paramCells.s': 2,
   // (a key's tonic, written in a scale the key holds)
   tonic: 2,
 };
