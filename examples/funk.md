@@ -10,6 +10,7 @@ The share is a slider, from straight (1/2) to a triplet's (2/3).
 In the Groove MIDI Dataset's drummers (#19, [the measurements](../docs/notes/groove-measure.md)), the funk performances that swing their sixteenths do so at .56 to .63, a median of .60, and the New Orleans ones at .56 to .59; most funk is played straight.
 
 ```cells
+* from style=&funk
 &swingNote label="swing=16n: the sixteenths lean, the second of each pair this share of the way through its eighth (1/2 straight). The eighths stay straight: the level is the difference from jazz's swing=8n:2/3." about=&swing
 &bar from meter(swing=&swing) &tempo
 &tempo step=free(100bpm, 80..120)

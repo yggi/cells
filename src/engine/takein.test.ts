@@ -55,7 +55,7 @@ describe('where a given cell came from (origins)', () => {
   it("chains Electroswing's &hh through drums_performer to the kit's line", () => {
     const r = compileSource(EXAMPLES.electroswing.source, undefined, O);
     expect(r.origins?.get('hh')).toEqual([
-      { id: null, line: 1 },
+      { id: null, line: 2 },
       { id: 'drums_performer', line: expect.any(Number) },
       { id: 'gm_kit', line: expect.any(Number) },
     ]);

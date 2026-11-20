@@ -5,6 +5,7 @@ description: "I – V – vi – IV, arranged by a selector: intro, verses, chor
 ---
 
 ```cells
+* from style=&synthPop
 &vibrato from vibrato
 &strike, &thump, &snap, &click from envelopes
 # The four chords: I – V – vi – IV, a bar each, in C. Written as scale degrees

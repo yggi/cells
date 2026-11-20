@@ -9,6 +9,7 @@ Here the band comes from the seed library, taken by name, and so does the tune: 
 The piece writes only what is its own: the tempo, the key's tonic, the stabs, who plays when, and the sound of each instrument.
 
 ```cells
+* from style=&spooky
 &drums, &drumsOut from drums_performer &drumlines
 &key from harmonic_minor D
 &harm from dark_cadence &key

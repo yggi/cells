@@ -32,6 +32,17 @@ export declare function associationOf(text: string, options: {
     explicit: boolean;
 } | null;
 /**
+ * A piece's own place in style space (#543): the points its `* from style=…` lines declare, read as a collection's
+ * declaration is (§1). Only those lines count: a piece's other signatures declare its parts, which are taken apart.
+ * Null for a piece that declares none (a piece may have no style, decision 090).
+ */
+export declare function placeOf(text: string, options: {
+    readonly styles: StyleNames;
+}): {
+    association: WeightedPoint[];
+    problems: string[];
+} | null;
+/**
  * A text without its association (decision 089): each signature once, its attributes dropped, and a collection's
  * `* from` lines gone. The lines a piece takes from it, as they were before the association moved into the text.
  */
