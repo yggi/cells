@@ -1,3 +1,0 @@
-### Added
-
-- **`@yggi/cells/midi`, the second entry point by role** (#724): a text's MIDI notes and routes (`channelTable`, `router`, `routesOf`, `midiNote`, `noteOf`, `gmDrumNote`, `kitNotes`), the MIDI file and text formats (`readMidi`, `writeMidi`, `pieceMidi`, `midiText`), notes folded into cells (`fold`, `cellsFromMidi`, `hints`), the keys a controller plays (`keyboardOf`, `kitPads`), the clock (`ticksBetween`), and the performer that reads a frame as a feel (`readerOf`, `readerByName`, `played`, `perform`). Each name is the one a module path already gave, and the module paths still work.
