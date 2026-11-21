@@ -261,9 +261,21 @@ describe('the forms', () => {
       expect([h.lines, h.sounds], f.id).toEqual([[hole], []]);
       const fit = takenOn(f.text, '');
       expect([fit.fits, fit.missing, fit.sounds], f.id).toEqual([false, [hole], []]);
-      // (filled by a line, nothing is missing and no instrument asked for; its clock need is #322's)
+      // (filled by a line, nothing is missing and no instrument asked for)
       const filled = takenOn(f.text, `${BENCH}\n&gypsy from gypsy &key\n${hole} step=8n &gypsy`, hole);
       expect([filled.missing, filled.sounds, filled.diagnostics], f.id).toEqual([[], [], []]);
+    }
+  });
+
+  // (#322: a form is a splice, its lap its parts' end to end: a one-bar call and answer is two bars, a period's four. It writes no
+  // `cycle=`, so it states no clock need of its own, and each part states its own where it is written)
+  it('each form, filled with each motif, fits the motif’s own meter', () => {
+    for (const f of FORM_FRAGMENTS) {
+      const hole = `&${FORMS[f.id]!.hole}`;
+      for (const motif of Object.keys(MOTIFS)) {
+        const filled = takenOn(f.text, `${benchOf(motif)}\n&${headOf(motif)} from ${fromId(motif)} &key\n${hole} step=8n &${headOf(motif)}`, hole);
+        expect([filled.fits, filled.missing, filled.sounds], `${f.id} × ${motif}`).toEqual([true, [], []]);
+      }
     }
   });
 
