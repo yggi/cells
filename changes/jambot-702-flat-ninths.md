@@ -1,0 +1,3 @@
+### Added
+
+- **The chord reader names the two diatonic ninths with a flat ninth** (yggi/jambot#702): `QUALITY_STACKS` gains `m7b9` (0 3 7 10 13, the ninth on a phrygian degree, as on vi of a mixolydian key) and `m7b5b9` (0 3 6 10 13, on a locrian degree). With them, every diatonic ninth chord of every mode is one of five named stacks, as music21 and tonal count them. **What a frontend sees at its next pin:** `chordOf` and `readChords` read those five-note sets as these qualities, where they read another chord or none; `readHarm` follows. No note or event moves. Jambot names the same qualities (`CHORD_QUALITIES`), and its test holds the two tables equal.
