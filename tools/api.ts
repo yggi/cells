@@ -42,6 +42,11 @@ export const ENTRY_POINTS: readonly { readonly match: string; readonly entry: En
   ...['compile', 'host', 'keepbeat', 'schedule', 'realize', 'program', 'ast', 'parser/index', 'span', 'styleat', 'render', 'audioexport', 'wavfile'].map(
     (m): { match: string; entry: Entry } => ({ match: `engine/${m}`, entry: '@yggi/cells' }),
   ),
+  // `physics` is the engine's playing state; `declare` holds the kit's voices' id; `fills` and `parser/use` read a fill and a `from` line.
+  { match: 'engine/physics', entry: '@yggi/cells' },
+  { match: 'engine/fills', entry: '@yggi/cells/inspect' },
+  { match: 'engine/parser/use', entry: '@yggi/cells/repository' },
+  { match: 'engine/compiler/declare', entry: '@yggi/cells/library' },
   // The view moves to Cell studio (decision 086, #731).
   ...['routing', 'live', 'plugins', 'builtinPlugins', 'parser/showMeaning'].map((m): { match: string; entry: Entry } => ({ match: `engine/${m}`, entry: 'view' })),
   // Edit.
@@ -94,7 +99,33 @@ export const ENTRY_POINTS: readonly { readonly match: string; readonly entry: En
   { match: 'theory/', entry: '@yggi/cells/library' },
 ];
 
+/**
+ * A name placed apart from its module's entry point, by `module:name`: a module the root plans for holds facts about a
+ * compiled piece that belong to `inspect`, and the view's names leave for Cell studio (decision 086).
+ */
+export const SYMBOL_ENTRY: Readonly<Record<string, Entry>> = {
+  ...Object.fromEntries(
+    ['BODIES', 'DEFAULT_FREQ', 'LABEL_FIELDS', 'ROOT', 'adsrOf', 'isMidiCard', 'keepsTime', 'pickIndices'].map((n) => [`engine/program:${n}`, '@yggi/cells/inspect' as Entry]),
+  ),
+  ...Object.fromEntries(
+    ['engine/helix:positionHue', 'engine/helix:positionOctave', 'engine/helix:freqHue', 'theory/modes:pitchHue', 'engine/parser/index:SHOWS'].map((k) => [k, 'view' as Entry]),
+  ),
+};
+
+/**
+ * What a frontend may reach by a module path on purpose, by module or `module:name`, and why: the view until it moves,
+ * and what is not the language's. The page lists them apart from the work left.
+ */
+export const DEEP_ON_PURPOSE: Readonly<Record<string, string>> = {
+  'engine/fiveto12': "a piece's own data, a plugin ultimately; the owner, 2026-11-21",
+  'engine/order:ExampleKey': 'the same type as `ExampleKey` of `engine/examples`, which `library` exports',
+};
+
 /** The entry point a module (a path under `src/`, no extension) is planned for. */
+export function entryOfSymbol(module: string, name: string): Entry {
+  return SYMBOL_ENTRY[`${module}:${name}`] ?? entryOf(module);
+}
+
 export function entryOf(module: string): Entry {
   for (const { match, entry } of ENTRY_POINTS) if (match.endsWith('/') ? module.startsWith(match) : module === match) return entry;
   return 'internal';
@@ -219,6 +250,29 @@ export function exportsOfModules(paths: readonly string[], root = ROOT): Map<str
   return out;
 }
 
+/** What each frontend's app reaches by a module path: an entry point exports it, it is reached on purpose, or it is work left. */
+export function standing(ledger: Ledger = readLedger(), root = ROOT) {
+  const have = new Map<string, Set<string>>();
+  for (const e of ENTRIES)
+    for (const [m, names] of e.name === '@yggi/cells' ? exportsOfFile('index.ts', root, true) : entryExports(e.name, root, true))
+      have.set(m, new Set([...(have.get(m) ?? []), ...names]));
+  const out: Record<string, { covered: number; onPurpose: [string, string][]; left: string[] }> = {};
+  for (const [name, f] of Object.entries(ledger)) {
+    const s: { covered: number; onPurpose: [string, string][]; left: string[] } = (out[name] = { covered: 0, onPurpose: [], left: [] });
+    for (const [m, names] of Object.entries(f.app)) {
+      if (m === '.' || !/^(engine|theory|repository)\//.test(m)) continue;
+      for (const n of names) {
+        const key = `${m}:${n}`;
+        const why = DEEP_ON_PURPOSE[key] ?? DEEP_ON_PURPOSE[m] ?? (entryOfSymbol(m, n) === 'view' ? 'leaves for Cell studio, decision 086' : undefined);
+        if (have.get(m)?.has(n) && !why) s.covered++;
+        else if (why) s.onPurpose.push([key, why]);
+        else s.left.push(key);
+      }
+    }
+  }
+  return out;
+}
+
 const count = (r: Record<string, string[]>) => Object.values(r).reduce((n, v) => n + v.length, 0);
 
 /** The generated part of docs/api.md: the entry points, what each holds, the root's exports, the frontends' reach. */
@@ -251,32 +305,50 @@ export function render(root = ROOT, ledger: Ledger = readLedger()): string {
   if (stray.length) lines.push('#### On the root index, planned for no entry point', '', `${stray.join(', ')}.`, '');
 
   lines.push('### What the frontends reach by a module path', '');
-  const have = new Map<string, Set<string>>();
-  for (const e of ENTRIES)
-    for (const [m, names] of e.name === '@yggi/cells' ? exportsOfFile('index.ts', root, true) : entryExports(e.name, root, true))
-      have.set(m, new Set([...(have.get(m) ?? []), ...names]));
+  const state = standing(ledger, root);
   lines.push(
-    '| frontend | pin | app: modules / symbols deep | of them, symbols an entry point exports | app: symbols from the root | tests and tools: modules / symbols deep |',
-    '|---|---|---|---|---|---|',
+    '| frontend | pin | app: modules / symbols deep | an entry point exports | on purpose | work left | app: symbols from the root | tests and tools: modules / symbols deep |',
+    '|---|---|---|---|---|---|---|---|',
   );
   for (const [name, f] of Object.entries(ledger)) {
     const deep = (r: Record<string, string[]>) => Object.fromEntries(Object.entries(r).filter(([m]) => m !== '.'));
-    const covered = Object.entries(deep(f.app)).reduce((n, [m, names]) => n + names.filter((x) => have.get(m)?.has(x)).length, 0);
+    const s = state[name];
     lines.push(
-      `| ${name} (\`${f.commit.slice(0, 7)}\`) | ${f.pin} | ${Object.keys(deep(f.app)).length} / ${count(deep(f.app))} | ${covered} | ${f.app['.']?.length ?? 0} | ${Object.keys(deep(f.tests)).length} / ${count(deep(f.tests))} |`,
+      `| ${name} (\`${f.commit.slice(0, 7)}\`) | ${f.pin} | ${Object.keys(deep(f.app)).length} / ${count(deep(f.app))} | ${s.covered} | ${s.onPurpose.length} | ${s.left.length} | ${f.app['.']?.length ?? 0} | ${Object.keys(deep(f.tests)).length} / ${count(deep(f.tests))} |`,
     );
   }
   lines.push('');
-  const reached = new Map<string, string[]>();
-  for (const [name, f] of Object.entries(ledger))
-    for (const m of Object.keys(f.app)) if (m !== '.' && /^(engine|theory|repository)\//.test(m) && entryOf(m) === 'internal') reached.set(m, [...(reached.get(m) ?? []), name]);
+  const purposes = new Map<string, Set<string>>();
+  for (const s of Object.values(state))
+    for (const [k, why] of s.onPurpose) {
+      const [module, name] = k.split(':');
+      const key = `${module} (${why})`;
+      purposes.set(key, new Set([...(purposes.get(key) ?? []), name]));
+    }
   lines.push(
-    reached.size
-      ? `Reached by an app and planned for no entry point (the work left): ${[...reached]
+    purposes.size
+      ? `Reached by a module path on purpose: ${[...purposes]
           .sort()
-          .map(([m, who]) => `\`${m}\` (${who.join(', ')})`)
+          .map(
+            ([k, names]) =>
+              `${k}: ${[...names]
+                .sort()
+                .map((n) => `\`${n}\``)
+                .join(', ')}`,
+          )
+          .join('; ')}.`
+      : 'Nothing is reached by a module path on purpose.',
+    '',
+  );
+  const left = new Map<string, string[]>();
+  for (const [name, s] of Object.entries(state)) for (const k of s.left) left.set(k, [...(left.get(k) ?? []), name]);
+  lines.push(
+    left.size
+      ? `Reached by an app and on no entry point (the work left): ${[...left]
+          .sort()
+          .map(([k, who]) => `\`${k}\` (${who.join(', ')})`)
           .join(', ')}.`
-      : 'Every module an app reaches is planned for an entry point.',
+      : 'Every symbol an app reaches is on an entry point or reached on purpose.',
     '',
   );
   return lines.join('\n');

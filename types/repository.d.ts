@@ -20,6 +20,7 @@ export { audition, headsOf, playedHeadsOf, type Audition, type AuditionOptions }
 export { catalogue, type CatalogueEntry } from './repository/catalogue';
 export { coreFragment, type FragmentCore } from './repository/corefragment';
 export { bodyOf, expand, expansion, fragmentHash, hasFrom, partOf, partsOf, signatureOf } from './engine/use';
+export { readFrom } from './engine/parser/use';
 export { fromLine, references, type FromLine, type Reference } from './engine/references';
 export { takeIn, type TakenIn } from './engine/takein';
 export { RENAMED_IDS, wordOf } from './engine/renamed';

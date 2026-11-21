@@ -10,6 +10,7 @@ export { audition, headsOf, playedHeadsOf } from "./repository/audition.js";
 export { catalogue } from "./repository/catalogue.js";
 export { coreFragment } from "./repository/corefragment.js";
 export { bodyOf, expand, expansion, fragmentHash, hasFrom, partOf, partsOf, signatureOf } from "./engine/use.js";
+export { readFrom } from "./engine/parser/use.js";
 export { fromLine, references } from "./engine/references.js";
 export { takeIn } from "./engine/takein.js";
 export { RENAMED_IDS, wordOf } from "./engine/renamed.js";
