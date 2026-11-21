@@ -120,8 +120,8 @@ const FORMS: Record<string, { head: string; hole: string; bars: number; point: S
   period: { head: 'period', hole: 'call', bars: 4, point: { sync: 0.15, harm: 0.4, bite: 0.3 } },
   AABA: { head: 'chorus', hole: 'a', bars: 4, point: { sync: 0.45, harm: 0.85, bite: 0.4 } },
   // (Twinkle's and Hänschen klein's, at their tunes' points, #371)
-  ternary: { head: 'song', hole: 'call', bars: 6, point: { sync: KINDERLIED.sync!, harm: KINDERLIED.harm!, bite: KINDERLIED.bite! }, weight: 0.5 },
-  rounded_binary: { head: 'song', hole: 'call', bars: 8, point: heldForm(0.1, 0.12, 0.6, 0.45), weight: 0.5 },
+  ternary: { head: 'ternary', hole: 'call', bars: 6, point: { sync: KINDERLIED.sync!, harm: KINDERLIED.harm!, bite: KINDERLIED.bite! }, weight: 0.5 },
+  rounded_binary: { head: 'rounded_binary', hole: 'call', bars: 8, point: heldForm(0.1, 0.12, 0.6, 0.45), weight: 0.5 },
 };
 
 type Meter = '4/4' | '3/4' | '6/8' | '5/4' | '7/8' | '10/8' | '12/8' | '2/4' | 'alla breve';
