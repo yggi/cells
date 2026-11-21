@@ -1,8 +1,8 @@
 /**
  * Anchors (decision 052, point 3): what no operator touches, derived from a fragment's text on its workbench by a rule
  * per kind of line, never declared. Rung 1 has the drums' two: the kick (a line every note of which strikes General
- * MIDI's kick, 36, by its `note=`) and the backbeat (a line every note of which strikes the snare, 38,
- * on the meter's backbeat). Rung 2 has the pitched lines' one: the root on a chord change (a note of a line over a
+ * MIDI's kick, 36, by its `note=`) and the backbeat (a line every note of which strikes the snare or a drum that
+ * stands for it, the clap, the side stick or the electric snare, on the meter's backbeat). Rung 2 has the pitched lines' one: the root on a chord change (a note of a line over a
  * harmony, a braid of stacks, whose onset is where the chord in force changes or its lap starts, and which plays that
  * chord's root, its degree 0 or a lap of it). The cadence joins with harmony (rung 3). Pure.
  */
@@ -21,7 +21,13 @@ export interface Anchor {
 }
 
 const KICK = 36;
-const SNARE = 38;
+/**
+ * The drums a backbeat is struck on, as General MIDI numbers them: the side stick 37, the snare 38, the hand clap 39 and the
+ * electric snare 40 (#317). A line every note of which strikes one of them, on the meter's backbeat, is the backbeat's;
+ * a clap on two and four is a backbeat as a snare is. Jambot's `GROOVE_ANCHORS` read the roles, so they take a clap line
+ * by its `role=backbeat`; Vary derives it, never declared (decision 052, point 3).
+ */
+const BACKBEAT_DRUMS = new Set([37, 38, 39, 40]);
 
 // Lifted from yggi/jambot packages/engine/src/drums.ts @ 0a56da9 (`backbeatOf`), as a function of the meter's beats
 // (Jambot's pulses are what decision 040 calls the beats): every beat after the downbeat in a bar of two or three, the
@@ -48,6 +54,10 @@ function onBackbeat(line: Line): boolean {
 
 /** Whether every note of a line strikes this drum: its voice's `note=`, not its name (decision 075, #617). */
 const strikes = (line: Line, note: number, result: CompileResult) => line.notes.length > 0 && line.notes.every((n) => drumNoteOf(result, n.voice) === note);
+
+/** Whether every note of a line strikes one of these drums. */
+const strikesAny = (line: Line, notes: ReadonlySet<number>, result: CompileResult) =>
+  line.notes.length > 0 && line.notes.every((n) => notes.has(drumNoteOf(result, n.voice) ?? -1));
 
 /**
  * A harmony's changes: each onset, in whole notes from its lap's start, where the chord in force changes or its lap
@@ -99,7 +109,7 @@ export function anchorsAmong(lines: readonly Line[], result: CompileResult): Anc
       ? rootsOf(line, result)
       : strikes(line, KICK, result)
         ? [{ line: line.name, reason: 'kick' }]
-        : strikes(line, SNARE, result) && onBackbeat(line)
+        : strikesAny(line, BACKBEAT_DRUMS, result) && onBackbeat(line)
           ? [{ line: line.name, reason: 'backbeat' }]
           : [],
   );

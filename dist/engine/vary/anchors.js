@@ -2,7 +2,7 @@ import { flatten } from "../flatten.js";
 import { codeShifts } from "../program.js";
 import { drumNoteOf, tapWhole } from "./lines.js";
 const KICK = 36;
-const SNARE = 38;
+const BACKBEAT_DRUMS = new Set([37, 38, 39, 40]);
 export function backbeatOf(meter) {
     const beats = meter.beats.length;
     const starts = meter.beats.map((_, i) => meter.beats.slice(0, i).reduce((sum, b) => sum + b, 0) / meter.unit);
@@ -20,6 +20,7 @@ function onBackbeat(line) {
     });
 }
 const strikes = (line, note, result) => line.notes.length > 0 && line.notes.every((n) => drumNoteOf(result, n.voice) === note);
+const strikesAny = (line, notes, result) => line.notes.length > 0 && line.notes.every((n) => notes.has(drumNoteOf(result, n.voice) ?? -1));
 function changesOf(result, table) {
     const cell = result.cells.get(table);
     if (!cell?.step)
@@ -62,7 +63,7 @@ export function anchorsAmong(lines, result) {
         ? rootsOf(line, result)
         : strikes(line, KICK, result)
             ? [{ line: line.name, reason: 'kick' }]
-            : strikes(line, SNARE, result) && onBackbeat(line)
+            : strikesAny(line, BACKBEAT_DRUMS, result) && onBackbeat(line)
                 ? [{ line: line.name, reason: 'backbeat' }]
                 : []);
 }
