@@ -253,3 +253,23 @@ describe('a cell the compile reads by value, or makes for a slot, is still a wir
     expect(all.filter((e) => e.from === cellId(name) && e.to === cellId('v')).map((e) => e.port)).toEqual(['lpf']);
   });
 });
+
+describe("a meter's swing cell is a wire into the meter (#825)", () => {
+  const TAIL = '&t step=8n 0 1 2\n&v s=sine loop=C4\n&o [&t * &v]';
+  const wire = (text: string, from: string) => {
+    const r = compileSource(text);
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    return writtenGraph(r).edges.filter((e) => e.from === cellId(from) && e.to === cellId('bar'));
+  };
+  it('swing=&swing, a cell that is a swing alone: one wire, port swing', () => {
+    const text = `&bar meter("4/4") step=100bpm swing=&sw\n&sw swing=8n:.6\n${TAIL}`;
+    expect(wire(text, 'sw').map((e) => [e.port, e.band])).toEqual([['swing', 'cv']]);
+  });
+  it('swing=8n:&lean, a share moved by a cell, and the cells that scale a range: each is a wire into the meter', () => {
+    expect(wire(`&bar meter("4/4") step=100bpm swing=8n:&lean\n&lean .6\n${TAIL}`, 'lean').map((e) => e.port)).toEqual(['swing']);
+    expect(wire(`&bar meter("4/4") step=100bpm swing=8n:.5...75 * &k\n&k 1\n${TAIL}`, 'k').map((e) => e.port)).toEqual(['swing']);
+  });
+  it('a meter with a swing written on it has no such wire', () => {
+    expect(wire(`&bar meter("4/4") step=100bpm swing=8n:.6\n&lean .6\n${TAIL}`, 'lean')).toEqual([]);
+  });
+});

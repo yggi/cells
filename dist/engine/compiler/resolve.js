@@ -171,6 +171,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             scan: b.kind === 'scan' ? { lap: scanOf(b.steps).lap, steps: b.steps } : null,
             ...(d.bend ? bentOf(d, warn, (n) => decls.get(n)) : {}),
             ...(d.readsSlot ? { readsSlot: d.readsSlot } : {}),
+            ...(d.swingFrom ? { swingFrom: d.swingFrom.name } : {}),
             ...(d.valueReads ? { valueReads: d.valueReads } : {}),
             ...(d.style ? { styleReads: [...new Set(styleRefs(d.style).map((r) => r.name))] } : {}),
             shift: d.shift ?? 0,
