@@ -182,6 +182,14 @@ export function associationOf(text, options) {
     }
     return found ? { association, problems, explicit } : null;
 }
+export function placeOf(text, options) {
+    const own = text
+        .split('\n')
+        .filter((raw) => splitComment(raw)[0].trim().startsWith('*'))
+        .join('\n');
+    const read = associationOf(own, options);
+    return read?.explicit ? { association: read.association, problems: read.problems } : null;
+}
 export function withoutDeclarations(text) {
     const seen = new Set();
     return text

@@ -10,6 +10,7 @@ A three leans by a bend instead (decision 080): `bend=8n:&lean` gives the eighth
 Its depth, after a second colon, is a slider: 0 even, 1 as written, 2 the lengths squared (16 : 9 : 9).
 
 ```cells
+* from style=&bluesShuffle
 &leanNote label="A lean of three: the eighths of each beat take the lengths 4, 3 and 3, long, short, short; the beats never move. Its depth: 0 even, 1 as written, 2 twice as far." about=&lean
 &bar meter("12/8") step=&tempo bend=8n:&lean:free(1, 0..2)
 &tempo step=free(60bpm, 45..80)

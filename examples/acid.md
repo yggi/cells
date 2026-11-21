@@ -5,6 +5,7 @@ description: "Acid-Cell — everybody needs a 303: a saw through a resonant filt
 ---
 
 ```cells
+* from style=&acid
 # Acid-Cell — everybody needs a 303. An original acid line: a saw through a resonant
 # low-pass whose envelope opens on every note — further on the accents — while a hand
 # turns the cutoff and the resonance, slowly (all of it lpf=… * &cells). Echo: a dotted eighth.
