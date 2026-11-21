@@ -142,7 +142,7 @@ export interface GraphEdge extends Wire {
  * card's entry, a product's voice, a note's link, a copy's base, a bend's table (how a meter places its steps) and a
  * style (what a cell is, not what it sends).
  */
-const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about', 'base', 'bend', 'style']);
+const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about', 'base', 'bend', 'style', 'swing']);
 /**
  * A wire into what plays it: a melody into its voice, its envelope, levels, pitch, parameters, FM, what excites, couples,
  * writes or plays it. Not ticks: a parameter's clock (`delaytime=&bar*4/3`) is timing, as a step is.
@@ -515,6 +515,10 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
           transforms: AS_IS,
           ...wire('braid', 'cv', id, cellId(name), 1, true, true),
         });
+    // a meter's swing read from a cell (`swing=&swing`, `swing=8n:&lean`): each cell is a wire into the meter, as a bend's is
+    for (const name of new Set([c.swingFrom, ...(c.swingMoves?.factors ?? [])]))
+      if (name && result.cells.has(name) && shown(name))
+        link({ id: edgeId(cellId(name), id), source: cellId(name), target: id, count: 1, transforms: AS_IS, ...wire('swing', 'cv', cellId(name), id, 1, false, true) });
     // a cell made for a style's slot read (`lpf=… * &style[bite]`): the style it reads, into it; the cell goes on into what
     // reads the slot, as any parameter's does (#618)
     if (c.readsSlot && result.cells.has(c.readsSlot.cell) && shown(c.readsSlot.cell))
