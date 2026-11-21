@@ -11,6 +11,8 @@ export { beatCount, meterOfFrame, noteValue, swungPlace, tapShare, writtenPlace 
 export { outs, soundRole } from "./engine/outs.js";
 export { kitOf } from "./engine/plays.js";
 export { formOf, readsOf } from "./engine/reads.js";
+export { adsrOf, BODIES, DEFAULT_FREQ, isMidiCard, keepsTime, LABEL_FIELDS, pickIndices, ROOT } from "./engine/program.js";
+export { lawAt } from "./engine/fills.js";
 export { lapOf, ownRate, refsOf, stepsAt, stepsPerSecond } from "./engine/readers.js";
 export { heldAt } from "./engine/series.js";
 export { CELL_KINDS, pieceStats } from "./engine/stats.js";

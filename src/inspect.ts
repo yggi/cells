@@ -20,6 +20,8 @@ export { beatCount, meterOfFrame, noteValue, swungPlace, tapShare, writtenPlace,
 export { outs, soundRole } from './engine/outs';
 export { kitOf } from './engine/plays';
 export { formOf, readsOf, type Read } from './engine/reads';
+export { adsrOf, BODIES, DEFAULT_FREQ, isMidiCard, keepsTime, LABEL_FIELDS, pickIndices, ROOT } from './engine/program';
+export { lawAt } from './engine/fills';
 export { lapOf, ownRate, refsOf, stepsAt, stepsPerSecond } from './engine/readers';
 export { heldAt, type ParamTrack } from './engine/series';
 export { CELL_KINDS, pieceStats, type CellKind } from './engine/stats';

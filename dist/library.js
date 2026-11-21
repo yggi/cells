@@ -5,6 +5,7 @@ export { AXES, AXIS_NAMES, SLOTS } from "./engine/style.js";
 export { EXAMPLES } from "./engine/examples.js";
 export { canonicalTags, MIDI_FILE, parseTag, tagKind, tagName, TUTORIAL } from "./engine/tags.js";
 export { DOUGH_PARAMS, DOUGH_SOURCES } from "./engine/dough-params.js";
+export { VOICE_KIT } from "./engine/compiler/declare.js";
 export { bjorklund } from "./engine/parser/generators.js";
 export { midiOf, mod, modeBrightness, modeName, NOTE_NAMES, noteName, SCALES } from "./theory/modes.js";
 export { TONAL_SCALES } from "./theory/tonal.js";

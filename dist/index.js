@@ -1,8 +1,8 @@
 export { compileSource } from "./engine/compile.js";
 export { parse, pieceMeta } from "./engine/parser/index.js";
-export { plan, swingOfBar } from "./engine/realize.js";
-export { windowAt } from "./engine/schedule.js";
-export { createHost, planOf } from "./engine/host.js";
+export { chanceOf, eventsBetween, liveGains, outputPlays, outputSounds, plan, returnGains, swingOfBar } from "./engine/realize.js";
+export { isPhysical, retime, tapeSpeeds, windowAt } from "./engine/schedule.js";
+export { createHost, emptyWindow, grabIn, planOf } from "./engine/host.js";
 export { keepBar, keepBeat } from "./engine/keepbeat.js";
 export { shorten, shortenAll } from "./engine/shorten/index.js";
 export { normalise } from "./engine/normalise/index.js";
@@ -23,6 +23,8 @@ export { isPieceFile, lockChanges, lockfileOf, readPiece, textLockfile, withLock
 export { fileLine, readLiterate, rewrite } from "./engine/literate.js";
 export { movedCard } from "./engine/shorten/card.js";
 export { jacksOf, patch, unpatch, PatchError } from "./engine/patch.js";
+export { codeShifts } from "./engine/program.js";
+export { resetPhysics } from "./engine/physics.js";
 export { bodyOf, expand, fragmentHash, signatureOf } from "./engine/use.js";
 export { fromLine, references } from "./engine/references.js";
 export { formOf, readsOf } from "./engine/reads.js";

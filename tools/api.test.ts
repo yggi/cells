@@ -3,7 +3,22 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { ENTRIES, ENTRY_POINTS, ROOT, entryExports, entryOf, exportsOfModules, importsOf, modules, readLedger, render, rootExports, withGenerated } from './api';
+import {
+  ENTRIES,
+  ENTRY_POINTS,
+  ROOT,
+  entryExports,
+  entryOf,
+  entryOfSymbol,
+  exportsOfModules,
+  importsOf,
+  modules,
+  readLedger,
+  render,
+  standing,
+  rootExports,
+  withGenerated,
+} from './api';
 
 describe('the entry points', () => {
   const all = modules();
@@ -50,7 +65,7 @@ describe('the entry point files written', () => {
     for (const e of written) {
       const names: string[] = [];
       for (const [module, list] of entryExports(e.name)) {
-        expect(entryOf(module), `${e.name}: ${module}`).toBe(e.name);
+        for (const name of list) expect(entryOfSymbol(module, name), `${e.name}: ${module}:${name}`).toBe(e.name);
         names.push(...list);
       }
       expect(
@@ -97,6 +112,13 @@ describe('the ledger', () => {
   it('names both frontends, at a pin', () => {
     expect(Object.keys(ledger).sort()).toEqual(['cell-studio', 'jambot']);
     for (const f of Object.values(ledger)) expect(f.pin).toMatch(/^v\d+\.\d+\.\d+$/);
+  });
+
+  it('leaves only the migrate internals, which #716 replaces, on no entry point and not on purpose', () => {
+    expect(Object.fromEntries(Object.entries(standing(ledger)).map(([f, s]) => [f, s.left]))).toEqual({
+      jambot: ['engine/migrate/axes:OLD_AXES', 'engine/migrate/axes:newPoint', 'engine/migrate/moved:movedIds', 'engine/renamed:MOVED'],
+      'cell-studio': [],
+    });
   });
 
   it('is still exported: a symbol a frontend reaches that moved goes in changes/, and in the ledger', () => {
