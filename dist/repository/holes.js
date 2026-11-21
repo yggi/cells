@@ -14,13 +14,23 @@ function fewestBar(need) {
     return 0;
 }
 export const meterMeets = (need, meter, tap) => lapMeets(need, tapPositions(meter, tap, need.bars).length);
+const splicesOnly = (d, result) => {
+    const line = (name) => {
+        const c = result.cells.get(name);
+        return !!c && !c.voice && !c.kit && !c.mix && !c.gate;
+    };
+    return (d.cycle == null &&
+        d.braid.kind === 'list' &&
+        d.braid.tokens.some((t) => t.atom.kind === 'ref') &&
+        d.braid.tokens.every((t) => (t.atom.kind === 'ref' && line(t.atom.name)) || t.atom.kind === 'rest'));
+};
 export function clockNeeds(text, result, of, own) {
     const decls = parse(text).cells;
     const mine = own ?? new Set(decls.map((d) => d.name));
     const mainIsMine = result.mainMeter !== undefined && mine.has(result.mainMeter);
     return decls.flatMap((d) => {
         const step = d.step;
-        if (step?.kind !== 'tap' || (of && !of.has(d.name)))
+        if (step?.kind !== 'tap' || (of && !of.has(d.name)) || splicesOnly(d, result))
             return [];
         if (step.meter ? mine.has(step.meter.name) : mainIsMine)
             return [];

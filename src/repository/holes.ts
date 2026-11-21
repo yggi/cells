@@ -94,6 +94,26 @@ export interface TappedNeed {
 }
 
 /**
+ * A braid of nothing but spliced lines and rests (`&phrase step=8n &call &answer`) and no `cycle=`: a form, the splice of its
+ * parts. Its lap is its parts' laps end to end, as long as they are, and it comes round after as many bars as that takes (a
+ * one-bar call and answer, two), so it can't know a lap of bars to state a need for: each part states its own, where it is
+ * written (#322). A step that names a sound (`&bd`, a voice, a kit, a mix or a gate) is a hit, not a spliced line: a line of
+ * hits is a pattern, and keeps its need.
+ */
+const splicesOnly = (d: CellDecl, result: CompileResult): boolean => {
+  const line = (name: string) => {
+    const c = result.cells.get(name);
+    return !!c && !c.voice && !c.kit && !c.mix && !c.gate;
+  };
+  return (
+    d.cycle == null &&
+    d.braid.kind === 'list' &&
+    d.braid.tokens.some((t) => t.atom.kind === 'ref') &&
+    d.braid.tokens.every((t) => (t.atom.kind === 'ref' && line(t.atom.name)) || t.atom.kind === 'rest')
+  );
+};
+
+/**
  * The clock needs of the cells `of` names (every cell of `text` where it names none), as `result` compiled `text`: each
  * that taps a meter not among `own` (the cells of `text`, where it names none) and that compiled with steps. A tap of the
  * main meter is a need unless the main meter is one of `own`. A cell that didn't compile states no need here.
@@ -104,7 +124,7 @@ export function clockNeeds(text: string, result: CompileResult, of?: ReadonlySet
   const mainIsMine = result.mainMeter !== undefined && mine.has(result.mainMeter);
   return decls.flatMap((d) => {
     const step = d.step;
-    if (step?.kind !== 'tap' || (of && !of.has(d.name))) return [];
+    if (step?.kind !== 'tap' || (of && !of.has(d.name)) || splicesOnly(d, result)) return [];
     if (step.meter ? mine.has(step.meter.name) : mainIsMine) return [];
     const cell = result.cells.get(d.name);
     if (!cell || cell.voice || cell.steps <= 0) return [];

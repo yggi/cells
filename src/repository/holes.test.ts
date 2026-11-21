@@ -91,6 +91,22 @@ describe('what its clock needs', () => {
     expect(holes('&x step=1m &rim(5,16,4)\n&rim s=white').clock).toEqual([need('&x', '1m', 1, 1, 1, 1)]);
   });
 
+  it('a splice of lines states no need of its own: its lap is its parts’ end to end, and each part states its own (#322)', () => {
+    const parts = '&a step=8n 0 2 4 5 4 2 0 ~\n&b step=8n 4 5 4 2 0 ~ 0 ~\n';
+    const spliced = holes(`${parts}&form step=8n &a &b`).clock;
+    expect(spliced.map((n) => n.cell)).toEqual(['&a', '&b']);
+    // (a rest between parts is still a splice; a note among them is a line of its own)
+    expect(holes(`${parts}&form step=8n &a ~ &b`).clock.map((n) => n.cell)).toEqual(['&a', '&b']);
+    expect(holes(`${parts}&form step=8n &a 0 &b`).clock.map((n) => n.cell)).toEqual(['&a', '&b', '&form']);
+    // (and a splice that writes its lap, `cycle=`, states that)
+    expect(holes(`${parts}&form step=8n cycle=2 &a &b`).clock.map((n) => n.cell)).toEqual(['&a', '&b', '&form']);
+  });
+
+  it('a line of hits keeps its need: a step that names a voice is a hit, not a spliced line', () => {
+    const text = '&hat step=16n &hh ~ ~ ~ &hh ~ ~ ~\n&hh s=white';
+    expect(holes(text).clock).toEqual([need('&hat', '16n', 1, 8, 1, 8)]);
+  });
+
   it('a braid that comes round within the bar needs bars of a multiple of it; a rate takes its steps faster', () => {
     expect(holes('&x step=8n 0 2 4').clock).toEqual([need('&x', '8n', 1, 3, 1, 3)]);
     expect(holes('&x step=16n*2 0!16').clock).toEqual([need('&x', '16n', 1, 16, 2, 8)]);
