@@ -1,6 +1,6 @@
 // Lifted from yggi/jambot packages/engine/src/chord-reading.test.ts @ a34d13c6.
 import { describe, expect, it } from 'vitest';
-import { readChords, readHarm } from './chords';
+import { QUALITY_STACKS, chordOf, readChords, readHarm } from './chords';
 import type { Sounding } from './style';
 
 const at = (part: Sounding['part'], step: number, notes: number[]) => notes.map((note) => ({ part, step, note, length: 1 }));
@@ -54,6 +54,22 @@ describe('reading chords from notes', () => {
     ]);
     expect(readChords([])).toEqual([null, null]);
     expect(readChords(at('lead', 0, [60, 64, 67]))).toEqual([null, null]);
+  });
+
+  it('reads every quality on every root back as itself, the bass on its root (finite: every quality, every root)', () => {
+    let read = 0;
+    for (const [quality, stack] of Object.entries(QUALITY_STACKS))
+      for (let root = 0; root < 12; root++) {
+        expect([quality, root, chordOf(new Set(stack.map((x) => (root + x) % 12)), root)]).toEqual([quality, root, { root, quality }]);
+        read++;
+      }
+    expect(read).toBe(21 * 12);
+  });
+
+  it('reads a ninth with a flat ninth, as a harmony states it on a mode’s minor-ninth degree (yggi/jambot#702)', () => {
+    // A C E G B♭: the ninth on vi of C mixolydian; B D F A C: on vii of C major
+    expect(readChords([...at('pad', 0, [57, 60, 64, 67, 70]), ...at('bass', 0, [45])])[0]).toEqual({ root: 9, quality: 'm7b9' });
+    expect(readChords([...at('pad', 0, [59, 62, 65, 69, 72]), ...at('bass', 0, [47])])[0]).toEqual({ root: 11, quality: 'm7b5b9' });
   });
 
   it('reads no chord from notes that are none: a cluster no quality holds', () => {
