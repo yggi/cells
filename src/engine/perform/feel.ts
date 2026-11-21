@@ -39,7 +39,7 @@ const PARTS: readonly FeelPart[] = ['drums', 'bass', 'pad', 'stab', 'lead'];
  * toms or congas.
  */
 export type DrumRole = 'kick' | 'backbeat' | 'ghost' | 'hat' | 'pedal' | 'euclid' | 'ostinato' | 'clave' | 'fill';
-const ROLES: ReadonlySet<string> = new Set<DrumRole>(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'ostinato', 'clave', 'fill']);
+export const ROLES: ReadonlySet<string> = new Set<DrumRole>(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'ostinato', 'clave', 'fill']);
 /** Version 2's roles, read off a name (`readingOf`): the eight before minor 1, so a line named `&ostinato` reads as it did, as nothing. */
 const ROLES_BY_NAME: ReadonlySet<string> = new Set<DrumRole>(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'clave', 'fill']);
 
