@@ -2,61 +2,6 @@
 title: Kinderlieder, in pieces
 tags: [genre:folk, diatonic, motifs, arrangement]
 description: Twinkle and Hänschen klein, each tune's lines its own parts, each tune's shape a form, over a vamp of two chords, a root bass and the plainest beat.
-parts:
-  twinkle:
-    association:
-      - point:
-          sync: 0.1
-          harm: 0.12
-          bite: 0.5
-          mood: 0.95
-        weight: 1
-        facet: motif
-  wonder:
-    association:
-      - point:
-          sync: 0.1
-          harm: 0.12
-          bite: 0.4
-          mood: 0.95
-        weight: 1
-        facet: motif
-  haenschen:
-    association:
-      - point:
-          sync: 0.1
-          harm: 0.12
-          bite: 0.65
-          mood: 0.95
-        weight: 1
-        facet: motif
-  hinein:
-    association:
-      - point:
-          sync: 0.1
-          harm: 0.12
-          bite: 0.6
-          mood: 0.95
-        weight: 1
-        facet: motif
-  heim:
-    association:
-      - point:
-          sync: 0.1
-          harm: 0.12
-          bite: 0.55
-          mood: 0.95
-        weight: 1
-        facet: motif
-  weinet:
-    association:
-      - point:
-          sync: 0.1
-          harm: 0.12
-          bite: 0.7
-          mood: 0.95
-        weight: 1
-        facet: motif
 ---
 
 Two children's songs, the kind a learner plays first, made of the seed library's pieces.
@@ -85,17 +30,17 @@ Each tune is a part of this file: its signature (`&twinkle from &key`), then its
 The forms put them together: `ternary` takes Twinkle's call and names its answer, and makes its bridge of the answer a step up, *up above the world so high*; `rounded_binary` takes Hänschen klein's call and names its open answer, its close and its bridge, which it plays twice, the second time a step up, *hat ja nun kein Hänschen mehr*.
 
 ```cells
-&twinkle from &key
+&twinkle from &key style=&(map=style sync=.1 harm=.12 bite=.5 mood=.95) facet=motif
 &twinkle over=&key step=8n 0 0 4 4 5 5 4@2
-&wonder from &key
+&wonder from &key style=&(map=style sync=.1 harm=.12 bite=.4 mood=.95) facet=motif
 &wonder over=&key step=8n 3 3 2 2 1 1 0@2
-&haenschen from &key
+&haenschen from &key style=&(map=style sync=.1 harm=.12 bite=.65 mood=.95) facet=motif
 &haenschen over=&key step=8n 4 2 2@2 3 1 1@2
-&hinein from &key
+&hinein from &key style=&(map=style sync=.1 harm=.12 bite=.6 mood=.95) facet=motif
 &hinein over=&key step=8n 0 1 2 3 4 4 4@2
-&heim from &key
+&heim from &key style=&(map=style sync=.1 harm=.12 bite=.55 mood=.95) facet=motif
 &heim over=&key step=8n 0 2 4 4 0@4
-&weinet from &key
+&weinet from &key style=&(map=style sync=.1 harm=.12 bite=.7 mood=.95) facet=motif
 &weinet over=&key step=8n 1 1 1 1 1 2 3@2
 &twinkleSong from ternary(answer=&wonder) &twinkle
 &haenschenSong from rounded_binary(answer=&hinein, close=&heim, bridge=&weinet) &haenschen

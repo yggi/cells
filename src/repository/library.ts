@@ -9,10 +9,15 @@ import type { Resolve } from '../engine/program';
 import { EXAMPLES } from '../engine/examples';
 import { RENAMED_IDS } from '../engine/renamed';
 import { SEED, seedFragments } from './seed';
-import { EMPTY_LAYER, fragmentProblems, type Fragment, type LearnedLayer, type WeightedPoint } from './fragments';
-import { readPiece } from '../engine/piecefile';
-import { partOf, usesIn } from '../engine/use';
+import { EMPTY_LAYER, fragmentProblems, type Fragment, type LearnedLayer } from './fragments';
+import { partOf, signatureHeads, usesIn } from '../engine/use';
+import { associationOf } from './declarations';
+import { styleNamesIn } from './files';
+import { SEED_FILES } from './seed.generated';
 import { variantsOf } from './variants';
+
+/** The styles the library's declarations name, by name (decision 089 §2). */
+const STYLE_NAMES = styleNamesIn(SEED_FILES);
 
 /** The seed library's folders, in the order the library lists them: each folder its facet's fragments (decision 047). */
 const FOLDERS = [
@@ -38,23 +43,30 @@ const FOLDERS = [
 /** Every seed fragment, a template's sets of arguments each a fragment of its own, folder by folder (`FOLDERS`). */
 /**
  * The parts the examples give (decision 082), each a fragment whose id is its document's key and its head
- * (`kinderlied/twinkle`), its text the part (`partOf`), its points the ones its document's frontmatter keys by its head
- * (`parts: { twinkle: { association: […] } }`). A part with no association there is taken by its head all the same,
- * and found by no query, so it isn't listed. A malformed one throws here, naming the example and the head.
+ * (`kinderlied/twinkle`), its text the part (`partOf`), its points the ones its signature line declares (decision 089:
+ * `&twinkle from &key style=&(map=style …) facet=motif`). A part whose signature declares none is taken by its head all
+ * the same, and found by no query, so it isn't listed. A malformed one throws here, naming the example and the head.
  */
-export const PARTS: readonly Fragment[] = Object.entries(EXAMPLES).flatMap(([key, e]) => {
-  const file = readPiece(e.file);
-  const parts = 'problems' in file ? undefined : file.frontmatter.parts;
-  if (!parts || typeof parts !== 'object' || Array.isArray(parts)) return [];
-  return Object.entries(parts as Record<string, { association?: unknown }>).map(([head, entry]) => {
+export const PARTS: readonly Fragment[] = Object.entries(EXAMPLES).flatMap(([key, e]) =>
+  signatureHeads(e.source).flatMap((name) => {
+    const head = name.slice(1);
     const text = partOf(e.source, head);
-    if (text === null) throw new Error(`examples/${key}.md: its frontmatter keys a part &${head}, and no signature names it`);
-    const fragment = { id: `${key}/${head}`, text, association: (entry?.association ?? []) as readonly WeightedPoint[] };
-    const problems = fragmentProblems(fragment);
+    if (text === null) return [];
+    // (a piece's own `* from style=` says where the piece is found, not its part)
+    const declared = associationOf(
+      text
+        .split('\n')
+        .filter((line) => !line.trim().startsWith('*'))
+        .join('\n'),
+      { styles: STYLE_NAMES },
+    );
+    if (!declared?.explicit) return [];
+    const fragment = { id: `${key}/${head}`, text, association: declared.association };
+    const problems = [...declared.problems, ...fragmentProblems(fragment)];
     if (problems.length) throw new Error(`examples/${key}.md, part &${head}: ${problems.join('; ')}`);
-    return fragment;
-  });
-});
+    return [fragment];
+  }),
+);
 
 /** Every seed fragment, a template's sets of arguments each a fragment of its own, folder by folder (`FOLDERS`), then the parts the examples give (`PARTS`). */
 export const LIBRARY: readonly Fragment[] = [...FOLDERS.flatMap((folder) => seedFragments(folder)), ...PARTS];
