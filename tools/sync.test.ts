@@ -55,6 +55,9 @@ describe('npm run sync: main merged in, the generated files written again (yggi/
     });
     // (the generated modules before what compiles them)
     expect(REGENERATE.indexOf('examples')).toBeLessThan(REGENERATE.indexOf('dist'));
+    // (the API's ledger, which a main with new exports changes: #854)
+    expect(isGenerated('docs/api.md')).toBe(true);
+    expect(REGENERATE).toContain('api');
   });
 
   it('settles a conflict in generated files alone by writing them again, and commits the merge', () => {

@@ -7,7 +7,7 @@
  * numbers in `flatten.ts`, streams of values over a note in `series.ts`.
  */
 import type { Pick } from './ast';
-import { BY_FRAGMENT, textOf, unitOf, type PluginFragment } from './fills';
+import { pluginIn, textOf, unitOf, type PluginFragment } from './fills';
 import { parse } from './parser';
 import { compile } from './compiler';
 import { adsrOf, balance, codeShifts, CV_LAPS, DEFAULT_ENV, type CompileResult, type Output, type Shifts } from './program';
@@ -656,12 +656,19 @@ interface Stream {
 }
 
 const STREAMS = new WeakMap<Output, Stream | null>();
-/** The stream an output plays, or null: its line a stream fill of a built-in plugin-fragment (#792). */
+/** Each plugin's code its own number, so laps kept for one never answer for another of the same fragment id (a host's in a built-in's place). */
+const CODE_IDS = new WeakMap<PluginFragment, number>();
+const codeId = (law: PluginFragment): number => {
+  if (!CODE_IDS.has(law)) CODE_IDS.set(law, CODE_IDS_NEXT.n++);
+  return CODE_IDS.get(law)!;
+};
+const CODE_IDS_NEXT = { n: 0 };
+/** The stream an output plays, or null: its line a stream fill of a plugin-fragment, the host's or a built-in (#792). */
 function streamOf(result: Plan['result'], o: Output): Stream | null {
   if (STREAMS.has(o)) return STREAMS.get(o)!;
   const found = ((): Stream | null => {
     const f = result.cells.get(o.cell)?.fill;
-    const law = f?.fragment ? BY_FRAGMENT.get(f.fragment) : undefined;
+    const law = f?.fragment ? pluginIn(result, f.fragment) : undefined;
     const codes = result.codes;
     if (!f || !law || !codes || law.fills[f.name ?? '']?.lap === undefined) return null;
     const levels = o.levels.map((t) => t.cell).filter((n) => result.cells.get(n)?.fill?.fragment === f.fragment);
@@ -676,7 +683,7 @@ function streamOf(result: Plan['result'], o: Output): Stream | null {
       queue.push(...reads(n));
     }
     const cells = names.map((name) => ({ name, code: codes.get(name)!, fill: result.cells.get(name)?.fill?.name ?? null }));
-    return { law, clock: f.clock, head: o.cell, levels, cells, key: `${law.fragment}\n${cells.map((c) => c.code).join('\n')}` };
+    return { law, clock: f.clock, head: o.cell, levels, cells, key: `${law.fragment}#${codeId(law)}\n${cells.map((c) => c.code).join('\n')}` };
   })();
   STREAMS.set(o, found);
   return found;

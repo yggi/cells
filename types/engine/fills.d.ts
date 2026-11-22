@@ -52,6 +52,8 @@ export declare const BY_FRAGMENT: ReadonlyMap<string, PluginFragment>;
  * `from` line): kept for a frontend that called it (`engine/holes.ts`), it finds nothing; `lawAt` reads a program.
  */
 export declare const lawOf: (params: Readonly<Record<string, number | string>> | undefined) => PluginFragment | null;
+/** The plugin-fragment a program's fills of `fragment` are answered by: the host's it was compiled with, else a built-in (#792 6e). */
+export declare const pluginIn: (result: CompileResult, fragment: string) => PluginFragment | undefined;
 /** The built-in law a program plays, or null: the first stream fill's (a piece's length and sections, `duration.ts`). */
 export declare const lawIn: (result: CompileResult) => PluginFragment | null;
 /** The built-in law that reads a clock (`from five_to_twelve &day`: `lawAt(result, 'day')`), or null: what a frontend draws on that clock (the sun). */

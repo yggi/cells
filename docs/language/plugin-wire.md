@@ -57,3 +57,16 @@ answers:
 ```
 
 `args` is a hash of the arguments as the wire hands them, so a renamed text keeps its answers. A piece opens playing its recorded answers without asking the code, and a host verifies them when it can. Arguments edited since are answered anew, and with no code, the fill stays unanswered. A frontend that reads no answers keeps its `uses` entries.
+
+## For a host
+
+Cells runs no foreign code. A host runs a plugin-fragment's code (in Cell studio, WASM in a worker) and hands it to each compile behind the interface the built-ins answer (`PluginFragment`, `engine/fills`):
+
+```ts
+compileSource(text, env, { resolve, plugins: [countercell3] });
+```
+
+- **The interface:** `fragment` (the id a `from` line names), `fills` (each fill's `lap` for a stream, none for a braid; its `fuel`), `origin`, `cycle` and `stepSeconds` (a stream's clock), `wire`, and `fill(name, lap, args, fuel)`, which answers text or `{ refused }`. It answers synchronously: a host fills ahead and answers from what it has.
+- **Braid fills** are answered when the text is expanded. **Stream fills** are answered lap by lap as the piece plays: the program keeps the host's plugins (`pluginFragments`), so realize, `lawIn` and `lawAt` find them before the built-ins. A host's plugin of a built-in's id stands in for it.
+- **Recorded answers:** a piece file's `answers:` (`answersOf(file)`) are handed as `compileSource(…, { answers })`, and each plays without its code being asked.
+- **The deadline:** a braid fill gets 10 s of wall clock. Past it, the host answers a refusal and drops the instance, never a partial answer (decision 085 §8.2).
