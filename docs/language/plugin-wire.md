@@ -41,3 +41,15 @@ A braid fill is filled once, and its code can't draw cells' chance. So an argume
 - **a key that moves** (a stepped tonic or mode).
 
 Not yet: **a fill as an argument**, handed as its answer in the order the fills depend on each other. It comes with each braid fill's answer in the lockfile (#792, 6d's second step).
+
+## For a host
+
+Cells runs no foreign code. A host runs a plugin-fragment's code (in Cell studio, WASM in a worker) and hands it to each compile behind the interface the built-ins answer (`PluginFragment`, `engine/fills`):
+
+```ts
+compileSource(text, env, { resolve, plugins: [countercell3] });
+```
+
+- **The interface:** `fragment` (the id a `from` line names), `fills` (each fill's `lap` for a stream, none for a braid; its `fuel`), `origin`, `cycle` and `stepSeconds` (a stream's clock), `wire`, and `fill(name, lap, args, fuel)`, which answers text or `{ refused }`. It answers synchronously: a host fills ahead and answers from what it has.
+- **Braid fills** are answered when the text is expanded. **Stream fills** are answered lap by lap as the piece plays: the program keeps the host's plugins (`pluginFragments`), so realize, `lawIn` and `lawAt` find them before the built-ins. A host's plugin of a built-in's id stands in for it.
+- **The deadline:** a braid fill gets 10 s of wall clock. Past it, the host answers a refusal and drops the instance, never a partial answer (decision 085 §8.2).

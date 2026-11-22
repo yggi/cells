@@ -43,12 +43,12 @@ export function compileSource(written, env = DEFAULT_ENV, options = {}) {
         };
     });
     if (!hasFrom(source)) {
-        const alone = withCodes(compile(parse(source, { old: options.old ?? false }), env), source);
+        const alone = withCodes(compile(parse(source, { old: options.old ?? false }), env), source, options.plugins);
         const all = [...said, ...oldLaws(alone, () => true, source)];
         return all.length ? { ...alone, diagnostics: [...alone.diagnostics, ...all].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col) } : alone;
     }
     const x = expansion(source, options);
-    const result = withCodes(compile(parse(x.text, { old: options.old ?? false }), env, x.given), x.text);
+    const result = withCodes(compile(parse(x.text, { old: options.old ?? false }), env, x.given), x.text, options.plugins);
     const diagnostics = [
         ...x.diagnostics,
         ...said,
@@ -57,12 +57,12 @@ export function compileSource(written, env = DEFAULT_ENV, options = {}) {
     ].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
     return { ...result, ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics, takes: x.takes, ...(x.origins.size ? { origins: x.origins } : {}) };
 }
-function withCodes(result, text) {
+function withCodes(result, text, plugins = []) {
     if (![...result.cells.values()].some((c) => c.fill))
         return result;
     const lines = text.split('\n');
     const codes = new Map([...result.cells.values()].map((c) => [c.name, splitComment(lines[c.span.line - 1] ?? '')[0].trim()]));
-    return { ...result, codes };
+    return { ...result, codes, ...(plugins.length ? { pluginFragments: new Map(plugins.map((f) => [f.fragment, f])) } : {}) };
 }
 function oldLaws(result, own, source) {
     const defined = new Set(signatureHeads(source).map((n) => n.slice(1)));

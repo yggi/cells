@@ -55,12 +55,12 @@ export function compileSource(written: string, env: Env = DEFAULT_ENV, options: 
     };
   });
   if (!hasFrom(source)) {
-    const alone = withCodes(compile(parse(source, { old: options.old ?? false }), env), source);
+    const alone = withCodes(compile(parse(source, { old: options.old ?? false }), env), source, options.plugins);
     const all = [...said, ...oldLaws(alone, () => true, source)];
     return all.length ? { ...alone, diagnostics: [...alone.diagnostics, ...all].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col) } : alone;
   }
   const x = expansion(source, options);
-  const result = withCodes(compile(parse(x.text, { old: options.old ?? false }), env, x.given), x.text);
+  const result = withCodes(compile(parse(x.text, { old: options.old ?? false }), env, x.given), x.text, options.plugins);
   const diagnostics = [
     ...x.diagnostics,
     ...said,
@@ -70,12 +70,15 @@ export function compileSource(written: string, env: Env = DEFAULT_ENV, options: 
   return { ...result, ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics, takes: x.takes, ...(x.origins.size ? { origins: x.origins } : {}) };
 }
 
-/** A program with each cell's line of code, where it has fills: what realize compiles a stream's laps from (#792). */
-function withCodes(result: CompileResult, text: string): CompileResult {
+/**
+ * A program with each cell's line of code, where it has fills: what realize compiles a stream's laps from (#792); and the
+ * host's plugins it was compiled with, which realize plays them with (6e).
+ */
+function withCodes(result: CompileResult, text: string, plugins: CompileOptions['plugins'] = []): CompileResult {
   if (![...result.cells.values()].some((c) => c.fill)) return result;
   const lines = text.split('\n');
   const codes = new Map([...result.cells.values()].map((c) => [c.name, splitComment(lines[c.span.line - 1] ?? '')[0].trim()] as const));
-  return { ...result, codes };
+  return { ...result, codes, ...(plugins.length ? { pluginFragments: new Map(plugins.map((f) => [f.fragment, f] as const)) } : {}) };
 }
 
 /**

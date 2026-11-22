@@ -73,10 +73,13 @@ export const BY_FRAGMENT: ReadonlyMap<string, PluginFragment> = new Map([...BUIL
 export const lawOf = (params: Readonly<Record<string, number | string>> | undefined): PluginFragment | null =>
   (typeof params?.law === 'string' && BUILT_IN.get(params.law)) || null;
 
+/** The plugin-fragment a program's fills of `fragment` are answered by: the host's it was compiled with, else a built-in (#792 6e). */
+export const pluginIn = (result: CompileResult, fragment: string): PluginFragment | undefined => result.pluginFragments?.get(fragment) ?? BY_FRAGMENT.get(fragment);
+
 /** The stream fills of a program: each cell a `from` line's copy marks as a fill of a built-in with a lap (#792). */
 const streamsIn = (result: CompileResult): { cell: ResolvedCell; law: PluginFragment }[] =>
   [...result.cells.values()].flatMap((cell) => {
-    const law = cell.fill?.fragment ? BY_FRAGMENT.get(cell.fill.fragment) : undefined;
+    const law = cell.fill?.fragment ? pluginIn(result, cell.fill.fragment) : undefined;
     return law && law.fills[cell.fill?.name ?? '']?.lap !== undefined ? [{ cell, law }] : [];
   });
 

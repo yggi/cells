@@ -535,6 +535,12 @@ export interface CompileResult {
   readonly origins?: ReadonlyMap<string, readonly Origin[]>;
   /** Each cell's line of code, where the text has fills (decision 085, #792): what realize compiles a stream's laps from. */
   readonly codes?: ReadonlyMap<string, string>;
+  /**
+   * The host's plugin-fragments it was compiled with (`CompileOptions.plugins`), by fragment id, where it has fills:
+   * what realize plays a stream's laps with, and what `lawIn` and `lawAt` find, before the built-ins (085 §6, #792 6e).
+   * (`plugins` is the show plugins', decision 011.)
+   */
+  readonly pluginFragments?: ReadonlyMap<string, PluginFragment>;
   /** Its gates, the performers (decision 058), in the order written: who plays which part, on what. */
   readonly performers: readonly Performer[];
 }
