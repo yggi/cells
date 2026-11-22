@@ -10,6 +10,7 @@
  * foreign code; a host does, behind this same interface.
  */
 import { FIVETO12 } from './fiveto12';
+import { METRIC_ACCENT } from './accent';
 import type { CompileResult, ResolvedCell } from './program';
 import type { Expr } from './ast';
 
@@ -63,8 +64,11 @@ export interface PluginFragment {
 /** The plugin-fragments cells ships, by the word `law=` names them with. */
 export const BUILT_IN: ReadonlyMap<string, PluginFragment> = new Map([[FIVETO12.id, FIVETO12]]);
 
-/** The built-ins by their fragment file's id (`five_to_twelve`): what a `from` line's copy names its fills by. */
-export const BY_FRAGMENT: ReadonlyMap<string, PluginFragment> = new Map([...BUILT_IN.values()].map((f) => [f.fragment, f]));
+/**
+ * The built-ins by their fragment file's id (`five_to_twelve`, `metric_accent`): what a `from` line's copy names its
+ * fills by. The laws, `BUILT_IN`, and the braid fills (#799), which no `law=` ever named.
+ */
+export const BY_FRAGMENT: ReadonlyMap<string, PluginFragment> = new Map([...BUILT_IN.values(), METRIC_ACCENT].map((f) => [f.fragment, f]));
 
 /**
  * The built-in a cell's `law=` names, or null. Since #792 no compiled cell has `law=` (the old spelling is read as its

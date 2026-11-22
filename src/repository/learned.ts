@@ -28,6 +28,7 @@ import { counts } from '../engine/core/desugar';
 import { splitComment } from '../engine/edit';
 import { argsOf, ofArgs } from './variants';
 import { RENAMED_IDS } from '../engine/renamed';
+import { answered } from './answered';
 
 /**
  * A filed fragment's weight at its point. A fragment is first at a query when its distance divided by its weight is the
@@ -127,11 +128,12 @@ export function canonicalText(text: string): string {
 }
 
 /**
- * A template's lines as a text with no signature reads them: its signature and its own `from` lines aside, so the lines
+ * A template's lines as a text with no signature reads them: its signature and its own `from` lines aside (a plugin's
+ * written out as its answer, `answered`), so the lines
  * read its parameters by their names (a groove's `&bd`, decision 075, #637). What a host's text of the same lines is.
  */
 const linesAlone = (text: string): string =>
-  text
+  answered(text)
     .split('\n')
     .filter((l) => readFrom(splitComment(l)[0].trim()) === undefined)
     .join('\n');

@@ -6,7 +6,7 @@ import { entries, resolveIn, semitones, tableChain } from "./helix.js";
 import { readsOf } from "./reads.js";
 export const WIRE = 1;
 const ARG = '__wire_arg';
-const PLAIN = /^(-?\d+(\.\d+)?(\/\d+)?|[A-Za-z_][A-Za-z0-9_#-]*)$/;
+const PLAIN = /^(-?(\d+(\.\d+)?|\.\d+)(\/\d+)?|[A-Za-z_][A-Za-z0-9_#-]*)$/;
 function written(x) {
     for (let d = 1; d <= 64; d++) {
         const n = Math.round(x * d);
@@ -37,14 +37,21 @@ export function wireArg(value, context) {
     catch (e) {
         return { refused: `${value} doesn't read: ${e instanceof Error ? e.message : String(e)}` };
     }
-    const errors = result.diagnostics.filter((d) => d.severity === 'error');
+    const line = context.split('\n').length + 1;
+    const errors = result.diagnostics.filter((d) => d.severity === 'error' && d.span.line === line);
     if (errors.length || !result.cells.has(ARG))
         return { refused: `${value} doesn't read: ${errors[0]?.message ?? 'no cell'}` };
     const unanswered = [...result.cells.values()].find((c) => c.fill && new RegExp(`&${c.name}(?![A-Za-z0-9_])`).test(value));
     if (unanswered)
         return { refused: `&${unanswered.name} is a fill with no answer to hand (a stream's, or one refused): a braid fill is handed answers (wire 1)` };
     const shifts = codeShifts(result);
-    const events = flatten(result, ARG, shifts);
+    let events;
+    try {
+        events = flatten(result, ARG, shifts);
+    }
+    catch (e) {
+        return { refused: `${value} doesn't read: ${e instanceof Error ? e.message : String(e)}` };
+    }
     const lap = stepsOf(result, ARG, null);
     if (events.some((e) => e.chance !== undefined || e.options || e.chosen))
         return { refused: `${value} draws by chance, and a plugin can't draw cells' (wire 1)` };

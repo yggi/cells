@@ -15,6 +15,7 @@ import { createRepository, EMPTY_LAYER, type Fragment } from './fragments';
 import { fileFragment } from './learned';
 import { createRecogniser, RECOGNISER_CAPACITY, type RecogniseOptions, type Recognised } from './recognise';
 import { seedFragments } from './seed';
+import { answered } from './answered';
 
 const BASS_FRAGMENTS = seedFragments('bass');
 
@@ -43,7 +44,7 @@ const BASS = `&bar meter("4/4") step=120bpm\n&key scale(major, C)\n&harm over=&k
 
 /** A fragment's lines, its `from` lines aside (a groove's signature and the kit it takes, decision 075). */
 const linesAlone = (text: string) =>
-  text
+  answered(text)
     .split('\n')
     .filter((l) => readFrom(l.trim()) === undefined)
     .join('\n');

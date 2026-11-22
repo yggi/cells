@@ -17,6 +17,8 @@ import { fitsAs } from '../repository/fit';
 import { drumCard } from '../repository/benches';
 import { holesOf } from '../repository/holes';
 import { seedFragments } from '../repository/seed';
+import { answered } from '../repository/answered';
+import { BY_FRAGMENT } from './fills';
 
 const METER_FRAGMENTS = seedFragments('meters');
 const RHYTHM_FRAGMENTS = seedFragments('rhythms');
@@ -49,7 +51,7 @@ const GROOVE = '* from gm_kit\n&bar meter("4/4") step=100bpm\n&beat step=8n &bd 
 
 /** A fragment's lines, its signature and its own `from` lines aside: a groove read as a text with no signature (#637). */
 const linesAlone = (text: string) =>
-  text
+  answered(text)
     .split('\n')
     .filter((l) => readFrom(l.trim()) === undefined)
     .join('\n');
@@ -139,7 +141,8 @@ describe('a named use of a collection (decision 059)', () => {
   // lines are taken, by name, which a template's copy isn't, decision 065)
   const asCollections: Resolve = (id) => {
     const t = resolveSeed(id);
-    return t !== null && signatureOf(t) ? bodyOf(t) : t;
+    // (a plugin-fragment is answered, never a collection: its copy is its answer, #799)
+    return t !== null && signatureOf(t) && !BY_FRAGMENT.has(id) ? bodyOf(t) : t;
   };
   const read = (text: string, resolve: Resolve = asCollections) => {
     const r = compileSource(text, undefined, { resolve });
@@ -309,7 +312,8 @@ describe('the rhythms with the General MIDI kit (S1)', () => {
       expect(r.takes?.[0]?.overrode).toEqual([]);
       expect(soundsIdentical(piece, expand(piece, resolveSeed), undefined, seed)).toBe(true);
     });
-  it('every rhythm is one of the thirty-two (#572: four read from the examples; #542: eight more; #646: two, for 7/8 and 12/8)', () => expect(RHYTHM_FRAGMENTS).toHaveLength(32));
+  it('every rhythm is one of the thirty-three (#572: four read from the examples; #542: eight more; #646: two, for 7/8 and 12/8; #799: breathing_drums, its hats’ levels metric_accent’s)', () =>
+    expect(RHYTHM_FRAGMENTS).toHaveLength(33));
 });
 
 describe('the lockfile', () => {
