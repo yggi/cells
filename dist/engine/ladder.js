@@ -16,19 +16,13 @@ export const STUBS = new Set([
         .map((k) => `parameter ${k}`),
 ]);
 export const PENDING = new Set([
-    'sort pitch: a product with no sound in it and a pitch',
-    'sort plain: a cell that is one number and nothing else',
     'sort plain: a sum of values',
     'free free(v, lo..hi, unit=bpm)',
-    'generator even(k, n)',
     'step <a b c>',
     'modifier x/n',
     'modifier x(k,n,r)',
     'parameter legato',
     'parameter bend',
-    'attribute tags',
-    'parameter licence',
-    'parameter accents',
     'parameter bpf',
     'parameter bpq',
     'parameter ftype',
@@ -44,7 +38,7 @@ export function formKey(e) {
 export const TIERS = [
     {
         name: 'Steps and sound',
-        concept: 'a voice and the sound card; steps: numbers, rests, holds, repeats, a rate; notes on the cells',
+        concept: 'a voice and the sound card; steps: numbers, rests, holds, repeats, a rate; notes on the cells, and tags that cluster them',
         forms: [
             'line &name …',
             'line &name label="…"',
@@ -60,6 +54,7 @@ export const TIERS = [
             'attribute map',
             'attribute label',
             'attribute about',
+            'attribute tags',
             'rate step=r',
             'rate loop=NAME',
             'map map=sample',
@@ -142,7 +137,7 @@ export const TIERS = [
     },
     {
         name: 'Development',
-        concept: 'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths; arrangement: sections stepped by the bar, a selector, laps=, off',
+        concept: 'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths, even(k, n), the generator under them; arrangement: sections stepped by the bar, a selector, laps=, off',
         forms: [
             'parameter role',
             'parameter gain',
@@ -160,6 +155,7 @@ export const TIERS = [
             'attribute stride',
             'rate step=cycle(&x)',
             'generator fifths()',
+            'generator even(k, n)',
             'line &sections step=&bar &a &b',
             'attribute laps',
             'line off',
@@ -168,7 +164,7 @@ export const TIERS = [
     },
     {
         name: 'Sound and tuning',
-        concept: 'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; a style the voices read',
+        concept: 'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; a style the voices read; a level a cell names',
         forms: [
             'parameter pan',
             'parameter glide',
@@ -190,6 +186,7 @@ export const TIERS = [
             'map map=style',
             'attribute style',
             'reference &name[slot]',
+            'sort plain: a cell that is one number and nothing else',
         ],
     },
     {
@@ -250,12 +247,15 @@ export const TIERS = [
     },
     {
         name: 'Gates, performing and MIDI',
-        concept: 'a gate: a product with a name, and a role, the gates that play it; a braid left to the performer, recorded from the keys; a MIDI card, its entries channels',
+        concept: 'a gate: a product with a name (notes with their levels named too), how far its performer plays from what is written, and a role, the gates that play it; a braid left to the performer, recorded from the keys; a MIDI card, its entries channels',
         forms: [
             'gate play=&x',
             'gate level=&a*&b*n',
             'parameter level',
             'gate [&a, &b]',
+            'sort pitch: a product with no sound in it and a pitch',
+            'parameter licence',
+            'parameter accents',
             'map map=role',
             'free free(0 2 4 ~ …)',
             'map map=midi',
@@ -495,6 +495,8 @@ export function formsUsed(source, options = {}) {
         for (const k of [...Object.keys(d.params), ...Object.keys(d.paramCells ?? {}), ...Object.keys(d.paramClocks ?? {})])
             if (k !== 'pitch' && !(gate && (k === 'play' || k === 'level')))
                 use(`parameter ${k}`);
+        if (d.bend)
+            (use('parameter bend'), ref(d.bend.table));
         for (const pc of Object.values(d.paramCells ?? {}))
             for (const r of pc.factors)
                 ref(r);

@@ -19,6 +19,7 @@ mirrors  live 65b90037525fe0a0
 variations  live 0f98335972bc907e
 chance  live 7f4543c7cb673938
 fifths  live dfc87981699f75f3
+circle  live c40a7600b88d5ab1
 arrangement  live 30a702a0ed77fe79
 stereo  live 2a23340ac7fbd3be
 waveforms  live 073e7e071cdc9319
@@ -56,7 +57,6 @@ bossa  live 5b26d0dbb24b0cb6
 bell  live 9b1f39e9d79535f7
 prelude  live 089d425c7ef8b506
 pachelbel  live e0765d827b6d7111
-circle  live c40a7600b88d5ab1
 pop  live b8a32905acaf986c
 idm  live 153a82869c0fc67b
 alpha  live a48b6224d695faa8

@@ -1,4 +1,4 @@
-import { valueSumOf } from "../valuesum.js";
+import { numberCellOf, valueSumOf } from "../valuesum.js";
 import { isNote } from "../ast.js";
 import { footOf, innerSteps, leaves } from "../subseq.js";
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps } from "../program.js";
@@ -64,6 +64,31 @@ function bentOf(d, warn, declOf) {
     };
 }
 export const stepsPerBeat = (m) => (m ? (stepsPerPulse(m) * m.pulses) / beatCount(m) : 1);
+function namedByValue(d, decls, isNotes) {
+    if (valueSumOf(d.name, decls) !== null)
+        return [];
+    const exprs = d.braid.kind === 'list' ? d.braid.tokens.flatMap((t) => (t.atom.kind === 'mix' ? t.atom.exprs : [])) : [];
+    const names = [];
+    const walk = (e, own) => {
+        if (e.k === 'ref') {
+            const n = e.ref.name;
+            if (!decls.has(n) || valueSumOf(n, decls) !== null)
+                return;
+            if (own || numberCellOf(decls.get(n)) !== null || isNotes(n))
+                names.push(n);
+        }
+        else if (e.k === 'sum')
+            for (const it of e.items)
+                walk(it.e, own);
+        else if (e.k === 'prod')
+            for (const f of e.factors)
+                walk(f, own);
+    };
+    const own = isNotes(d.name);
+    for (const e of exprs)
+        walk(e, own);
+    return names;
+}
 export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stacks }, typed, sortOf) {
     const isNotes = notesCells(ctx, decls);
     const { rateOf, error, warn, broken, unknownCell } = ctx;
@@ -172,7 +197,10 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             ...(d.bend ? bentOf(d, warn, (n) => decls.get(n)) : {}),
             ...(d.readsSlot ? { readsSlot: d.readsSlot } : {}),
             ...(d.swingFrom ? { swingFrom: d.swingFrom.name } : {}),
-            ...(d.valueReads ? { valueReads: d.valueReads } : {}),
+            ...(() => {
+                const reads = [...new Set([...(d.valueReads ?? []), ...namedByValue(d, decls, isNotes)])];
+                return reads.length ? { valueReads: reads } : {};
+            })(),
             ...(d.style ? { styleReads: [...new Set(styleRefs(d.style).map((r) => r.name))] } : {}),
             shift: d.shift ?? 0,
             ...(d.tonic ? { tonic: d.tonic.name } : {}),
