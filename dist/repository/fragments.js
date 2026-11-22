@@ -206,7 +206,7 @@ export function createRepository(given, { known = () => false } = {}) {
         fragments: seed,
         merge,
         knows: (id) => seen.has(id) || known(id),
-        query(point, k, axisWeights = {}, { facet, chosen = [], workbench, layer, pull = CO_USE_PULL, arguments: mains = {} } = {}) {
+        query(point, k, axisWeights = {}, { facet, chosen = [], workbench, layer, pull = CO_USE_PULL, arguments: mains = {}, reach, exclude, accept, within, playing } = {}) {
             if (!(Number.isInteger(k) && k >= 0))
                 throw new Error(`query: k is ${k}, not a whole number ≥ 0`);
             if (!(isFiniteNumber(pull) && pull >= 0))
@@ -217,6 +217,14 @@ export function createRepository(given, { known = () => false } = {}) {
             ];
             if (wrong.length)
                 throw new Error(`query: ${wrong.join(', ')}`);
+            const number = (name, x, least) => {
+                if (x !== undefined && !(isFiniteNumber(x) && x >= least))
+                    throw new Error(`query: ${name} is ${String(x)}, not a number ≥ ${least}`);
+            };
+            number('reach', reach, 0);
+            number('within', within, 1);
+            number('playing.hold', playing?.hold, 0);
+            number('playing.slack', playing?.slack, 0);
             const { fragments, filed, together } = layer ? merge(layer) : alone;
             const chosenIds = [...new Set(chosen)];
             const usesWith = (id) => {
@@ -234,9 +242,9 @@ export function createRepository(given, { known = () => false } = {}) {
                 return { fragment, distance, score: coUseScore(distance, usesWith(fragment.id), pull) };
             })
                 .sort((a, b) => a.score - b.score || Number(filed.has(b.fragment.id)) - Number(filed.has(a.fragment.id)) || byId(a.fragment.id, b.fragment.id));
-            if (workbench === undefined)
+            if (workbench === undefined && reach === undefined && !exclude && !accept && within === undefined && !playing)
                 return ranked.slice(0, k);
-            const fit = layer && fragments !== seed ? cachedFit(resolverOf([...fragments, ...layer.filed.map((f) => f.fragment)])) : fits;
+            const fit = workbench !== undefined && layer && fragments !== seed ? cachedFit(resolverOf([...fragments, ...layer.filed.map((f) => f.fragment)])) : fits;
             const mainOf = (f) => {
                 if (facet !== undefined)
                     return mains[facet];
@@ -245,14 +253,30 @@ export function createRepository(given, { known = () => false } = {}) {
                         return mains[wp.facet];
                 return undefined;
             };
-            const fitting = [];
-            for (const found of ranked) {
-                if (fitting.length >= k)
+            const slack = playing ? (playing.slack ?? 0) : 0;
+            const cap = reach === undefined ? Infinity : reach + slack;
+            const left = new Set(exclude);
+            const candidates = ranked.filter((f) => f.distance <= cap && !left.has(f.fragment.id));
+            const passes = (f) => (workbench === undefined || fit(f.fragment.text, workbench, mainOf(f.fragment)).fits) && (!accept || accept(f.fragment));
+            const passing = [];
+            let edge = Infinity;
+            for (const found of candidates) {
+                if (passing.length >= k || found.score > edge)
                     break;
-                if (fit(found.fragment.text, workbench, mainOf(found.fragment)).fits)
-                    fitting.push(found);
+                if (!passes(found))
+                    continue;
+                passing.push(found);
+                if (passing.length === 1 && within !== undefined)
+                    edge = found.score + (within - 1) * found.distance + 1e-9;
             }
-            return fitting;
+            const inReach = passing.filter((f) => f.distance <= (reach ?? Infinity));
+            if (!playing)
+                return inReach;
+            const kept = passing.find((f) => f.fragment.id === playing.id) ?? candidates.find((f) => f.fragment.id === playing.id && passes(f));
+            const nearest = passing[0] ?? kept;
+            if (!kept || !nearest || kept.distance - nearest.distance > playing.hold)
+                return inReach;
+            return [{ ...kept, held: true }, ...inReach.filter((f) => f !== kept)].slice(0, k);
         },
     };
 }

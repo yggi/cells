@@ -362,3 +362,83 @@ describe('a repository told the ids it knows (#716, ask 3)', () => {
     expect(knowing.merge({ ...EMPTY_LAYER, together: [{ ids: ['far', 'nothing'] as const, count: 3 }] }).unheld).toEqual(['nothing']);
   });
 });
+
+describe('a query asked beyond the ranking: reach, exclude, accept, within and the playing one kept (#716, ask 1)', () => {
+  // five fragments on one axis, nearest first from x = 0.2; the distances are read off the query itself, so no number here
+  // is the repository's own
+  const at = (x: number): Fragment => ({ id: `f${x}`, text: '&bar meter("4/4")', association: [{ point: { x }, weight: 1 }] });
+  const repo = createRepository([0.2, 0.25, 0.3, 0.45, 0.8].map(at));
+  const point = { x: 0.2 };
+  const all = repo.query(point, 10);
+  const ids = (found: readonly { fragment: Fragment }[]) => found.map((f) => f.fragment.id);
+  const names = ids(all);
+  const d = all.map((f) => f.distance);
+
+  it('answers as before with none of them', () => {
+    expect(names).toEqual(['f0.2', 'f0.25', 'f0.3', 'f0.45', 'f0.8']);
+    expect(ids(repo.query(point, 3, {}, {}))).toEqual(names.slice(0, 3));
+    expect(d[0]).toBe(0);
+  });
+
+  it('reach drops what lies past it, and none lies within a reach below the nearest', () => {
+    expect(ids(repo.query(point, 10, {}, { reach: d[2]! }))).toEqual(names.slice(0, 3));
+    expect(repo.query(point, 10, {}, { reach: d[0]! })).toHaveLength(1);
+    expect(repo.query({ x: 0.9 }, 10, {}, { reach: 0.01 })).toEqual([]);
+  });
+
+  it('exclude finds the next nearest in place of an id left out', () => {
+    expect(ids(repo.query(point, 2, {}, { exclude: [names[0]!] }))).toEqual([names[1], names[2]]);
+  });
+
+  it('accept is tried in rank order until k are accepted, and a refused one is left out', () => {
+    const tried: string[] = [];
+    const found = repo.query(point, 2, {}, { accept: (f) => (tried.push(f.id), f.id !== names[1]) });
+    expect(ids(found)).toEqual([names[0], names[2]]);
+    expect(tried).toEqual([names[0], names[1], names[2]]);
+  });
+
+  it('within keeps what scores within the best’s score plus (within − 1) times its distance', () => {
+    // (from the second: the nearest of what is asked has a distance above 0)
+    const fromSecond = repo.query(point, 10, {}, { exclude: [names[0]!] });
+    const best = fromSecond[0]!;
+    const edge = (within: number) => best.score + (within - 1) * best.distance;
+    for (const within of [1, 1.5, 2, 4]) {
+      expect(ids(repo.query(point, 10, {}, { exclude: [names[0]!], within })), `within ${within}`).toEqual(ids(fromSecond.filter((f) => f.score <= edge(within) + 1e-9)));
+    }
+    expect(ids(repo.query(point, 10, {}, { exclude: [names[0]!], within: 1 }))).toEqual([names[1]]);
+  });
+
+  it('the playing one is returned first, held, where it lies within the hold of the nearest, and not where it lies farther', () => {
+    const gap = d[2]! - d[0]!;
+    const kept = repo.query(point, 3, {}, { playing: { id: names[2]!, hold: gap } });
+    expect(ids(kept)).toEqual([names[2], names[0], names[1]]);
+    expect(kept.map((f) => f.held)).toEqual([true, undefined, undefined]);
+    expect(ids(repo.query(point, 3, {}, { playing: { id: names[2]!, hold: gap - 1e-6 } }))).toEqual(names.slice(0, 3));
+    expect(ids(repo.query(point, 3, {}, { playing: { id: names[0]!, hold: 0 } }))).toEqual(names.slice(0, 3));
+  });
+
+  it('the playing one is held past the reach by its slack, and only where it is within the hold of the nearest', () => {
+    const reach = d[1]!;
+    const hold = d[3]! - d[0]!;
+    // (the third lies past the reach: held with the slack that covers it, dropped without)
+    expect(ids(repo.query(point, 3, {}, { reach, playing: { id: names[2]!, hold, slack: d[2]! - reach } }))).toEqual([names[2], names[0], names[1]]);
+    expect(ids(repo.query(point, 3, {}, { reach, playing: { id: names[2]!, hold, slack: d[2]! - reach - 1e-6 } }))).toEqual([names[0], names[1]]);
+    expect(ids(repo.query(point, 3, {}, { reach, playing: { id: names[2]!, hold } }))).toEqual([names[0], names[1]]);
+    // (nothing lies within the reach but the one playing is within the slack and the hold: it is what is returned)
+    expect(ids(repo.query({ x: 0.3 }, 3, {}, { reach: 0, exclude: ['f0.3'], playing: { id: 'f0.25', hold: 1, slack: 1 } }))).toEqual(['f0.25']);
+  });
+
+  it('the playing one is not kept where it is excluded, refused, or not a fragment', () => {
+    const playing = { id: names[2]!, hold: 1 };
+    expect(ids(repo.query(point, 3, {}, { exclude: [names[2]!], playing }))).toEqual([names[0], names[1], names[3]]);
+    expect(ids(repo.query(point, 3, {}, { accept: (f) => f.id !== names[2], playing }))).toEqual([names[0], names[1], names[3]]);
+    expect(ids(repo.query(point, 3, {}, { playing: { id: 'nothing', hold: 1 } }))).toEqual(names.slice(0, 3));
+  });
+
+  it('refuses a margin that is not a number in its range', () => {
+    expect(() => repo.query(point, 1, {}, { reach: -1 })).toThrow(/reach is -1/);
+    expect(() => repo.query(point, 1, {}, { within: 0.5 })).toThrow(/within is 0.5/);
+    expect(() => repo.query(point, 1, {}, { playing: { id: 'a', hold: Number.NaN } })).toThrow(/playing.hold is NaN/);
+    expect(() => repo.query(point, 1, {}, { playing: { id: 'a', hold: 0, slack: -1 } })).toThrow(/playing.slack is -1/);
+  });
+});

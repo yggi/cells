@@ -31,6 +31,8 @@ export interface Found {
     readonly distance: number;
     /** What it is ranked by: the distance less the pull of its uses with what is already chosen (`coUseScore`); the distance when it has none. */
     readonly score: number;
+    /** True on the fragment a query kept because it was playing (`QueryOptions.playing`), moved first though another is nearer. */
+    readonly held?: true;
 }
 /**
  * What a frontend has learned (decision 048): plain data, JSON as it stands, kept by the frontend (files, a database, a
@@ -95,6 +97,35 @@ export interface QueryOptions {
     readonly arguments?: Readonly<Record<string, string>>;
     /** What the frontend has learned, merged with the seed for this query only (`merge`); none, or `EMPTY_LAYER`, ranks the seed alone. */
     readonly layer?: LearnedLayer;
+    /**
+     * The farthest a fragment may lie from the point (`Found.distance`, the style alone), a number ≥ 0: none past it is
+     * returned. A frontend's miss: where nothing lies within it, the answer is empty. With none, every fragment is a candidate.
+     */
+    readonly reach?: number;
+    /** Ids not to return (a frontend's rejected, those it has tired of): the next nearest is found in their place. */
+    readonly exclude?: readonly string[];
+    /**
+     * A fragment the frontend can use or not, which only it can judge (a read under the section's meter): tried in rank order,
+     * after the fit, until `k` are accepted. A fragment it refuses is left out as one that doesn't fit is.
+     */
+    readonly accept?: (fragment: Fragment) => boolean;
+    /**
+     * How near the best a fragment must score to be returned (the best's score plus (`within` − 1) × its distance), a number
+     * ≥ 1: a frontend that draws among what is on offer. The best is the first fragment that is returned, past `reach`,
+     * `exclude`, the fit and `accept`. With none, the `k` best are returned whatever their scores.
+     */
+    readonly within?: number;
+    /**
+     * The fragment now playing, kept: it is returned first, `held`, where it lies within `hold` of the nearest returned, though
+     * another scores nearer, so a point walking along a border between two fragments doesn't change what plays at every
+     * query. It may lie `slack` past `reach` (0 where none); it is kept only if it is accepted and fits as any other. cells
+     * has no default for `hold`: the margin is the frontend's.
+     */
+    readonly playing?: {
+        readonly id: string;
+        readonly hold: number;
+        readonly slack?: number;
+    };
 }
 export interface Repository {
     /** The seed: the fragments it was built from. */

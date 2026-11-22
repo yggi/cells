@@ -1,0 +1,3 @@
+### Added
+
+- **A query asked beyond the ranking: `reach`, `exclude`, `accept`, `within` and `playing`** (#716): the filters a composer wrote around `query`. `reach` leaves out what lies past a distance; `exclude` ids not to return; `accept(fragment)` is tried in rank order, after the fit, until `k` are accepted; `within` (≥ 1) keeps what scores within the best's score plus (`within` − 1) times its distance; and `playing: { id, hold, slack? }` returns the fragment now playing first, with `held: true` on it, where it lies within `hold` of the nearest returned (and within `reach` plus `slack`), so a point walking along a border doesn't change what plays at every query. cells has no default for any margin: they are the frontend's, and a query with none answers as it did.
