@@ -59,6 +59,8 @@ export interface Found {
   readonly distance: number;
   /** What it is ranked by: the distance less the pull of its uses with what is already chosen (`coUseScore`); the distance when it has none. */
   readonly score: number;
+  /** True on the fragment a query kept because it was playing (`QueryOptions.playing`), moved first though another is nearer. */
+  readonly held?: true;
 }
 
 /**
@@ -129,6 +131,31 @@ export interface QueryOptions {
   readonly arguments?: Readonly<Record<string, string>>;
   /** What the frontend has learned, merged with the seed for this query only (`merge`); none, or `EMPTY_LAYER`, ranks the seed alone. */
   readonly layer?: LearnedLayer;
+  /**
+   * The farthest a fragment may lie from the point (`Found.distance`, the style alone), a number ≥ 0: none past it is
+   * returned. A frontend's miss: where nothing lies within it, the answer is empty. With none, every fragment is a candidate.
+   */
+  readonly reach?: number;
+  /** Ids not to return (a frontend's rejected, those it has tired of): the next nearest is found in their place. */
+  readonly exclude?: readonly string[];
+  /**
+   * A fragment the frontend can use or not, which only it can judge (a read under the section's meter): tried in rank order,
+   * after the fit, until `k` are accepted. A fragment it refuses is left out as one that doesn't fit is.
+   */
+  readonly accept?: (fragment: Fragment) => boolean;
+  /**
+   * How near the best a fragment must score to be returned (the best's score plus (`within` − 1) × its distance), a number
+   * ≥ 1: a frontend that draws among what is on offer. The best is the first fragment that is returned, past `reach`,
+   * `exclude`, the fit and `accept`. With none, the `k` best are returned whatever their scores.
+   */
+  readonly within?: number;
+  /**
+   * The fragment now playing, kept: it is returned first, `held`, where it lies within `hold` of the nearest returned, though
+   * another scores nearer, so a point walking along a border between two fragments doesn't change what plays at every
+   * query. It may lie `slack` past `reach` (0 where none); it is kept only if it is accepted and fits as any other. cells
+   * has no default for `hold`: the margin is the frontend's.
+   */
+  readonly playing?: { readonly id: string; readonly hold: number; readonly slack?: number };
 }
 
 export interface Repository {
@@ -403,7 +430,7 @@ export function createRepository(given: readonly Fragment[], { known = () => fal
     fragments: seed,
     merge,
     knows: (id) => seen.has(id) || known(id),
-    query(point, k, axisWeights = {}, { facet, chosen = [], workbench, layer, pull = CO_USE_PULL, arguments: mains = {} } = {}) {
+    query(point, k, axisWeights = {}, { facet, chosen = [], workbench, layer, pull = CO_USE_PULL, arguments: mains = {}, reach, exclude, accept, within, playing } = {}) {
       if (!(Number.isInteger(k) && k >= 0)) throw new Error(`query: k is ${k}, not a whole number ≥ 0`);
       if (!(isFiniteNumber(pull) && pull >= 0)) throw new Error(`query: pull is ${String(pull)}, not a number ≥ 0`);
       const wrong = [
@@ -411,6 +438,13 @@ export function createRepository(given: readonly Fragment[], { known = () => fal
         ...Object.entries(axisWeights).flatMap(([axis, w]) => (isFiniteNumber(w) && w > 0 ? [] : [`${axis}'s weight is ${String(w)}`])),
       ];
       if (wrong.length) throw new Error(`query: ${wrong.join(', ')}`);
+      const number = (name: string, x: number | undefined, least: number) => {
+        if (x !== undefined && !(isFiniteNumber(x) && x >= least)) throw new Error(`query: ${name} is ${String(x)}, not a number ≥ ${least}`);
+      };
+      number('reach', reach, 0);
+      number('within', within, 1);
+      number('playing.hold', playing?.hold, 0);
+      number('playing.slack', playing?.slack, 0);
       const { fragments, filed, together } = layer ? merge(layer) : alone;
       const chosenIds = [...new Set(chosen)];
       const usesWith = (id: string) => {
@@ -427,20 +461,35 @@ export function createRepository(given: readonly Fragment[], { known = () => fal
           return { fragment, distance, score: coUseScore(distance, usesWith(fragment.id), pull) };
         })
         .sort((a, b) => a.score - b.score || Number(filed.has(b.fragment.id)) - Number(filed.has(a.fragment.id)) || byId(a.fragment.id, b.fragment.id));
-      if (workbench === undefined) return ranked.slice(0, k);
+      if (workbench === undefined && reach === undefined && !exclude && !accept && within === undefined && !playing) return ranked.slice(0, k);
       // (a layer's filed fragments are the from lines' to take too: a fit of its own, for this query)
-      const fit = layer && fragments !== seed ? cachedFit(resolverOf([...fragments, ...layer.filed.map((f) => f.fragment)])) : fits;
+      const fit = workbench !== undefined && layer && fragments !== seed ? cachedFit(resolverOf([...fragments, ...layer.filed.map((f) => f.fragment)])) : fits;
       const mainOf = (f: Fragment): string | undefined => {
         if (facet !== undefined) return mains[facet];
         for (const wp of f.association) if (wp.facet !== undefined && mains[wp.facet] !== undefined) return mains[wp.facet];
         return undefined;
       };
-      const fitting: Found[] = [];
-      for (const found of ranked) {
-        if (fitting.length >= k) break;
-        if (fit(found.fragment.text, workbench, mainOf(found.fragment)).fits) fitting.push(found);
+      // (what a frontend asks beyond the ranking, in this order: reach, exclude, the fit, accept, within, then the playing one kept)
+      const slack = playing ? (playing.slack ?? 0) : 0;
+      const cap = reach === undefined ? Infinity : reach + slack;
+      const left = new Set(exclude);
+      const candidates = ranked.filter((f) => f.distance <= cap && !left.has(f.fragment.id));
+      const passes = (f: Found) => (workbench === undefined || fit(f.fragment.text, workbench, mainOf(f.fragment)).fits) && (!accept || accept(f.fragment));
+      const passing: Found[] = [];
+      let edge = Infinity;
+      for (const found of candidates) {
+        if (passing.length >= k || found.score > edge) break;
+        if (!passes(found)) continue;
+        passing.push(found);
+        if (passing.length === 1 && within !== undefined) edge = found.score + (within - 1) * found.distance + 1e-9;
       }
-      return fitting;
+      const inReach = passing.filter((f) => f.distance <= (reach ?? Infinity));
+      if (!playing) return inReach;
+      // (the playing one may lie past the k that were taken: it is tried by itself)
+      const kept = passing.find((f) => f.fragment.id === playing.id) ?? candidates.find((f) => f.fragment.id === playing.id && passes(f));
+      const nearest = passing[0] ?? kept;
+      if (!kept || !nearest || kept.distance - nearest.distance > playing.hold) return inReach;
+      return [{ ...kept, held: true as const }, ...inReach.filter((f) => f !== kept)].slice(0, k);
     },
   };
 }

@@ -1,4 +1,4 @@
-import { BY_FRAGMENT, textOf, unitOf } from "./fills.js";
+import { pluginIn, textOf, unitOf } from "./fills.js";
 import { parse } from "./parser/index.js";
 import { compile } from "./compiler/index.js";
 import { adsrOf, balance, codeShifts, CV_LAPS, DEFAULT_ENV } from "./program.js";
@@ -424,12 +424,19 @@ function lawOffset(result, clock, law) {
     return Math.round(((((sec(anchor) - sec(law.origin)) % 86400) + 86400) % 86400) / law.stepSeconds);
 }
 const STREAMS = new WeakMap();
+const CODE_IDS = new WeakMap();
+const codeId = (law) => {
+    if (!CODE_IDS.has(law))
+        CODE_IDS.set(law, CODE_IDS_NEXT.n++);
+    return CODE_IDS.get(law);
+};
+const CODE_IDS_NEXT = { n: 0 };
 function streamOf(result, o) {
     if (STREAMS.has(o))
         return STREAMS.get(o);
     const found = (() => {
         const f = result.cells.get(o.cell)?.fill;
-        const law = f?.fragment ? BY_FRAGMENT.get(f.fragment) : undefined;
+        const law = f?.fragment ? pluginIn(result, f.fragment) : undefined;
         const codes = result.codes;
         if (!f || !law || !codes || law.fills[f.name ?? '']?.lap === undefined)
             return null;
@@ -445,7 +452,7 @@ function streamOf(result, o) {
             queue.push(...reads(n));
         }
         const cells = names.map((name) => ({ name, code: codes.get(name), fill: result.cells.get(name)?.fill?.name ?? null }));
-        return { law, clock: f.clock, head: o.cell, levels, cells, key: `${law.fragment}\n${cells.map((c) => c.code).join('\n')}` };
+        return { law, clock: f.clock, head: o.cell, levels, cells, key: `${law.fragment}#${codeId(law)}\n${cells.map((c) => c.code).join('\n')}` };
     })();
     STREAMS.set(o, found);
     return found;

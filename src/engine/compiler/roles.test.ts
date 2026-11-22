@@ -21,16 +21,16 @@ describe('the roles an attribute acts on, over every example (#782)', () => {
     }
     expect(Object.fromEntries([...count].sort())).toMatchInlineSnapshot(`
       {
-        "(none)": 925,
-        "card": 88,
+        "(none)": 945,
+        "card": 92,
         "card + clock": 1,
         "carrier + voice": 12,
-        "clock": 136,
-        "clock + driven": 76,
+        "clock": 140,
+        "clock + driven": 80,
         "clock + driven + motor": 3,
         "clock + law": 6,
         "clock + motor": 5,
-        "driven": 397,
+        "driven": 410,
         "driven + section": 68,
         "driven + selector": 13,
         "driven + tape": 6,
@@ -38,10 +38,10 @@ describe('the roles an attribute acts on, over every example (#782)', () => {
         "head": 15,
         "law": 6,
         "modulator + voice": 11,
-        "note": 197,
+        "note": 207,
         "resonator + voice": 15,
         "scope": 10,
-        "voice": 363,
+        "voice": 374,
       }
     `);
   });
