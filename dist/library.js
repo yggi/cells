@@ -1,11 +1,14 @@
 export { bandAt, bandLine, CENTRE, INSTRUMENT_REACH, instrumentsAt, PERFORMER_VOICES, resolveBand, scoreStyle } from "./repository/band.js";
-export { fromId, headOf, isLibraryFragment, LIBRARY, PARTS, resolveSeed, resolverOf, usesOf } from "./repository/library.js";
+export { FACETS, fromId, headOf, isLibraryFragment, LIBRARY, SECTION_KINDS, PARTS, resolveSeed, resolverOf, usesOf } from "./repository/library.js";
 export { nearestStyle, STYLES } from "./repository/styles.js";
 export { AXES, AXIS_NAMES, SLOTS } from "./engine/style.js";
 export { EXAMPLES } from "./engine/examples.js";
 export { canonicalTags, MIDI_FILE, parseTag, tagKind, tagName, TUTORIAL } from "./engine/tags.js";
 export { DOUGH_PARAMS, DOUGH_SOURCES } from "./engine/dough-params.js";
 export { VOICE_KIT } from "./engine/compiler/declare.js";
+export { DRUM_ROLES, FEEL_PARTS, SECTION_TYPES } from "./engine/perform/feel.js";
+export { GM_KIT, kitVoiceOf } from "./engine/midi.js";
+export { backbeatOf } from "./engine/vary/index.js";
 export { bjorklund } from "./engine/parser/generators.js";
 export { midiOf, mod, modeBrightness, modeName, NOTE_NAMES, noteName, SCALES } from "./theory/modes.js";
 export { TONAL_SCALES } from "./theory/tonal.js";

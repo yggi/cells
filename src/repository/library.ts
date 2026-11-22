@@ -139,6 +139,12 @@ const BY_ID = new Map([...PIECES, ...CURRENT, ...RENAMED, ...RETIRED]);
  */
 export const resolveSeed: Resolve = (id) => BY_ID.get(id) ?? null;
 
+/** The section kinds the library has fragments for (`fragments/sections/`), in its order: a section a text can name (`&verse`, `&chorus`), the feel's six (`SECTION_TYPES`) and the song's verse, chorus and outro. */
+export const SECTION_KINDS: readonly string[] = LIBRARY.filter((f) => f.association.some((p) => p.facet === 'section')).map((f) => f.id);
+
+/** Every facet the library's fragments are associated as, in the order they first appear: a query names one (`QueryOptions.facet`). */
+export const FACETS: readonly string[] = [...new Set(LIBRARY.flatMap((f) => f.association.flatMap((p) => (p.facet === undefined ? [] : [p.facet]))))];
+
 /** Whether `id` is a fragment of the library (`LIBRARY`): the ids a repository of one facet's fragments may be told it knows (`RepositoryOptions.known`). */
 export const isLibraryFragment = (id: string): boolean => LIBRARY_IDS.has(id);
 const LIBRARY_IDS: ReadonlySet<string> = new Set(LIBRARY.map((f) => f.id));

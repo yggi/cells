@@ -73,6 +73,10 @@ export const GM_KIT = [
     { note: 81, name: 'opentriangle', aliases: [] },
 ];
 const GM_DRUMS = new Map(GM_KIT.flatMap(({ note, name, aliases }) => [name, ...aliases].map((n) => [n, note])));
+const KIT_VOICES = new Map(GM_KIT.map(({ note, name }) => [note, name]));
+export function kitVoiceOf(note) {
+    return KIT_VOICES.get(note) ?? null;
+}
 export function gmDrumNote(name) {
     return GM_DRUMS.get(name.toLowerCase().replace(/\d+$/, '')) ?? null;
 }
