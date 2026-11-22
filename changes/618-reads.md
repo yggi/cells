@@ -1,3 +1,0 @@
-### Added
-
-- **`readsOf(decl)`, every cell a declaration names** (#618, #737): each reference in the AST is a `Ref`, so one walk finds every cell a line reads, with the keys that reach it (`bend.table`, `style.from`, `paramCells.lpf`, `braid.tokens`) and its form (`formOf`). It reads names, not cells (a note name where a rate goes is a `Ref` too): check each against the cells you have. A frontend can measure its own "every name written is a wire" against it instead of re-reading the text, which misses the cells a `from` line makes. New exports: `readsOf`, `formOf`, `Read`. Nothing a text means changes, and no graph moves.

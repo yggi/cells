@@ -5,6 +5,7 @@ The full hierarchy of `docs/`. Start with [MEMORY.md](MEMORY.md).
 - [MEMORY.md](MEMORY.md) — entrypoint: the project, the family, the map, the cheatsheet, decisions
 - [architecture.md](architecture.md) — what lives where in the engine, and how text becomes events
 - [testing.md](testing.md) — what the language's tests promise
+- [api.md](api.md) — the API a frontend runs and asks cells with: three layers, seven entry points, the ledger of what the frontends reach by a module path
 
 ## language/
 

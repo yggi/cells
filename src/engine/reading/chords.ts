@@ -11,7 +11,8 @@
  * Pure: it counts pitch classes and knows no clock, file or key.
  *
  * Lifted from yggi/jambot packages/engine/src/chord-reading.ts @ a34d13c6, its qualities from yggi/jambot
- * packages/theory/src/chords.ts @ a34d13c6 (`CHORD_QUALITIES`' stacks, but the harmonic series, which it never read);
+ * packages/theory/src/chords.ts @ a34d13c6 (`CHORD_QUALITIES`' stacks, but the harmonic series, which it never read),
+ * with the two diatonic ninths of a flat ninth it lacked, m7b9 and m7b5b9 (yggi/jambot#702);
  * the halves are the bar's (`Bar`), 4/4's eight steps each as they were.
  */
 import { BAR_4_4, type Bar, type Sounding } from './style';
@@ -42,6 +43,8 @@ export const QUALITY_STACKS: Readonly<Record<string, readonly number[]>> = {
   '9': [0, 4, 7, 10, 14],
   maj9: [0, 4, 7, 11, 14],
   m9: [0, 3, 7, 10, 14],
+  m7b9: [0, 3, 7, 10, 13],
+  m7b5b9: [0, 3, 6, 10, 13],
   add9: [0, 4, 7, 14],
 };
 

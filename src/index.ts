@@ -16,9 +16,9 @@
  */
 export { compileSource } from './engine/compile';
 export { parse, pieceMeta, type PieceMeta } from './engine/parser';
-export { plan, swingOfBar, type Plan, type Played } from './engine/realize';
-export { windowAt, type Window } from './engine/schedule';
-export { createHost, planOf, type ToEngine, type FromEngine } from './engine/host';
+export { chanceOf, eventsBetween, liveGains, outputPlays, outputSounds, plan, returnGains, swingOfBar, type Plan, type Played } from './engine/realize';
+export { isPhysical, retime, tapeSpeeds, windowAt, type Window } from './engine/schedule';
+export { createHost, emptyWindow, grabIn, planOf, type ToEngine, type FromEngine } from './engine/host';
 export { keepBar, keepBeat, type KeptBar } from './engine/keepbeat';
 export { shorten, shortenAll, type ShortenOptions } from './engine/shorten';
 export { normalise } from './engine/normalise';
@@ -51,13 +51,15 @@ export {
 export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
 export { movedCard } from './engine/shorten/card';
 export { jacksOf, patch, unpatch, PatchError, type Jack } from './engine/patch';
-export type { CompileOptions, CompileResult, Locked, Origin, Performer, Resolve, Take } from './engine/program';
+export { codeShifts } from './engine/program';
+export { resetPhysics } from './engine/physics';
+export type { AudioTape, CompileOptions, CompileResult, Env, Locked, Origin, Output, Performer, Resolve, ResolvedCell, Shifts, Take, Unit } from './engine/program';
 export { bodyOf, expand, fragmentHash, signatureOf } from './engine/use';
 export { fromLine, references, type FromLine, type Reference } from './engine/references';
 export { formOf, readsOf, type Read } from './engine/reads';
 export { outlineOf, type Outline, type OutlineNode, type OutlineOptions, type OutlinePart } from './engine/outline';
 export { takeIn, type TakenIn } from './engine/takein';
-export type { Diagnostic } from './engine/ast';
+export type { Atom, Braid, Diagnostic, FreeSpec, Pick, Token } from './engine/ast';
 export {
   createRepository,
   EMPTY_LAYER,

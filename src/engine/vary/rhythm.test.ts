@@ -285,6 +285,31 @@ describe('the anchors', () => {
     expect(anchorsOf(fragment, WORKBENCH)).toEqual([]);
   });
 
+  describe('a backbeat is struck on the snare or a drum that stands for it (#317)', () => {
+    const on = (drum: string, steps = '~ &' + drum) =>
+      ['&bd, &sd, &cp, &rim, &hh from gm_kit', '&kick step=4n &bd', `&back step=2n [${steps}]`, '&groove [&kick, &back]'].join('\n');
+    it.each(['sd', 'cp', 'rim'])('a line of %s on two and four is the backbeat’s anchor', (drum) => {
+      expect(anchorsOf(on(drum), WORKBENCH, resolveSeed)).toEqual([
+        { line: '&kick', reason: 'kick' },
+        { line: '&back', reason: 'backbeat' },
+      ]);
+    });
+    it('a hat there is no backbeat, nor a clap on the downbeat', () => {
+      expect(anchorsOf(on('hh'), WORKBENCH, resolveSeed)).toEqual([{ line: '&kick', reason: 'kick' }]);
+      expect(anchorsOf(on('cp', '&cp ~'), WORKBENCH, resolveSeed)).toEqual([{ line: '&kick', reason: 'kick' }]);
+    });
+    // (the seeds that keep their backbeat on a clap: before, only the kick was an anchor, and the clap line was varied)
+    it.each([
+      ['electro_swing_drums', 14, 9],
+      ['acid_drums', 7, 4],
+      ['happy_hardcore_drums', 4, 2],
+    ])('%s keeps its clap as the backbeat: %i variations before, %i now', (id, _before, after) => {
+      const text = resolveSeed(id)!;
+      expect(anchorsOf(text, WORKBENCH, resolveSeed).map((a) => a.reason)).toEqual(['kick', 'backbeat']);
+      expect(variations(text, { workbench: WORKBENCH, keep: ['&fill'], fewest: 3, resolve: resolveSeed })).toHaveLength(after);
+    });
+  });
+
   it('a drum is read by its note=, not its name: each bar with its drums renamed is varied as written, renamed (decision 075, #617)', () => {
     for (const b of BARS) {
       const drums = [...b.fragment.matchAll(/^&(\w+) note=/gm)].map((m) => m[1]!);

@@ -161,6 +161,8 @@ export interface ResolvedCell {
     readonly tonic?: string;
     /** The cells its `style=` names (the ends of a range, a set's members, a curve): a read the graph draws as a wire into this cell. */
     readonly styleReads?: readonly string[];
+    /** The cell a meter's swing is read from (`swing=&swing`, a swing alone: `&swing swing=8n:.6`): the graph draws it into the meter. */
+    readonly swingFrom?: string;
     /** A cell made for a style's slot read (`lpf=… * &style[bite]`): the style it reads, and the slot's position. The graph draws the style into it. */
     readonly readsSlot?: {
         readonly cell: string;

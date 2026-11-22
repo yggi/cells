@@ -5,7 +5,7 @@ import { VOICE_KIT } from "./compiler/declare.js";
 import { refsOf } from "./readers.js";
 import { gatePairs, gateVoices, productOutputs, termPairs } from "./plays.js";
 export const isCellNode = (n) => n.kind !== 'junction';
-const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about', 'base', 'bend', 'style']);
+const STRUCTURE = new Set(['over', 'braid', 'step', 'mix', 'midi', 'is', 'about', 'base', 'bend', 'style', 'swing']);
 export const feeds = (e) => !STRUCTURE.has(e.port) && e.band !== 'sync';
 const AS_IS = [[]];
 function refTransform(r) {
@@ -292,6 +292,9 @@ export function writtenGraph(result, { card = false } = {}) {
                     transforms: AS_IS,
                     ...wire('braid', 'cv', id, cellId(name), 1, true, true),
                 });
+        for (const name of new Set([c.swingFrom, ...(c.swingMoves?.factors ?? [])]))
+            if (name && result.cells.has(name) && shown(name))
+                link({ id: edgeId(cellId(name), id), source: cellId(name), target: id, count: 1, transforms: AS_IS, ...wire('swing', 'cv', cellId(name), id, 1, false, true) });
         if (c.readsSlot && result.cells.has(c.readsSlot.cell) && shown(c.readsSlot.cell))
             link({
                 id: edgeId(cellId(c.readsSlot.cell), id),
