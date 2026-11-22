@@ -1,3 +1,0 @@
-### Changed
-
-- **A part's association is written on its signature line** (#703, decision 089): `&twinkle from &key style=&(map=style sync=.1 harm=.12 bite=.5 mood=.95) facet=motif`, read by `associationOf` like any fragment's, where Kinderlieder's six parts kept it in the document's frontmatter (`parts:`, decision 082). `PARTS` lists a part that declares one. **Migration:** none for a saved piece. A document that keyed a part's association under `parts:` in its frontmatter must write it on the part's signature line; no example other than Kinderlieder did. The six parts are found as before (same ids, order, points, weights and facet), no event snapshot moves, and a part's hash is unchanged (a signature's attributes are left out of it).
