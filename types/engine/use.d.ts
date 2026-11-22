@@ -12,6 +12,13 @@ export declare const FROM_DEPTH = 8;
  * own part. Null where no signature names the head.
  */
 export declare function partOf(text: string, head: string): string | null;
+/**
+ * What a document gives a part to play with (#703): the document's own lines for the part's main parameter, with the
+ * lines they read, taken through the closure as `partOf` takes a part's (`&key from diatonic(mode=ionian) C`). The
+ * lines `partOf` leaves out, since they are the document's, what it plays with as a piece. Empty where the document
+ * is one part, or the part has no main parameter, or the document doesn't define it; null where no signature names the head.
+ */
+export declare function givenOf(text: string, head: string): string | null;
 /** A line that takes a fragment over a name (#692): the id it takes and its named arguments, as written (`ternary`, `{ answer: '&wonder' }`). */
 export interface UseOver {
     readonly id: string;
