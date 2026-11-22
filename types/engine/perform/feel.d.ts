@@ -41,6 +41,7 @@ export type FeelPart = 'drums' | 'bass' | 'pad' | 'stab' | 'lead';
  * toms or congas.
  */
 export type DrumRole = 'kick' | 'backbeat' | 'ghost' | 'hat' | 'pedal' | 'euclid' | 'ostinato' | 'clave' | 'fill';
+export declare const ROLES: ReadonlySet<string>;
 /**
  * Version 2's reading, by names (feel minor 1): the part and drum role an event of a host's section text is, read off the
  * output cells names it by (`voice:cell:line:col`, split on `:`): a groove's member of the kit cells makes,

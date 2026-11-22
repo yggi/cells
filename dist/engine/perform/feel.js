@@ -1,5 +1,5 @@
 const PARTS = ['drums', 'bass', 'pad', 'stab', 'lead'];
-const ROLES = new Set(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'ostinato', 'clave', 'fill']);
+export const ROLES = new Set(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'ostinato', 'clave', 'fill']);
 const ROLES_BY_NAME = new Set(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'clave', 'fill']);
 export function readingOf(output) {
     const [first, second, third] = (output ?? '').split(':');

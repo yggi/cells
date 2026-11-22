@@ -14,12 +14,13 @@ const STEP = BAR_SECONDS / 16;
 const FOUR_FOUR = '&bar meter("4/4") step=120bpm';
 export function readFragment(text, facet, resolve) {
     const part = PART_OF[facet];
-    if (!part)
-        return null;
+    return part ? readAudition(text, part, resolve) : null;
+}
+export function readAudition(text, part, resolve, given = '') {
     const self = '_read';
     if (fitsAs(self, FOUR_FOUR, { resolve: (id) => (id === self ? text : resolve(id)) }).unmet.length)
         return null;
-    const a = audition(text, { resolve });
+    const a = audition(given ? `${text}\n${given}` : text, { resolve });
     if (a.why)
         return null;
     const plan = planOf(a.text, undefined, { resolve });

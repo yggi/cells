@@ -66,6 +66,30 @@ describe('an empty layer', () => {
     }
   });
 
+  // (#840: a layer merges alike at every query and merging counts every pair it holds, so a layer is merged once)
+  it('merges a layer once: the same layer gives the same merge, a new one its own, and a layer grown in place is merged again', () => {
+    const layer = useFragments(library, EMPTY_LAYER, [{ id: 'funk_drums', point: FUNK, facet: 'rhythm' }]);
+    const merged = library.merge(layer);
+    expect(library.merge(layer)).toBe(merged);
+    const other = { ...layer };
+    expect(library.merge(other)).not.toBe(merged);
+    expect(library.merge(other).fragments).toEqual(merged.fragments);
+    // (grown in place, which is no way to change one: it is still read as it is)
+    const pairs: { ids: [string, string]; count: number }[] = [];
+    const grown: LearnedLayer = { ...layer, together: pairs };
+    const before = library.merge(grown);
+    pairs.push({ ids: ['funk_drums', 'son_clave_3_2'], count: 7 });
+    const after = library.merge(grown);
+    expect(after).not.toBe(before);
+    expect(after.together.get('funk_drums')?.get('son_clave_3_2')).toBe(7);
+  });
+
+  it('a malformed layer throws at every merge, kept or not', () => {
+    const wrong = { filed: [], points: [], together: [{ ids: ['funk_drums'], count: 1 }] } as unknown as LearnedLayer;
+    expect(() => library.merge(wrong)).toThrow(/malformed learned layer/);
+    expect(() => library.merge(wrong)).toThrow(/malformed learned layer/);
+  });
+
   it('merges to the seed itself', () => {
     expect(library.merge(EMPTY_LAYER).fragments).toBe(library.fragments);
   });
@@ -104,26 +128,23 @@ describe('the pull', () => {
     return { ...(facet ? { facet } : {}), layer, chosen: Array.from({ length: 1 + (i % 3) }, (_, j) => pick(`chosen|${i}|${j}`)) };
   };
 
-  // (in eighths too, each its own test, for the same reason as below: a quarter came within the 20 s timeout on CI once #741 grew the library)
-  it.each([0, 125, 250, 375, 500, 625, 750, 875])('at 0, ranks as a query with nothing chosen: over 1,000 points, 125 from %i, with a layer that counts every pair', (from) => {
+  // (a layer that counts every pair merges once, not at each query: #840. Each query cost 25 ms to merge it before, so these were
+  // cut in quarters, then eighths, to stay within the 20 s timeout as the library grew; whole, they take under a second)
+  it('at 0, ranks as a query with nothing chosen: over 1,000 points, with a layer that counts every pair', () => {
     expect(POINTS).toHaveLength(1_000);
     let moved = 0;
     for (const [i, point] of POINTS.entries()) {
-      if (i < from || i >= from + 125) continue;
       const { chosen, ...unchosen } = optionsAt(i);
       const none = ranked(library.query(point, 27, {}, unchosen));
       expect(ranked(library.query(point, 27, {}, { ...unchosen, chosen, pull: 0 })), JSON.stringify(point)).toEqual(none);
       if (JSON.stringify(ranked(library.query(point, 27, {}, { ...unchosen, chosen }))) !== JSON.stringify(none)) moved++;
     }
     // (and the default pull, over the same, does move them: the 0 is what holds)
-    expect(moved).toBeGreaterThan(112);
+    expect(moved).toBeGreaterThan(896);
   });
 
-  // (the 1,000 points in eighths, each its own test: a query merges a layer that counts every pair of the library, so
-  // its cost grows with the square of the library's size; a quarter took 9 s here and reached CI's 20 s at #652's)
-  it.each([0, 125, 250, 375, 500, 625, 750, 875])('with nothing chosen, no pull changes a query: over 1,000 points, 125 from %i', (from) => {
+  it('with nothing chosen, no pull changes a query: over 1,000 points', () => {
     for (const [i, point] of POINTS.entries()) {
-      if (i < from || i >= from + 125) continue;
       const { chosen: _, ...unchosen } = optionsAt(i);
       const asked = ranked(library.query(point, 27, {}, unchosen));
       for (const pull of [0, 0.5, 10]) expect(ranked(library.query(point, 27, {}, { ...unchosen, pull })), `${JSON.stringify(point)} pull ${pull}`).toEqual(asked);
