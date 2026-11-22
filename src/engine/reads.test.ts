@@ -42,6 +42,55 @@ describe('readsOf finds every cell a line names, by the form that reads it', () 
   });
 });
 
+describe('a read carries the reference as it is written, and where (#857)', () => {
+  const text = [
+    '&m step=8n 0 2 4',
+    '&t step=8n &m &m[1:] &m[<<2] &m^$7 &m^2 degree(&m, 3) inverse(&m)',
+    '&style map=style .3 .45 .55 .55',
+    '&v s=sine loop=C4 lpf=200..3000 * &style[bite]',
+  ].join('\n');
+  const reads = (name: string) => readsOf(decl(text, name)).filter((r) => r.name !== 'C4');
+  const written = (name: string) => reads(name).map(({ ref }) => ({ ...ref, span: undefined }));
+
+  it('a cell spliced as a step of a braid is a read, each with what is written on it', () => {
+    expect(reads('t').map((r) => r.path)).toEqual([0, 1, 2, 3, 4, 5, 6].map((i) => `braid.tokens.${i}.atom`));
+    expect(written('t')).toEqual(
+      [
+        { kind: 'ref', name: 'm', pick: null, shift: 0 },
+        { kind: 'ref', name: 'm', pick: { kind: 'slice', from: 1, to: null }, shift: 0 },
+        { kind: 'ref', name: 'm', pick: null, shift: -2 },
+        { kind: 'ref', name: 'm', pick: null, shift: 0, transpose: 7 },
+        { kind: 'ref', name: 'm', pick: null, shift: 0, values: { mul: 1, add: 2 } },
+        { kind: 'ref', name: 'm', pick: null, shift: 0, values: { mul: 1, add: 3 } },
+        // (inverse negates its values' 0, which is a negative zero)
+        { kind: 'ref', name: 'm', pick: null, shift: 0, values: { mul: -1, add: -0 } },
+      ].map((r) => ({ ...r, span: undefined })),
+    );
+  });
+
+  it('a cell read by an attribute carries its slot by name, as written', () => {
+    expect(written('v')).toEqual([{ name: 'style', pick: null, shift: 0, slot: 'bite', span: undefined }]);
+  });
+
+  it('says where: a ref in a braid at its step’s place, a ref of its own at its own', () => {
+    expect(reads('t').map((r) => [r.span.line, r.span.col])).toEqual([12, 15, 22, 30, 36, 41, 55].map((col) => [2, col]));
+    expect(reads('v').map((r) => r.span.line)).toEqual([4]);
+  });
+
+  it('is so of every read in every example: the reference names the cell, and has a place', () => {
+    let reads = 0;
+    for (const { source } of Object.values(EXAMPLES))
+      for (const d of parse(expansion(source, O).text).cells)
+        for (const r of readsOf(d)) {
+          reads++;
+          expect(r.ref.name, `&${d.name}: ${r.path}`).toBe(r.name);
+          expect(r.span.line).toBeGreaterThanOrEqual(1);
+        }
+    // (cells spliced as steps of a braid among them: the commonest read, which `readsOf` once didn't see)
+    expect(reads).toBeGreaterThan(2_900);
+  });
+});
+
 /**
  * The reads of a text the written graph draws no wire for, by form: a read is drawn when its two cells have an edge
  * between them, either way. A read inside an unnamed cell (`&key:λ19_5`) is its owner's. A gate read in a mix
