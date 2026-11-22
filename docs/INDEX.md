@@ -23,6 +23,7 @@ The full hierarchy of `docs/`. Start with [MEMORY.md](MEMORY.md).
 - [language/physics.md](language/physics.md) — motors, belts, tape, resonators, FM
 - [language/display.md](language/display.md) — titles, tags, labels, `show=`, loudness (the card's `postgain=`)
 - [language/plugins.md](language/plugins.md) — a piece's own `show=`: a block of code in the piece
+- [language/plugin-wire.md](language/plugin-wire.md) — what a plugin-fragment's code is handed for its arguments: the wire grammar, version 1
 - [language/kinds.md](language/kinds.md) — what a cell is: every cell's one kind, the ordered rules that decide it, and the relations that are not kinds
 - [language/laws.md](language/laws.md) — the language's laws: each property stated, its test, what it covers, its field; the invariants among them; the conjectures (decision 083)
 - [language/style.md](language/style.md) — a style: `map=style`, the table of axes, a value read by name (`&x[slot]`)

@@ -39,6 +39,7 @@ import { MOVED, RENAMED_IDS } from './renamed';
 import { BOUND_BY_NAME, byNameMessage } from './byname';
 import type { CompileOptions, Origin, Resolve, Take } from './program';
 import { BY_FRAGMENT, type PluginFragment, type Refusal } from './fills';
+import { WIRE, wireArg } from './wire';
 
 /** The plugin-fragments a text's `from` lines may name, by fragment id: the built-ins, and the host's (`CompileOptions.plugins`). */
 type Plugins = ReadonlyMap<string, PluginFragment>;
@@ -47,7 +48,16 @@ type Plugins = ReadonlyMap<string, PluginFragment>;
 interface Run {
   readonly plugins: Plugins;
   readonly warn: (message: string) => void;
+  /** The text the `from` line stands in, its `from` lines left out: where a braid fill's arguments are read (085 §8.3). */
+  readonly context: string;
 }
+
+/** A text with its `from` lines left out (a signature's, a use's): what an argument written beside them reads. */
+const withoutFrom = (text: string): string =>
+  text
+    .split('\n')
+    .filter((raw) => !readFrom(splitComment(raw)[0].trim()))
+    .join('\n');
 
 /** A fill to be answered, as a fragment writes it. */
 const FILL = /(^|\s)fill\(\s*\)/;
@@ -769,18 +779,29 @@ function instantiate(
     }
   }
   // (a braid fill's arguments, as written: each parameter's value, or its default line's braid; 6d writes their core, #749)
-  const argsOf = (): Record<string, string> =>
-    Object.fromEntries(
-      [...optional, ...(main ? [main] : [])].flatMap((o) => {
-        const v =
-          values.get(o) ??
-          byName
-            .get(o)
-            ?.code.replace(new RegExp(`^&${o}\\s*`), '')
-            .trim();
-        return v !== undefined ? [[o, v]] : [];
-      }),
-    );
+  // (a braid fill's arguments, each its core in the wire grammar (decision 085 §8.3, `wire.ts`): a value the from line
+  // writes read where the line stands, a default where the fragment writes it; one read over a key hands that key too,
+  // as `<parameter>:key`; one the grammar can't carry refuses the fill)
+  const argsOf = (): { readonly args: Record<string, string> } | Refusal => {
+    const args: Record<string, string> = {};
+    const wire = run.plugins.get(id)?.wire ?? 1;
+    if (wire > WIRE) return { refused: `it reads wire ${wire}, and cells speaks wire ${WIRE} (docs/language/plugin-wire.md)` };
+    for (const o of [...optional, ...(main ? [main] : [])]) {
+      const given = values.get(o);
+      const v =
+        given ??
+        byName
+          .get(o)
+          ?.code.replace(new RegExp(`^&${o}\\s*`), '')
+          .trim();
+      if (v === undefined) continue;
+      const w = wireArg(v, given !== undefined ? run.context : withoutFrom(text));
+      if ('refused' in w) return { refused: `its ${o}= ${w.refused}` };
+      args[o] = w.text;
+      if (w.key !== undefined) args[`${o}:key`] = w.key;
+    }
+    return { args };
+  };
   const copy: Line[] = [];
   for (const l of own) {
     const p = l.name!;
@@ -796,7 +817,10 @@ function instantiate(
         const answer = answered(
           id,
           p,
-          () => (fill.fuel === undefined ? { refused: `its fill ${p} declares no fuel, and a braid fill must (decision 085 §8)` } : plugin.fill(p, 0, argsOf(), fill.fuel)),
+          () =>
+            fill.fuel === undefined
+              ? { refused: `its fill ${p} declares no fuel, and a braid fill must (decision 085 §8)` }
+              : withArgs(argsOf(), (args) => plugin.fill(p, 0, args, fill.fuel)),
           say,
         );
         if (typeof answer === 'string') code = code.replace(FILL, `$1${answer}`);
@@ -826,6 +850,10 @@ function instantiate(
   const given = { id, names: new Set(sharing.map((l) => l.name!)), lines: sharing, resolved: true };
   return { taken: given, copy, args: Object.fromEntries(values) };
 }
+
+/** A call with its arguments, or their refusal as the call's. */
+const withArgs = <T>(given: { readonly args: Record<string, string> } | Refusal, call: (args: Record<string, string>) => T | Refusal): T | Refusal =>
+  'args' in given ? call(given.args) : given;
 
 /**
  * A plugin's answer for a fill (decision 085 §8): its text, or its refusal; a thrown error is a bug in its code, said as an
@@ -865,7 +893,7 @@ function fragmentLines(path: readonly string[], text: string, resolve: Resolve, 
       const theirs = whole === null ? null : (pickPart(id, whole, entry.from, sayHere)?.text ?? null);
       if (whole === null) sayHere(`No fragment ${quoted(id)} to use`);
       else if (theirs !== null) {
-        const g = give(entry, next, theirs, resolve, { ...run, warn: (message: string) => run.warn(`${message}${where}`) }, say, taken);
+        const g = give(entry, next, theirs, resolve, { ...run, warn: (message: string) => run.warn(`${message}${where}`), context: withoutFrom(text) }, say, taken);
         const step = { id: here, line: l.line };
         copies.push(...via(g.copy, step));
         return [{ ...g.taken, lines: via(g.taken.lines, step) }];
@@ -964,10 +992,20 @@ export function expansion(text: string, { resolve, locked = [], old = false, plu
     const binding = old
       ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) }
       : undefined;
-    const g = give(u, [id], theirs, resolve!, { plugins, warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) }, say, taken, binding, {
-      ...level,
-      warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }),
-    });
+    const g = give(
+      u,
+      [id],
+      theirs,
+      resolve!,
+      { plugins, warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }), context: withoutFrom(text) },
+      say,
+      taken,
+      binding,
+      {
+        ...level,
+        warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }),
+      },
+    );
     const step = { id: null, line: u.line.line };
     copies.push(via(g.copy, step));
     args.push(g.args);

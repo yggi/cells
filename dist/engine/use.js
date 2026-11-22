@@ -5,6 +5,11 @@ import { STYLE } from "./style.js";
 import { MOVED, RENAMED_IDS } from "./renamed.js";
 import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
 import { BY_FRAGMENT } from "./fills.js";
+import { WIRE, wireArg } from "./wire.js";
+const withoutFrom = (text) => text
+    .split('\n')
+    .filter((raw) => !readFrom(splitComment(raw)[0].trim()))
+    .join('\n');
 const FILL = /(^|\s)fill\(\s*\)/;
 export const FROM_DEPTH = 8;
 const via = (lines, step) => lines.map((l) => ({ ...l, origin: [step, ...(l.origin ?? [])] }));
@@ -518,14 +523,29 @@ function instantiate(from, id, signature, path, text, resolve, run, say, taken, 
                     queue.push(r);
         }
     }
-    const argsOf = () => Object.fromEntries([...optional, ...(main ? [main] : [])].flatMap((o) => {
-        const v = values.get(o) ??
-            byName
-                .get(o)
-                ?.code.replace(new RegExp(`^&${o}\\s*`), '')
-                .trim();
-        return v !== undefined ? [[o, v]] : [];
-    }));
+    const argsOf = () => {
+        const args = {};
+        const wire = run.plugins.get(id)?.wire ?? 1;
+        if (wire > WIRE)
+            return { refused: `it reads wire ${wire}, and cells speaks wire ${WIRE} (docs/language/plugin-wire.md)` };
+        for (const o of [...optional, ...(main ? [main] : [])]) {
+            const given = values.get(o);
+            const v = given ??
+                byName
+                    .get(o)
+                    ?.code.replace(new RegExp(`^&${o}\\s*`), '')
+                    .trim();
+            if (v === undefined)
+                continue;
+            const w = wireArg(v, given !== undefined ? run.context : withoutFrom(text));
+            if ('refused' in w)
+                return { refused: `its ${o}= ${w.refused}` };
+            args[o] = w.text;
+            if (w.key !== undefined)
+                args[`${o}:key`] = w.key;
+        }
+        return { args };
+    };
     const copy = [];
     for (const l of own) {
         const p = l.name;
@@ -536,7 +556,9 @@ function instantiate(from, id, signature, path, text, resolve, run, say, taken, 
             const plugin = run.plugins.get(id);
             const fill = plugin?.fills[p];
             if (plugin && fill && fill.lap === undefined) {
-                const answer = answered(id, p, () => (fill.fuel === undefined ? { refused: `its fill ${p} declares no fuel, and a braid fill must (decision 085 §8)` } : plugin.fill(p, 0, argsOf(), fill.fuel)), say);
+                const answer = answered(id, p, () => fill.fuel === undefined
+                    ? { refused: `its fill ${p} declares no fuel, and a braid fill must (decision 085 §8)` }
+                    : withArgs(argsOf(), (args) => plugin.fill(p, 0, args, fill.fuel)), say);
                 if (typeof answer === 'string')
                     code = code.replace(FILL, `$1${answer}`);
                 else if (answer)
@@ -566,6 +588,7 @@ function instantiate(from, id, signature, path, text, resolve, run, say, taken, 
     const given = { id, names: new Set(sharing.map((l) => l.name)), lines: sharing, resolved: true };
     return { taken: given, copy, args: Object.fromEntries(values) };
 }
+const withArgs = (given, call) => 'args' in given ? call(given.args) : given;
 function answered(id, fill, call, say) {
     try {
         return call();
@@ -603,7 +626,7 @@ function fragmentLines(path, text, resolve, run, say) {
             if (whole === null)
                 sayHere(`No fragment ${quoted(id)} to use`);
             else if (theirs !== null) {
-                const g = give(entry, next, theirs, resolve, { ...run, warn: (message) => run.warn(`${message}${where}`) }, say, taken);
+                const g = give(entry, next, theirs, resolve, { ...run, warn: (message) => run.warn(`${message}${where}`), context: withoutFrom(text) }, say, taken);
                 const step = { id: here, line: l.line };
                 copies.push(...via(g.copy, step));
                 return [{ ...g.taken, lines: via(g.taken.lines, step) }];
@@ -677,7 +700,7 @@ export function expansion(text, { resolve, locked = [], old = false, plugins: th
         const binding = old
             ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message) => diagnostics.push({ severity: 'warning', message, span }) }
             : undefined;
-        const g = give(u, [id], theirs, resolve, { plugins, warn: (message) => diagnostics.push({ severity: 'warning', message, span }) }, say, taken, binding, {
+        const g = give(u, [id], theirs, resolve, { plugins, warn: (message) => diagnostics.push({ severity: 'warning', message, span }), context: withoutFrom(text) }, say, taken, binding, {
             ...level,
             warn: (message) => diagnostics.push({ severity: 'warning', message, span }),
         });
