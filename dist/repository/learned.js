@@ -104,12 +104,12 @@ function countedTogether(layer, ids) {
 }
 export function useFragments(repository, layer, uses) {
     const held = new Set(repository.merge(layer).fragments.map((f) => f.id));
-    const unknown = uses.filter((u) => !held.has(u.id)).map((u) => `'${u.id}'`);
+    const unknown = uses.filter((u) => !held.has(u.id) && !repository.knows(u.id)).map((u) => `'${u.id}'`);
     if (unknown.length)
         throw new Error(`useFragments: no fragment ${unknown.join(', ')}`);
     let next = countedTogether(layer, uses.map((u) => u.id));
     for (const { id, point, facet } of uses)
-        if (point)
+        if (point && held.has(id))
             next = movedAt(repository, next, id, point, facet);
     return next;
 }

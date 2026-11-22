@@ -139,6 +139,10 @@ const BY_ID = new Map([...PIECES, ...CURRENT, ...RENAMED, ...RETIRED]);
  */
 export const resolveSeed: Resolve = (id) => BY_ID.get(id) ?? null;
 
+/** Whether `id` is a fragment of the library (`LIBRARY`): the ids a repository of one facet's fragments may be told it knows (`RepositoryOptions.known`). */
+export const isLibraryFragment = (id: string): boolean => LIBRARY_IDS.has(id);
+const LIBRARY_IDS: ReadonlySet<string> = new Set(LIBRARY.map((f) => f.id));
+
 /**
  * The seed library and a person's filed fragments as one resolver (#638): a `from` line's id read from the seed first
  * (`resolveSeed`, its retired and renamed ids too), then from the layer's filed fragments, a filed template's sets of

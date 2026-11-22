@@ -72,6 +72,8 @@ const RENAMED = [...RENAMED_IDS].map(([old, word]) => [old, CURRENT.get(word)]);
 const PIECES = Object.entries(EXAMPLES).map(([key, e]) => [key, e.source]);
 const BY_ID = new Map([...PIECES, ...CURRENT, ...RENAMED, ...RETIRED]);
 export const resolveSeed = (id) => BY_ID.get(id) ?? null;
+export const isLibraryFragment = (id) => LIBRARY_IDS.has(id);
+const LIBRARY_IDS = new Set(LIBRARY.map((f) => f.id));
 export function resolverOf(layer = EMPTY_LAYER) {
     if (!layer.filed.length)
         return resolveSeed;

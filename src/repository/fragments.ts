@@ -144,6 +144,20 @@ export interface Repository {
   query(point: StylePoint, k: number, axisWeights?: StylePoint, options?: QueryOptions): Found[];
   /** The seed and a layer merged, as a query sees them; throws on a malformed layer, or one that files a seed's id. */
   merge(layer: LearnedLayer): Merged;
+  /** Whether the repository holds this id, or names it known (`RepositoryOptions.known`): a use together counts for it. */
+  knows(id: string): boolean;
+}
+
+/** What a repository may be told beside its fragments. */
+export interface RepositoryOptions {
+  /**
+   * Ids the repository doesn't hold but are fragments all the same, the library's (`isLibraryFragment`): a frontend's
+   * repository of one facet's fragments still counts the use of one of them together with a meter's, a bass line's. A pair
+   * of known ids is counted (a query's `chosen` finds it, `useFragments` takes it); a known id has no points here, so a
+   * use of it moves no association (its own repository's does), and a query finds no fragment of it. An id neither held nor
+   * known is as before: left out (`Merged.unheld`), and refused by `useFragments`.
+   */
+  readonly known?: (id: string) => boolean;
 }
 
 /** The pull of use together a query has where it names none (`QueryOptions.pull`): λ in `coUseScore`. */
@@ -308,7 +322,7 @@ function expanded(fragment: Fragment, problems: string[]): Fragment[] {
  * A repository of these fragments, the seed; it throws on a malformed entry or an id given twice, naming each problem. It
  * keeps nothing between calls but a cache of compiles by text (`cachedFit`), which changes no answer.
  */
-export function createRepository(given: readonly Fragment[]): Repository {
+export function createRepository(given: readonly Fragment[], { known = () => false }: RepositoryOptions = {}): Repository {
   // (a template whose points carry its arguments is a fragment for each set, `diatonic(mode=aeolian)`: #387, B1)
   const problems: string[] = [];
   const entries = given.flatMap((f) => expanded(f, problems));
@@ -352,6 +366,8 @@ export function createRepository(given: readonly Fragment[]): Repository {
     if (wrong.length) throw new Error(`A malformed learned layer: ${wrong.join('; ')}`);
     const filed = new Set(filedFragments.map((f) => f.id));
     const held = (id: string) => seen.has(id) || filed.has(id);
+    // (a use together counts for an id the repository only knows: the library's, of another facet)
+    const counted = (id: string) => held(id) || known(id);
     const added = new Map<string, WeightedPoint[]>();
     const unheld = new Set<string>();
     for (const { id, point, weight, facet } of layer.points) {
@@ -375,8 +391,8 @@ export function createRepository(given: readonly Fragment[]): Repository {
     };
     for (const { ids, count: n } of layer.together) {
       const [a, b] = ids;
-      for (const id of ids) if (!held(id)) unheld.add(id);
-      if (!held(a) || !held(b)) continue;
+      for (const id of ids) if (!counted(id)) unheld.add(id);
+      if (!counted(a) || !counted(b)) continue;
       count(a, b, n);
       count(b, a, n);
     }
@@ -386,6 +402,7 @@ export function createRepository(given: readonly Fragment[]): Repository {
   return {
     fragments: seed,
     merge,
+    knows: (id) => seen.has(id) || known(id),
     query(point, k, axisWeights = {}, { facet, chosen = [], workbench, layer, pull = CO_USE_PULL, arguments: mains = {} } = {}) {
       if (!(Number.isInteger(k) && k >= 0)) throw new Error(`query: k is ${k}, not a whole number ≥ 0`);
       if (!(isFiniteNumber(pull) && pull >= 0)) throw new Error(`query: pull is ${String(pull)}, not a number ≥ 0`);

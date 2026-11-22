@@ -8,7 +8,7 @@
  * the parts, the facets, the meters) as a runtime list is #717's, and lands here.
  */
 export { bandAt, bandLine, CENTRE, INSTRUMENT_REACH, instrumentsAt, PERFORMER_VOICES, resolveBand, scoreStyle, type FoundInstrument, type VoicedPart } from './repository/band';
-export { fromId, headOf, LIBRARY, PARTS, resolveSeed, resolverOf, usesOf, type PartUse } from './repository/library';
+export { fromId, headOf, isLibraryFragment, LIBRARY, PARTS, resolveSeed, resolverOf, usesOf, type PartUse } from './repository/library';
 export { nearestStyle, STYLES, type NearStyle, type Style } from './repository/styles';
 export { AXES, AXIS_NAMES, SLOTS, type Axis } from './engine/style';
 export { EXAMPLES, type Example, type ExampleKey } from './engine/examples';
