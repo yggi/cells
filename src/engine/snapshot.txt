@@ -24,7 +24,7 @@ arrangement  124 notes  notes 128b16a317226848  events e6331c929bcf5737  values 
 stereo  56 notes  notes d23210bd260e6335  events e9c10974daf63589  values 0b1806e962cefbbc
 waveforms  152 notes  notes af98ebebf3624177  events 6bb60131bc6a7a78  values 85857b1ac8e7ffed
 moving  247 notes  notes 19baf812baae7e0d  events 2dcfc6b9534c6c40  values e76cbaf311e176c4
-style  150 notes  notes 55b0c191a3c60d9a  events 77affbccbe68e119  values 64a15cb7f30afd5e
+style  150 notes  notes 55b0c191a3c60d9a  events a13990a3f5ef0f71  values 9b0f140566c2c2fd
 grids  123 notes  notes c48b619498fae94e  events d4a05490c582e2a3  values 73a3617ea0bae3d1
 metronome  67 notes  notes 56b7210ad4f883c9  events 7a421fb8829b74c0  values 2d25d1d75eac48ac
 fm  96 notes  notes a357e7f6250b6df0  events deb17b877796ed64  values a0d2534235872980

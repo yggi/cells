@@ -38,7 +38,7 @@ describe('the roles an attribute acts on, over every example (#782)', () => {
         "head": 15,
         "law": 6,
         "modulator + voice": 11,
-        "note": 197,
+        "note": 198,
         "resonator + voice": 15,
         "scope": 10,
         "voice": 363,
