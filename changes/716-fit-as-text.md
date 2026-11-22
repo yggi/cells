@@ -1,0 +1,3 @@
+### Added
+
+- **A fragment given as its text, and the union without the judging** (#716): `fitsAs` and `useOn` take a fragment as `{ text, head? }` where they took an id (`FragmentRef`). Cells reads the text by an id of its own, `fit_<its hash>`, so a frontend need not invent an id and wrap its resolver; the result carries `resolve`, what reads its `from` line (the options' own, and the text by its id), and `compiled` is told the resolve to compile through. `unionOf(fragment, workbench)` writes a collection's union with a workbench, renaming what collides, with no compile: `fitsAs` judges the same union, and a compile is what it costs (33 rhythm bodies on one bench: 3.6 ms against 327 ms). An id still works as before.

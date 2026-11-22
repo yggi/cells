@@ -68,8 +68,7 @@ export function readFragment(text: string, facet: string, resolve: Resolve): Poi
  * still a hole (`readPart`: the document's key). The 4/4 fit is judged on the text alone, as a fragment's.
  */
 export function readAudition(text: string, part: Part, resolve: Resolve, given = ''): PointReading | null {
-  const self = '_read';
-  if (fitsAs(self, FOUR_FOUR, { resolve: (id) => (id === self ? text : resolve(id)) }).unmet.length) return null;
+  if (fitsAs({ text }, FOUR_FOUR, { resolve }).unmet.length) return null;
   const a = audition(given ? `${text}\n${given}` : text, { resolve });
   if (a.why) return null;
   const plan = planOf(a.text, undefined, { resolve });

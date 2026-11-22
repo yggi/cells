@@ -17,8 +17,7 @@ export function readFragment(text, facet, resolve) {
     return part ? readAudition(text, part, resolve) : null;
 }
 export function readAudition(text, part, resolve, given = '') {
-    const self = '_read';
-    if (fitsAs(self, FOUR_FOUR, { resolve: (id) => (id === self ? text : resolve(id)) }).unmet.length)
+    if (fitsAs({ text }, FOUR_FOUR, { resolve }).unmet.length)
         return null;
     const a = audition(given ? `${text}\n${given}` : text, { resolve });
     if (a.why)
