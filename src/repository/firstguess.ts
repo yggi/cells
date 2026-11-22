@@ -59,10 +59,18 @@ const FOUR_FOUR = '&bar meter("4/4") step=120bpm';
  */
 export function readFragment(text: string, facet: string, resolve: Resolve): PointReading | null {
   const part = PART_OF[facet];
-  if (!part) return null;
+  return part ? readAudition(text, part, resolve) : null;
+}
+
+/**
+ * A text heard in the host (`audition`) and read as a part over `READ_BARS` bars, or null where it plays nothing a
+ * reading can read. `given` is lines a document hands it, written after the text before the host stands in for what is
+ * still a hole (`readPart`: the document's key). The 4/4 fit is judged on the text alone, as a fragment's.
+ */
+export function readAudition(text: string, part: Part, resolve: Resolve, given = ''): PointReading | null {
   const self = '_read';
   if (fitsAs(self, FOUR_FOUR, { resolve: (id) => (id === self ? text : resolve(id)) }).unmet.length) return null;
-  const a = audition(text, { resolve });
+  const a = audition(given ? `${text}\n${given}` : text, { resolve });
   if (a.why) return null;
   const plan = planOf(a.text, undefined, { resolve });
   const bars: Sounding[][] = Array.from({ length: READ_BARS }, () => []);
