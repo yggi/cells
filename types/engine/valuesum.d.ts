@@ -39,7 +39,7 @@ export declare function valueSumOf(name: string, decls: ReadonlyMap<string, Cell
  * and `inlineNotes` writes it so before a mix is typed.
  *
  * `sounds` says whether a cell that is not a mix is a sound (a voice, a gate, a kit read, a tape's read head, a wave):
- * the compiler's sorts know, this module doesn't; a mix among the factors is read here, as notes in turn or not at all. A product of numbers and levels alone (no pitch) is not notes: it stays what it was.
+ * the compiler's sorts know, this module doesn't; a mix among the factors is read here, as notes in turn or not at all. A product of numbers, sums of values and levels alone (no pitch) is not notes: it stays what it was; a cell that is one number or a sum of values among the factors is a level (decision 088, #856).
  */
 export declare function notesProductOf(name: string, decls: ReadonlyMap<string, CellDecl>, sounds: (name: string) => boolean, seen?: ReadonlySet<string>): Extract<Expr, {
     k: 'prod';
