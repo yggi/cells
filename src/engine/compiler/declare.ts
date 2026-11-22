@@ -1,7 +1,7 @@
 /** Phase 1: the declarations — one per name, the default grid and scale() tables added, over= chains known and acyclic. */
 import { numberCellOf, valueSumOf } from '../valuesum';
 import { refLabel, type Atom, type CellDecl, type Expr, type Ref, type Span, type Token } from '../ast';
-import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from '../program';
+import { MAX_SPLICE_DEPTH, ROOT } from '../program';
 import { evenProblem, evenSteps, SCALE_KEY } from '../parser/generators';
 import { PLAYED_AS, VOICE_MAKERS } from '../attributes';
 import { IMPLICIT, isRootDecl, tableOf } from './tables';
@@ -28,7 +28,7 @@ export interface Declared {
   readonly sections: ReadonlyMap<string, string>;
   /** The stacks a gate plays (#287: `&drums play=&drumlines &kit`): parts, each line played, not mixes of their own. */
   readonly stacks: ReadonlySet<string>;
-  /** The piece's main key, which a bare `over=key` reads, the old way (#124, #301): the first cell in the text whose braid is `scale(…)`. */
+  /** The piece's main key: the first cell in the text whose braid is `scale(…)`. */
   readonly mainKey?: string;
 }
 
@@ -40,7 +40,7 @@ export function declare(ctx: Ctx): Declared {
     if (decls.has(c.name)) error(`&${c.name} is already defined on line ${decls.get(c.name)!.span.line}`, c.span);
     else decls.set(c.name, c);
   }
-  const mainKey = mainKeyOf(ctx, decls);
+  const mainKey = mainKeyOf(decls);
   tonics(ctx, decls);
   modes(ctx, decls);
   evens(ctx, decls);
@@ -48,7 +48,7 @@ export function declare(ctx: Ctx): Declared {
   movingSwings(ctx, decls);
   movingDepths(ctx, decls);
   const sections = sectionTables(decls, error);
-  const stacks = gates(decls, implicit, error, ctx.warn);
+  const stacks = gates(decls, implicit, error);
   mixSelectors(ctx, decls);
   const implicitRoot = !decls.has(ROOT);
   // scale(name, tonic): the key and the table it declares, unnamed and not drawn
@@ -418,29 +418,11 @@ function movingDepths(ctx: Ctx, decls: Map<string, CellDecl>): void {
 }
 
 /**
- * The piece's main key (#124), which a bare `over=key` reads, as a bare tap reads the main meter (decision 040): the first
- * cell in the text whose own braid is `scale(…)` (`&key scale(dorian, D)`), not an unnamed one or a copy (`base=`). Each
- * `over=key` is set to read it by name, with a warning that names it (the old way, #301, decision 060); with none, each
- * is an error, never a default key.
+ * The piece's main key: the first cell in the text whose own braid is `scale(…)` (`&key scale(dorian, D)`), not an unnamed
+ * one or a copy (`base=`). A host that shows a key, and Normalise's interface name `&key`, read it.
  */
-function mainKeyOf(ctx: Ctx, decls: Map<string, CellDecl>): string | null {
-  const main = [...decls.values()].find((d) => !d.lambda && !d.base && d.over?.name.startsWith(SCALE_KEY))?.name ?? null;
-  for (const d of [...decls.values()]) {
-    if (d.over?.name !== MAIN_KEY) continue;
-    if (main) {
-      // (the old way, #301, decision 060: the main key is a cell, and a line names it)
-      ctx.warn(`over=key is the old way: name the key, over=&${main} (Migrate rewrites it)`, d.over.span);
-      decls.set(d.name, { ...d, over: { ...d.over, name: main } });
-    } else {
-      ctx.error(
-        `over=key is the old way, and the piece has no main key (the first scale(…) in the text) for it to read: name a key, over=&key, and write it (&key scale(major, C))`,
-        d.over.span,
-      );
-      // (said here, so not again as an unknown cell)
-      ctx.broken.add(MAIN_KEY);
-    }
-  }
-  return main;
+function mainKeyOf(decls: ReadonlyMap<string, CellDecl>): string | null {
+  return [...decls.values()].find((d) => !d.lambda && !d.base && d.over?.name.startsWith(SCALE_KEY))?.name ?? null;
 }
 
 /** The kit that grooves and their motifs read: every voice they name. */
@@ -523,14 +505,13 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
  * `&leadOut [&tune * &accent * &duck * &lead * .4, …]`, which is what it is read as (one product per receiver), so it
  * sounds, routes and draws as that named mix does; the product stays its anonymous form.
  *
- * The old spelling still reads (`trigger=` for play=, `velocity=` `gate=` `gain=` for level=, several bare voices all
- * played), with a warning, and Migrate rewrites it (migrate/gates.ts). Either way the gate's spec is `CellDecl.gate`, and the
- * parameters it was written with are taken off the cell (a gate's play= is no tape's read head).
+ * The gate's spec is `CellDecl.gate`, and the parameters it was written with are taken off the cell (a gate's play= is no
+ * tape's read head).
  *
  * A gate transposes what it plays (decision 058): `play=&tune^$-12` (grid steps) and `play=&tune^2` (degrees) read an
  * implicit cell `&tune^$-12`, which plays &tune as a braid splicing `&tune^$-12` does.
  */
-function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['error'], warn: Ctx['warn']): Set<string> {
+function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['error']): Set<string> {
   const stacks = new Set<string>();
   const ref = (name: string, span: Span): Expr => ({ k: 'ref', ref: { name, pick: null, shift: 0, span } });
   // (the lines that name their own voices, read before any gate is rewritten: a gate's line is no groove)
@@ -538,19 +519,13 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
   for (const d of [...decls.values()]) {
     const p = d.params;
     const tokens = d.braid.kind === 'list' ? d.braid.tokens : [];
-    // play= on a cell with a braid is a gate (a read head has none); trigger= is the old spelling
-    const old = typeof p.trigger === 'string';
-    const notes = old ? (p.trigger as string) : typeof p.play === 'string' && tokens.length ? p.play : null;
+    // play= on a cell with a braid is a gate (a read head has none)
+    const notes = typeof p.play === 'string' && tokens.length ? p.play : null;
     if (notes === null) continue;
-    const port = old ? 'trigger' : 'play';
+    const port = 'play';
     const notesSpan = d.paramSpans[port] ?? d.span;
-    const move = old ? undefined : d.playMove;
-    if (old)
-      warn(
-        `&${d.name} is a gate written the old way: play= for trigger=, one level= for velocity=, gate= and gain=, the voices it plays all of as a chord (Migrate rewrites it, decision 023)`,
-        notesSpan,
-      );
-    // what it plays: a chord of voices (all), one voice or kit, or several bare voices (a kit; the old spelling: all)
+    const move = d.playMove;
+    // what it plays: a chord of voices (all), one voice or kit, or several bare voices (a kit)
     const plain = (a: Atom) => a.kind === 'ref' && !a.pick && !a.shift && !a.transpose && !a.values;
     const chord = tokens.length === 1 && tokens[0].atom.kind === 'mix' && tokens[0].atom.exprs.every((e) => e.k === 'ref' && !e.ref.pick) ? tokens[0].atom.exprs : null;
     const bare = tokens.every((t) => plain(t.atom) && t.repeat === 1 && t.subdivide === 1 && t.elongate === 1);
@@ -566,7 +541,7 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
       : tokens.flatMap((t) => (t.atom.kind === 'ref' ? [{ name: t.atom.name, span: t.span }] : []));
     // (several bare voices, written the new way: a kit of them, which the notes pick from)
     let played = named;
-    if (!chord && !old && named.length > 1) {
+    if (!chord && named.length > 1) {
       const kit = `${d.name}:kit`;
       decls.set(kit, {
         name: kit,
@@ -585,13 +560,10 @@ function gates(decls: Map<string, CellDecl>, implicit: Set<string>, error: Ctx['
       implicit.add(kit);
       played = [{ name: kit, span: d.span }];
     }
-    // its level: level=&a*&b*.4 (cells and a gain), or the old velocity= gate= gain=
-    const levels = old
-      ? (['velocity', 'gate'] as const).flatMap((k) => (typeof p[k] === 'string' ? [{ name: p[k] as string, port: k, span: d.paramSpans[k] ?? d.span }] : []))
-      : (d.paramCells?.level?.factors ?? []).map((f) => ({ name: f.name, port: 'level', span: f.span }));
-    const gainOf = old ? p.gain : p.level;
-    const gain = typeof gainOf === 'number' ? gainOf : 1;
-    const gainSpan = d.paramSpans[old ? 'gain' : 'level'] ?? d.span;
+    // its level: level=&a*&b*.4 (cells and a gain)
+    const levels = (d.paramCells?.level?.factors ?? []).map((f) => ({ name: f.name, port: 'level', span: f.span }));
+    const gain = typeof p.level === 'number' ? p.level : 1;
+    const gainSpan = d.paramSpans.level ?? d.span;
     // (moved: a copy of the notes that splices them moved, &tune^$-12 or &tune^2, as a braid plays them; it takes their
     // table, clock and laps, their turn in the splice, and is off when they are)
     const moved = (line: string, span: Span): string => {

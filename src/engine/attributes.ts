@@ -46,7 +46,7 @@ export interface Attribute {
   readonly clock?: true;
   /** It is a frequency or a rate, in Hz (lpf=1200, wanderhz=.5): its slider over a wide range runs on a log scale. */
   readonly hz?: true;
-  /** An old spelling, still read and rewritten by Migrate: what says it now. Not in the reference. */
+  /** Not in the reference: a spelling a text no longer writes (the card's `title=` `tier=`, still read with a warning), or one only a built-in plugin-fragment's block writes (`law=`): what says it now. */
   readonly old?: string;
   /** Named before it is built (some of its values warn and play as the default): in the reference, taught on no tier yet. */
   readonly stub?: true;
@@ -172,13 +172,6 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     on: ['card'],
   },
   // meters and their physics
-  beat: {
-    help: 'on a meter, retired (#502): how many beats it counted, equal; a meter counts its beats by its signature or its levels (meter("2/2", 2): alla breve)',
-    doc: 'time.md',
-    value: 'number',
-    on: ['clock'],
-    old: 'the signature: meter("2/2", 2)',
-  },
   pulse: {
     help: 'on a scan: the note value of its entries (pulse=16n: sixteenths) — its beats then count quarters, and its taps read note values by it',
     doc: 'time.md',
@@ -261,10 +254,6 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     value: 'word',
     form: 'role=kick (kick, backbeat, ghost, hat, pedal, euclid, ostinato, clave or fill)',
   },
-  // (the old spelling of a gate, still read with a warning; Migrate rewrites it: decision 023)
-  trigger: { help: 'a gate, the old spelling of play=: the notes it plays (trigger=&tune)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'play=' },
-  gate: { help: 'a gate, the old spelling: a level over time, one factor of level= (gate=&duck)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
-  velocity: { help: 'a gate, the old spelling: a level, one factor of level= (velocity=&accent)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
   gain: {
     help: 'on a voice: its own gain, dough’s, times every gain it is played at (1 by default, a negative one inverts the phase; a kit member’s balance); on a gate written the old way (trigger=): the number in level=',
     doc: 'sound.md',
@@ -294,10 +283,9 @@ export const PARAMS: Readonly<Record<string, Attribute>> = {
     on: ['section', 'performer', 'selector'],
     stub: true,
   },
-  // laws
-  // (the old spelling of a built-in law: a plugin-fragment taken from its clock now, decision 085; Migrate rewrites it)
+  // laws: a built-in plugin-fragment's head line carries it (`&cycle law=fiveto12 over=&day`, decision 085): a piece takes the law with `from`
   law: {
-    help: 'a law that computes the notes, the old spelling: &cycle from five_to_twelve &day takes it now (decision 085)',
+    help: 'a law that computes the notes: written by a built-in plugin-fragment’s block (decision 085); a piece takes it with &cycle from five_to_twelve &day',
     doc: 'time.md',
     value: 'word',
     on: ['law'],

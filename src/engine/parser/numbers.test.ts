@@ -54,7 +54,7 @@ const ROWS: Readonly<Record<keyof typeof NUMBER_PLACES, readonly [string, string
   phase: ['&key scale(2, X)', '3', 'free(3, 0..6)', BUILT, BUILT],
   meter: ['&bar meter(X) step=90bpm', '"4/4"', 'free(2, 0..3, "2/4 3/4 4/4 6/8")', BUILT, BUILT],
   grid: ['&edo map=edo(X)', '19', 'free(19, 5..31)', BUILT, BUILT],
-  ratio: ['&bp cycle=13 map=ed(X)', '3', 'free(3, 1.5..4)', BUILT, BUILT],
+  ratio: ['&bp map=ed(13, X)', '3', 'free(3, 1.5..4)', BUILT, BUILT],
   step: ['&tune step=2 0 X 4', '2', 'free(2, 0..7)', 'ok', NOT_HERE],
   modifier: ['&beat step=4 0!X 2', '4', 'free(4, 1..8)', BUILT, BUILT],
   drop: ['&hats step=4 0 0?X', '.3', 'free(.3, 0..1)', BUILT, BUILT],

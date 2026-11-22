@@ -5,7 +5,6 @@ import { notesCells, sortOfCells } from './sorts';
 import { FILTER_MODELS, filterModel, MOVING_PARAMS } from '../attributes';
 import { DOUGH_SOURCES } from '../dough-params';
 import { refsOf } from '../readers';
-import { gmDrumNote } from '../midi';
 import { leaves } from '../subseq';
 import type { CellDecl } from '../ast';
 import type { Cells, Ctx } from './context';
@@ -23,31 +22,6 @@ export function checkCells(
     const t = d.tonic ? cells.get(d.tonic.name) : undefined;
     if (t?.meter) warn(`&${t.name} is a meter: a key's tonic is a note (&tonic D); a meter's first level is read as its pitch class`, d.tonic!.span);
   }
-  // a kit's member named as a General MIDI drum that writes no note=: its name gives none (decision 075, #560 rung 1)
-  const told = new Set<string>();
-  for (const c of cells.values()) {
-    if (!c.kit) continue;
-    for (const u of c.units) {
-      const name = u.atom.kind === 'ref' ? u.atom.name : null;
-      const d = name === null ? undefined : decls.get(name);
-      const gm = name === null ? null : gmDrumNote(name);
-      if (!d || gm === null || d.drumNote !== undefined || told.has(name!) || !cells.get(name!)?.voice) continue;
-      told.add(name!);
-      warn(`&${name} is named as General MIDI's drum ${gm}, and a name gives no note: write &${name} note=${gm} (Migrate writes it, decision 075)`, d.span);
-    }
-  }
-  // read the old way: a role cell or a line named as one of the feel's parts, a line named as a drum role, that declares
-  // none: its name gave the default performer what it plays as, and gives nothing now (feel v3, decision 075, #560 rung 2)
-  if (ctx.parsed.old)
-    for (const d of decls.values()) {
-      const c = cells.get(d.name);
-      if (!c || c.voice) continue;
-      const part = ['bass', 'pad', 'stab', 'lead'].includes(d.name) && c.params.part === undefined;
-      const role = ['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'clave', 'fill'].includes(d.name) && c.params.role === undefined && !c.map;
-      if (part) warn(`&${d.name} is named as the feel's part ${d.name}, and a name gives none now: write &${d.name} part=${d.name} (Migrate writes it, decision 075)`, d.span);
-      else if (role)
-        warn(`&${d.name} is named as the feel's drum role ${d.name}, and a name gives none now: write &${d.name} role=${d.name} (Migrate writes it, decision 075)`, d.span);
-    }
   // resonators: body= one of the known bodies; couple= another resonator; excite= a mix
   for (const c of cells.values()) {
     const span = (k: string) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name)!.span;
@@ -202,16 +176,6 @@ export function checkCells(
   for (const d of decls.values())
     if (d.oneshot && cells.get(d.name) && !cells.get(d.name)!.voice)
       warn(`oneshot=1 is a voice's: &${d.name} is no voice, so it does nothing (put it on the voice that plays its notes)`, d.span);
-  // (cycle= counts laps, decision 040, #75: on a table stepped by a cell, one a whole number of its own lengths of two or
-  // more steps was very likely written when it counted steps, cycle=24 on a 12 for two laps)
-  for (const d of decls.values()) {
-    const own = cells.get(d.name)?.cycle ?? 0;
-    if (d.step?.kind !== 'driven' || d.cycle === null || d.map || own < 2 || d.cycle < own || d.cycle % own !== 0) continue;
-    warn(
-      `cycle=${d.cycle} on &${d.name} counts laps: ${d.cycle} of its ${own} steps. Written before v0.16, when it counted steps, it says cycle=${d.cycle / own} (Migrate rewrites it, decision 040)`,
-      d.paramSpans.cycle ?? d.span,
-    );
-  }
   for (const d of decls.values()) {
     for (const [key, r] of [
       ['env', d.env],
@@ -252,14 +216,14 @@ export function checkCells(
   for (const d of decls.values()) {
     if (d.map?.kind !== 'edo') continue;
     if (d.over !== null || d.braid.kind !== 'blank') error(`A grid (map=edo, map=ed(r)) reads nothing and has no braid: &${d.name} map=edo(19)`, d.map.span);
-    // (a grid's size is its map's, decision 040, #75: cycle= on it is the old way, still read)
+    // (a grid's size is its map's, decision 040, #75)
     else if (d.cycle !== null && d.name !== ROOT) {
       const map = d.map.period === 2 ? `edo(${d.cycle})` : `ed(${d.cycle}, ${ratioText(d.map.period)})`;
       const span = d.paramSpans.cycle ?? d.span;
       if (d.cycle === 0) error(`A grid has at least one step: its size is its map's, map=edo(19)`, span);
       else if (d.map.steps !== null)
         warn(`cycle=${d.cycle} does nothing on a grid whose map says its size (map=${d.map.period === 2 ? 'edo' : 'ed'}(${d.map.steps}…)): leave it out`, span);
-      else warn(`cycle= on a grid is the old way: its size is its map's, map=${map} (Migrate rewrites it)`, span);
+      else error(`a grid's size is its map's, map=${map}: cycle= does not say it`, span);
     }
   }
   // a table is its numbers: cells spliced into one are skipped when it is read (over=), unless it is a

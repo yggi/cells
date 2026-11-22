@@ -1,7 +1,6 @@
 import { braidReadsOf, otherReadsOf } from "../engine/compiler/builtin.js";
 import { parse } from "../engine/parser/index.js";
 import { tapPositions } from "../engine/meter.js";
-import { MAIN_KEY } from "../engine/program.js";
 import { expansion, hasFrom, signatureOf } from "../engine/use.js";
 import { isValueLine } from "../engine/valuesum.js";
 const WHOLE = 1e-9;
@@ -72,7 +71,6 @@ export function holesOf(text, compiled, resolve) {
     const decls = all.filter((d) => !d.lambda);
     const result = compiled(text);
     const unknown = result.unknown.map((u) => `&${u.name}`);
-    const readsKey = decls.some((d) => d.over?.name === MAIN_KEY) && !result.mainKey;
     const sound = readOnlyAsSound(all);
     const found = new Set(unknown.filter(sound));
     const declared = new Set(all.map((d) => `&${d.name}`));
@@ -90,7 +88,7 @@ export function holesOf(text, compiled, resolve) {
             break;
         more.forEach((n) => found.add(n));
     }
-    const uses = [...new Set([...unknown, ...found, ...(readsKey ? ['key'] : [])])].sort();
+    const uses = [...new Set([...unknown, ...found])].sort();
     const sounds = uses.filter(sound);
     const asLine = readAsLine(all);
     const stand = sounds.map(standIn).join('\n');

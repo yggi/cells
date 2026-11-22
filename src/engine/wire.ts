@@ -57,7 +57,7 @@ export function wireArg(value: string, context: string): WireArg | { refused: st
   let result: CompileResult;
   let decls: ReadonlyMap<string, CellDecl>;
   try {
-    const parsed = parse(`${context}\n&${ARG} ${value}`, { old: false });
+    const parsed = parse(`${context}\n&${ARG} ${value}`);
     decls = new Map(parsed.cells.map((d) => [d.name, d]));
     result = compile(parsed, DEFAULT_ENV);
   } catch (e) {

@@ -114,11 +114,8 @@ describe('the ledger', () => {
     for (const f of Object.values(ledger)) expect(f.pin).toMatch(/^v\d+\.\d+\.\d+$/);
   });
 
-  it('leaves only the migrate internals, which #716 replaces, on no entry point and not on purpose', () => {
-    expect(Object.fromEntries(Object.entries(standing(ledger)).map(([f, s]) => [f, s.left]))).toEqual({
-      jambot: ['engine/migrate/axes:OLD_AXES', 'engine/migrate/axes:newPoint', 'engine/migrate/moved:movedIds', 'engine/renamed:MOVED'],
-      'cell-studio': [],
-    });
+  it('leaves nothing a frontend reaches by a module path on no entry point and not on purpose', () => {
+    expect(Object.fromEntries(Object.entries(standing(ledger)).map(([f, s]) => [f, s.left]))).toEqual({ jambot: [], 'cell-studio': [] });
   });
 
   it('is still exported: a symbol a frontend reaches that moved goes in changes/, and in the ledger', () => {

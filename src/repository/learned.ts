@@ -27,7 +27,6 @@ import { readFrom } from '../engine/parser/use';
 import { counts } from '../engine/core/desugar';
 import { splitComment } from '../engine/edit';
 import { argsOf, ofArgs } from './variants';
-import { RENAMED_IDS } from '../engine/renamed';
 
 /**
  * A filed fragment's weight at its point. A fragment is first at a query when its distance divided by its weight is the
@@ -277,20 +276,4 @@ export function fileFragment(repository: Repository, layer: LearnedLayer, filing
   for (let n = 2; taken.has(id); n++) id = `${source} ${created} ${n}`;
   const file: FragmentFile = { fragment: { id, text, association }, meta: { source, created, ...meta }, prose };
   return { layer: { ...layer, filed: [...layer.filed, file] }, id, file, renamed: new Map() };
-}
-
-/**
- * A layer kept before the seed's ids became words (#387), its seed ids written as words (`RENAMED_IDS`): its points and
- * its pairs, each pair in the order it had (`byId` breaks ties by the old id). A layer that names none is returned as it
- * is. A frontend reads a kept layer through it, so a band keeps what it learned across the rename; the old ids, which a
- * repository no longer holds, would otherwise be left out with a problem.
- */
-export function renamedLayer(layer: LearnedLayer): LearnedLayer {
-  const word = (id: string) => RENAMED_IDS.get(id) ?? id;
-  if (![...layer.points.map((p) => p.id), ...layer.together.flatMap((p) => p.ids)].some((id) => RENAMED_IDS.has(id))) return layer;
-  return {
-    ...layer,
-    points: layer.points.map((p) => (RENAMED_IDS.has(p.id) ? { ...p, id: word(p.id) } : p)),
-    together: layer.together.map((p) => ({ ...p, ids: [word(p.ids[0]), word(p.ids[1])].sort(byId) as [string, string] })),
-  };
 }

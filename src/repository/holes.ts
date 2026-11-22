@@ -27,7 +27,7 @@ import type { Atom, CellDecl, Expr, Tap } from '../engine/ast';
 import { braidReadsOf, otherReadsOf } from '../engine/compiler/builtin';
 import { parse } from '../engine/parser';
 import { tapPositions, type Meter } from '../engine/meter';
-import { MAIN_KEY, type CompileResult, type Resolve } from '../engine/program';
+import type { CompileResult, Resolve } from '../engine/program';
 import { expansion, hasFrom, signatureOf } from '../engine/use';
 import { isValueLine } from '../engine/valuesum';
 
@@ -190,7 +190,6 @@ export function holesOf(text: string, compiled: (text: string) => CompileResult,
   const decls = all.filter((d) => !d.lambda);
   const result = compiled(text);
   const unknown = result.unknown.map((u) => `&${u.name}`);
-  const readsKey = decls.some((d) => d.over?.name === MAIN_KEY) && !result.mainKey;
   const sound = readOnlyAsSound(all);
   // A line that strikes a hole (`&clave`'s `&claves`) doesn't compile until an instrument fills it, and the compile says
   // one unknown cell a line: so each sound hole is stood in by a voice, and the compile asked again for the next, until
@@ -208,7 +207,7 @@ export function holesOf(text: string, compiled: (text: string) => CompileResult,
     if (!more.length) break;
     more.forEach((n) => found.add(n));
   }
-  const uses = [...new Set([...unknown, ...found, ...(readsKey ? ['key'] : [])])].sort();
+  const uses = [...new Set([...unknown, ...found])].sort();
   const sounds = uses.filter(sound);
   const asLine = readAsLine(all);
   const stand = sounds.map(standIn).join('\n');

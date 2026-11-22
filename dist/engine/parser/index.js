@@ -1,4 +1,3 @@
-import { restyled } from "../migrate/axes.js";
 import { applyBases } from "./base.js";
 import { isNote } from "../ast.js";
 import { isPieceFile, readPiece } from "../piecefile.js";
@@ -10,7 +9,7 @@ import { FROM_FORM, isUse, readFrom, USE_RETIRED } from "./use.js";
 export { groupingOf, meterLevels } from "./generators.js";
 export { SHOWS } from "./cell.js";
 export { readFrom, USE_RETIRED } from "./use.js";
-export function parse(whole, { old = false } = {}) {
+export function parse(whole) {
     const cells = [];
     const takes = [];
     const offers = [];
@@ -36,16 +35,7 @@ export function parse(whole, { old = false } = {}) {
     if (carry)
         lines.push(carry);
     lines.forEach(({ text: written, line: lineNo, parts }) => {
-        const restyle = old ? restyled(written) : null;
-        if (restyle !== null) {
-            const col = written.search(/\S/);
-            diagnostics.push({
-                severity: 'warning',
-                message: `a style on the axes before v0.23.0 (sync harm artic energy): its axes are sync harm bite mood, bite its articulation and energy off the point (decision 076); Migrate rewrites it`,
-                span: { line: lineNo, col: col + 1, len: written.trimEnd().length - col },
-            });
-        }
-        const text = restyle ?? written;
+        const text = written;
         const s = new LineScanner(text, lineNo, 0, [], parts, diagnostics, 0, parseBody);
         if (s.done())
             return;
@@ -94,12 +84,6 @@ export function parse(whole, { old = false } = {}) {
                 s.i = start;
                 const decl = parseCell(s);
                 cells.push(decl, ...s.lambdas);
-                if (decl.params.beat !== undefined)
-                    diagnostics.push({
-                        severity: old ? 'warning' : 'error',
-                        message: `beat= is retired: a meter counts its beats by its signature or its levels (meter("4/4") beat=2 is meter("2/2", 2); a waltz in one, meter("*..", 4n)); Migrate rewrites it`,
-                        span: decl.paramSpans?.beat ?? decl.span,
-                    });
             }
             else
                 s.fail(`A line declares a cell: &name …`, start, word.length);
@@ -113,7 +97,7 @@ export function parse(whole, { old = false } = {}) {
                 broken.push(name);
         }
     });
-    return applyBases({ cells, diagnostics, broken, plugins, ...(takes.length ? { takes } : {}), ...(offers.length ? { offers } : {}), ...(old ? { old } : {}) });
+    return applyBases({ cells, diagnostics, broken, plugins, ...(takes.length ? { takes } : {}), ...(offers.length ? { offers } : {}) });
 }
 export const plainLabel = (label) => label
     .replace(/\{[^}]*\}/g, '')

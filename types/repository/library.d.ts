@@ -37,13 +37,6 @@ export interface PartUse {
  */
 export declare function usesOf(id: string): readonly PartUse[];
 /**
- * The ids the library no longer lists, each still read as a fragment that only forwards: a `from` line of the fragment
- * that took its place (#196). The core kit was the General MIDI kit's 13 voices a groove needs, before a
- * `use` could name what it takes; the General MIDI kit is `gm_kit`, a word. Migrate writes a line of one as the line it
- * forwards to (`migrate/forwarded.ts`), so a piece that names one plays as before and is respelled.
- */
-export declare const RETIRED: ReadonlyMap<string, string>;
-/**
  * The seed library as a `from` line's resolver (decision 054): a fragment's text by its id, an example's by its key
  * (decision 082), a retired id's forwarding
  * text (`RETIRED`), or null for none. It holds each fragment's current version only: a lockfile's older hash plays the

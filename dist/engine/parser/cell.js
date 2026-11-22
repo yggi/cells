@@ -1,7 +1,7 @@
 import { leaves } from "../subseq.js";
 import { TIME_PARAMS } from "../attributes.js";
 import { RETIRED_PARAMS } from "../dough-params.js";
-import { LABEL_FIELDS, MAIN_KEY, MAX_EVENTS } from "../program.js";
+import { LABEL_FIELDS, MAX_EVENTS } from "../program.js";
 import { CELL_PARAMS, CORE, filterModel, PARAMS, PARAM_ALIASES, nearestAttribute } from "../attributes.js";
 import { IDENT, LineScanner } from "./scanner.js";
 import { OPERATIONS, parseToken, pushStep } from "./braid.js";
@@ -69,16 +69,7 @@ export const KEYS = {
         form: 'over=&table · over=&table[<<n] · over=scale(name, tonic)',
         examples: ['&tune over=&major step=2 0 2 4', '&mode over=&major[<<2] 0 2 4', '&tune over=scale(minor, A) step=2 0 2 4', '&bass over=&key step=16n 0 4 7'],
         read: (s, b) => {
-            const bare = /key(?![A-Za-z0-9_])/y;
-            bare.lastIndex = s.i;
-            if (bare.test(s.text)) {
-                const at = s.i;
-                s.i += 3;
-                if (s.peek() === '[')
-                    s.fail('over=key is the old way: name the key, and turn it there (over=&key[<<2])', s.i, 1);
-                b.over = { name: MAIN_KEY, pick: null, shift: 0, span: s.place(at) };
-            }
-            else if (s.text.startsWith('scale(', s.i)) {
+            if (s.text.startsWith('scale(', s.i)) {
                 const at0 = s.i;
                 s.i += 5;
                 const sc = parseScale(s, at0);
@@ -469,13 +460,7 @@ const readLevels = (s, b, word) => {
             const at = s.i;
             s.i++;
             const named = s.match(/[a-z]+/y);
-            if (named !== 'pairs')
-                s.fail(`a share takes no word after it: a swing leans a level's pairs alone and keeps its groups of three straight (swing=${level}:2/3)`, at, 1 + (named?.length ?? 0));
-            if (word === 'legato')
-                s.fail(`:pairs was swing='s word; a legato= share holds every note of its level: legato=${level}:.5`, at, 6);
-            if (free && s.peek() === ',')
-                s.fail(`a share left free(…) is one level alone: ${word}=8n:free(.5, .5..75)`, vs, s.i - vs);
-            s.warn(":pairs says nothing more: every swing leans a level's pairs alone and keeps its groups of three straight (decision 071); Migrate drops it", at, 6);
+            s.fail(`a share takes no word after it: a swing leans a level's pairs alone and keeps its groups of three straight (swing=${level}:2/3)`, at, 1 + (named?.length ?? 0));
         }
         levels.push({ level: level, share });
         if (s.peek() !== ',')
@@ -743,8 +728,6 @@ export function parseBody(s, head) {
             if (key === null) {
                 if (word in RETIRED_KEYS)
                     s.fail(RETIRED_KEYS[word], at, word.length);
-                if ((word === 'artic' || word === 'energy') && b.map?.kind === 'style')
-                    s.fail(`${word}= is retired: a style's axes are ${AXIS_NAMES.join(' ')}, bite its articulation and energy off the point (decision 076); Migrate rewrites it`, at, word.length);
                 const near = nearestAttribute(word);
                 s.fail(`Unknown attribute ${word}=${near ? ` — did you mean ${near}=?` : ''} (a cell: ${Object.keys(CORE).join(' ')}; a sound or a physical cell: ${Object.keys(PARAMS).join(' ')})`, at, word.length);
             }
@@ -846,13 +829,6 @@ export function parseBody(s, head) {
             if (off)
                 s.fail('off is given twice', at, word.length);
             off = true;
-            continue;
-        }
-        if (word === 'oneshot' && s.atBoundary()) {
-            if (oneshot)
-                s.fail('oneshot is given twice', at, word.length);
-            oneshot = true;
-            s.warn('oneshot is retired as a line word: a voice’s parameter, oneshot=1 (Migrate rewrites it, decision 068)', at, word.length);
             continue;
         }
         if (word !== null && (/^[A-G](?:b?-?[0-9]*)$/.test(word) || word === '_' || Object.hasOwn(MODE_WORDS, word)))

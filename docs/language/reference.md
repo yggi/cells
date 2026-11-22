@@ -98,11 +98,11 @@ Every form the parser reads, what it means and an example: generated from the pa
 - `map=adsr a d s r`: An envelope: attack, decay, release in seconds, sustain a level; one per note. [→](sound.md) `&pluck map=adsr .01 .3 .5 .4`
 - `map=sample`: The sound card: its entries are channels, one (mono) or two (left, right). [→](mix.md) `&out loop=SAMPLE_RATE map=sample &left &right`
 - `map=midi`: A MIDI card: its entries are MIDI channels, in order (~ skips one); a voice only here is sent and heard, at its entry's gain. [→](midi.md) `&synth map=midi [&theme * &reed] [&bass * &sub] ~!7 &groove`
-- `map=edo`: A grid: cycle= equal steps to the octave. [→](tuning.md) `&edo19 cycle=19 map=edo`
+- `map=edo`: A grid: n equal steps to the octave, written map=edo(n). [→](tuning.md) `&edo19 map=edo(19)`
 - `map=ratios`: A grid of ratios: one period's tones, then the period (the last). [→](tuning.md) `&just map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2`
 - `map=style`: A style: a point in style space, one value an axis in the table's order (sync harm bite mood, each 0 to 1), or each by its name (sync=.3); it doesn't sound. A pick reads an axis by name: &funk[bite]. [→](style.md) `&funk map=style .3 .45 .55 .5` · `&funk map=style sync=.3 harm=.45 bite=.55 mood=.5`
 - `map=role`: A role: its name is the role, its entries the gates that play it (two entries, two players); a gate no role names plays as written. [→](mix.md) `&comp map=role &violin2 &viola`
-- `map=ed(r)`: A grid: cycle= equal steps to the ratio r (a number or a fraction): ed(2) the octave, ed(3/2) the fifth. [→](tuning.md) `&bp cycle=13 map=ed(3)` · `&fifths cycle=7 map=ed(3/2)`
+- `map=ed(r)`: A grid: n equal steps to the ratio r (a number or a fraction), written map=ed(n, r): ed(12, 2) the octave, ed(7, 3/2) the fifth. [→](tuning.md) `&bp map=ed(13, 3)` · `&fifths map=ed(7, 3/2)`
 - `map=midi(c)` · `map=midi(c, p)`: A MIDI card on one channel c (1–16), and on output slot p (1–16; the nth output of the MIDI page, 1 the first). [→](midi.md) `&drums map=midi(10) &groove` · `&keys map=midi(1, 2) [&theme * &reed]`
 - `map=&table`: Each value looked up in a table cell first, then sounded as amp. [→](sound.md) `&shaped loop=220 map=&curve 0 1 2 3`
 

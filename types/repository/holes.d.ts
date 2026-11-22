@@ -25,7 +25,7 @@
  */
 import type { CellDecl, Tap } from '../engine/ast';
 import { type Meter } from '../engine/meter';
-import { type CompileResult, type Resolve } from '../engine/program';
+import type { CompileResult, Resolve } from '../engine/program';
 /** What a line's clock needs of the meter it taps: its lap of `bars` bars holds its `steps` a whole number of times. */
 export interface ClockNeed {
     /** The tapping cell, as written (`&clave`). */

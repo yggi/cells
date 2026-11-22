@@ -57,7 +57,7 @@ const benchOf = (id: string, text: string) => {
 
 /** What a text sends over its first 16 s: each note's channel, MIDI note, onset and end (s) and velocity, in order. */
 function sent(text: string): (string | number)[][] {
-  const plan = planOf(text, undefined, { resolve: resolveSeed, old: true });
+  const plan = planOf(text, undefined, { resolve: resolveSeed });
   expect(plan.result.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   const route = router(plan.result, channelTable(plan.result));
   return windowAt(plan, 0, 16)
@@ -132,7 +132,7 @@ describe('a pattern fragment heard through the tests’ cards (#291, #640)', () 
     '%s, heard on its bench, says nothing: the bass’s sound is heard on a sound card as well as sent (#391)',
     (id, text) => {
       const bench = benchOf(id, text);
-      const said = (cards: string) => compileSource(`${bench}\n${text}\n${cards}`, undefined, { resolve: resolveSeed, old: true }).diagnostics.map((d) => d.message);
+      const said = (cards: string) => compileSource(`${bench}\n${text}\n${cards}`, undefined, { resolve: resolveSeed }).diagnostics.map((d) => d.message);
       expect(said(bassCards(text))).toEqual([]);
       // (it fires: the MIDI card alone says the sound isn't sent)
       expect(said(bassCards(text).replace(/\n&bassSound .*$/m, ''))).toEqual([expect.stringMatching(/^&bassV is only on a MIDI card: its sound/)]);

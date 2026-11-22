@@ -1,5 +1,4 @@
 import { EXAMPLES } from "../engine/examples.js";
-import { RENAMED_IDS } from "../engine/renamed.js";
 import { SEED, seedFragments } from "./seed.js";
 import { EMPTY_LAYER, fragmentProblems } from "./fragments.js";
 import { partOf, signatureHeads, usesIn } from "../engine/use.js";
@@ -63,14 +62,9 @@ export function usesOf(id) {
     };
     return usesIn(source, headOf(id)).map((u) => ({ id: u.id, args: Object.fromEntries(Object.entries(u.args).map(([k, v]) => [k, part(v)])) }));
 }
-export const RETIRED = new Map([
-    ['core kit', '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit'],
-    ['gm kit', '* from gm_kit'],
-]);
 const CURRENT = new Map([...SEED.map((f) => [f.fragment.id, f.fragment.text]), ...LIBRARY.map((f) => [f.id, f.text])]);
-const RENAMED = [...RENAMED_IDS].map(([old, word]) => [old, CURRENT.get(word)]);
 const PIECES = Object.entries(EXAMPLES).map(([key, e]) => [key, e.source]);
-const BY_ID = new Map([...PIECES, ...CURRENT, ...RENAMED, ...RETIRED]);
+const BY_ID = new Map([...PIECES, ...CURRENT]);
 export const resolveSeed = (id) => BY_ID.get(id) ?? null;
 export const isLibraryFragment = (id) => LIBRARY_IDS.has(id);
 const LIBRARY_IDS = new Set(LIBRARY.map((f) => f.id));

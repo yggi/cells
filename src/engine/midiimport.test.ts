@@ -270,7 +270,7 @@ describe('a MIDI file as a piece', () => {
 
   it('brings back the drums of a file the app saved as the piece’s own, at their pitches (#334)', () => {
     const src =
-      '&beat scan(1 1 1 1) step=120bpm\n&dundun oneshot s=sine loop=C2 env=&(map=adsr 0 .25 0 .1)\n&bd note=36 s=sine loop=G1\n&shekere s=white hpf=6000\n' +
+      '&beat scan(1 1 1 1) step=120bpm\n&dundun oneshot=1 s=sine loop=C2 env=&(map=adsr 0 .25 0 .1)\n&bd note=36 s=sine loop=G1\n&shekere s=white hpf=6000\n' +
       '&ting s=square loop=527.4\n&drums step=pulse [&dundun,&shekere] &shekere &bd &ting\n&out map=sample [&drums]';
     const r = compileSource(src);
     const smf = readMidi(writeMidi(pieceMidi(r, codeShifts(r)).smf));

@@ -7,7 +7,6 @@
  */
 import type { Resolve } from '../engine/program';
 import { EXAMPLES } from '../engine/examples';
-import { RENAMED_IDS } from '../engine/renamed';
 import { SEED, seedFragments } from './seed';
 import { EMPTY_LAYER, fragmentProblems, type Fragment, type LearnedLayer } from './fragments';
 import { partOf, signatureHeads, usesIn } from '../engine/use';
@@ -108,28 +107,15 @@ export function usesOf(id: string): readonly PartUse[] {
   return usesIn(source, headOf(id)).map((u) => ({ id: u.id, args: Object.fromEntries(Object.entries(u.args).map(([k, v]) => [k, part(v)])) }));
 }
 
-/**
- * The ids the library no longer lists, each still read as a fragment that only forwards: a `from` line of the fragment
- * that took its place (#196). The core kit was the General MIDI kit's 13 voices a groove needs, before a
- * `use` could name what it takes; the General MIDI kit is `gm_kit`, a word. Migrate writes a line of one as the line it
- * forwards to (`migrate/forwarded.ts`), so a piece that names one plays as before and is respelled.
- */
-export const RETIRED: ReadonlyMap<string, string> = new Map([
-  ['core kit', '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit'],
-  ['gm kit', '* from gm_kit'],
-]);
-
 // (a template whose points carry its arguments is in the library as a fragment for each set, `diatonic(mode=aeolian)`; a from
 // line names the template itself, `diatonic`, so its own text is read by its id too)
 const CURRENT = new Map([...SEED.map((f): [string, string] => [f.fragment.id, f.fragment.text]), ...LIBRARY.map((f): [string, string] => [f.id, f.text])]);
-/** Each id the seed renamed (`RENAMED_IDS`, #387), read for a minor version as the text of its word: the same hash, so a lockfile still holds. */
-const RENAMED = [...RENAMED_IDS].map(([old, word]): [string, string] => [old, CURRENT.get(word)!]);
 /**
  * The examples by their keys (decision 082): a piece is a document, so a line takes a part it gives by its key
  * (`&twinkle from kinderlied &key`). One namespace: no example's key is a fragment's id (`namespace.test.ts`).
  */
 const PIECES = Object.entries(EXAMPLES).map(([key, e]): [string, string] => [key, e.source]);
-const BY_ID = new Map([...PIECES, ...CURRENT, ...RENAMED, ...RETIRED]);
+const BY_ID = new Map([...PIECES, ...CURRENT]);
 
 /**
  * The seed library as a `from` line's resolver (decision 054): a fragment's text by its id, an example's by its key

@@ -1,5 +1,4 @@
 import { attrsOf, setAttr, setBraid } from "../edit.js";
-import { tapOfRaw } from "../migrate/taps.js";
 import { savesChars } from "./harness.js";
 const gcd = (a, b) => (b ? gcd(b, a % b) : a);
 export function fractions(source, cells, result) {
@@ -41,10 +40,7 @@ export function fractions(source, cells, result) {
         }
         else if (/^[0-9]*\.?[0-9]+$/.test(step))
             slower = String(+(+step / g).toFixed(6));
-        if (driven && tapOfRaw(result, c.name) !== null)
-            slower = tapOfRaw(result, c.name, g);
-        else
-            slower = slowerTap(step, g) ?? slower;
+        slower = slowerTap(step, g) ?? slower;
         if (!slower)
             continue;
         const next = c.tokens.map((t, i) => t.slice(0, cut(t)) + t.slice(cut(t)).replace(/@[0-9]+/, held[i] / g > 1 ? `@${held[i] / g}` : ''));

@@ -2,7 +2,6 @@ import { splitComment } from "./edit.js";
 import { FROM_FORM, HEAD_FLAGS, isAttribute, readFrom, topTokens } from "./parser/use.js";
 import { counts } from "./core/desugar.js";
 import { STYLE } from "./style.js";
-import { MOVED, RENAMED_IDS } from "./renamed.js";
 import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
 import { BY_FRAGMENT } from "./fills.js";
 import { WIRE, wireArg } from "./wire.js";
@@ -706,12 +705,6 @@ function fragmentLines(path, text, resolve, run, say) {
     });
     return merge([...own, ...copies], used, (_, message) => sayHere(message), quoted(path.at(-1))).lines;
 }
-const renamedMessage = (id, word) => `${quoted(id)} is renamed ${word}: write from ${word} (#387; Migrate rewrites it)`;
-function forwardsTo(text) {
-    const lines = linesOf(text);
-    const only = lines.length === 1 ? lines[0].from : null;
-    return only?.kind === 'use' && !only.head.length && !only.args && only.main === null ? only.id : null;
-}
 export function expansion(text, { resolve, locked = [], old = false, plugins: theirs = [], answers: lockedAnswers = [] } = {}) {
     const plugins = theirs.length ? new Map([...BY_FRAGMENT, ...theirs.map((f) => [f.fragment, f])]) : BY_FRAGMENT;
     const own = linesOf(text);
@@ -744,10 +737,7 @@ export function expansion(text, { resolve, locked = [], old = false, plugins: th
         const say = (message) => diagnostics.push({ severity: 'error', message, span });
         const head = (u.from.takes ?? u.from.names)?.[0]?.slice(1);
         const recorded = (locked.find((k) => head !== undefined && k.id === `${id}/${head}`) ?? locked.find((k) => k.id === id))?.hash;
-        const moved = old ? MOVED.get(id) : undefined;
-        if (moved)
-            diagnostics.push({ severity: 'warning', message: `${quoted(id)} is a part of ${moved.document} now: take it from there (Migrate rewrites it)`, span });
-        const whole = resolve ? (moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []))) : null;
+        const whole = resolve ? resolve(id, ...(recorded ? [recorded] : [])) : null;
         const picked = whole === null ? null : pickPart(id, whole, u.from, say);
         const theirs = picked?.text ?? null;
         parts[i] = picked?.part;
@@ -763,12 +753,6 @@ export function expansion(text, { resolve, locked = [], old = false, plugins: th
         hashes[i] = hash;
         if (recorded && !hashIs(recorded, theirs))
             diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });
-        const word = RENAMED_IDS.get(id);
-        if (word !== undefined && resolve(word) === theirs)
-            diagnostics.push({ severity: 'warning', message: renamedMessage(id, word), span });
-        const to = forwardsTo(theirs);
-        if (to !== null)
-            diagnostics.push({ severity: 'warning', message: `${quoted(id)} only forwards to ${quoted(to)}: take from it (Migrate rewrites it)`, span });
         const binding = old
             ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message) => diagnostics.push({ severity: 'warning', message, span }) }
             : undefined;

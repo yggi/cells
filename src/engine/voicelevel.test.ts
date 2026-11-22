@@ -65,17 +65,13 @@ describe('oneshot', () => {
 
   it('plays a voice its envelope through, whatever its step: a kick on eighths rings its decay', () => {
     const plain = at(SRC(''));
-    const hit = at(SRC('oneshot'));
+    const hit = at(SRC('oneshot=1'));
     // (eighths at 240 bpm: an eighth is 0.125 s, the kick's decay 0.3 s)
     expect(plain.find((e) => e.voice === 'bd')!.dur).toBeCloseTo(0.125, 3);
     expect(hit.find((e) => e.voice === 'bd')!.dur).toBeCloseTo(0.3, 3);
     // the same notes at the same times, and the hats as they were
     expect(hit.map((e) => [e.voice, e.at])).toEqual(plain.map((e) => [e.voice, e.at]));
     expect(hit.filter((e) => e.voice === 'hh')).toEqual(plain.filter((e) => e.voice === 'hh'));
-  });
-
-  it('is given once', () => {
-    expect(compileSource(SRC('oneshot oneshot')).diagnostics.some((d) => /oneshot is given twice/.test(d.message))).toBe(true);
   });
 });
 
@@ -188,7 +184,7 @@ describe('glide=', () => {
   });
 
   it('is one way or the other: oneshot or glide=', () => {
-    expect(compileSource(SRC('oneshot glide=.1', '0')).diagnostics.some((d) => /oneshot or glide=/.test(d.message))).toBe(true);
+    expect(compileSource(SRC('oneshot=1 glide=.1', '0')).diagnostics.some((d) => /oneshot or glide=/.test(d.message))).toBe(true);
   });
 });
 

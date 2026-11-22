@@ -63,7 +63,7 @@ A fragment may itself take from others: its own lines win over what it takes, an
   A collection never renames what it gives: a kit member keeps its name, and sends the note it writes (`note=`, [midi.md](midi.md)).
 - A cycle is an error naming it, and so is a depth past 8 (a kit in a groove in a section in a piece is 3).
 - An id the library doesn't hold is an error naming it, and the piece's other lines compile as they would without it.
-- **A retired id** is read as a fragment that only forwards, one `from` line of what took its place, with a warning, and Migrate writes a line of it as that line (#196): `* from "core kit"`, the 13 voices a groove needs before a line could name what it takes, is `&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit`, and `"gm kit"` is `gm_kit` (`RETIRED` in `src/repository/library.ts`).
+- **A retired id** finds no fragment: `* from "core kit"` and `"gm kit"` (#196) are `gm_kit`, and an id the seed renamed (#387, `RENAMED_IDS`) is its word (`RENAMED_IDS` stays for the order a query breaks its ties in).
 
 Each of these is said on the piece's `from` line it came through, and so is what the compiler says of a used line.
 

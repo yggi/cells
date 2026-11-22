@@ -14,11 +14,6 @@ import type { PluginFragment } from './fills';
 
 export const ROOT = 'fifths12TET';
 /**
- * What a bare `over=key` names until compile reads it as the piece's main key (#124, declare.ts): no cell can be called
- * this, so a piece's own `&key` is never it.
- */
-export const MAIN_KEY = 'key:main';
-/**
  * The most notes a cell's braid may stand for, every &ref spliced in (`&b &a!4000` with `&a 0!4000` is 16 million):
  * more is a compile error. The largest in examples/ is 1,120 (bwv847's &tempo).
  */
@@ -178,8 +173,7 @@ export interface ResolvedCell {
   /** `oneshot` as written: a voice's note lasts its envelope's attack and decay, not its step. */
   readonly oneshot: boolean;
   /**
-   * `note=` as written: a kit member's MIDI note on its kit's channel (decision 075). Read the old way
-   * (`CompileOptions.old`), a cell with none takes the note its General MIDI name gave (`gmDrumNote`), for Migrate.
+   * `note=` as written: a kit member's MIDI note on its kit's channel (decision 075).
    */
   readonly drumNote?: number;
   /** `glide=` as written, seconds (0 off): a run of tied notes is one note, its envelope once, each next sliding there (realize.ts). */
@@ -591,8 +585,8 @@ export interface CompileOptions {
   /** The braid fills' answers its lockfile recorded (`answers:`, decision 085 §8.2): each plays without its plugin's code. */
   readonly answers?: readonly LockedAnswer[];
   /**
-   * Read the retired forms as they read before they retired, each with a warning: a `use` line (decision 065, #387). Migrate
-   * and Normalise compile so, to rewrite them; without it a retired form is an error, and the text doesn't play.
+   * Read a fragment's `from` line the old way: one that passes no cell by name where its fragment reads one (decision 075,
+   * `byname.ts`), with a warning. Migrate's one rule, `arguments`, and Normalise compile so, to rewrite it.
    */
   readonly old?: boolean;
   /**

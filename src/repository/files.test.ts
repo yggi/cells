@@ -1,7 +1,7 @@
 // Fragment files (#143, decision 047): every seed file writes back byte for byte and every seed fragment reads back
 // unchanged; metadata keeps its unknown keys in order; a malformed file names its problem and its line; the seed library
 // built from the files is the meters and the rhythms.
-import { newPoint } from '../engine/migrate/axes';
+import { newPoint } from './oldaxes.testutil';
 import { describe, expect, it } from 'vitest';
 import { readFragment, readFragments, styleNamesIn, writeFragment, type FragmentFile, type ReadOptions } from './files';
 import { FOLDER_FACETS } from './declarations';

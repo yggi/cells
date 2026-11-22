@@ -56,7 +56,7 @@ describe('a key on a melody: the nearest pitch its table can play', () => {
   });
 
   it('on 19-EDO, a key takes the nearest step of the table over the grid, every key over the keyboard', () => {
-    const r = compiled(`&edo19 cycle=19 map=edo
+    const r = compiled(`&edo19 map=edo(19)
 &v s=sine loop=C4
 &s over=&edo19 0 3 6 8 11 14 17
 &tune over=&s step=2 0 1 2
@@ -81,7 +81,7 @@ describe('a key on a melody: the nearest pitch its table can play', () => {
   });
 
   it('a melody on a grid of 19 with no table between: the nearest step of the 19', () => {
-    const k = voiceKeys(compiled(`&edo19 cycle=19 map=edo\n&v s=sine loop=C4\n&tune over=&edo19 step=2 0 5\n&mix map=sample [&tune * &v]`), 'tune');
+    const k = voiceKeys(compiled(`&edo19 map=edo(19)\n&v s=sine loop=C4\n&tune over=&edo19 step=2 0 5\n&mix map=sample [&tune * &v]`), 'tune');
     for (let note = 36; note <= 96; note++) expect(fromC4(k.key(note))).toBeCloseTo((Math.ceil(((note - 60) * 19) / 12 - 0.5) * 12) / 19, 9); // (a tie the lower)
   });
 
@@ -163,7 +163,7 @@ describe('rowNote: a row of a cell as the note it plays (the piano roll, #211)',
     }
   });
   it("over 19-EDO: the table's steps of the 19", () => {
-    const r = compiled(`&edo19 cycle=19 map=edo\n&v s=sine loop=C4\n&s over=&edo19 0 3 6 8 11 14 17\n&tune over=&s step=2 0 1 2\n&mix map=sample [&tune * &v]`);
+    const r = compiled(`&edo19 map=edo(19)\n&v s=sine loop=C4\n&s over=&edo19 0 3 6 8 11 14 17\n&tune over=&s step=2 0 1 2\n&mix map=sample [&tune * &v]`);
     expect(fromC4(rowNote(r, 'tune', 2, codeShifts(r))?.freq ?? null)).toBeCloseTo((6 * 12) / 19, 9);
     expect(fromC4(rowNote(r, 'tune', 7, codeShifts(r))?.freq ?? null)).toBeCloseTo(12, 9);
   });
@@ -184,7 +184,7 @@ describe('scaleKeys: the dots on the on-screen keys (#255)', () => {
   });
 
   it('every dotted key plays itself and every key without one plays another (the dots agree with keyboardOf), over 12-EDO and 19-EDO', () => {
-    for (const src of [PENTA, `&edo19 cycle=19 map=edo\n&v s=sine loop=C4\n&s over=&edo19 0 3 6 8 11 14 17\n&tune over=&s step=2 0 1 2\n&mix map=sample [&tune * &v]`]) {
+    for (const src of [PENTA, `&edo19 map=edo(19)\n&v s=sine loop=C4\n&s over=&edo19 0 3 6 8 11 14 17\n&tune over=&s step=2 0 1 2\n&mix map=sample [&tune * &v]`]) {
       const r = compiled(src);
       const dots = scaleKeys(r, 'tune', codeShifts(r))!;
       const k = voiceKeys(r, 'tune');
@@ -198,7 +198,7 @@ describe('scaleKeys: the dots on the on-screen keys (#255)', () => {
   });
 
   it('a 7-step scale on 19-EDO: seven keys an octave', () => {
-    const r = compiled(`&edo19 cycle=19 map=edo\n&v s=sine loop=C4\n&s over=&edo19 0 3 6 8 11 14 17\n&tune over=&s step=2 0 1 2\n&mix map=sample [&tune * &v]`);
+    const r = compiled(`&edo19 map=edo(19)\n&v s=sine loop=C4\n&s over=&edo19 0 3 6 8 11 14 17\n&tune over=&s step=2 0 1 2\n&mix map=sample [&tune * &v]`);
     const dots = scaleKeys(r, 'tune', codeShifts(r))!;
     expect([...dots].filter((n) => n >= 60 && n < 72)).toHaveLength(7);
   });

@@ -1,6 +1,6 @@
 import { numberCellOf, valueSumOf } from "../valuesum.js";
 import { refLabel } from "../ast.js";
-import { MAIN_KEY, MAX_SPLICE_DEPTH, ROOT } from "../program.js";
+import { MAX_SPLICE_DEPTH, ROOT } from "../program.js";
 import { evenProblem, evenSteps, SCALE_KEY } from "../parser/generators.js";
 import { PLAYED_AS, VOICE_MAKERS } from "../attributes.js";
 import { IMPLICIT, isRootDecl, tableOf } from "./tables.js";
@@ -17,7 +17,7 @@ export function declare(ctx) {
         else
             decls.set(c.name, c);
     }
-    const mainKey = mainKeyOf(ctx, decls);
+    const mainKey = mainKeyOf(decls);
     tonics(ctx, decls);
     modes(ctx, decls);
     evens(ctx, decls);
@@ -25,7 +25,7 @@ export function declare(ctx) {
     movingSwings(ctx, decls);
     movingDepths(ctx, decls);
     const sections = sectionTables(decls, error);
-    const stacks = gates(decls, implicit, error, ctx.warn);
+    const stacks = gates(decls, implicit, error);
     mixSelectors(ctx, decls);
     const implicitRoot = !decls.has(ROOT);
     for (const name of decls.keys())
@@ -336,21 +336,8 @@ function movingDepths(ctx, decls) {
             decls.set(name, { ...d, bend: { ...d.bend, depth: first.value + first.alter } });
     }
 }
-function mainKeyOf(ctx, decls) {
-    const main = [...decls.values()].find((d) => !d.lambda && !d.base && d.over?.name.startsWith(SCALE_KEY))?.name ?? null;
-    for (const d of [...decls.values()]) {
-        if (d.over?.name !== MAIN_KEY)
-            continue;
-        if (main) {
-            ctx.warn(`over=key is the old way: name the key, over=&${main} (Migrate rewrites it)`, d.over.span);
-            decls.set(d.name, { ...d, over: { ...d.over, name: main } });
-        }
-        else {
-            ctx.error(`over=key is the old way, and the piece has no main key (the first scale(…) in the text) for it to read: name a key, over=&key, and write it (&key scale(major, C))`, d.over.span);
-            ctx.broken.add(MAIN_KEY);
-        }
-    }
-    return main;
+function mainKeyOf(decls) {
+    return [...decls.values()].find((d) => !d.lambda && !d.base && d.over?.name.startsWith(SCALE_KEY))?.name ?? null;
 }
 export const VOICE_KIT = 'kit:voices';
 export function voiceGrooves(decls) {
@@ -425,22 +412,19 @@ export function voiceGrooves(decls) {
             rewrite(d);
     return { voices, cells };
 }
-function gates(decls, implicit, error, warn) {
+function gates(decls, implicit, error) {
     const stacks = new Set();
     const ref = (name, span) => ({ k: 'ref', ref: { name, pick: null, shift: 0, span } });
     const grooves = voiceGrooves(decls);
     for (const d of [...decls.values()]) {
         const p = d.params;
         const tokens = d.braid.kind === 'list' ? d.braid.tokens : [];
-        const old = typeof p.trigger === 'string';
-        const notes = old ? p.trigger : typeof p.play === 'string' && tokens.length ? p.play : null;
+        const notes = typeof p.play === 'string' && tokens.length ? p.play : null;
         if (notes === null)
             continue;
-        const port = old ? 'trigger' : 'play';
+        const port = 'play';
         const notesSpan = d.paramSpans[port] ?? d.span;
-        const move = old ? undefined : d.playMove;
-        if (old)
-            warn(`&${d.name} is a gate written the old way: play= for trigger=, one level= for velocity=, gate= and gain=, the voices it plays all of as a chord (Migrate rewrites it, decision 023)`, notesSpan);
+        const move = d.playMove;
         const plain = (a) => a.kind === 'ref' && !a.pick && !a.shift && !a.transpose && !a.values;
         const chord = tokens.length === 1 && tokens[0].atom.kind === 'mix' && tokens[0].atom.exprs.every((e) => e.k === 'ref' && !e.ref.pick) ? tokens[0].atom.exprs : null;
         const bare = tokens.every((t) => plain(t.atom) && t.repeat === 1 && t.subdivide === 1 && t.elongate === 1);
@@ -452,7 +436,7 @@ function gates(decls, implicit, error, warn) {
             ? chord.flatMap((e) => (e.k === 'ref' ? [{ name: e.ref.name, span: e.ref.span }] : []))
             : tokens.flatMap((t) => (t.atom.kind === 'ref' ? [{ name: t.atom.name, span: t.span }] : []));
         let played = named;
-        if (!chord && !old && named.length > 1) {
+        if (!chord && named.length > 1) {
             const kit = `${d.name}:kit`;
             decls.set(kit, {
                 name: kit,
@@ -471,12 +455,9 @@ function gates(decls, implicit, error, warn) {
             implicit.add(kit);
             played = [{ name: kit, span: d.span }];
         }
-        const levels = old
-            ? ['velocity', 'gate'].flatMap((k) => (typeof p[k] === 'string' ? [{ name: p[k], port: k, span: d.paramSpans[k] ?? d.span }] : []))
-            : (d.paramCells?.level?.factors ?? []).map((f) => ({ name: f.name, port: 'level', span: f.span }));
-        const gainOf = old ? p.gain : p.level;
-        const gain = typeof gainOf === 'number' ? gainOf : 1;
-        const gainSpan = d.paramSpans[old ? 'gain' : 'level'] ?? d.span;
+        const levels = (d.paramCells?.level?.factors ?? []).map((f) => ({ name: f.name, port: 'level', span: f.span }));
+        const gain = typeof p.level === 'number' ? p.level : 1;
+        const gainSpan = d.paramSpans.level ?? d.span;
         const moved = (line, span) => {
             const of = decls.get(line);
             if (!move || !of)

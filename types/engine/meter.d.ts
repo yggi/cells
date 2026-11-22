@@ -54,8 +54,6 @@ export declare function noteValue(v: string): number | null;
 export declare function withPulse(m: Meter, whole: number): Meter;
 /** How many beats a meter's bpm counts in a bar: one each (7/8: three, unequal), or a scan's beats of `pulse=` (276¼). */
 export declare const beatCount: (m: Meter) => number;
-/** beat=n on a meter, retired (#502) and still read for Migrate: n equal beats over its pulses, in place of the beats it was written with (`meter("4/4") beat=2`, now `meter("2/2", 2)`). */
-export declare function withBeats(m: Meter, n: number): Meter;
 /**
  * A bent meter's steps (decision 080) at a depth (decision 081): over the bars its table spans, each of the level's nodes
  * the table's next length raised to the depth (1 as written, 0 even, -1 inverted), its `per` steps even within it; and

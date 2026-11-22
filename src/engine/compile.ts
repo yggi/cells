@@ -1,5 +1,5 @@
 /** compile(): a parsed piece as a program (program.ts), in phases (compiler/). */
-import type { Diagnostic, ParseResult } from './ast';
+import type { ParseResult } from './ast';
 import { parse } from './parser';
 import { compile as compileIn } from './compiler';
 import { readSlots } from './compiler/slots';
@@ -7,9 +7,7 @@ import { clocking } from './clocking';
 import { mainLength, pieceTime } from './duration';
 import { codeShifts, DEFAULT_ENV, type CompileOptions, type CompileResult, type Env } from './program';
 import { readStyles, type Scope } from './styles';
-import { expansion, hasFrom, signatureHeads } from './use';
-import { BUILT_IN } from './fills';
-import { laws } from './migrate/laws';
+import { expansion, hasFrom } from './use';
 import { splitComment } from './edit';
 
 /** A parsed piece, compiled: the phases are in compiler/ (index.ts says their order). */
@@ -43,30 +41,13 @@ function scopeOf(result: CompileResult): Scope | null {
  * came through.
  */
 export function compileSource(written: string, env: Env = DEFAULT_ENV, options: CompileOptions = {}): CompileResult {
-  // (law= written by a piece, the old way: read as the from line Migrate writes for it, and said, #792)
-  const old = laws(written);
-  const source = old.reduce((text, r) => r.apply(text), written);
-  const said: Diagnostic[] = old.map((r) => {
-    const line = Number(r.id.slice('law:'.length));
-    return {
-      severity: 'warning',
-      message: `${r.title.split(':')[0]}: write ${r.after}, the law taken from its clock (decision 085; Migrate rewrites it)`,
-      span: { line, col: 1, len: Math.max(1, (written.split('\n')[line - 1] ?? '').length) },
-    };
-  });
-  if (!hasFrom(source)) {
-    const alone = withCodes(compile(parse(source, { old: options.old ?? false }), env), source, options.plugins);
-    const all = [...said, ...oldLaws(alone, () => true, source)];
-    return all.length ? { ...alone, diagnostics: [...alone.diagnostics, ...all].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col) } : alone;
-  }
+  const source = written;
+  if (!hasFrom(source)) return withCodes(compile(parse(source), env), source, options.plugins);
   const x = expansion(source, options);
-  const result = withCodes(compile(parse(x.text, { old: options.old ?? false }), env, x.given), x.text, options.plugins);
-  const diagnostics = [
-    ...x.diagnostics,
-    ...said,
-    ...oldLaws(result, (line) => x.through(line) === null, source),
-    ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span })),
-  ].sort((a, b) => a.span.line - b.span.line || a.span.col - b.span.col);
+  const result = withCodes(compile(parse(x.text), env, x.given), x.text, options.plugins);
+  const diagnostics = [...x.diagnostics, ...result.diagnostics.map((d) => ({ ...d, span: x.through(d.span.line) ?? d.span }))].sort(
+    (a, b) => a.span.line - b.span.line || a.span.col - b.span.col,
+  );
   return { ...result, ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics, takes: x.takes, ...(x.origins.size ? { origins: x.origins } : {}) };
 }
 
@@ -79,25 +60,4 @@ function withCodes(result: CompileResult, text: string, plugins: CompileOptions[
   const lines = text.split('\n');
   const codes = new Map([...result.cells.values()].map((c) => [c.name, splitComment(lines[c.span.line - 1] ?? '')[0].trim()] as const));
   return { ...result, codes, ...(plugins.length ? { pluginFragments: new Map(plugins.map((f) => [f.fragment, f] as const)) } : {}) };
-}
-
-/**
- * `law=` written by a piece (decision 085 §2, rung 5): the old way of taking a built-in law, said with the `from` line
- * Migrate writes for it. `own(line)`: did the piece write the line (not a fragment, through a `from` line)?
- */
-function oldLaws(result: CompileResult, own: (line: number) => boolean, source: string): Diagnostic[] {
-  // (the law's own fragment defines it, its signature heading the line: no piece's old spelling)
-  const defined = new Set(signatureHeads(source).map((n) => n.slice(1)));
-  return [...result.cells.values()].flatMap((c) => {
-    const law = c.params.law;
-    if (typeof law !== 'string' || !own(c.span.line) || defined.has(c.name)) return [];
-    const clock = c.over ? ` &${c.over}` : ' &day';
-    return [
-      {
-        severity: 'warning' as const,
-        message: `law=${law} is the old way: write &${c.name} from ${BUILT_IN.get(law)?.fragment ?? law}${clock}, the law taken from its clock (decision 085; Migrate rewrites it)`,
-        span: c.span,
-      },
-    ];
-  });
 }

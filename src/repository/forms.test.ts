@@ -15,7 +15,7 @@ import type { Resolve } from '../engine/program';
 import { createRepository, pointDistance, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { fromId, headOf, LIBRARY, ofFacet, resolveSeed } from './library';
-import { newPoint } from '../engine/migrate/axes';
+import { newPoint } from './oldaxes.testutil';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, KINDERLIED, SPOOKY, STYLES, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { createRecogniser } from './recognise';
 import { seedFragments } from './seed';

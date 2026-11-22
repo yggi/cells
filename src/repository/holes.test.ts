@@ -32,11 +32,6 @@ describe('what a fragment uses and defines', () => {
     expect(holes('&key scale(major, C)\n&line step=8n 0 2 4 over=&key').uses).toEqual([]);
   });
 
-  it('uses the main key where a line reads it the old way (over=key) and the text has none, as `key`', () => {
-    expect(holes('&line step=8n 0 2 4 over=key').uses).toEqual(['key']);
-    expect(holes('&key scale(major, C)\n&line step=8n 0 2 4 over=key').uses).toEqual([]);
-  });
-
   it('uses a meter it names and doesn’t define; a tap of the main meter is a clock need, not a name', () => {
     expect(holes('&x step=&bar:16n 0 2').uses).toEqual(['&bar']);
     expect(holes('&x step=16n 0!16').uses).toEqual([]);
