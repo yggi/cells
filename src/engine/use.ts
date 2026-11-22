@@ -156,6 +156,44 @@ export function partOf(text: string, head: string): string | null {
   return [sigLine.written.trim(), ...lines.filter((l) => keep.has(l)).map((l) => l.written)].join('\n');
 }
 
+/**
+ * What a document gives a part to play with (#703): the document's own lines for the part's main parameter, with the
+ * lines they read, taken through the closure as `partOf` takes a part's (`&key from diatonic(mode=ionian) C`). The
+ * lines `partOf` leaves out, since they are the document's, what it plays with as a piece. Empty where the document
+ * is one part, or the part has no main parameter, or the document doesn't define it; null where no signature names the head.
+ */
+export function givenOf(text: string, head: string): string | null {
+  const lines = linesOf(text);
+  const sigs = oneSignatureEach(
+    lines.flatMap((l) => (l.from?.kind === 'signature' ? [{ line: l, sig: l.from }] : [])),
+    (s) => s.sig,
+  );
+  const found = sigs.find((s) => s.sig.names.includes(`&${head}`));
+  if (!found) return null;
+  if (sigs.length === 1 || !found.sig.main) return '';
+  const defines = new Map<string, Line>();
+  for (const l of lines) {
+    if (l.name) defines.set(l.name, l);
+    else if (l.from?.kind === 'use') for (const n of l.from.names ?? []) defines.set(n.slice(1), l);
+  }
+  const readsOf = (l: Line) => (l.from?.kind === 'use' ? [...l.code.slice(l.code.search(/\sfrom\s/)).matchAll(READS)].map((m) => m[1]!) : l.reads);
+  const keep = new Set<Line>();
+  const seen = new Set<string>();
+  for (const queue = [found.sig.main.slice(1)]; queue.length;) {
+    const n = queue.shift()!;
+    if (seen.has(n)) continue;
+    seen.add(n);
+    const l = defines.get(n);
+    if (!l || keep.has(l)) continue;
+    keep.add(l);
+    queue.push(...readsOf(l));
+  }
+  return lines
+    .filter((l) => keep.has(l))
+    .map((l) => l.written)
+    .join('\n');
+}
+
 /** A line that takes a fragment over a name (#692): the id it takes and its named arguments, as written (`ternary`, `{ answer: '&wonder' }`). */
 export interface UseOver {
   readonly id: string;

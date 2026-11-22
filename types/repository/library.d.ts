@@ -10,9 +10,9 @@ import { type Fragment, type LearnedLayer } from './fragments';
 /** Every seed fragment, a template's sets of arguments each a fragment of its own, folder by folder (`FOLDERS`). */
 /**
  * The parts the examples give (decision 082), each a fragment whose id is its document's key and its head
- * (`kinderlied/twinkle`), its text the part (`partOf`), its points the ones its document's frontmatter keys by its head
- * (`parts: { twinkle: { association: […] } }`). A part with no association there is taken by its head all the same,
- * and found by no query, so it isn't listed. A malformed one throws here, naming the example and the head.
+ * (`kinderlied/twinkle`), its text the part (`partOf`), its points the ones its signature line declares (decision 089:
+ * `&twinkle from &key style=&(map=style …) facet=motif`). A part whose signature declares none is taken by its head all
+ * the same, and found by no query, so it isn't listed. A malformed one throws here, naming the example and the head.
  */
 export declare const PARTS: readonly Fragment[];
 /** Every seed fragment, a template's sets of arguments each a fragment of its own, folder by folder (`FOLDERS`), then the parts the examples give (`PARTS`). */

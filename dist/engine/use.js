@@ -75,6 +75,41 @@ export function partOf(text, head) {
     }
     return [sigLine.written.trim(), ...lines.filter((l) => keep.has(l)).map((l) => l.written)].join('\n');
 }
+export function givenOf(text, head) {
+    const lines = linesOf(text);
+    const sigs = oneSignatureEach(lines.flatMap((l) => (l.from?.kind === 'signature' ? [{ line: l, sig: l.from }] : [])), (s) => s.sig);
+    const found = sigs.find((s) => s.sig.names.includes(`&${head}`));
+    if (!found)
+        return null;
+    if (sigs.length === 1 || !found.sig.main)
+        return '';
+    const defines = new Map();
+    for (const l of lines) {
+        if (l.name)
+            defines.set(l.name, l);
+        else if (l.from?.kind === 'use')
+            for (const n of l.from.names ?? [])
+                defines.set(n.slice(1), l);
+    }
+    const readsOf = (l) => (l.from?.kind === 'use' ? [...l.code.slice(l.code.search(/\sfrom\s/)).matchAll(READS)].map((m) => m[1]) : l.reads);
+    const keep = new Set();
+    const seen = new Set();
+    for (const queue = [found.sig.main.slice(1)]; queue.length;) {
+        const n = queue.shift();
+        if (seen.has(n))
+            continue;
+        seen.add(n);
+        const l = defines.get(n);
+        if (!l || keep.has(l))
+            continue;
+        keep.add(l);
+        queue.push(...readsOf(l));
+    }
+    return lines
+        .filter((l) => keep.has(l))
+        .map((l) => l.written)
+        .join('\n');
+}
 export const usesIn = (text, head) => linesOf(text).flatMap((l) => l.from?.kind === 'use' && l.from.main?.trim().split(/\s+/).at(-1) === `&${head}`
     ? [{ id: l.from.id, args: Object.fromEntries((l.from.args ?? []).map((a) => [a.name, a.value.trim()])) }]
     : []);
