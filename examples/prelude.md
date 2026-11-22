@@ -4,10 +4,9 @@ tags: [genre:classical, genre:electronic, artist:Bach, artist:Wendy Carlos, tona
 description: Bach's Prelude in C (bars 1–19) as one figure reading a table of chords, on an old-school synthesizer.
 ---
 
+J. S. Bach, Prelude in C major (Well-Tempered Clavier I), bars 1–19, on an old-school synthesizer, in homage to Wendy Carlos. The whole prelude is one figure reading a braid of chords, one a bar, five notes each.
+
 ```cells
-# J. S. Bach, Prelude in C major (Well-Tempered Clavier I), bars 1–19 — on an
-# old-school synthesizer, in homage to Wendy Carlos. The whole prelude is one
-# figure reading a braid of chords, one a bar, five notes each.
 &bar from meter &tempo
 &tempo step=free(66bpm, 40..100)
 &chords step=1m [0,4,7,12,16] [0,2,9,14,17] [-1,2,7,14,17] [0,4,7,12,16] [0,4,9,16,21] [0,2,6,9,14] [-1,2,7,14,19] [-1,0,4,7,12] [-3,0,4,7,12] [-10,-3,2,6,12] [

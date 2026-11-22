@@ -4,11 +4,9 @@ tags: [genre:experimental, microtonal, tuning, harmony, stereo]
 description: "Just intonation: the same four chords twice, pure on the left and tempered on the right."
 ---
 
+The same chords twice: on the left in just intonation (thirds 5/4, fifths 3/2: pure), on the right in equal temperament. Listen to the right one beat. And in ii (D F A) the just fifth, 40/27, is out of tune, the price of purity.
+
 ```cells
-# Just intonation: a grid of ratios. The same chords twice — on the left in just
-# intonation (thirds 5/4, fifths 3/2: pure), on the right in equal temperament.
-# Listen to the right one beat. And ii (D F A): its fifth, 40/27, is out of tune —
-# the price of purity.
 &justPureNote label="Left: just — thirds 5/4, fifths 3/2." about=(&just &pure)
 &temperedBeatsNote label="Right: tempered — listen to it beat." about=(&equal &tempered)
 &justFifthNote label="In ii (D F A) the just fifth is 40/27: out of tune." about=&chords

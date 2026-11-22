@@ -4,12 +4,9 @@ tags: [genre:experimental, genre:electronic, artist:Stockhausen, microtonal, tun
 description: Sine mixtures on Stockhausen's scale of 25 equal steps to 5:1, with durations from the same series.
 ---
 
+An original study in the system of Stockhausen's Studie II (1954): sine tones on a scale of 25 equal steps to 5:1 from 100 Hz, not octaves, sounding as tone mixtures, five sines a fixed number of steps apart. The durations come from the same series (`geo`: 5^(k/25), k = 0 10 5 20 15), the intensities in decibels. One player goes forward, swelling; the other plays it backwards, eight steps higher, fading.
+
 ```cells
-# An original study in the system of Stockhausen's Studie II (1954): sine tones on
-# a scale of 25 equal steps to 5:1 from 100 Hz — not octaves — sounding as tone
-# mixtures, five sines a fixed number of steps apart. The durations come from the
-# same series (geo: 5^(k/25), k = 0 10 5 20 15), the intensities in decibels.
-# One player goes forward, swelling; the other plays it backwards, eight steps higher, fading.
 &time scan(geo(5, 25, 0 10 5 20 15)) step=free(24bpm, 12..48)  # five durations: 5^(k/25)
 &dyn map=db step=4n 0 -10 -4 -16 -8                              # their intensities, in decibels
 &steps map=ed(25, 5)                                             # 25 steps to 5:1
