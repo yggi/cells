@@ -19,6 +19,18 @@ const ownNames = (text) => {
     return [...new Set(declarations(text).map((l) => l.name))].filter((name) => !kept.has(name));
 };
 export function canonicalText(text) {
+    const kept = canonicals.get(text);
+    if (kept !== undefined)
+        return kept;
+    const value = canonicalOf(text);
+    if (canonicals.size >= CANONICALS)
+        canonicals.clear();
+    canonicals.set(text, value);
+    return value;
+}
+const canonicals = new Map();
+const CANONICALS = 4096;
+function canonicalOf(text) {
     const index = new Map(ownNames(text).map((name, i) => [name, i + 1]));
     return counts(declarations(text)
         .map((l) => l.code)

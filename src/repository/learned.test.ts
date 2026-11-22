@@ -153,6 +153,17 @@ describe('the pull', () => {
   });
 });
 
+describe('canonicalText is kept per text (#867)', () => {
+  it('reads again as it read, a text renamed as one text, and the same after the cache is full and started afresh', () => {
+    const first = LIBRARY.slice(0, 20).map((f) => canonicalText(f.text));
+    expect(LIBRARY.slice(0, 20).map((f) => canonicalText(f.text))).toEqual(first);
+    expect(canonicalText('&bar meter("3/4")')).toBe(canonicalText('&m meter("3/4")'));
+    // (4,096 texts fill it: it is cleared and the first is read afresh, the same)
+    for (let i = 0; i < 4_200; i++) canonicalText(`&bar meter("${i}/4")`);
+    expect(LIBRARY.slice(0, 20).map((f) => canonicalText(f.text))).toEqual(first);
+  });
+});
+
 describe('filing', () => {
   it('a filed fragment is found first at its point, at distance 0: at 200 points, and at each preset’s, where a seed fragment sits at 0 too', () => {
     for (const point of [...drawn(200, 'filed'), ...PRESETS]) {

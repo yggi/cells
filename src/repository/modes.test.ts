@@ -259,6 +259,7 @@ describe('the bell and scale', () => {
     }
   });
 
+  // (every vamp over every bass line, twice, 11 s: its own timeout, #867)
   it('plays every vamp and bass line note for note as the ionian fragment does: a stepped key nothing plays doesn’t turn', () => {
     const ionian = byId('ionian').text;
     const melodic = (t: string) => sent(t, 2, 32).concat(sent(t, 4, 32));
@@ -268,7 +269,7 @@ describe('the bell and scale', () => {
           `${filled(takenOn(bass.text, takenOn(vamp.text, takenOn(mode, meter(), '&tonic').union.text, '&key').union.text, '&harm').union.text)}\n${BASS_VOICE}\n&padV loop=C4\n&pad map=midi(4) [&harm * &padV]`;
         expect(melodic(over(bell.text)), `${bass.id} over ${vamp.id}`).toEqual(melodic(over(ionian)));
       }
-  });
+  }, 60_000);
 
   it('layers on every rhythm, and its high agogô is a hole the General MIDI kit fills (#244)', () => {
     const gmKit = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')!;
