@@ -1,0 +1,3 @@
+### Added
+
+- **A part's read place** (#703, option 3): `readPlace(reading, facet)` and `placeOfPart(document, head, { resolve, facet })` (`repository/readpart`). `readPlace` turns a part's reading into a point on the axes its facet's notes speak to (`READ_AXES`: a rhythm's `sync`, a harmony's `harm`, a motif's `mood`), each with a reach of `(1 − confidence)` of half the axis, written as a point's reach is (decision 089 §6, `mood=.6 ± .14`). `placeOfPart` gives the association a part's signature declares where it declares one (a hand's), else its read place. Nothing in the library reads it yet: `PARTS` lists the parts that declare an association, and no document has one that doesn't. No piece sounds different, and no query changes.

@@ -6,7 +6,7 @@ import { EXAMPLES } from '../engine/examples';
 import { givenOf, partOf } from '../engine/use';
 import { readFragment } from './firstguess';
 import { resolveSeed } from './library';
-import { readPart } from './readpart';
+import { placeOfPart, readPart, readPlace } from './readpart';
 
 const document = EXAMPLES.kinderlied.source;
 const HEADS = ['twinkle', 'wonder', 'haenschen', 'hinein', 'heim', 'weinet'];
@@ -68,5 +68,46 @@ describe('a part read in its document', () => {
     expect(read(document, 'nowhere')).toBeNull();
     expect(readPart(document, 'twinkle', { resolve: resolveSeed })).toBeNull();
     expect(readPart(document, 'twinkle', { resolve: resolveSeed, facet: 'meter' })).toBeNull();
+  });
+});
+
+/** The document with its parts' declarations taken off their signature lines: parts with no hand association. */
+const bare = document.replace(/(&\w+ from &key) style=&\(map=style [^)]*\) facet=motif/g, '$1');
+const HAND = 'style=&(map=style sync=.1 harm=.12 bite=.5 mood=.95) facet=motif';
+/** Twinkle's call with a hand's association on its signature line (decision 089), the others bare. */
+const handed = bare.replace('&twinkle from &key\n', `&twinkle from &key ${HAND}\n`);
+
+describe('a part read as a place', () => {
+  it("is a motif's mood, each axis with a reach of its confidence's lack, half an axis at most", () => {
+    const place = readPlace(read(document, 'hinein')!, 'motif')!;
+    expect(Object.keys(place.point)).toEqual(['mood']);
+    expect(place.point.mood).toBeCloseTo(0.6, 2);
+    // (hinein's mood is held at 0.71: a reach of (1 − .71) × .5)
+    expect(place.reach!.mood).toBeCloseTo(0.145, 2);
+    expect(place).toMatchObject({ weight: 1, facet: 'motif' });
+  });
+
+  it('carries no sync or bite for a motif, whose written steps say nothing of a style’s, and none for a facet with no axis', () => {
+    for (const head of HEADS) expect(Object.keys(readPlace(read(document, head)!, 'motif')!.point), head).toEqual(['mood']);
+    expect(readPlace(read(document, 'hinein')!, 'meter')).toBeNull();
+  });
+
+  it('reads hinein and weinet apart on mood by at least 0.1, as the prototype did', () => {
+    expect(bare).not.toMatch(/from &key style=/);
+    const [a, b] = ['hinein', 'weinet'].map((h) => placeOfPart(bare, h, { resolve: resolveSeed, facet: 'motif' })![0]!.point.mood!);
+    expect(Math.abs(a! - b!)).toBeGreaterThanOrEqual(0.1);
+  });
+
+  it("is a hand's association where the part declares one, and the read place only where it declares none", () => {
+    const opts = { resolve: resolveSeed, facet: 'motif' };
+    const hand = placeOfPart(handed, 'twinkle', opts)!;
+    expect(hand).toEqual([{ point: { sync: 0.1, harm: 0.12, bite: 0.5, mood: 0.95 }, weight: 1, facet: 'motif' }]);
+    const readOnly = placeOfPart(bare, 'twinkle', opts)!;
+    expect(readOnly).toHaveLength(1);
+    expect(Object.keys(readOnly[0]!.point)).toEqual(['mood']);
+    expect(readOnly[0]!.reach).toBeDefined();
+    expect(handed).not.toBe(bare);
+    expect(placeOfPart(handed, 'wonder', opts)![0]!.reach).toBeDefined();
+    expect(placeOfPart(document, 'nowhere', opts)).toBeNull();
   });
 });
