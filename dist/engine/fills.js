@@ -2,8 +2,9 @@ import { FIVETO12 } from "./fiveto12.js";
 export const BUILT_IN = new Map([[FIVETO12.id, FIVETO12]]);
 export const BY_FRAGMENT = new Map([...BUILT_IN.values()].map((f) => [f.fragment, f]));
 export const lawOf = (params) => (typeof params?.law === 'string' && BUILT_IN.get(params.law)) || null;
+export const pluginIn = (result, fragment) => result.pluginFragments?.get(fragment) ?? BY_FRAGMENT.get(fragment);
 const streamsIn = (result) => [...result.cells.values()].flatMap((cell) => {
-    const law = cell.fill?.fragment ? BY_FRAGMENT.get(cell.fill.fragment) : undefined;
+    const law = cell.fill?.fragment ? pluginIn(result, cell.fill.fragment) : undefined;
     return law && law.fills[cell.fill?.name ?? '']?.lap !== undefined ? [{ cell, law }] : [];
 });
 export const lawIn = (result) => streamsIn(result)[0]?.law ?? null;
