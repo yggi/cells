@@ -124,6 +124,8 @@ A product with no voice in it and a pitch, given a cell of its own, is **notes w
 &out map=sample [&phrase * &glass * .3]   # plays [(&notes * &accent) * &glass * .3]
 ```
 
+A level may be a cell that is one number or a sum of values (`&level [&base + .1]`, [decision 088](https://github.com/yggi/cells/blob/main/docs/decisions/088-naming-a-number-plays-as-the-number.md)): `&phrase [&notes * &level]` is notes with their levels all the same, and plays as the parentheses do.
+
 It is named whole (`&phrase[<<]` or `&phrase^2` is an error, for now), and it is no value: read as a parameter's factor, or played with no voice, it says what it is. One line of plain numbers times numbers stays a weighted value, as above (079).
 
 ## A gate: a product with a name

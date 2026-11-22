@@ -140,7 +140,7 @@ export function valueSumOf(name: string, decls: ReadonlyMap<string, CellDecl>, s
  * and `inlineNotes` writes it so before a mix is typed.
  *
  * `sounds` says whether a cell that is not a mix is a sound (a voice, a gate, a kit read, a tape's read head, a wave):
- * the compiler's sorts know, this module doesn't; a mix among the factors is read here, as notes in turn or not at all. A product of numbers and levels alone (no pitch) is not notes: it stays what it was.
+ * the compiler's sorts know, this module doesn't; a mix among the factors is read here, as notes in turn or not at all. A product of numbers, sums of values and levels alone (no pitch) is not notes: it stays what it was; a cell that is one number or a sum of values among the factors is a level (decision 088, #856).
  */
 export function notesProductOf(
   name: string,
@@ -162,6 +162,8 @@ export function notesProductOf(
     if (!d) return null;
     // (a cell that is one number is that number, decision 088: no pitch)
     if (bare(f) && numberCellOf(d) !== null) continue;
+    // (a sum of values is a level in a product, as a number is, decision 088: no pitch, and notes with their levels still)
+    if (bare(f) && valueSumOf(f.ref.name, decls) !== null) continue;
     // (a mix among its factors: notes named in turn, or else an instrument or a sum of values, which it can't hold)
     if (chordOf(d)) {
       if (!notesProductOf(f.ref.name, decls, sounds, inner)) return null;

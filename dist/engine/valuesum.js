@@ -106,6 +106,8 @@ export function notesProductOf(name, decls, sounds, seen = new Set()) {
             return null;
         if (bare(f) && numberCellOf(d) !== null)
             continue;
+        if (bare(f) && valueSumOf(f.ref.name, decls) !== null)
+            continue;
         if (chordOf(d)) {
             if (!notesProductOf(f.ref.name, decls, sounds, inner))
                 return null;

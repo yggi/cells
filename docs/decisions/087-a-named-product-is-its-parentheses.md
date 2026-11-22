@@ -29,6 +29,8 @@ That goes against the mix algebra's own laws (grouping doesn't matter), 075 and 
 5. **Not a voiceless gate.** `&x play=&notes level=&level` with no voice stays an error: gates are the performer (058), and one spelling (L5) is the product.
 6. **079 first.** One line of plain numbers (read through no table) times numbers, named, is 079's weighted value, as it was. That is the one shape both could read, and 079 keeps it.
 
+7. **A sum of values among its factors is a level, as a number is** (amended, the owner on #856, 2026-11-23: "should work, close the gap"). `&level [&base + .1]` is 079's value; `&phrase [&notes * &level]` is notes with their levels, the sum its level (088 reads a number so), and `&cycle [&notes * &level]` then `[&cycle * &glass]` plays `[(&notes * &level) * &glass]`, as with a number. A pitch is still what makes a product notes: a product of values alone stays 079's.
+
 **The law, L17:** naming a sub-product plays as its parentheses do, but for 079's weighted values. `src/engine/naming.test.ts` names every voiceless group (two factors or more, a pitch among them) of every example's one-chord mixes: 104 groups in 56 examples play note for note what they played (11 in 8 when first measured: the test skipped every example with a `from` line until rung 5 wrote them out, #691). 57 groups are 079's, and are left as written.
 
 ## Why
