@@ -34,23 +34,12 @@ export const STUBS: ReadonlySet<string> = new Set([
  * (decision 047): it goes on a tier with a piece whose cells it clusters.
  */
 export const PENDING: ReadonlySet<string> = new Set([
-  // a sum of values read as a level (decision 079): a named product of notes and such a sum doesn't type yet, so no piece writes one (#856)
+  // a sum of values read as a level (decision 079): a named product of notes and such a sum is notes with their levels
+  // now (#856, decision 087 §7); its tutorial piece is `style`'s level, a follow-up to #862
   'sort plain: a sum of values',
   // (a slider's unit as an argument, the core's spelling, decision 069: toCore writes it, a tutorial piece doesn't, the
-  // examples staying in their normal form, the unit written after the number)
+  // examples staying in their normal form, the unit written after the number): the core tier teaches it (#850)
   'free free(v, lo..hi, unit=bpm)',
-  'step <a b c>',
-  'modifier x/n',
-  'modifier x(k,n,r)',
-  'parameter legato',
-  // (decision 080: a meter bent by a table; no example bends one yet, a meter scan its sugar)
-  'parameter bend',
-  // (the band-pass and the filters' model, decision 074: a piece of tier 2's effects that sweeps one is wanted; no example moves for it)
-  'parameter bpf',
-  'parameter bpq',
-  'parameter ftype',
-  // (cycle= in laps, #75: grids say their size in the map now; a piece that turns a table and shows its laps is wanted)
-  'attribute cycle',
 ]);
 
 /**
@@ -105,7 +94,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Time and voice',
     concept:
-      "a clock: a bar (&bar from meter 120bpm, the library's), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato",
+      "a clock: a bar (&bar from meter 120bpm, the library's), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters (low-pass, high-pass, band-pass and their model) and effects, a vibrato",
     forms: [
       // (the part a line plays as, for the default performer: Clock's bass, decision 075)
       'parameter part',
@@ -127,6 +116,10 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'parameter lpf',
       'parameter lpq',
       'parameter hpf',
+      // a band-pass: its centre, its Q and its filters' model (decision 074)
+      'parameter bpf',
+      'parameter bpq',
+      'parameter ftype',
       'parameter hpq',
       'parameter room',
       'parameter delay',
@@ -162,7 +155,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Rhythm and feel',
     concept:
-      'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: swing= on a meter, a share of each pair at a level, a slider from straight to hard',
+      'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: swing= on a meter, a share of each pair at a level, a slider from straight to hard; a bent bar: bend= gives the eighths of a meter the lengths of a table; Strudel spelling: <a b c>, x/n, x(k,n,r), legato=',
     forms: [
       // meter and feel
       'map map=amp',
@@ -185,13 +178,20 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       // swing, its share a slider (#646: the swing showcase leans from straight to hard)
       'parameter swing',
       'free free(v, lo..hi)',
+      // a bar bent by a table: its eighths take the table's lengths, the beats never move (decision 080)
+      'parameter bend',
+      // Strudel's spelling (decision 027): an alternation, a slow group, a euclid on a step, a note's length as a share
+      'step <a b c>',
+      'modifier x/n',
+      'modifier x(k,n,r)',
+      'parameter legato',
       'generator meter("sig")',
     ],
   },
   {
     name: 'Development',
     concept:
-      'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths, even(k, n), the generator under them; arrangement: sections stepped by the bar, a selector, laps=, off',
+      'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the laps they come round after (cycle=), the circle of fifths, even(k, n), the generator under them; arrangement: sections stepped by the bar, a selector, laps=, off',
     forms: [
       // (a drum line's role, for the default performer: the arrangement's kick, decision 075)
       'parameter role',
@@ -215,6 +215,8 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       // turning tables
       'attribute stride',
       'rate step=cycle(&x)',
+      // the laps a turning table comes round after (#75, decision 040)
+      'attribute cycle',
       'generator fifths()',
       // the one generator under the scales and the rhythms (decision 072), a table of even places
       'generator even(k, n)',

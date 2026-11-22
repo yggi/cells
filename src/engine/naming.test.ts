@@ -112,9 +112,9 @@ describe('law L17: naming a sub-product plays as its parentheses do (decision 08
     expect({ count, examples: rewritten.length, skipped, continued }).toMatchInlineSnapshot(`
       {
         "continued": 0,
-        "count": 125,
-        "examples": 59,
-        "skipped": 57,
+        "count": 129,
+        "examples": 61,
+        "skipped": 60,
       }
     `);
   });
