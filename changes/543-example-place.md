@@ -1,3 +1,0 @@
-### Added
-
-- **A piece says where it is found** (#543, decision 089): `placeOf(text, { styles })` (`repository/declarations`) reads the points a piece's `* from style=&funk` lines declare, as a collection's declaration is read; a piece's other signatures declare its parts and are not read. The line compiles to nothing, so no piece sounds different. A style is optional (decision 090): 12 examples that are one style's idiom say theirs (`acid`, `bossa`, `electroswing`, `funk`, `jazz`, `kinderlied`, `korobeiniki`, `pop`, `sailor`, `spooky`, `twelve`, `waltz`), and the rest say none. **What a frontend sees at its next pin:** those 12 examples gain a first line in their cells block, so each cell's line is one more (a `values` and `live` snapshot moves; no note or event does).
