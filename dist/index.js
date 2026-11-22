@@ -39,6 +39,7 @@ export { perform, widthsOf } from "./engine/perform/perform.js";
 export { meterOfFrame, swungPlace, writtenPlace } from "./engine/meter.js";
 export { nearestStyle, STYLES } from "./repository/styles.js";
 export { bandAt, instrumentsAt, resolveBand, scoreStyle, PERFORMER_VOICES } from "./repository/band.js";
+export { SECTION_KINDS, isSectionKind } from "./repository/sectionkinds.js";
 export { LIBRARY, PARTS, resolveSeed, resolverOf, usesOf } from "./repository/library.js";
 export { catalogue } from "./repository/catalogue.js";
 export { RENAMED_IDS, wordOf } from "./engine/renamed.js";

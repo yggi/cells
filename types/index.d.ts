@@ -57,6 +57,7 @@ export { perform, widthsOf, type Performance, type TextBar } from './engine/perf
 export { meterOfFrame, swungPlace, writtenPlace } from './engine/meter';
 export { nearestStyle, STYLES, type NearStyle, type Style } from './repository/styles';
 export { bandAt, instrumentsAt, resolveBand, scoreStyle, PERFORMER_VOICES, type FoundInstrument, type VoicedPart } from './repository/band';
+export { SECTION_KINDS, isSectionKind } from './repository/sectionkinds';
 export { LIBRARY, PARTS, resolveSeed, resolverOf, usesOf, type PartUse } from './repository/library';
 export { catalogue, type CatalogueEntry } from './repository/catalogue';
 export { RENAMED_IDS, wordOf } from './engine/renamed';

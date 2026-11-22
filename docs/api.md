@@ -36,7 +36,7 @@ Each step of the plan moves a count in the ledger: the symbols a frontend reache
 | `@yggi/cells/repository` | repository | query, fit, learn and migrate a layer; a fragment read as cells means it | 22 |
 | `@yggi/cells/library` | library | the seed, styles, kit, roles, modes, the band; every vocabulary as values | 13 |
 | (leaves for Cell studio, decision 086) | | the view: drawing only | 5 |
-| (internal) | | named by no entry point | 51 |
+| (internal) | | named by no entry point | 52 |
 
 #### `@yggi/cells`
 
@@ -91,6 +91,10 @@ Planned modules: `engine/compiler/declare`, `engine/dough-params`, `engine/examp
 Exported by its entry point, `src/library.ts` (48): `AXES`, `AXIS_NAMES`, `Axis`, `CENTRE`, `DOUGH_PARAMS`, `DOUGH_SOURCES`, `EXAMPLES`, `Example`, `ExampleKey`, `FoundInstrument`, `INSTRUMENT_REACH`, `LIBRARY`, `MIDI_FILE`, `NOTE_NAMES`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SCALES`, `SLOTS`, `STYLES`, `Style`, `TONAL_SCALES`, `TUTORIAL`, `TagKind`, `VOICE_KIT`, `VoicedPart`, `bandAt`, `bandLine`, `bjorklund`, `canonicalTags`, `fromId`, `headOf`, `instrumentsAt`, `midiOf`, `mod`, `modeBrightness`, `modeName`, `nearestStyle`, `noteName`, `parseTag`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `tagKind`, `tagName`, `usesOf`.
 
 On the root index today (24): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example`, `ExampleKey`, `FoundInstrument`, `LIBRARY`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SLOTS`, `STYLES`, `Style`, `VoicedPart`, `bandAt`, `instrumentsAt`, `nearestStyle`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `usesOf`.
+
+#### On the root index, planned for no entry point
+
+`SECTION_KINDS` (repository/sectionkinds), `isSectionKind` (repository/sectionkinds).
 
 ### What the frontends reach by a module path
 
