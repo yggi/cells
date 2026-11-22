@@ -167,6 +167,7 @@ export interface ResolvedCell {
     readonly readsSlot?: {
         readonly cell: string;
         readonly slot: number;
+        readonly named?: string;
     };
     /** Cells whose one number the compile read into this cell's table, leaving no reference (`scale(&mode, …)`, `even(&k, &n, &mode)`): the graph draws each into it. */
     readonly valueReads?: readonly string[];

@@ -163,7 +163,7 @@ export interface ResolvedCell {
   /** The cell a meter's swing is read from (`swing=&swing`, a swing alone: `&swing swing=8n:.6`): the graph draws it into the meter. */
   readonly swingFrom?: string;
   /** A cell made for a style's slot read (`lpf=… * &style[bite]`): the style it reads, and the slot's position. The graph draws the style into it. */
-  readonly readsSlot?: { readonly cell: string; readonly slot: number };
+  readonly readsSlot?: { readonly cell: string; readonly slot: number; readonly named?: string };
   /** Cells whose one number the compile read into this cell's table, leaving no reference (`scale(&mode, …)`, `even(&k, &n, &mode)`): the graph draws each into it. */
   readonly valueReads?: readonly string[];
   /**

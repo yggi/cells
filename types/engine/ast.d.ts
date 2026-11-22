@@ -489,6 +489,7 @@ export interface CellDecl {
     readonly readsSlot?: {
         readonly cell: string;
         readonly slot: number;
+        readonly named?: string;
     };
     /** `off`: switched off — silences it and everything that reads through it or plays it. */
     readonly off: boolean;

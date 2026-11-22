@@ -4,7 +4,7 @@ const signed = (n) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${Math.abs(n)}`;
 export function stepLabel(s) {
     switch (s.kind) {
         case 'pick':
-            return pickLabel(s.pick);
+            return s.slot ? `[${s.slot}]` : pickLabel(s.pick);
         case 'delay':
             return s.unit === 'step' ? shiftLabel(-s.by) : `at=${+s.by.toFixed(3)}`;
         case 'degree':

@@ -14,7 +14,7 @@ export function readSlots(parsed) {
         const slots = kind ? SLOTS[kind] : undefined;
         const at = slots?.indexOf(slot) ?? -1;
         if (at >= 0)
-            return { ...rest, pick: { kind: 'at', i: at, abs: true } };
+            return { ...rest, slot, pick: { kind: 'at', i: at, abs: true } };
         diagnostics.push({
             severity: 'error',
             message: kind === 'style' && (slot === 'artic' || slot === 'energy')
