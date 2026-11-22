@@ -3,7 +3,7 @@
  * generated files written again rather than merged by hand
  * (yggi/music-commons#68). `dist/` and `types/` mirror `src/` file by file,
  * and the generated modules and the reference follow the examples, the
- * fragments and the parser's tables, so a conflict in one of them says
+ * fragments and the parser's tables, and `docs/api.md` the entry points, so a conflict in one of them says
  * nothing a person can settle: the tool that wrote it writes it again from
  * the merged sources.
  *
@@ -20,10 +20,10 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** What a generator writes: these paths and what lies under those that end in a slash. */
-export const GENERATED = ['dist/', 'types/', 'src/engine/examples.generated.ts', 'src/repository/seed.generated.ts', 'docs/language/reference.md'] as const;
+export const GENERATED = ['dist/', 'types/', 'src/engine/examples.generated.ts', 'src/repository/seed.generated.ts', 'docs/language/reference.md', 'docs/api.md'] as const;
 
-/** The generators, in the order one feeds the next: the generated modules before what compiles them. */
-export const REGENERATE = ['examples', 'fragments', 'reference', 'types', 'dist'] as const;
+/** The generators, in the order one feeds the next: the generated modules before what compiles them, the API's ledger last (it reads the entry points, #854). */
+export const REGENERATE = ['examples', 'fragments', 'reference', 'types', 'dist', 'api'] as const;
 
 /** Whether a generator writes `path`. */
 export const isGenerated = (path: string): boolean => GENERATED.some((g) => (g.endsWith('/') ? path.startsWith(g) : path === g));
