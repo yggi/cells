@@ -4,11 +4,9 @@ tags: [genre:electronic, sound]
 description: "A Berlin-school patch on the modules: two oscillators into one resonant low-pass, its cutoff patched from a contour and a slow LFO, its resonance from a sample and hold, then an amp and an echo."
 ---
 
+A modular synthesizer's patch, each module a line and each cable a reference. Two oscillators an octave apart into one resonant low-pass (a VCF after a mixer: decision 067), its cutoff patched from a contour on every note and a slow LFO, its resonance from a sample and hold; then an amp, and an echo. A sixteen-step sequencer in A minor, moved every two bars, plays it.
+
 ```cells
-# Patchbay: a modular synthesizer's patch, each module a line and each cable a reference. Two oscillators an octave apart
-# into one resonant low-pass (a VCF after a mixer: decision 067), its cutoff patched from a contour on every note and a
-# slow LFO, its resonance from a sample and hold; then an amp, and an echo. A sixteen-step sequencer in A minor, moved
-# every two bars, plays it.
 &patchNote label="Each module is a fragment: its jacks are its parameters, a knob at its default until a cable (a cell) is patched in: lowpass(eg=&contour, cutoff=&sweep, res=&jitter)." about=(&vcf &vca)
 &modNote label="The modulation: a contour on every note (&contour), an LFO once every eight bars (&sweep), a value at random each eighth, held (&jitter)." about=(&contour &sweep &jitter)
 &bar from meter &tempo

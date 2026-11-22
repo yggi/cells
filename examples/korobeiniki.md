@@ -4,12 +4,10 @@ tags: [genre:world, genre:electronic, genre:folk, genre:8-bit, tonal, arrangemen
 description: "Korobeiniki, in the form of the puzzle game's music: A · A · B · B · A, and round again."
 ---
 
+The Russian folk song a famous puzzle game made its own, as a 1980s console would play it: pulse waves are braids, the bass a stepped triangle, chords are arpeggios too fast to hear apart. In the game's form: the song (A), then a slower middle section (B, our own), then the song again, and round.
+
 ```cells
 * from style=&chiptune
-# Korobeiniki — the Russian folk song a famous puzzle game made its own — as a
-# 1980s console would play it: pulse waves are braids, the bass a stepped triangle,
-# chords are arpeggios too fast to hear apart. In the game's form: the song (A),
-# then a slower middle section (B, our own), then the song again — and round.
 &formNote label="&tetris picks the parts, eight bars a step." about=&tetris
 &sectionsNote label="A is the folk song; B, slower, in half notes, is our own." about=(&tune &chorale)
 &bar from meter &tempo
