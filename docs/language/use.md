@@ -113,6 +113,7 @@ uses:
 - `lockfileOf(file)` reads it, for the compile's `locked`; a recorded hash the library no longer gives plays the current version, with a warning naming the id.
 - `withLockfile(file, result.takes)` records a compile's hashes; `writePiece` drops an entry no `from` line names.
 - A document's part is locked by its key and its head, `kinderlied/twinkle`, its hash its part's: two parts of one document are two entries, and the piece's own lines move neither.
+- **A plugin-fragment's braid fills** keep their answers beside `uses`, in `answers:` ([plugin-wire.md](plugin-wire.md#in-the-lockfile)): `answersOf(file)` reads them, for the compile's `answers`, and `withLockfile` records them.
 - A raw text, or a file with no frontmatter, has no lockfile: it plays the current version, always.
 
 ## Normalise and the measure

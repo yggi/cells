@@ -6,6 +6,32 @@ import { MOVED, RENAMED_IDS } from "./renamed.js";
 import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
 import { BY_FRAGMENT } from "./fills.js";
 import { WIRE, wireArg } from "./wire.js";
+export const argsHash = (args) => `a1:${hash64(JSON.stringify(Object.keys(args)
+    .sort()
+    .map((k) => [k, args[k]])))}`;
+function fillOrder(uses, plugin, say) {
+    const gives = uses.map((u, i) => (plugin(i) ? (u.from.names ?? []).map((n) => n.slice(1)) : []));
+    const reads = uses.map((u) => [...[...(u.from.args ?? []).map((a) => a.value), u.from.main ?? ''].join(' ').matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]));
+    const after = uses.map((_, i) => uses.flatMap((_, j) => (j !== i && gives[j].some((n) => reads[i].includes(n)) ? [j] : [])));
+    const order = [];
+    const left = new Set(uses.map((_, i) => i));
+    while (left.size) {
+        const next = [...left].find((i) => after[i].every((j) => !left.has(j)));
+        if (next === undefined) {
+            const stuck = [...left];
+            for (const i of stuck) {
+                const other = after[i].find((j) => left.has(j));
+                if (other !== undefined)
+                    say(i, `${quoted(uses[i].id)} and ${quoted(uses[other].id)} read each other's fills: neither can be answered first (decision 085 §8.3)`);
+            }
+            order.push(...stuck);
+            break;
+        }
+        order.push(next);
+        left.delete(next);
+    }
+    return order;
+}
 const withoutFrom = (text) => text
     .split('\n')
     .filter((raw) => !readFrom(splitComment(raw)[0].trim()))
@@ -590,10 +616,20 @@ function instantiate(from, id, signature, path, text, resolve, run, say, taken, 
         if (FILL.test(code)) {
             const plugin = run.plugins.get(id);
             const fill = plugin?.fills[p];
-            if (plugin && fill && fill.lap === undefined) {
-                const answer = answered(id, p, () => fill.fuel === undefined
-                    ? { refused: `its fill ${p} declares no fuel, and a braid fill must (decision 085 §8)` }
-                    : withArgs(argsOf(), (args) => plugin.fill(p, 0, args, fill.fuel)), say);
+            if (plugin ? fill && fill.lap === undefined : run.locked.some((x) => x.id === id && x.fill === p)) {
+                const given = argsOf();
+                let answer = 'args' in given ? null : given;
+                if ('args' in given) {
+                    const key = argsHash(given.args);
+                    const kept = run.locked.find((x) => x.id === id && x.fill === p && x.args === key);
+                    answer = kept
+                        ? kept.text
+                        : plugin && fill
+                            ? answered(id, p, () => fill.fuel === undefined ? { refused: `its fill ${p} declares no fuel, and a braid fill must (decision 085 §8)` } : plugin.fill(p, 0, given.args, fill.fuel), say)
+                            : null;
+                    if (typeof answer === 'string')
+                        run.made.push({ id, fill: p, args: key, text: answer });
+                }
                 if (typeof answer === 'string')
                     code = code.replace(FILL, `$1${answer}`);
                 else if (answer)
@@ -623,7 +659,6 @@ function instantiate(from, id, signature, path, text, resolve, run, say, taken, 
     const given = { id, names: new Set(sharing.map((l) => l.name)), lines: sharing, resolved: true };
     return { taken: given, copy, args: Object.fromEntries(values) };
 }
-const withArgs = (given, call) => 'args' in given ? call(given.args) : given;
 function answered(id, fill, call, say) {
     try {
         return call();
@@ -677,7 +712,7 @@ function forwardsTo(text) {
     const only = lines.length === 1 ? lines[0].from : null;
     return only?.kind === 'use' && !only.head.length && !only.args && only.main === null ? only.id : null;
 }
-export function expansion(text, { resolve, locked = [], old = false, plugins: theirs = [] } = {}) {
+export function expansion(text, { resolve, locked = [], old = false, plugins: theirs = [], answers: lockedAnswers = [] } = {}) {
     const plugins = theirs.length ? new Map([...BY_FRAGMENT, ...theirs.map((f) => [f.fragment, f])]) : BY_FRAGMENT;
     const own = linesOf(text);
     const uses = own.flatMap((l) => {
@@ -694,13 +729,15 @@ export function expansion(text, { resolve, locked = [], old = false, plugins: th
     const copies = [];
     const args = [];
     const parts = [];
+    const answers = uses.map(() => []);
     const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
+    const copiedSoFar = [];
     const level = {
         defines: new Set(taken),
         reads: new Map(own.flatMap((l) => (l.name ? [[l.name, l.reads]] : []))),
         codes: new Map(own.flatMap((l) => (l.name ? [[l.name, l.code]] : []))),
     };
-    const used = uses.map((u) => {
+    const takeOf = (u, i) => {
         const { id } = u;
         const names = namesOf(u);
         const span = spanOf(u.line);
@@ -713,17 +750,17 @@ export function expansion(text, { resolve, locked = [], old = false, plugins: th
         const whole = resolve ? (moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []))) : null;
         const picked = whole === null ? null : pickPart(id, whole, u.from, say);
         const theirs = picked?.text ?? null;
-        parts.push(picked?.part);
+        parts[i] = picked?.part;
         if (theirs === null) {
             if (whole === null)
                 say(resolve ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
-            hashes.push(null);
-            copies.push([]);
-            args.push(undefined);
+            hashes[i] = null;
+            copies[i] = [];
+            args[i] = undefined;
             return { id, names, lines: [], resolved: false };
         }
         const hash = fragmentHash(theirs);
-        hashes.push(hash);
+        hashes[i] = hash;
         if (recorded && !hashIs(recorded, theirs))
             diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });
         const word = RENAMED_IDS.get(id);
@@ -735,15 +772,25 @@ export function expansion(text, { resolve, locked = [], old = false, plugins: th
         const binding = old
             ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message) => diagnostics.push({ severity: 'warning', message, span }) }
             : undefined;
-        const g = give(u, [id], theirs, resolve, { plugins, warn: (message) => diagnostics.push({ severity: 'warning', message, span }), context: withoutFrom(text) }, say, taken, binding, {
+        const g = give(u, [id], theirs, resolve, {
+            plugins,
+            warn: (message) => diagnostics.push({ severity: 'warning', message, span }),
+            context: [withoutFrom(text), ...copiedSoFar].join('\n'),
+            locked: lockedAnswers,
+            made: answers[i],
+        }, say, taken, binding, {
             ...level,
             warn: (message) => diagnostics.push({ severity: 'warning', message, span }),
         });
         const step = { id: null, line: u.line.line };
-        copies.push(via(g.copy, step));
-        args.push(g.args);
+        copies[i] = via(g.copy, step);
+        args[i] = g.args;
+        copiedSoFar.push(...g.copy.map((l) => l.code));
         return { ...g.taken, lines: via(g.taken.lines, step) };
-    });
+    };
+    const used = [];
+    for (const i of fillOrder(uses, (i) => plugins.has(uses[i].id), (i, message) => diagnostics.push({ severity: 'error', message, span: spanOf(uses[i].line) })))
+        used[i] = takeOf(uses[i], i);
     const merged = merge([...own, ...copies.flat()], used, (i, message) => diagnostics.push({ severity: 'error', message, span: spanOf(uses[i].line) }), 'the piece');
     uses.forEach((u, i) => {
         const { gave, overrode, read } = merged.per[i];
@@ -781,6 +828,7 @@ export function expansion(text, { resolve, locked = [], old = false, plugins: th
                 overrode: merged.per[i].overrode,
                 ...(args[i] ? { args: args[i] } : {}),
                 ...(parts[i] ? { part: parts[i] } : {}),
+                ...(answers[i].length ? { answers: answers[i] } : {}),
             };
         }),
         given: new Set(added.flatMap((l) => (l.name && l.shared ? [l.name] : []))),

@@ -37,7 +37,7 @@ import type { Diagnostic, Span } from './ast';
 import { STYLE } from './style';
 import { MOVED, RENAMED_IDS } from './renamed';
 import { BOUND_BY_NAME, byNameMessage } from './byname';
-import type { CompileOptions, Origin, Resolve, Take } from './program';
+import type { CompileOptions, LockedAnswer, Origin, Resolve, Take } from './program';
 import { BY_FRAGMENT, type PluginFragment, type Refusal } from './fills';
 import { WIRE, wireArg } from './wire';
 
@@ -50,6 +50,48 @@ interface Run {
   readonly warn: (message: string) => void;
   /** The text the `from` line stands in, its `from` lines left out: where a braid fill's arguments are read (085 §8.3). */
   readonly context: string;
+  /** The braid fills' answers the lockfile recorded (085 §8.2): one found plays without its code being asked. */
+  readonly locked: readonly LockedAnswer[];
+  /** Where each braid fill's answer is written, for the lockfile. */
+  readonly made: LockedAnswer[];
+}
+
+/** The key a braid fill's arguments are recorded by in a lockfile: a hash of their core, each name with its text (085 §8.2). */
+export const argsHash = (args: Readonly<Record<string, string>>): string =>
+  `a1:${hash64(
+    JSON.stringify(
+      Object.keys(args)
+        .sort()
+        .map((k) => [k, args[k]]),
+    ),
+  )}`;
+
+/**
+ * The order a text's `from` lines are taken in: as written, but one whose arguments read a name a plugin-fragment's line
+ * gives after that line, so a fill is handed as its answer (085 §8.3). Two that read each other's: an error on each,
+ * naming both, and taken as written.
+ */
+function fillOrder(uses: readonly { readonly id: string; readonly from: FromUse }[], plugin: (i: number) => boolean, say: (i: number, message: string) => void): number[] {
+  const gives = uses.map((u, i) => (plugin(i) ? (u.from.names ?? []).map((n) => n.slice(1)) : []));
+  const reads = uses.map((u) => [...[...(u.from.args ?? []).map((a) => a.value), u.from.main ?? ''].join(' ').matchAll(/&([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]!));
+  const after = uses.map((_, i) => uses.flatMap((_, j) => (j !== i && gives[j]!.some((n) => reads[i]!.includes(n)) ? [j] : [])));
+  const order: number[] = [];
+  const left = new Set(uses.map((_, i) => i));
+  while (left.size) {
+    const next = [...left].find((i) => after[i]!.every((j) => !left.has(j)));
+    if (next === undefined) {
+      const stuck = [...left];
+      for (const i of stuck) {
+        const other = after[i]!.find((j) => left.has(j));
+        if (other !== undefined) say(i, `${quoted(uses[i]!.id)} and ${quoted(uses[other]!.id)} read each other's fills: neither can be answered first (decision 085 §8.3)`);
+      }
+      order.push(...stuck);
+      break;
+    }
+    order.push(next);
+    left.delete(next);
+  }
+  return order;
 }
 
 /** A text with its `from` lines left out (a signature's, a use's): what an argument written beside them reads. */
@@ -851,16 +893,27 @@ function instantiate(
       const fill = plugin?.fills[p];
       // (a braid fill, no lap: answered here, once, its text in place of fill(), so everything after reads steps, 085 §4;
       // refused, it says why on the from line and stays unanswered, playing nothing, 085 §8)
-      if (plugin && fill && fill.lap === undefined) {
-        const answer = answered(
-          id,
-          p,
-          () =>
-            fill.fuel === undefined
-              ? { refused: `its fill ${p} declares no fuel, and a braid fill must (decision 085 §8)` }
-              : withArgs(argsOf(), (args) => plugin.fill(p, 0, args, fill.fuel)),
-          say,
-        );
+      // (the lockfile's answer for these arguments plays as recorded, with or without the code, 085 §8.2: a host
+      // verifies it when it can; one it answers anew is recorded)
+      if (plugin ? fill && fill.lap === undefined : run.locked.some((x) => x.id === id && x.fill === p)) {
+        const given = argsOf();
+        let answer: string | Refusal | null = 'args' in given ? null : given;
+        if ('args' in given) {
+          const key = argsHash(given.args);
+          const kept = run.locked.find((x) => x.id === id && x.fill === p && x.args === key);
+          answer = kept
+            ? kept.text
+            : plugin && fill
+              ? answered(
+                  id,
+                  p,
+                  () =>
+                    fill.fuel === undefined ? { refused: `its fill ${p} declares no fuel, and a braid fill must (decision 085 §8)` } : plugin.fill(p, 0, given.args, fill.fuel),
+                  say,
+                )
+              : null;
+          if (typeof answer === 'string') run.made.push({ id, fill: p, args: key, text: answer });
+        }
         if (typeof answer === 'string') code = code.replace(FILL, `$1${answer}`);
         else if (answer) run.warn(`${quoted(id)} refused: ${answer.refused}`);
       }
@@ -888,10 +941,6 @@ function instantiate(
   const given = { id, names: new Set(sharing.map((l) => l.name!)), lines: sharing, resolved: true };
   return { taken: given, copy, args: Object.fromEntries(values) };
 }
-
-/** A call with its arguments, or their refusal as the call's. */
-const withArgs = <T>(given: { readonly args: Record<string, string> } | Refusal, call: (args: Record<string, string>) => T | Refusal): T | Refusal =>
-  'args' in given ? call(given.args) : given;
 
 /**
  * A plugin's answer for a fill (decision 085 §8): its text, or its refusal; a thrown error is a bug in its code, said as an
@@ -972,7 +1021,7 @@ export interface Expansion {
 }
 
 /** The expansion of a text (see the module's comment), its `use` and `from` lines resolved by `options`. */
-export function expansion(text: string, { resolve, locked = [], old = false, plugins: theirs = [] }: CompileOptions = {}): Expansion {
+export function expansion(text: string, { resolve, locked = [], old = false, plugins: theirs = [], answers: lockedAnswers = [] }: CompileOptions = {}): Expansion {
   const plugins: Plugins = theirs.length ? new Map([...BY_FRAGMENT, ...theirs.map((f) => [f.fragment, f] as const)]) : BY_FRAGMENT;
   const own = linesOf(text);
   const uses = own.flatMap((l) => {
@@ -989,13 +1038,16 @@ export function expansion(text: string, { resolve, locked = [], old = false, plu
   const copies: (readonly Line[])[] = [];
   const args: (Readonly<Record<string, string>> | undefined)[] = [];
   const parts: (string | undefined)[] = [];
+  const answers: LockedAnswer[][] = uses.map(() => []);
   const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
+  // (the lines the uses taken so far copied, where a later use's arguments read a fill's answer, 085 §8.3)
+  const copiedSoFar: string[] = [];
   const level: Level = {
     defines: new Set(taken),
     reads: new Map(own.flatMap((l) => (l.name ? [[l.name, l.reads] as const] : []))),
     codes: new Map(own.flatMap((l) => (l.name ? [[l.name, l.code] as const] : []))),
   };
-  const used = uses.map((u): Taken => {
+  const takeOf = (u: (typeof uses)[number], i: number): Taken => {
     const { id } = u;
     const names = namesOf(u);
     const span = spanOf(u.line);
@@ -1009,16 +1061,16 @@ export function expansion(text: string, { resolve, locked = [], old = false, plu
     const whole = resolve ? (moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []))) : null;
     const picked = whole === null ? null : pickPart(id, whole, u.from, say);
     const theirs = picked?.text ?? null;
-    parts.push(picked?.part);
+    parts[i] = picked?.part;
     if (theirs === null) {
       if (whole === null) say(resolve ? `No fragment ${quoted(id)} to use` : `No library to use ${quoted(id)} from: compileSource(text, env, { resolve })`);
-      hashes.push(null);
-      copies.push([]);
-      args.push(undefined);
+      hashes[i] = null;
+      copies[i] = [];
+      args[i] = undefined;
       return { id, names, lines: [], resolved: false };
     }
     const hash = fragmentHash(theirs);
-    hashes.push(hash);
+    hashes[i] = hash;
     if (recorded && !hashIs(recorded, theirs))
       diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });
     // (an id the seed renamed, which this resolver reads as its word: the old way for a minor version, #387)
@@ -1035,7 +1087,13 @@ export function expansion(text: string, { resolve, locked = [], old = false, plu
       [id],
       theirs,
       resolve!,
-      { plugins, warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }), context: withoutFrom(text) },
+      {
+        plugins,
+        warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }),
+        context: [withoutFrom(text), ...copiedSoFar].join('\n'),
+        locked: lockedAnswers,
+        made: answers[i]!,
+      },
       say,
       taken,
       binding,
@@ -1045,10 +1103,19 @@ export function expansion(text: string, { resolve, locked = [], old = false, plu
       },
     );
     const step = { id: null, line: u.line.line };
-    copies.push(via(g.copy, step));
-    args.push(g.args);
+    copies[i] = via(g.copy, step);
+    args[i] = g.args;
+    copiedSoFar.push(...g.copy.map((l) => l.code));
     return { ...g.taken, lines: via(g.taken.lines, step) };
-  });
+  };
+  // (in the order their fills depend on each other, 085 §8.3: else as written)
+  const used: Taken[] = [];
+  for (const i of fillOrder(
+    uses,
+    (i) => plugins.has(uses[i]!.id),
+    (i, message) => diagnostics.push({ severity: 'error', message, span: spanOf(uses[i]!.line) }),
+  ))
+    used[i] = takeOf(uses[i]!, i);
   const merged = merge([...own, ...copies.flat()], used, (i, message) => diagnostics.push({ severity: 'error', message, span: spanOf(uses[i]!.line) }), 'the piece');
   // (a use that adds nothing says so: what it names the piece defines, or an earlier use of its id took it all; a copy
   // of a template always adds its own)
@@ -1082,6 +1149,7 @@ export function expansion(text: string, { resolve, locked = [], old = false, plu
         overrode: merged.per[i]!.overrode,
         ...(args[i] ? { args: args[i] } : {}),
         ...(parts[i] ? { part: parts[i] } : {}),
+        ...(answers[i]!.length ? { answers: answers[i] } : {}),
       };
     }),
     // (a copy's lines are the piece's own, as if written there: the built-in card hears them; what was taken by name isn't)
