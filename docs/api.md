@@ -58,7 +58,7 @@ Planned modules: `engine/attributes`, `engine/clocking`, `engine/duration`, `eng
 
 Exported by its entry point, `src/inspect.ts` (101): `ATTRIBUTES`, `BODIES`, `CELL_KINDS`, `CORE`, `CellKind`, `DEFAULT_FREQ`, `EPS`, `EdgeTransform`, `Flow`, `GraphEdge`, `GraphModel`, `GraphNode`, `LABEL_FIELDS`, `Leaf`, `Meter`, `ParamTrack`, `PieceTime`, `ROOT`, `Read`, `SwingLevel`, `TIME_PARAMS`, `WrittenGraph`, `adsrOf`, `anchoredAt`, `beatCount`, `canonicalParam`, `cellId`, `clockTapId`, `clockText`, `clocking`, `durationText`, `edgeId`, `edgeLabel`, `entries`, `feeds`, `filterModel`, `flatten`, `flows`, `fmLines`, `fmWave`, `footOf`, `formOf`, `gridName`, `harmonics`, `heldAt`, `isAttribute`, `isCellNode`, `isJunction`, `isMidiCard`, `isPicked`, `isTurntable`, `keepsTime`, `kitOf`, `lapOf`, `lastNoteAt`, `lawAt`, `leaves`, `lookup`, `mainLength`, `mainTempo`, `meterOfFrame`, `netsOf`, `noteValue`, `notesAt`, `outs`, `ownRate`, `period`, `physicsOf`, `pickIndices`, `pieceStats`, `pieceTime`, `playedCells`, `positionOf`, `readThrough`, `readsOf`, `refsOf`, `resolveIn`, `resolvePitch`, `sections`, `selects`, `semitones`, `shiftedUnits`, `shiftsAt`, `slots`, `soundRole`, `stepEdgeId`, `stepsAt`, `stepsOf`, `stepsPerSecond`, `structureKey`, `swungPlace`, `tableChain`, `tapShare`, `tapeMotion`, `tapped`, `transformLabel`, `valueAt`, `valuesAt`, `waveform`, `writtenGraph`, `writtenPlace`.
 
-On the root index today (6): `Read`, `formOf`, `meterOfFrame`, `readsOf`, `swungPlace`, `writtenPlace`.
+On the root index today (7): `Read`, `RefAtom`, `formOf`, `meterOfFrame`, `readsOf`, `swungPlace`, `writtenPlace`.
 
 #### `@yggi/cells/midi`
 
