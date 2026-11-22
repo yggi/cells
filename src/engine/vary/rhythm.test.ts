@@ -186,9 +186,10 @@ describe("Jambot's variations on E31's eight drum bars, reproduced", () => {
     expect([by('rotate'), by('drop'), by('add'), by('rotate') + by('drop') + by('add')]).toEqual([18, 81, 185, 284]);
   });
 
+  // (284 variations compiled and read, 15 s with the others running: its own timeout, #867)
   it('each read back by Jambot’s reader as the hits Jambot’s gives, in the same order: role, note, step, velocity', () => {
     for (const b of ALL) for (const [k, text] of texts(b).entries()) expect(readRhythm(text), `${b.preset}, ${b.mine[k]!.by}`).toEqual(b.jambot[k]);
-  });
+  }, 60_000);
 });
 
 /** What a text plays over its first bar for S2: each event's voice, onset, length and pitch, as `playsSameNotes` keys it. */
@@ -201,6 +202,7 @@ function notesOf(fragment: string): string {
 }
 
 describe('what a variation is', () => {
+  // (284 variations compiled and played, 10 s: its own timeout, #867)
   it('none of the 284 plays the notes of its source or of another variation of it (S2)', () => {
     for (const b of ALL) {
       const played = [b.fragment, ...texts(b)].map(notesOf);
@@ -209,7 +211,7 @@ describe('what a variation is', () => {
       expect(compileSource(inKit(b.fragment), undefined, { resolve: resolveSeed }).ok, b.preset).toBe(true);
       for (const text of texts(b)) expect(playsSameNotes(inKit(b.fragment), inKit(text), 2, { resolve: resolveSeed })).toBe(false);
     }
-  });
+  }, 60_000);
 
   it('none moves an anchor: the kick’s and the backbeat’s lines play as in the source (S3), nor the line kept', () => {
     for (const b of ALL) for (const text of texts(b)) expect(sameNotes(under(b.fragment), under(text), ['kick', 'backbeat', 'fill'])).toBe(true);

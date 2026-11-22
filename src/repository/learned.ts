@@ -114,6 +114,20 @@ const ownNames = (text: string): string[] => {
  * core counts it, `x x` as `x!2` where nothing reads the cell's units (decision 077 §3, #710). Two texts that read alike are one fragment, renamed.
  */
 export function canonicalText(text: string): string {
+  const kept = canonicals.get(text);
+  if (kept !== undefined) return kept;
+  const value = canonicalOf(text);
+  // (bounded: a library's worth of texts, then started afresh)
+  if (canonicals.size >= CANONICALS) canonicals.clear();
+  canonicals.set(text, value);
+  return value;
+}
+
+/** Texts' canonical forms, kept: filing compares a text with every fragment of the library, and re-reading those was 87 % of its 45 ms (#867). */
+const canonicals = new Map<string, string>();
+const CANONICALS = 4096;
+
+function canonicalOf(text: string): string {
   const index = new Map(ownNames(text).map((name, i) => [name, i + 1]));
   // (each run counted as the core counts it, decision 077 §3: where nothing reads a cell's units, `x x` is `x!2`)
   return counts(

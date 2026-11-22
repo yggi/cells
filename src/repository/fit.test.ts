@@ -397,6 +397,7 @@ describe('what it costs', () => {
   // looked for among the workbench's cells, a compile each until a second meets it, so at most one more a cell. A query
   // for k stops at the k-th that fits, so k = 1 tries the first that fits; the same workbench again, every fit cached by
   // its text, the workbench and the argument (`cachedFit`), compiles nothing. Their milliseconds: `timing.slow.test.ts` (#237).
+  // (it compiles the whole library for real, 14 s alone: its own timeout, not the quick 20 s, #867)
   it('a fitting query over the library compiles at most two a fragment for a new workbench, one more a cell where no argument is named, and none the second time', async () => {
     // (the repository loaded afresh, so it compiles through the counted compile: with isolate off, a file that ran earlier
     // in this worker may have loaded it with the real one)
@@ -432,7 +433,7 @@ describe('what it costs', () => {
       // before it looks for its argument among the cells first, within the bound of a whole query)
       expect(tried).toBeLessThanOrEqual(options === named ? 4 : 1 + LIBRARY.length * (2 + cells));
     }
-  });
+  }, 60_000);
 
   it('a cached compile is the compile, and keeps the last texts it was asked for', () => {
     const compiled = cachedCompile(2);
