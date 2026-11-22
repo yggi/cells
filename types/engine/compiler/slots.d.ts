@@ -1,7 +1,8 @@
 /**
  * A pick by name (decision 063): `&env[sustain]`, `&funk[bite]`. The parser reads the name (`Ref.slot`); before
  * anything else compiles, it becomes the slot's position as written (`&env[$2]`), read off the slots the cell's map
- * names (`SLOTS`, style.ts), so no phase after this one sees a name. A cell whose map names no slots, or a name its map
+ * names (`SLOTS`, style.ts), so no phase after this one reads a name: the position is the pick. The name stays on the ref
+ * (`Ref.slot`) for what says a reference as it is written, a wire's label (#858). A cell whose map names no slots, or a name its map
  * lacks, is an error that lists the slots there are; the pick is then dropped (the whole cell is read).
  */
 import type { ParseResult } from '../ast';

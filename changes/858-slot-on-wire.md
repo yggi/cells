@@ -1,0 +1,3 @@
+### Fixed
+
+- **The wire from a style into the cell made for its slot says the slot** (#858): `lpf=250..1600 * &style[bite]` draws the style into the cell compile makes for the slot (#827), and that wire carried no transform where every other wire says its pick. It carries the slot's pick now, and its label is the name as written: `[bite]` for `&style[bite]`, `[$2]` for `&style[$2]` (`TransformStep`'s `pick` gains an optional `slot`, the name a label says; `slots.ts` keeps `Ref.slot` after it has read the position, and `readsSlot` gains `named`). **What a frontend sees at its next pin:** 4 wires in 3 examples gain a label (`style`: `[bite]` and `[mood]`; `song` and `radio`: `[bite]`); no other wire, and no event snapshot or `live` hash, moves.

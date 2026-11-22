@@ -5,7 +5,7 @@ import { resolveSeed } from '../repository/library';
 import { writtenGraph } from './graph';
 import { routing } from './routing';
 import { cellId, edgeId } from './ids';
-import { edgeLabel } from './transform';
+import { edgeLabel, transformLabel } from './transform';
 
 describe('a tap on a belt says itself on its wire (#92)', () => {
   const label = (step: string) => {
@@ -252,6 +252,18 @@ describe('a cell the compile reads by value, or makes for a slot, is still a wir
     const arguments_ = '&key scale(even(&k, &n, &mode), &tonic)';
     for (const name of ['k', 'n', 'mode']) expect(into(arguments_, name), name).toHaveLength(1);
     expect(into('&key scale(dorian, &tonic)', 'mode')).toEqual([]);
+  });
+
+  it('the wire into the cell made for a slot says the slot as it is written: by name, [bite]; by position, [$2] (#858)', () => {
+    const wireOf = (read: string) => {
+      const text = `&calm map=style .3 .45 .55 .55\n&style style=&calm\n&bar meter("4/4") step=100bpm\n&t step=8n 0 1 2\n&v s=sine loop=C4 lpf=250..1600 * ${read}\n&o [&t * &v]`;
+      const { r, edges: all } = edges(text);
+      const made = [...r.cells.values()].find((c) => c.readsSlot?.cell === 'style')!;
+      const wire = all.find((e) => e.from === cellId('style') && e.to === cellId(made.name))!;
+      return { label: transformLabel(wire.transforms[0]!), steps: wire.transforms[0]!.map((t) => t.kind) };
+    };
+    expect(wireOf('&style[bite]')).toEqual({ label: '[bite]', steps: ['pick'] });
+    expect(wireOf('&style[$2]')).toEqual({ label: '[$2]', steps: ['pick'] });
   });
 
   it('a style read by slot is a wire from the style into the cell made for it, and that cell goes on into the reader', () => {

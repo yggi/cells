@@ -281,7 +281,7 @@ export function readStyles(parsed, scope) {
             const factors = pc.factors.map((f) => {
                 const name = cellOf(f);
                 if (name && f.pick?.kind === 'at')
-                    slotReads.set(name, { cell: f.name, slot: f.pick.i });
+                    slotReads.set(name, { cell: f.name, slot: f.pick.i, ...(f.slot ? { named: f.slot } : {}) });
                 return name ? { name, pick: null, shift: 0, span: f.span } : f;
             });
             if (factors.some((f, k) => f !== pc.factors[k]))
