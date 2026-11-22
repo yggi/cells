@@ -1,3 +1,0 @@
-### Added
-
-- **The names an app reached by a module path now have an entry point** (#829, #724): `@yggi/cells` exports `eventsBetween`, `chanceOf`, `outputPlays`, `outputSounds`, `liveGains`, `returnGains`, `isPhysical`, `retime`, `tapeSpeeds`, `emptyWindow`, `grabIn`, `codeShifts` and `resetPhysics`; `@yggi/cells/inspect` exports `adsrOf`, `isMidiCard`, `keepsTime`, `pickIndices`, `BODIES`, `DEFAULT_FREQ`, `LABEL_FIELDS`, `ROOT` and `lawAt`; `@yggi/cells/library` exports `VOICE_KIT`, and `@yggi/cells/repository` exports `readFrom`. Each name is the one a module path already gave, and the module paths still work. The view's names (`positionHue`, `positionOctave`, `freqHue`, `pitchHue`, `SHOWS`) are not exported: they move to Cell studio (decision 086).

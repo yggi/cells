@@ -28,6 +28,7 @@ export {
   type WeightedPoint,
 } from './repository/fragments';
 export { canonicalText, fileFragment, renamedLayer, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
+export { axedLayer, migrateLayer, MOVED_IDS, movedLayer, movedText, roledLayer, signedLayer } from './repository/migratelayer';
 export { cachedFit, declarations, fitsAs, useOn, type FitAs, type UseOn, type UseOnOptions } from './repository/fit';
 export { holesOf, type ClockNeed, type Holes } from './repository/holes';
 export { readFragment, readFragments, writeFragment, type FragmentFile, type FragmentFileProblems, type LibraryFile, type Meta } from './repository/files';

@@ -1,0 +1,104 @@
+{
+ "lifted": "yggi/jambot packages/engine/src/kept-twinkle.fixture.json, its `layer`, @ d52f259: a learned layer as Jambot kept it at cells v0.24.0, holding the filed Twinkle (#660)",
+ "layer": {
+  "filed": [
+   {
+    "fragment": {
+     "id": "soloist song 3, bar 8",
+     "text": "&lead over=&key step=16n ~ ~ ~ ~ 0 ~ 2 4 ~ ~ ~ ~ 4 ~ 2 ~",
+     "association": [
+      {
+       "point": {
+        "sync": 0.3,
+        "harm": 0.45,
+        "bite": 0.55,
+        "mood": 0.5
+       },
+       "weight": 0.1,
+       "facet": "lead"
+      }
+     ]
+    },
+    "meta": {
+     "source": "soloist",
+     "created": "song 3, bar 8",
+     "tags": [
+      "lead line"
+     ]
+    },
+    "prose": ""
+   },
+   {
+    "fragment": {
+     "id": "Cy song 3, bar 8",
+     "text": "&twinkle from twinkle &key\n&wonder from wonder &key\n&lead from ternary(answer=&wonder) &twinkle",
+     "association": [
+      {
+       "point": {
+        "sync": 0.3,
+        "harm": 0.45,
+        "bite": 0.55,
+        "mood": 0.5
+       },
+       "weight": 0.4,
+       "facet": "lead"
+      }
+     ]
+    },
+    "meta": {
+     "source": "Cy",
+     "created": "song 3, bar 8",
+     "tags": [
+      "lead line"
+     ]
+    },
+    "prose": ""
+   }
+  ],
+  "points": [
+   {
+    "id": "meter",
+    "point": {
+     "sync": 0.3,
+     "harm": 0.45,
+     "bite": 0.55
+    },
+    "weight": 1.2,
+    "facet": "meter"
+   },
+   {
+    "id": "synth_pop_drums",
+    "point": {
+     "sync": 0.3,
+     "harm": 0.45,
+     "bite": 0.55
+    },
+    "weight": 1.2,
+    "facet": "rhythm"
+   }
+  ],
+  "together": [
+   {
+    "ids": [
+     "meter",
+     "synth_pop_drums"
+    ],
+    "count": 5
+   },
+   {
+    "ids": [
+     "meter",
+     "soloist song 3, bar 8"
+    ],
+    "count": 1
+   },
+   {
+    "ids": [
+     "meter",
+     "Cy song 3, bar 8"
+    ],
+    "count": 4
+   }
+  ]
+ }
+}

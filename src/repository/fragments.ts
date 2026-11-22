@@ -328,7 +328,20 @@ export function createRepository(given: readonly Fragment[]): Repository {
   const fits = cachedFit(resolverOf(seed));
   const alone: Merged = { fragments: seed, filed: new Set(), together: new Map(), unheld: [] };
 
+  // A layer is never changed (filing and use return a new one, `learned.ts`), so it merges alike at every query, and merging counts
+  // every pair it holds: 25 ms for a layer of every pair of the library, 35 times a query's own cost (#840). Kept by the layer
+  // object, and merged again if its lists have grown or shrunk in place, which is no way to change one.
+  const mergedBy = new WeakMap<LearnedLayer, { readonly sizes: string; readonly value: Merged }>();
+  const sizesOf = (l: LearnedLayer) => `${l.filed?.length}|${l.points?.length}|${l.together?.length}`;
   function merge(layer: LearnedLayer): Merged {
+    const kept = typeof layer === 'object' && layer !== null ? mergedBy.get(layer) : undefined;
+    if (kept && kept.sizes === sizesOf(layer)) return kept.value;
+    const value = mergeLayer(layer);
+    if (typeof layer === 'object' && layer !== null) mergedBy.set(layer, { sizes: sizesOf(layer), value });
+    return value;
+  }
+
+  function mergeLayer(layer: LearnedLayer): Merged {
     const wrong = layerProblems(layer);
     for (const { fragment } of Array.isArray(layer.filed) ? layer.filed : []) if (seen.has(fragment?.id)) wrong.push(`the layer files ${fragment.id}, a seed fragment's id`);
     if (wrong.length) throw new Error(`A malformed learned layer: ${wrong.join('; ')}`);
