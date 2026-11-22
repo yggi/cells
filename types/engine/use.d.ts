@@ -1,6 +1,8 @@
 import { type FromForm } from './parser/use';
 import type { Diagnostic, Span } from './ast';
 import type { CompileOptions, Origin, Resolve, Take } from './program';
+/** The key a braid fill's arguments are recorded by in a lockfile: a hash of their core, each name with its text (085 §8.2). */
+export declare const argsHash: (args: Readonly<Record<string, string>>) => string;
 /** How deep `from` lines nest: a kit in a groove in a section in a piece is 3. */
 export declare const FROM_DEPTH = 8;
 /**
@@ -69,7 +71,7 @@ export interface Expansion {
     readonly origins: ReadonlyMap<string, readonly Origin[]>;
 }
 /** The expansion of a text (see the module's comment), its `use` and `from` lines resolved by `options`. */
-export declare function expansion(text: string, { resolve, locked, old, plugins: theirs }?: CompileOptions): Expansion;
+export declare function expansion(text: string, { resolve, locked, old, plugins: theirs, answers: lockedAnswers }?: CompileOptions): Expansion;
 /**
  * A piece's expansion written out (decision 054; #177's `inline`, Cell studio's "write out"): its own lines, its `use`
  * lines gone, then the used lines it doesn't define. A `use` that doesn't resolve stays, so nothing is lost.

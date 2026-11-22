@@ -19,6 +19,8 @@ function keyProblems(root) {
             problems.push({ line, message: `the tier is ${JSON.stringify(v)}: a tier of the tutorial is a whole number, 1 to 9999` });
         if (key === 'uses' && !(Array.isArray(v) && v.every(isLocked)))
             problems.push({ line, message: `the uses are ${JSON.stringify(v)}, not a lockfile: uses: a list of - id: gm_kit, hash: e2:…` });
+        if (key === 'answers' && !(Array.isArray(v) && v.every(isAnswer)))
+            problems.push({ line, message: `the answers are ${JSON.stringify(v)}, not a lockfile's: answers: a list of - id: …, fill: …, args: a1:…, text: …` });
     }
     return problems;
 }
@@ -53,6 +55,17 @@ function isLocked(v) {
     const m = v;
     return Object.keys(m).sort().join() === 'hash,id' && typeof m.id === 'string' && typeof m.hash === 'string';
 }
+function isAnswer(v) {
+    if (typeof v !== 'object' || v === null || Array.isArray(v))
+        return false;
+    const m = v;
+    return Object.keys(m).sort().join() === 'args,fill,id,text' && ['id', 'fill', 'args', 'text'].every((k) => typeof m[k] === 'string');
+}
+export const answersOf = ({ frontmatter }) => Array.isArray(frontmatter.answers) ? frontmatter.answers.filter(isAnswer).map(({ id, fill, args, text }) => ({ id, fill, args, text })) : [];
+const answersIn = (takes) => {
+    const all = takes.flatMap((u) => u.answers ?? []);
+    return all.filter((a, i) => all.findIndex((b) => b.id === a.id && b.fill === a.fill && b.args === a.args) === i);
+};
 const asYaml = (entries) => entries.map(({ id, hash }) => ({ id, hash }));
 export const lockfileOf = ({ frontmatter }) => Array.isArray(frontmatter.uses) ? frontmatter.uses.filter(isLocked).map(({ id, hash }) => ({ id, hash })) : [];
 function lockedOf(takes, had) {
@@ -61,7 +74,16 @@ function lockedOf(takes, had) {
     return entries.filter((k, i) => entries.findIndex((e) => e.id === k.id) === i);
 }
 export function withLockfile(file, takes) {
-    return { ...file, frontmatter: { ...file.frontmatter, uses: asYaml(lockedOf(takes, lockfileOf(file))) } };
+    const answers = answersIn(takes);
+    const { answers: _had, ...rest } = file.frontmatter;
+    return {
+        ...file,
+        frontmatter: {
+            ...rest,
+            uses: asYaml(lockedOf(takes, lockfileOf(file))),
+            ...(answers.length ? { answers: answers.map(({ id, fill, args, text }) => ({ id, fill, args, text })) } : {}),
+        },
+    };
 }
 export const textLockfile = (text, resolve) => lockedOf(expansion(text, { resolve }).takes, []);
 export function lockChanges(text, locked, resolve) {

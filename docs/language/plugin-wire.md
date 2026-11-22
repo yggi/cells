@@ -40,4 +40,20 @@ A braid fill is filled once, and its code can't draw cells' chance. So an argume
 - more than one key;
 - **a key that moves** (a stepped tonic or mode).
 
-Not yet: **a fill as an argument**, handed as its answer in the order the fills depend on each other. It comes with each braid fill's answer in the lockfile (#792, 6d's second step).
+## A fill as an argument
+
+A braid fill's answer is handed to another as text, like any argument: `&x from countercell3 &h`, where `&h` is filled by another plugin-fragment's `from` line, hands `&x`'s code the steps `&h` was answered with. The `from` lines are taken in the order their fills depend on each other, as written otherwise. Two that read each other's fills are an error naming both. A stream's fill (a law's laps) or a refused fill has no answer to hand, and is refused.
+
+## In the lockfile
+
+Each braid fill's answer is recorded in a piece file's frontmatter, beside its `uses` (decision 085 §8.2):
+
+```yaml
+answers:
+  - id: countercell3
+    fill: upper
+    args: a1:…
+    text: 7 9 11@2 9
+```
+
+`args` is a hash of the arguments as the wire hands them, so a renamed text keeps its answers. A piece opens playing its recorded answers without asking the code, and a host verifies them when it can. Arguments edited since are answered anew, and with no code, the fill stays unanswered. A frontend that reads no answers keeps its `uses` entries.

@@ -42,7 +42,7 @@
  */
 import { type CodeLine, type Layout } from './literate';
 import { type YamlProblem, type YamlValue } from '../repository/yaml';
-import type { Locked, Resolve, Take } from './program';
+import type { Locked, LockedAnswer, Resolve, Take } from './program';
 /** The frontmatter, every key in the order the file gives it. */
 export type PieceFrontmatter = {
     readonly [key: string]: YamlValue;
@@ -72,6 +72,11 @@ export interface PieceFileProblems {
 export declare const isPieceFile: (source: string) => boolean;
 /** A piece file read: its frontmatter, its text and its prose, or what is wrong with it, each problem naming its line. */
 export declare function readPiece(markdown: string): PieceFile | PieceFileProblems;
+/**
+ * A piece file's braid fills' answers (decision 085 §8.2), for `compileSource`'s `answers`: beside its `uses`, in a key of
+ * their own, so a frontend that reads no answers keeps its `uses` entries.
+ */
+export declare const answersOf: ({ frontmatter }: Pick<PieceFile, "frontmatter">) => LockedAnswer[];
 /** A piece file's lockfile (decision 054): what each `use` resolved to when it was saved, for `compileSource`'s `locked`. */
 export declare const lockfileOf: ({ frontmatter }: Pick<PieceFile, "frontmatter">) => Locked[];
 /**
