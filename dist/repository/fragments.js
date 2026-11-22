@@ -140,7 +140,18 @@ export function createRepository(given) {
     };
     const fits = cachedFit(resolverOf(seed));
     const alone = { fragments: seed, filed: new Set(), together: new Map(), unheld: [] };
+    const mergedBy = new WeakMap();
+    const sizesOf = (l) => `${l.filed?.length}|${l.points?.length}|${l.together?.length}`;
     function merge(layer) {
+        const kept = typeof layer === 'object' && layer !== null ? mergedBy.get(layer) : undefined;
+        if (kept && kept.sizes === sizesOf(layer))
+            return kept.value;
+        const value = mergeLayer(layer);
+        if (typeof layer === 'object' && layer !== null)
+            mergedBy.set(layer, { sizes: sizesOf(layer), value });
+        return value;
+    }
+    function mergeLayer(layer) {
         const wrong = layerProblems(layer);
         for (const { fragment } of Array.isArray(layer.filed) ? layer.filed : [])
             if (seen.has(fragment?.id))
