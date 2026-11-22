@@ -93,7 +93,7 @@ interface Fills {
 }
 ```
 
-- **The arguments are text:** each argument in its core (§8.3), in a versioned grammar (`wire: 1`); for `necklace`'s numbers that is what's written (`{ k: "7", n: "12" }`). Text in and text out, so no plugin depends on cells' AST, which stays free to change.
+- **The arguments are text:** each argument in its core (§8.3), in a versioned grammar (`wire: 1`, [plugin-wire.md](../language/plugin-wire.md)); for `necklace`'s numbers that is what's written (`{ k: "7", n: "12" }`). Text in and text out, so no plugin depends on cells' AST, which stays free to change.
 - **The answer is a braid**, parsed as any braid is. An error in it points at the fragment and the lap. **Or a refusal** (§8.1): no text, and the reason why.
 - **The plugin never sees time.** Cells computes the lap from the clock, the clock's `anchor=` and the fragment's `origin` (the owner's 1a).
 - **Two things to see in rung 5:**
