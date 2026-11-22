@@ -4,7 +4,7 @@
 import { newPoint } from '../engine/migrate/axes';
 import { describe, expect, it } from 'vitest';
 import { createRepository, type Fragment, type StylePoint } from './fragments';
-import { LIBRARY, ofFacet, resolveSeed, RETIRED } from './library';
+import { isLibraryFragment, LIBRARY, ofFacet, resolveSeed, RETIRED } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { STYLE_FRAGMENTS } from './styles';
 import { seedFragments } from './seed';
@@ -312,5 +312,12 @@ describe('a seed placed for one preset (#404)', () => {
     expect(leaks(unfilled(withoutSynthPopAxis(weighted('haunted_progression', 1))).filter((f) => f.id !== 'dark_cadence'))).toEqual(
       ['Synth-pop', 'Lo-fi hip hop', 'Swing jazz', 'Electro swing'].map((name) => `${name}, harmony: haunted_progression`),
     );
+  });
+});
+
+describe('isLibraryFragment', () => {
+  it('is true of every fragment of the library and of no other id', () => {
+    expect(LIBRARY.every((f) => isLibraryFragment(f.id))).toBe(true);
+    expect(isLibraryFragment('no such fragment')).toBe(false);
   });
 });

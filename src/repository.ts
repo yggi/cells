@@ -22,6 +22,7 @@ export {
   type LearnedPoint,
   type Merged,
   type QueryOptions,
+  type RepositoryOptions,
   type Repository,
   type StylePoint,
   type UsedPair,

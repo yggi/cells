@@ -109,6 +109,19 @@ export interface Repository {
     query(point: StylePoint, k: number, axisWeights?: StylePoint, options?: QueryOptions): Found[];
     /** The seed and a layer merged, as a query sees them; throws on a malformed layer, or one that files a seed's id. */
     merge(layer: LearnedLayer): Merged;
+    /** Whether the repository holds this id, or names it known (`RepositoryOptions.known`): a use together counts for it. */
+    knows(id: string): boolean;
+}
+/** What a repository may be told beside its fragments. */
+export interface RepositoryOptions {
+    /**
+     * Ids the repository doesn't hold but are fragments all the same, the library's (`isLibraryFragment`): a frontend's
+     * repository of one facet's fragments still counts the use of one of them together with a meter's, a bass line's. A pair
+     * of known ids is counted (a query's `chosen` finds it, `useFragments` takes it); a known id has no points here, so a
+     * use of it moves no association (its own repository's does), and a query finds no fragment of it. An id neither held nor
+     * known is as before: left out (`Merged.unheld`), and refused by `useFragments`.
+     */
+    readonly known?: (id: string) => boolean;
 }
 /** The pull of use together a query has where it names none (`QueryOptions.pull`): λ in `coUseScore`. */
 export declare const CO_USE_PULL = 0.1;
@@ -161,4 +174,4 @@ export declare const byId: (a: string, b: string) => number;
  * A repository of these fragments, the seed; it throws on a malformed entry or an id given twice, naming each problem. It
  * keeps nothing between calls but a cache of compiles by text (`cachedFit`), which changes no answer.
  */
-export declare function createRepository(given: readonly Fragment[]): Repository;
+export declare function createRepository(given: readonly Fragment[], { known }?: RepositoryOptions): Repository;

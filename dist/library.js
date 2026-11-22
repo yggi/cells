@@ -1,5 +1,5 @@
 export { bandAt, bandLine, CENTRE, INSTRUMENT_REACH, instrumentsAt, PERFORMER_VOICES, resolveBand, scoreStyle } from "./repository/band.js";
-export { fromId, headOf, LIBRARY, PARTS, resolveSeed, resolverOf, usesOf } from "./repository/library.js";
+export { fromId, headOf, isLibraryFragment, LIBRARY, PARTS, resolveSeed, resolverOf, usesOf } from "./repository/library.js";
 export { nearestStyle, STYLES } from "./repository/styles.js";
 export { AXES, AXIS_NAMES, SLOTS } from "./engine/style.js";
 export { EXAMPLES } from "./engine/examples.js";
