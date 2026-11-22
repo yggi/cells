@@ -27,6 +27,12 @@ export declare const GUESSED: Readonly<Record<string, readonly string[]>>;
  * the host plays it in 4/4, where its syncopation, which lies in its meter's uneven beats, reads as none.
  */
 export declare function readFragment(text: string, facet: string, resolve: Resolve): PointReading | null;
+/**
+ * A text heard in the host (`audition`) and read as a part over `READ_BARS` bars, or null where it plays nothing a
+ * reading can read. `given` is lines a document hands it, written after the text before the host stands in for what is
+ * still a hole (`readPart`: the document's key). The 4/4 fit is judged on the text alone, as a fragment's.
+ */
+export declare function readAudition(text: string, part: Part, resolve: Resolve, given?: string): PointReading | null;
 /** The root mean square of the differences over the features two readings both have; Infinity over none. */
 export declare function readingDistance(a: PointReading, b: PointReading): number;
 /** A fragment's placed points as the facet: the points it is associated at as that facet (or as every facet). */
