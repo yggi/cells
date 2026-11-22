@@ -18,15 +18,6 @@ export const STUBS = new Set([
 export const PENDING = new Set([
     'sort plain: a sum of values',
     'free free(v, lo..hi, unit=bpm)',
-    'step <a b c>',
-    'modifier x/n',
-    'modifier x(k,n,r)',
-    'parameter legato',
-    'parameter bend',
-    'parameter bpf',
-    'parameter bpq',
-    'parameter ftype',
-    'attribute cycle',
 ]);
 export function formKey(e) {
     if (e.section === 'attribute' || e.section === 'parameter')
@@ -69,7 +60,7 @@ export const TIERS = [
     },
     {
         name: 'Time and voice',
-        concept: "a clock: a bar (&bar from meter 120bpm, the library's), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters and effects, a vibrato",
+        concept: "a clock: a bar (&bar from meter 120bpm, the library's), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters (low-pass, high-pass, band-pass and their model) and effects, a vibrato",
         forms: [
             'parameter part',
             'line &x from id(name=…) …',
@@ -86,6 +77,9 @@ export const TIERS = [
             'parameter lpf',
             'parameter lpq',
             'parameter hpf',
+            'parameter bpf',
+            'parameter bpq',
+            'parameter ftype',
             'parameter hpq',
             'parameter room',
             'parameter delay',
@@ -115,7 +109,7 @@ export const TIERS = [
     },
     {
         name: 'Rhythm and feel',
-        concept: 'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: swing= on a meter, a share of each pair at a level, a slider from straight to hard',
+        concept: 'meter and feel: a bent bar, gates; drums: a groove of voices, ratchets, a subsequence, euclid, a kit; swing: swing= on a meter, a share of each pair at a level, a slider from straight to hard; a bent bar: bend= gives the eighths of a meter the lengths of a table; Strudel spelling: <a b c>, x/n, x(k,n,r), legato=',
         forms: [
             'map map=amp',
             'sort volume: map=amp, map=db or map=adsr',
@@ -132,12 +126,17 @@ export const TIERS = [
             'parameter pulse',
             'parameter swing',
             'free free(v, lo..hi)',
+            'parameter bend',
+            'step <a b c>',
+            'modifier x/n',
+            'modifier x(k,n,r)',
+            'parameter legato',
             'generator meter("sig")',
         ],
     },
     {
         name: 'Development',
-        concept: 'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths, even(k, n), the generator under them; arrangement: sections stepped by the bar, a selector, laps=, off',
+        concept: 'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the laps they come round after (cycle=), the circle of fifths, even(k, n), the generator under them; arrangement: sections stepped by the bar, a selector, laps=, off',
         forms: [
             'parameter role',
             'parameter gain',
@@ -154,6 +153,7 @@ export const TIERS = [
             'attribute seed',
             'attribute stride',
             'rate step=cycle(&x)',
+            'attribute cycle',
             'generator fifths()',
             'generator even(k, n)',
             'line &sections step=&bar &a &b',
