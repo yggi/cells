@@ -69,4 +69,11 @@ describe('the tutorial, in tiers', () => {
     const keys = [...tutorial].sort((a, b) => ORDER.indexOf(a.key as (typeof ORDER)[number]) - ORDER.indexOf(b.key as (typeof ORDER)[number])).map((p) => p.meta?.tier);
     expect(keys, 'the library lists the tutorial tier by tier').toEqual([...keys].sort((a, b) => a! - b!));
   });
+
+  test('a meter’s bend= is a form it uses, its table a reference (decision 080)', () => {
+    const used = formsUsed(EXAMPLES.twelve.source, { resolve: resolveSeed });
+    expect(used.has('parameter bend')).toBe(true);
+    expect(used.has('reference &name')).toBe(true);
+    expect(formsUsed('&bar meter("4/4") step=100bpm\n').has('parameter bend')).toBe(false);
+  });
 });

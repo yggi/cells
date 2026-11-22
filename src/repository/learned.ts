@@ -219,18 +219,19 @@ function countedTogether(layer: LearnedLayer, ids: readonly string[]): LearnedLa
 
 /**
  * What using these fragments together teaches (see the module's comment): each pair's count raised by one, and each use
- * that names its point moving its fragment's association there. Throws on an id neither the seed nor the layer holds,
- * and returns a new layer, the one given unchanged.
+ * that names its point moving its fragment's association there. An id the repository only knows (`RepositoryOptions.known`)
+ * counts together and moves nothing. Throws on an id neither the seed, the layer nor `known` holds, and returns a new layer,
+ * the one given unchanged.
  */
 export function useFragments(repository: Repository, layer: LearnedLayer, uses: readonly Use[]): LearnedLayer {
   const held = new Set(repository.merge(layer).fragments.map((f) => f.id));
-  const unknown = uses.filter((u) => !held.has(u.id)).map((u) => `'${u.id}'`);
+  const unknown = uses.filter((u) => !held.has(u.id) && !repository.knows(u.id)).map((u) => `'${u.id}'`);
   if (unknown.length) throw new Error(`useFragments: no fragment ${unknown.join(', ')}`);
   let next = countedTogether(
     layer,
     uses.map((u) => u.id),
   );
-  for (const { id, point, facet } of uses) if (point) next = movedAt(repository, next, id, point, facet);
+  for (const { id, point, facet } of uses) if (point && held.has(id)) next = movedAt(repository, next, id, point, facet);
   return next;
 }
 

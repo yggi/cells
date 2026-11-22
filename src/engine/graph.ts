@@ -153,9 +153,16 @@ export const feeds = (e: { readonly port: string; readonly band: string }) => !S
 const AS_IS: readonly Transform[] = [[]];
 
 /** What a reference does, as written: a pick or a shift (a delay, in steps), its values' operations, a transposition. */
-function refTransform(r: { readonly pick: Pick | null; readonly shift: number; readonly transpose?: number; readonly values?: ValueMap; readonly sign?: 1 | -1 }): Transform {
+function refTransform(r: {
+  readonly pick: Pick | null;
+  readonly slot?: string;
+  readonly shift: number;
+  readonly transpose?: number;
+  readonly values?: ValueMap;
+  readonly sign?: 1 | -1;
+}): Transform {
   return [
-    ...(r.pick ? [{ kind: 'pick', pick: r.pick } as const] : []),
+    ...(r.pick ? [{ kind: 'pick', pick: r.pick, ...(r.slot ? { slot: r.slot } : {}) } as const] : []),
     ...(r.shift ? [{ kind: 'delay', by: -r.shift, unit: 'step' } as const] : []),
     ...(r.values && r.values.mul < 0 ? [{ kind: 'inverse' } as const] : []),
     ...(r.values?.add ? [{ kind: 'degree', by: r.values.add } as const] : []),
@@ -527,7 +534,7 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
         source: cellId(c.readsSlot.cell),
         target: id,
         count: 1,
-        transforms: AS_IS,
+        transforms: [[{ kind: 'pick', pick: { kind: 'at', i: c.readsSlot.slot, abs: true }, ...(c.readsSlot.named ? { slot: c.readsSlot.named } : {}) }]],
         ...wire('style', 'cv', cellId(c.readsSlot.cell), id, 1, false, true),
       });
     // a note's links: what it explains

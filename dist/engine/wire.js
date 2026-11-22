@@ -40,6 +40,9 @@ export function wireArg(value, context) {
     const errors = result.diagnostics.filter((d) => d.severity === 'error');
     if (errors.length || !result.cells.has(ARG))
         return { refused: `${value} doesn't read: ${errors[0]?.message ?? 'no cell'}` };
+    const unanswered = [...result.cells.values()].find((c) => c.fill && new RegExp(`&${c.name}(?![A-Za-z0-9_])`).test(value));
+    if (unanswered)
+        return { refused: `&${unanswered.name} is a fill with no answer to hand (a stream's, or one refused): a braid fill is handed answers (wire 1)` };
     const shifts = codeShifts(result);
     const events = flatten(result, ARG, shifts);
     const lap = stepsOf(result, ARG, null);

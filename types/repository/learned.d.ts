@@ -93,8 +93,9 @@ export declare function sameText(a: string, b: string): ReadonlyMap<string, stri
 export declare function usedTogether(layer: LearnedLayer, a: string, b: string): number;
 /**
  * What using these fragments together teaches (see the module's comment): each pair's count raised by one, and each use
- * that names its point moving its fragment's association there. Throws on an id neither the seed nor the layer holds,
- * and returns a new layer, the one given unchanged.
+ * that names its point moving its fragment's association there. An id the repository only knows (`RepositoryOptions.known`)
+ * counts together and moves nothing. Throws on an id neither the seed, the layer nor `known` holds, and returns a new layer,
+ * the one given unchanged.
  */
 export declare function useFragments(repository: Repository, layer: LearnedLayer, uses: readonly Use[]): LearnedLayer;
 /**

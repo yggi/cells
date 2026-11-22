@@ -6,10 +6,11 @@
 import { type Pick, type RateOp } from './ast';
 /** One step of a transform, applied in order (as the language applies them: a pick, a shift, the values' operations, then the tables, then a transposition). */
 export type TransformStep = 
-/** A slice or a pick of the steps as written: `[a:b]`, `[i]`, `[::-1]`. */
+/** A slice or a pick of the steps as written: `[a:b]`, `[i]`, `[::-1]`; a slot by its name, `&style[bite]` (`slot`, decision 063: the pick is its position, the label says the name). */
 {
     readonly kind: 'pick';
     readonly pick: Pick;
+    readonly slot?: string;
 }
 /**
  * A delay: `by` steps behind (`[<<n]`; `[>>n]` is −n: on a table read through over=, a rotation) or, on a tape's

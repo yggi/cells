@@ -403,7 +403,7 @@ export interface CellDecl {
   /** A cell `readStyles` made for a style's slot read, `lpf=… * &style[bite]`: the style it reads and the slot's position (decision 063). */
   /** Cells whose one number compile read into this cell's table and left no reference to (`scale(&mode, …)`, `even(&k, &n, &mode)`): what a reader of the text still names. */
   readonly valueReads?: readonly string[];
-  readonly readsSlot?: { readonly cell: string; readonly slot: number };
+  readonly readsSlot?: { readonly cell: string; readonly slot: number; readonly named?: string };
   /** `off`: switched off — silences it and everything that reads through it or plays it. */
   readonly off: boolean;
   /** `oneshot`: a voice plays each note as long as its envelope's attack and decay, whatever its step (a drum hit). */

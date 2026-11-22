@@ -325,3 +325,40 @@ describe('a fragment of no style (#540)', () => {
     expect(repo.fragments.find((f) => f.id === 'none')?.association).toEqual([{ point: {}, weight: 1, facet: 'module' }]);
   });
 });
+
+describe('a repository told the ids it knows (#716, ask 3)', () => {
+  // a frontend's repository of one facet's fragments (a rhythm's), asked about use together with another facet's (a meter's)
+  const at = { x: 0.5, y: 0.5 };
+  const rhythm = (id: string, x: number): Fragment => ({ id, text: '&bar meter("4/4")', association: [{ point: { x, y: 0.5 }, weight: 1, facet: 'rhythm' }] });
+  const rhythms = [rhythm('near', 0.5), rhythm('far', 0.7)];
+  const meter = '4/4';
+  const known = (id: string) => id === meter;
+  const alone = createRepository(rhythms);
+  const knowing = createRepository(rhythms, { known });
+  const used = (r: typeof alone) => useFragments(r, EMPTY_LAYER, [{ id: meter }, { id: 'far', point: at, facet: 'rhythm' }]);
+
+  it('refuses a use of an id it neither holds nor knows, as before; takes one it knows', () => {
+    expect(() => used(alone)).toThrow(/useFragments: no fragment '4\/4'/);
+    expect(() => useFragments(knowing, EMPTY_LAYER, [{ id: 'nothing' }, { id: 'far' }])).toThrow(/useFragments: no fragment 'nothing'/);
+    expect(usedTogether(used(knowing), meter, 'far')).toBe(1);
+    expect(knowing.knows(meter) && knowing.knows('far') && !knowing.knows('nothing') && !alone.knows(meter)).toBe(true);
+  });
+
+  it('moves no association of an id it only knows: a use of it with a point counts together and nothing else', () => {
+    const layer = useFragments(knowing, EMPTY_LAYER, [{ id: meter, point: at, facet: 'meter' }, { id: 'far' }]);
+    expect(usedTogether(layer, meter, 'far')).toBe(1);
+    expect(layer.points).toEqual([]);
+  });
+
+  it('ranks a fragment nearer by its use with a chosen id it knows, which a repository that does not know it cannot see', () => {
+    const layer = { ...EMPTY_LAYER, together: [{ ids: [meter, 'far'] as const, count: 10 }] };
+    const rank = (r: typeof alone) => r.query(at, 2, {}, { facet: 'rhythm', chosen: [meter], layer });
+    const far = (r: typeof alone) => rank(r).find((f) => f.fragment.id === 'far')!;
+    expect(far(alone).score).toBe(far(alone).distance);
+    expect(far(knowing).score).toBeLessThan(far(knowing).distance);
+    expect(alone.merge(layer).unheld).toEqual([meter]);
+    expect(knowing.merge(layer).unheld).toEqual([]);
+    // (what it never knew stays left out)
+    expect(knowing.merge({ ...EMPTY_LAYER, together: [{ ids: ['far', 'nothing'] as const, count: 3 }] }).unheld).toEqual(['nothing']);
+  });
+});

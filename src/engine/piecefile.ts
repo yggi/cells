@@ -44,7 +44,7 @@ import { readBlocks, rewrite, writeBody, type CodeLine, type Layout } from './li
 import { readYaml, writeYaml, yamlValue, type YamlNode, type YamlProblem, type YamlValue } from '../repository/yaml';
 import { readFrom } from './parser/use';
 import { splitComment } from './edit';
-import type { Locked, Resolve, Take } from './program';
+import type { Locked, LockedAnswer, Resolve, Take } from './program';
 import { expansion } from './use';
 
 /** The frontmatter, every key in the order the file gives it. */
@@ -92,6 +92,8 @@ function keyProblems(root: YamlNode & { kind: 'map' }): YamlProblem[] {
       problems.push({ line, message: `the tier is ${JSON.stringify(v)}: a tier of the tutorial is a whole number, 1 to 9999` });
     if (key === 'uses' && !(Array.isArray(v) && v.every(isLocked)))
       problems.push({ line, message: `the uses are ${JSON.stringify(v)}, not a lockfile: uses: a list of - id: gm_kit, hash: e2:…` });
+    if (key === 'answers' && !(Array.isArray(v) && v.every(isAnswer)))
+      problems.push({ line, message: `the answers are ${JSON.stringify(v)}, not a lockfile's: answers: a list of - id: …, fill: …, args: a1:…, text: …` });
   }
   return problems;
 }
@@ -126,6 +128,26 @@ function isLocked(v: YamlValue): v is { readonly id: string; readonly hash: stri
   return Object.keys(m).sort().join() === 'hash,id' && typeof m.id === 'string' && typeof m.hash === 'string';
 }
 
+/** Is this a braid fill's answer as a lockfile records it (decision 085 §8.2): its id, fill, arguments' hash and text, nothing else? */
+function isAnswer(v: YamlValue): v is { readonly id: string; readonly fill: string; readonly args: string; readonly text: string } {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
+  const m = v as { readonly [key: string]: YamlValue };
+  return Object.keys(m).sort().join() === 'args,fill,id,text' && ['id', 'fill', 'args', 'text'].every((k) => typeof m[k] === 'string');
+}
+
+/**
+ * A piece file's braid fills' answers (decision 085 §8.2), for `compileSource`'s `answers`: beside its `uses`, in a key of
+ * their own, so a frontend that reads no answers keeps its `uses` entries.
+ */
+export const answersOf = ({ frontmatter }: Pick<PieceFile, 'frontmatter'>): LockedAnswer[] =>
+  Array.isArray(frontmatter.answers) ? frontmatter.answers.filter(isAnswer).map(({ id, fill, args, text }) => ({ id, fill, args, text })) : [];
+
+/** The answers a compile's takes were filled with, each fill and arguments once, in the order made. */
+const answersIn = (takes: readonly Take[]): LockedAnswer[] => {
+  const all = takes.flatMap((u) => u.answers ?? []);
+  return all.filter((a, i) => all.findIndex((b) => b.id === a.id && b.fill === a.fill && b.args === a.args) === i);
+};
+
 /** A lockfile as the frontmatter holds it. */
 const asYaml = (entries: readonly Locked[]): YamlValue => entries.map(({ id, hash }) => ({ id, hash }));
 
@@ -150,7 +172,16 @@ function lockedOf(takes: readonly Take[], had: readonly Locked[]): Locked[] {
  * changed version (the compile warned) leaves the entry as it was. It is `textLockfile` in the frontmatter.
  */
 export function withLockfile(file: PieceFile, takes: readonly Take[]): PieceFile {
-  return { ...file, frontmatter: { ...file.frontmatter, uses: asYaml(lockedOf(takes, lockfileOf(file))) } };
+  const answers = answersIn(takes);
+  const { answers: _had, ...rest } = file.frontmatter;
+  return {
+    ...file,
+    frontmatter: {
+      ...rest,
+      uses: asYaml(lockedOf(takes, lockfileOf(file))),
+      ...(answers.length ? { answers: answers.map(({ id, fill, args, text }) => ({ id, fill, args, text })) } : {}),
+    },
+  };
 }
 
 /**

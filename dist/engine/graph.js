@@ -10,7 +10,7 @@ export const feeds = (e) => !STRUCTURE.has(e.port) && e.band !== 'sync';
 const AS_IS = [[]];
 function refTransform(r) {
     return [
-        ...(r.pick ? [{ kind: 'pick', pick: r.pick }] : []),
+        ...(r.pick ? [{ kind: 'pick', pick: r.pick, ...(r.slot ? { slot: r.slot } : {}) }] : []),
         ...(r.shift ? [{ kind: 'delay', by: -r.shift, unit: 'step' }] : []),
         ...(r.values && r.values.mul < 0 ? [{ kind: 'inverse' }] : []),
         ...(r.values?.add ? [{ kind: 'degree', by: r.values.add }] : []),
@@ -301,7 +301,7 @@ export function writtenGraph(result, { card = false } = {}) {
                 source: cellId(c.readsSlot.cell),
                 target: id,
                 count: 1,
-                transforms: AS_IS,
+                transforms: [[{ kind: 'pick', pick: { kind: 'at', i: c.readsSlot.slot, abs: true }, ...(c.readsSlot.named ? { slot: c.readsSlot.named } : {}) }]],
                 ...wire('style', 'cv', cellId(c.readsSlot.cell), id, 1, false, true),
             });
         for (const target of c.about)

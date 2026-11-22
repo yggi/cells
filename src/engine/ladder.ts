@@ -34,26 +34,17 @@ export const STUBS: ReadonlySet<string> = new Set([
  * (decision 047): it goes on a tier with a piece whose cells it clusters.
  */
 export const PENDING: ReadonlySet<string> = new Set([
-  // notes with their levels, named (decision 087, #740): its piece is fiveto12's head, rung 5 of #691
-  'sort pitch: a product with no sound in it and a pitch',
-  // the plain values named (decision 088, #754, #755): no example names a number in a mix, or reads a sum of values as
-  // a level, yet; each goes on a tier with the piece that shows it (#621)
-  'sort plain: a cell that is one number and nothing else',
+  // a sum of values read as a level (decision 079): a named product of notes and such a sum doesn't type yet, so no piece writes one (#856)
   'sort plain: a sum of values',
   // (a slider's unit as an argument, the core's spelling, decision 069: toCore writes it, a tutorial piece doesn't, the
   // examples staying in their normal form, the unit written after the number)
   'free free(v, lo..hi, unit=bpm)',
-  // (even(k, n), decision 072: its piece comes with the fragments that write it, #507)
-  'generator even(k, n)',
   'step <a b c>',
   'modifier x/n',
   'modifier x(k,n,r)',
   'parameter legato',
   // (decision 080: a meter bent by a table; no example bends one yet, a meter scan its sugar)
   'parameter bend',
-  'attribute tags',
-  'parameter licence',
-  'parameter accents',
   // (the band-pass and the filters' model, decision 074: a piece of tier 2's effects that sweeps one is wanted; no example moves for it)
   'parameter bpf',
   'parameter bpq',
@@ -82,7 +73,7 @@ export function formKey(e: { readonly section: string; readonly form: string; re
 export const TIERS: readonly { readonly name: string; readonly concept: string; readonly forms: readonly string[] }[] = [
   {
     name: 'Steps and sound',
-    concept: 'a voice and the sound card; steps: numbers, rests, holds, repeats, a rate; notes on the cells',
+    concept: 'a voice and the sound card; steps: numbers, rests, holds, repeats, a rate; notes on the cells, and tags that cluster them',
     forms: [
       'line &name …',
       'line &name label="…"',
@@ -98,6 +89,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'attribute map',
       'attribute label',
       'attribute about',
+      'attribute tags',
       'rate step=r',
       'rate loop=NAME',
       'map map=sample',
@@ -199,7 +191,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Development',
     concept:
-      'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths; arrangement: sections stepped by the bar, a selector, laps=, off',
+      'canon: a theme shifted; mirrors: retrograde, slices, picks, transposing, inverse(); variations: a copy changed where it says (base=, =); chance and choice; turning tables: stride=, cycle(&x), the circle of fifths, even(k, n), the generator under them; arrangement: sections stepped by the bar, a selector, laps=, off',
     forms: [
       // (a drum line's role, for the default performer: the arrangement's kick, decision 075)
       'parameter role',
@@ -224,6 +216,8 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'attribute stride',
       'rate step=cycle(&x)',
       'generator fifths()',
+      // the one generator under the scales and the rhythms (decision 072), a table of even places
+      'generator even(k, n)',
       // arrangement
       'line &sections step=&bar &a &b',
       'attribute laps',
@@ -234,7 +228,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Sound and tuning',
     concept:
-      'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; a style the voices read',
+      'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; a style the voices read; a level a cell names',
     forms: [
       // stereo
       'parameter pan',
@@ -263,6 +257,8 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'map map=style',
       'attribute style',
       'reference &name[slot]',
+      // a number a cell holds, read as a level (decision 088)
+      'sort plain: a cell that is one number and nothing else',
     ],
   },
   {
@@ -333,13 +329,19 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   },
   {
     name: 'Gates, performing and MIDI',
-    concept: 'a gate: a product with a name, and a role, the gates that play it; a braid left to the performer, recorded from the keys; a MIDI card, its entries channels',
+    concept:
+      'a gate: a product with a name (notes with their levels named too), how far its performer plays from what is written, and a role, the gates that play it; a braid left to the performer, recorded from the keys; a MIDI card, its entries channels',
     forms: [
       // a gate (decision 023): play= with a braid, its level a product, its voices a chord
       'gate play=&x',
       'gate level=&a*&b*n',
       'parameter level',
       'gate [&a, &b]',
+      // notes with their levels, named (decision 087)
+      'sort pitch: a product with no sound in it and a pitch',
+      // how far a gate's performer plays from what is written (decision 063 §2): a host's performer reads them
+      'parameter licence',
+      'parameter accents',
       // a role: the gates that play it (decision 061)
       'map map=role',
       // a braid left to the performer
@@ -537,6 +539,8 @@ export function formsUsed(source: string, options: CompileOptions = {}): Set<str
     }
     for (const k of [...Object.keys(d.params), ...Object.keys(d.paramCells ?? {}), ...Object.keys(d.paramClocks ?? {})])
       if (k !== 'pitch' && !(gate && (k === 'play' || k === 'level'))) use(`parameter ${k}`);
+    // (a meter's bend= is a parameter of its own, decision 080: its table is a cell the meter reads)
+    if (d.bend) (use('parameter bend'), ref(d.bend.table));
     for (const pc of Object.values(d.paramCells ?? {})) for (const r of pc.factors) ref(r);
     for (const st of Object.values(d.paramClocks ?? {})) if (st.kind === 'driven') ref(st.driver);
     // step= and loop=

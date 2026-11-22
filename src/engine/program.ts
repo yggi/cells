@@ -163,7 +163,7 @@ export interface ResolvedCell {
   /** The cell a meter's swing is read from (`swing=&swing`, a swing alone: `&swing swing=8n:.6`): the graph draws it into the meter. */
   readonly swingFrom?: string;
   /** A cell made for a style's slot read (`lpf=… * &style[bite]`): the style it reads, and the slot's position. The graph draws the style into it. */
-  readonly readsSlot?: { readonly cell: string; readonly slot: number };
+  readonly readsSlot?: { readonly cell: string; readonly slot: number; readonly named?: string };
   /** Cells whose one number the compile read into this cell's table, leaving no reference (`scale(&mode, …)`, `even(&k, &n, &mode)`): the graph draws each into it. */
   readonly valueReads?: readonly string[];
   /**
@@ -572,10 +572,24 @@ export interface Locked {
   readonly hash: string;
 }
 
+/**
+ * A braid fill's answer as a lockfile records it (decision 085 §8.2), beside its `uses`: the plugin-fragment's id, the
+ * fill's name in it, the hash of its arguments' core (`argsHash`), and the text it was answered with. A piece opens
+ * playing it; a host verifies it when it can.
+ */
+export interface LockedAnswer {
+  readonly id: string;
+  readonly fill: string;
+  readonly args: string;
+  readonly text: string;
+}
+
 /** What a compile reads besides the text: the resolver of its `from` lines, and the hashes its lockfile recorded. */
 export interface CompileOptions {
   readonly resolve?: Resolve;
   readonly locked?: readonly Locked[];
+  /** The braid fills' answers its lockfile recorded (`answers:`, decision 085 §8.2): each plays without its plugin's code. */
+  readonly answers?: readonly LockedAnswer[];
   /**
    * Read the retired forms as they read before they retired, each with a warning: a `use` line (decision 065, #387). Migrate
    * and Normalise compile so, to rewrite them; without it a retired form is an error, and the text doesn't play.
@@ -627,6 +641,8 @@ export interface Take {
    * name of the parameter it binds (`tempo: '&tempo'`). Absent for a collection.
    */
   readonly args?: Readonly<Record<string, string>>;
+  /** The braid fills' answers its copy was filled with (decision 085 §8.2), for the lockfile's `answers:`. */
+  readonly answers?: readonly LockedAnswer[];
   /** The head of the document's part it took (decision 082: `&twinkle from kinderlied` takes `twinkle`); absent for a file of one fragment. Its hash is the part's. */
   readonly part?: string;
 }

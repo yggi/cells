@@ -121,7 +121,7 @@ function expanded(fragment, problems) {
         return [];
     }
 }
-export function createRepository(given) {
+export function createRepository(given, { known = () => false } = {}) {
     const problems = [];
     const entries = given.flatMap((f) => expanded(f, problems));
     problems.push(...entries.flatMap(fragmentProblems));
@@ -168,6 +168,7 @@ export function createRepository(given) {
             throw new Error(`A malformed learned layer: ${wrong.join('; ')}`);
         const filed = new Set(filedFragments.map((f) => f.id));
         const held = (id) => seen.has(id) || filed.has(id);
+        const counted = (id) => held(id) || known(id);
         const added = new Map();
         const unheld = new Set();
         for (const { id, point, weight, facet } of layer.points) {
@@ -192,9 +193,9 @@ export function createRepository(given) {
         for (const { ids, count: n } of layer.together) {
             const [a, b] = ids;
             for (const id of ids)
-                if (!held(id))
+                if (!counted(id))
                     unheld.add(id);
-            if (!held(a) || !held(b))
+            if (!counted(a) || !counted(b))
                 continue;
             count(a, b, n);
             count(b, a, n);
@@ -204,6 +205,7 @@ export function createRepository(given) {
     return {
         fragments: seed,
         merge,
+        knows: (id) => seen.has(id) || known(id),
         query(point, k, axisWeights = {}, { facet, chosen = [], workbench, layer, pull = CO_USE_PULL, arguments: mains = {} } = {}) {
             if (!(Number.isInteger(k) && k >= 0))
                 throw new Error(`query: k is ${k}, not a whole number ≥ 0`);

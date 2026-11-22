@@ -1,6 +1,7 @@
 ---
 title: "The diatonic circle: one triad, turned a fourth a bar"
-tags: [genre:classical, harmony, diatonic, tonal]
+tags: [tutorial, genre:classical, harmony, diatonic, tonal]
+tier: 5
 description: The Baroque sequence I IV vii° iii vi ii V, its chords one triad turned through the key, not seven written out.
 ---
 

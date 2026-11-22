@@ -80,8 +80,6 @@ function undrawn(source: string): Record<string, number> {
 /** The reads no wire is drawn for, over every example, by form. Fewer is better: draw the form, and its line goes. */
 const UNDRAWN: Readonly<Record<string, number>> = {
   // (a meter's swing cell, `swing=&swing`: the cell is read, and no wire is drawn from it, yggi/cells#618, #737)
-  // (a fill's cells, `&cycle [&cycle_notes * &cycle_level]`, and a law's, in daytime and fiveto12: they wait on #792)
-  'braid.tokens': 6,
   // (a key's tonic, written in a scale the key holds)
   tonic: 2,
 };

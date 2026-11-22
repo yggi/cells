@@ -50,6 +50,8 @@ export declare const RETIRED: ReadonlyMap<string, string>;
  * current one (the compile warns).
  */
 export declare const resolveSeed: Resolve;
+/** Whether `id` is a fragment of the library (`LIBRARY`): the ids a repository of one facet's fragments may be told it knows (`RepositoryOptions.known`). */
+export declare const isLibraryFragment: (id: string) => boolean;
 /**
  * The seed library and a person's filed fragments as one resolver (#638): a `from` line's id read from the seed first
  * (`resolveSeed`, its retired and renamed ids too), then from the layer's filed fragments, a filed template's sets of

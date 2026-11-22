@@ -112,8 +112,8 @@ describe('law L17: naming a sub-product plays as its parentheses do (decision 08
     expect({ count, examples: rewritten.length, skipped, continued }).toMatchInlineSnapshot(`
       {
         "continued": 0,
-        "count": 126,
-        "examples": 60,
+        "count": 125,
+        "examples": 59,
         "skipped": 57,
       }
     `);
@@ -126,6 +126,19 @@ describe('law L17: naming a sub-product plays as its parentheses do (decision 08
     expect(played(head + '&cycle [&notes * &level]\n&out map=sample [&cycle * &glass * .3]').events).toEqual(flat);
     // (named in turn: a name of a name)
     expect(played(head + '&lv [&level * .5]\n&cycle [&notes * &level]\n&out map=sample [&cycle * &glass * .3]').events).toEqual(flat);
+  });
+
+  it('a sum of values among its factors is a level, as a number is: named, in parentheses and flat, the same notes (#856)', () => {
+    const head = '&notes step=4 0 2 4 7\n&base .4\n&level [&base + .1]\n&glass s=tri loop=C4\n';
+    const flat = played(head + '&out map=sample [&notes * &level * &glass * .3]').events as { levels: { level: number }[]; gains: number[] }[];
+    expect(flat.length).toBeGreaterThan(0);
+    expect(played(head + '&out map=sample [(&notes * &level) * &glass * .3]').events).toEqual(flat);
+    expect(played(head + '&cycle [&notes * &level]\n&out map=sample [&cycle * &glass * .3]').events).toEqual(flat);
+    // (its sum is its level: the 0.5 a sum of .4 and .1 is, held to 0 to 1 at its own cell)
+    expect(flat.every((e) => e.levels.every((l) => Math.abs(l.level - 0.5) < 1e-9) || e.gains.some((g) => Math.abs(g - 0.5) < 1e-9))).toBe(true);
+    // (and a product of values alone is still no notes: a pitch is what makes it so)
+    const msgs = compileSource(head + '&lv [&level * .5]\n&out map=sample [&lv * &glass]').diagnostics.map((d) => d.message);
+    expect(msgs.filter((m) => /notes with their levels/.test(m))).toEqual([]);
   });
 
   it('it says what it is where it is no sound and no value', () => {

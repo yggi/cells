@@ -1,0 +1,3 @@
+### Changed
+
+- **A sum of values among the factors of a named product is a level, as a number is** (#856, decision 087 amended, the owner's ruling): `&level [&base + .1]` then `&phrase [&notes * &level]` is notes with their levels, and `[&phrase * &glass]` plays `[(&notes * &level) * &glass]`. It was an error ("has no voice … Two sounds can't multiply"); with a literal or a cell that is one number it always worked. A product of values alone, with no pitch, is still 079's value. **What a frontend sees at its next pin:** a text that was an error on this shape now plays; no text that compiled plays differently, and no example's event snapshot moves.
