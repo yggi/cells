@@ -2,13 +2,12 @@
 title: "Canon: Frère Jacques"
 tags: [tutorial, genre:classical, genre:folk, diatonic, canon, stereo]
 tier: 5
-description: "Frère Jacques as a round: four voices, each a bar behind the last."
+description: "Frère Jacques as a round: four voices, each two bars behind the last."
 ---
 
+*Are you sleeping, Brother John?* as a round. One theme made of four two-bar units; each voice reads it one unit later: `&john[<<]` is the theme shifted back one unit, two bars behind.
+
 ```cells
-# "Are you sleeping, Brother John?" as a round. One theme made of four
-# two-bar units; each voice reads it one unit later: &john[<<] is the theme
-# shifted back one unit, two bars behind.
 &bar from meter &tempo
 &tempo step=120bpm
 &pluck from envelopes

@@ -32,6 +32,8 @@ export interface PluginFragment {
     readonly origin: number;
     /** Steps until it comes round (a day). */
     readonly cycle: number;
+    /** The wire grammar its code reads its arguments in (the fragment's `wire:`; `docs/language/plugin-wire.md`): one newer than cells speaks is refused. Absent: 1. */
+    readonly wire?: number;
     /** Seconds a step: its fills' `step=1` is one of these (`step=84bpm` as the old spelling wrote it). */
     readonly stepSeconds: number;
     /**
