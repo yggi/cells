@@ -33,6 +33,9 @@ const useLines = (text) => text
     .split('\n')
     .map((raw) => splitComment(raw)[0].trim().split(/\s+/).join(' '))
     .filter((code) => readFrom(code)?.kind === 'use');
+export function unionOf(fragment, workbench) {
+    return unionByName(fragment, workbench);
+}
 function unionByName(fragment, workbench) {
     const bench = new Map(declarations(workbench).map((l) => [l.name, l]));
     const taken = new Set([...namesIn(workbench), ...namesIn(fragment)]);
@@ -165,6 +168,13 @@ export function cachedFit(resolve, limit = 512) {
         return fit(JSON.stringify({ id, workbench, main: main ?? null }));
     };
 }
+function refOf(ref, options) {
+    if (typeof ref === 'string')
+        return { id: ref, options };
+    const id = `fit_${fragmentHash(ref.text).slice(3)}`;
+    const resolve = (other, hash) => (other === id ? ref.text : options.resolve(other, hash));
+    return { id, options: { ...options, resolve, ...(ref.head === undefined ? {} : { head: ref.head }) } };
+}
 const ID_ARGS = /^([^(]*)\((.*)\)$/;
 const PART = /^([^(/]+)\/([^(]+)$/;
 function takeLine(given, whole, args, main) {
@@ -203,7 +213,7 @@ function listed(inner) {
     }
     return out;
 }
-const compilerOf = (resolve, compiled) => compiled ?? ((text) => compileSource(text, undefined, { resolve }));
+const compilerOf = (resolve, compiled) => (text) => compiled ? compiled(text, resolve) : compileSource(text, undefined, { resolve });
 function newDiagnostics(result, before) {
     const left = [...before];
     return result.diagnostics.filter((d) => {
@@ -236,7 +246,11 @@ function clearOf(bench, name) {
         k++;
     return `&${bare}${k}`;
 }
-export function useOn(bench, id, options) {
+export function useOn(bench, ref, options) {
+    const { id, options: read } = refOf(ref, options);
+    return useById(bench, id, read);
+}
+function useById(bench, id, options) {
     const compiled = compilerOf(options.resolve, options.compiled);
     const text = options.resolve(id);
     const head = bench.replace(/\s+$/, '');
@@ -245,7 +259,7 @@ export function useOn(bench, id, options) {
     const signature = text === null ? null : signatureOf(text);
     if (text === null || !signature) {
         const line = `* from ${id}`;
-        return { text: written(line), line, heads: [], main: null, used: text === null ? null : usedBy(written(line)) };
+        return { text: written(line), line, heads: [], main: null, used: text === null ? null : usedBy(written(line)), resolve: options.resolve };
     }
     const heads = signature.names.length === 1 ? [options.head ?? clearOf(bench, signature.names[0])] : signature.names.map((h) => clearOf(bench, h));
     const stand = holesOf(text, compiled, options.resolve)
@@ -254,13 +268,17 @@ export function useOn(bench, id, options) {
     const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand) : null);
     const left = signature.names.length === 1 ? heads : heads.map((h, i) => (h === signature.names[i] ? h : `${h}=${signature.names[i].slice(1)}`));
     const line = takeLine(left, id, options.args, main);
-    return { text: written(line), line, heads, main, used: usedBy(written(line)) };
+    return { text: written(line), line, heads, main, used: usedBy(written(line)), resolve: options.resolve };
 }
-export function fitsAs(id, bench, options) {
+export function fitsAs(ref, bench, options) {
+    const { id, options: read } = refOf(ref, options);
+    return fitsById(id, bench, read);
+}
+function fitsById(id, bench, options) {
     const compiled = compilerOf(options.resolve, options.compiled);
     const text = options.resolve(id);
     if (text === null)
-        return { fits: false, text: bench, use: null, missing: [], sounds: [], unmet: [] };
+        return { fits: false, text: bench, use: null, missing: [], sounds: [], unmet: [], resolve: options.resolve };
     const signature = signatureOf(text);
     if (!signature) {
         const f = fitByName(text, bench, compiled, options.resolve);
@@ -273,11 +291,12 @@ export function fitsAs(id, bench, options) {
             sounds: f.sounds,
             unmet: f.unmet,
             ...(f.diagnostics ? { diagnostics: f.diagnostics } : {}),
+            resolve: options.resolve,
         };
     }
-    const use = useOn(bench, id, { ...options, compiled });
+    const use = useById(bench, id, { ...options, compiled });
     if (signature.main && use.main === null)
-        return { fits: false, text: use.text, use, missing: [signature.main], sounds: [], unmet: [] };
+        return { fits: false, text: use.text, use, missing: [signature.main], sounds: [], unmet: [], resolve: options.resolve };
     const benchNames = new Set(namesIn(bench));
     const sounds = holesOf(text, compiled, options.resolve)
         .sounds.filter((s) => !benchNames.has(s.slice(1)))
@@ -294,5 +313,5 @@ export function fitsAs(id, bench, options) {
     const unmet = clockNeeds(expansion(judged, { resolve: options.resolve }).text, result, gave, gave)
         .filter((t) => !meets(result, t))
         .map((t) => t.need);
-    return { fits: !diagnostics.length && !unmet.length, text: use.text, use, missing: [], sounds, unmet, diagnostics };
+    return { fits: !diagnostics.length && !unmet.length, text: use.text, use, missing: [], sounds, unmet, diagnostics, resolve: options.resolve };
 }

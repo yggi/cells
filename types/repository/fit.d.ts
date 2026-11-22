@@ -43,6 +43,12 @@ export interface Line {
 /** A text's declarations, a line (and the lines it continues onto: one ending in `+`, `*`, `,` or `[`) each, as the parser reads them. */
 export declare function declarations(text: string): Line[];
 /**
+ * The union of a fragment's lines with a workbench (see the module's comment), written without judging it: declarations
+ * and renames over the two texts, no compile. A frontend that reads the union itself, or compiles it later, asks for this
+ * (`fitsAs` judges it as well, and a compile is what it costs). `renamed` is empty where no name collides.
+ */
+export declare function unionOf(fragment: string, workbench: string): Union;
+/**
  * A compile cached by text: the last `limit` texts compiled. At 512, a library of 31 fragments, each alone and in its union
  * with a workbench, holds about ten workbenches' queries.
  */
@@ -71,6 +77,8 @@ export interface UseOn {
     readonly main: string | null;
     /** What the copy gives, as the compile reads it (`CompileResult.uses`); null where the template didn't resolve. */
     readonly used: Take | null;
+    /** What reads `text`'s `from` line: the options' own, and for a fragment given as text, that too by its id. */
+    readonly resolve: Resolve;
 }
 /** What `useOn` is told: the head's name, the main argument, the named arguments, and how to read the library. */
 export interface UseOnOptions {
@@ -81,16 +89,28 @@ export interface UseOnOptions {
     readonly main?: string;
     /** The named arguments (`{ swing: '8n:.64' }`). */
     readonly args?: Readonly<Record<string, string>>;
-    /** Compiles a text (its `from` lines read through `resolve`), and may cache it (`cachedCompile`). */
-    readonly compiled?: (text: string) => CompileResult;
+    /**
+     * Compiles a text, its `from` lines read through the `resolve` it is given (the options' own, or, for a fragment given as
+     * text, the one that also reads it by its id), and may cache it (`cachedCompile`).
+     */
+    readonly compiled?: (text: string, resolve: Resolve) => CompileResult;
 }
+/**
+ * A fragment to take onto a workbench or fit there: its id, which `options.resolve` reads, or its text, for one the library
+ * doesn't hold (a line a jam made, a template of a frontend's): cells reads it by an id of its own, `fit_<its hash>`, so no
+ * frontend need invent one and wrap its resolver. `head` is the head's name (`UseOnOptions.head`).
+ */
+export type FragmentRef = string | {
+    readonly text: string;
+    readonly head?: string;
+};
 /**
  * A template taken onto a workbench (decision 065, #454): the workbench with `&head from id(args) main` written on it, and
  * what the copy gives. Without `head`, the template's head numbered clear of the workbench's names; a template of several
  * heads is taken by their names. Without `main`, the one cell of the workbench that meets the main parameter (`mainOn`). A
  * fragment with no signature, a collection, is taken by every name it defines (`* from id`).
  */
-export declare function useOn(bench: string, id: string, options: UseOnOptions): UseOn;
+export declare function useOn(bench: string, ref: FragmentRef, options: UseOnOptions): UseOn;
 /** Whether a template fits a workbench taken by a `from` line, and why not: `fitsAs`'s answer. */
 export interface FitAs {
     readonly fits: boolean;
@@ -108,6 +128,8 @@ export interface FitAs {
     readonly unmet: readonly ClockNeed[];
     /** What the compile says that the workbench's alone doesn't; absent when a cheaper check failed first. */
     readonly diagnostics?: readonly Diagnostic[];
+    /** What reads `text`'s `from` line: the options' own, and for a fragment given as text, that too by its id. */
+    readonly resolve: Resolve;
 }
 /**
  * Whether a fragment fits a workbench, read by its signature (decision 065, #454): a template fits where the workbench
@@ -116,4 +138,4 @@ export interface FitAs {
  * it taps. Nothing is bound by name. A collection (no signature) is judged as the fit by lines judges it: its lines read only what
  * it defines, its sounds and its taps.
  */
-export declare function fitsAs(id: string, bench: string, options: UseOnOptions): FitAs;
+export declare function fitsAs(ref: FragmentRef, bench: string, options: UseOnOptions): FitAs;

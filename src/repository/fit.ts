@@ -101,6 +101,15 @@ const useLines = (text: string): string[] =>
     .map((raw) => splitComment(raw)[0].trim().split(/\s+/).join(' '))
     .filter((code) => readFrom(code)?.kind === 'use');
 
+/**
+ * The union of a fragment's lines with a workbench (see the module's comment), written without judging it: declarations
+ * and renames over the two texts, no compile. A frontend that reads the union itself, or compiles it later, asks for this
+ * (`fitsAs` judges it as well, and a compile is what it costs). `renamed` is empty where no name collides.
+ */
+export function unionOf(fragment: string, workbench: string): Union {
+  return unionByName(fragment, workbench);
+}
+
 /** The union of a fragment's lines with a workbench (see the module's comment). */
 function unionByName(fragment: string, workbench: string): Union {
   const bench = new Map(declarations(workbench).map((l) => [l.name, l]));
@@ -278,6 +287,8 @@ export interface UseOn {
   readonly main: string | null;
   /** What the copy gives, as the compile reads it (`CompileResult.uses`); null where the template didn't resolve. */
   readonly used: Take | null;
+  /** What reads `text`'s `from` line: the options' own, and for a fragment given as text, that too by its id. */
+  readonly resolve: Resolve;
 }
 
 /** What `useOn` is told: the head's name, the main argument, the named arguments, and how to read the library. */
@@ -289,8 +300,26 @@ export interface UseOnOptions {
   readonly main?: string;
   /** The named arguments (`{ swing: '8n:.64' }`). */
   readonly args?: Readonly<Record<string, string>>;
-  /** Compiles a text (its `from` lines read through `resolve`), and may cache it (`cachedCompile`). */
-  readonly compiled?: (text: string) => CompileResult;
+  /**
+   * Compiles a text, its `from` lines read through the `resolve` it is given (the options' own, or, for a fragment given as
+   * text, the one that also reads it by its id), and may cache it (`cachedCompile`).
+   */
+  readonly compiled?: (text: string, resolve: Resolve) => CompileResult;
+}
+
+/**
+ * A fragment to take onto a workbench or fit there: its id, which `options.resolve` reads, or its text, for one the library
+ * doesn't hold (a line a jam made, a template of a frontend's): cells reads it by an id of its own, `fit_<its hash>`, so no
+ * frontend need invent one and wrap its resolver. `head` is the head's name (`UseOnOptions.head`).
+ */
+export type FragmentRef = string | { readonly text: string; readonly head?: string };
+
+/** The id a fragment is read by and the options that read it: for a text, its own id, `resolve` reading it, and its head. */
+function refOf(ref: FragmentRef, options: UseOnOptions): { id: string; options: UseOnOptions } {
+  if (typeof ref === 'string') return { id: ref, options };
+  const id = `fit_${fragmentHash(ref.text).slice(3)}`;
+  const resolve: Resolve = (other, hash) => (other === id ? ref.text : options.resolve(other, hash));
+  return { id, options: { ...options, resolve, ...(ref.head === undefined ? {} : { head: ref.head }) } };
 }
 
 const ID_ARGS = /^([^(]*)\((.*)\)$/;
@@ -334,7 +363,10 @@ function listed(inner: string): string[] {
   return out;
 }
 
-const compilerOf = (resolve: Resolve, compiled?: (text: string) => CompileResult) => compiled ?? ((text: string) => compileSource(text, undefined, { resolve }));
+const compilerOf =
+  (resolve: Resolve, compiled?: UseOnOptions['compiled']) =>
+  (text: string): CompileResult =>
+    compiled ? compiled(text, resolve) : compileSource(text, undefined, { resolve });
 
 /** What a compile says that another doesn't (each said once as often as the other says it). */
 function newDiagnostics(result: CompileResult, before: readonly Diagnostic[]): Diagnostic[] {
@@ -394,7 +426,12 @@ function clearOf(bench: string, name: string): string {
  * heads is taken by their names. Without `main`, the one cell of the workbench that meets the main parameter (`mainOn`). A
  * fragment with no signature, a collection, is taken by every name it defines (`* from id`).
  */
-export function useOn(bench: string, id: string, options: UseOnOptions): UseOn {
+export function useOn(bench: string, ref: FragmentRef, options: UseOnOptions): UseOn {
+  const { id, options: read } = refOf(ref, options);
+  return useById(bench, id, read);
+}
+
+function useById(bench: string, id: string, options: UseOnOptions): UseOn {
   const compiled = compilerOf(options.resolve, options.compiled);
   const text = options.resolve(id);
   const head = bench.replace(/\s+$/, '');
@@ -403,7 +440,7 @@ export function useOn(bench: string, id: string, options: UseOnOptions): UseOn {
   const signature = text === null ? null : signatureOf(text);
   if (text === null || !signature) {
     const line = `* from ${id}`;
-    return { text: written(line), line, heads: [], main: null, used: text === null ? null : usedBy(written(line)) };
+    return { text: written(line), line, heads: [], main: null, used: text === null ? null : usedBy(written(line)), resolve: options.resolve };
   }
   // (one head named as the workbench is clear of it; several each by its own name, or renamed clear of the workbench's,
   // `&kick2=kick`, decision 075 §3a–b: a second groove beside a first)
@@ -414,7 +451,7 @@ export function useOn(bench: string, id: string, options: UseOnOptions): UseOn {
   const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand) : null);
   const left = signature.names.length === 1 ? heads : heads.map((h, i) => (h === signature.names[i] ? h : `${h}=${signature.names[i]!.slice(1)}`));
   const line = takeLine(left, id, options.args, main);
-  return { text: written(line), line, heads, main, used: usedBy(written(line)) };
+  return { text: written(line), line, heads, main, used: usedBy(written(line)), resolve: options.resolve };
 }
 
 /** Whether a template fits a workbench taken by a `from` line, and why not: `fitsAs`'s answer. */
@@ -434,6 +471,8 @@ export interface FitAs {
   readonly unmet: readonly ClockNeed[];
   /** What the compile says that the workbench's alone doesn't; absent when a cheaper check failed first. */
   readonly diagnostics?: readonly Diagnostic[];
+  /** What reads `text`'s `from` line: the options' own, and for a fragment given as text, that too by its id. */
+  readonly resolve: Resolve;
 }
 
 /**
@@ -443,10 +482,15 @@ export interface FitAs {
  * it taps. Nothing is bound by name. A collection (no signature) is judged as the fit by lines judges it: its lines read only what
  * it defines, its sounds and its taps.
  */
-export function fitsAs(id: string, bench: string, options: UseOnOptions): FitAs {
+export function fitsAs(ref: FragmentRef, bench: string, options: UseOnOptions): FitAs {
+  const { id, options: read } = refOf(ref, options);
+  return fitsById(id, bench, read);
+}
+
+function fitsById(id: string, bench: string, options: UseOnOptions): FitAs {
   const compiled = compilerOf(options.resolve, options.compiled);
   const text = options.resolve(id);
-  if (text === null) return { fits: false, text: bench, use: null, missing: [], sounds: [], unmet: [] };
+  if (text === null) return { fits: false, text: bench, use: null, missing: [], sounds: [], unmet: [], resolve: options.resolve };
   const signature = signatureOf(text);
   if (!signature) {
     const f = fitByName(text, bench, compiled, options.resolve);
@@ -459,10 +503,11 @@ export function fitsAs(id: string, bench: string, options: UseOnOptions): FitAs 
       sounds: f.sounds,
       unmet: f.unmet,
       ...(f.diagnostics ? { diagnostics: f.diagnostics } : {}),
+      resolve: options.resolve,
     };
   }
-  const use = useOn(bench, id, { ...options, compiled });
-  if (signature.main && use.main === null) return { fits: false, text: use.text, use, missing: [signature.main], sounds: [], unmet: [] };
+  const use = useById(bench, id, { ...options, compiled });
+  if (signature.main && use.main === null) return { fits: false, text: use.text, use, missing: [signature.main], sounds: [], unmet: [], resolve: options.resolve };
   const benchNames = new Set(namesIn(bench));
   const sounds = holesOf(text, compiled, options.resolve)
     .sounds.filter((s) => !benchNames.has(s.slice(1)))
@@ -479,5 +524,5 @@ export function fitsAs(id: string, bench: string, options: UseOnOptions): FitAs 
   const unmet = clockNeeds(expansion(judged, { resolve: options.resolve }).text, result, gave, gave)
     .filter((t) => !meets(result, t))
     .map((t) => t.need);
-  return { fits: !diagnostics.length && !unmet.length, text: use.text, use, missing: [], sounds, unmet, diagnostics };
+  return { fits: !diagnostics.length && !unmet.length, text: use.text, use, missing: [], sounds, unmet, diagnostics, resolve: options.resolve };
 }

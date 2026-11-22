@@ -11,7 +11,7 @@ import { setTiming } from '../engine/edit';
 import { planOf } from '../engine/host';
 import { channelTable, midiNote, router, routesOf } from '../engine/midi';
 import { windowAt } from '../engine/schedule';
-import { cachedCompile, fitsAs } from './fit';
+import { cachedCompile, fitsAs, unionOf as unionWithoutJudging, useOn } from './fit';
 import { createRepository } from './fragments';
 import { headsOf } from './audition';
 import { drumCard } from './benches';
@@ -442,5 +442,60 @@ describe('what it costs', () => {
     compiled('&b loop=A4');
     compiled('&c loop=A4');
     expect(compiled('&a loop=A4')).not.toBe(a);
+  });
+});
+
+describe('a fragment given as its text, and the union without the judging (#716, ask 2)', () => {
+  const bench = ['&bar meter("4/4")', '&key scale(ionian, C)', '&harm over=&key step=1m 0 3'].join('\n');
+  const library = (id: string) => LIBRARY.find((f) => f.id === id)!;
+  const resolve = (id: string, hash?: string) => (id === 'mine' ? rhythm : resolveSeed(id, hash));
+  const rhythm = '&kick s=bd step=8n x ~ x ~\n&hat s=hh step=8n x x x x\n&groove [&kick, &hat]';
+  const template = library('walking_bass').text;
+
+  it('fits a collection given as text as it fits given by its id, and says what reads its text', () => {
+    const byId = fitsAs('mine', bench, { resolve });
+    const byText = fitsAs({ text: rhythm }, bench, { resolve });
+    expect(byText.text).toBe(byId.text);
+    expect([byText.fits, byText.missing, byText.sounds, byText.unmet]).toEqual([byId.fits, byId.missing, byId.sounds, byId.unmet]);
+    expect(byText.union).toEqual(byId.union);
+    expect(byId.resolve).toBe(resolve);
+  });
+
+  it('takes a template given as text: its from line names an id of cells’ own, which the result’s resolve reads, with no id of the frontend’s', () => {
+    const byText = fitsAs({ text: template }, bench, { resolve, main: '&harm' });
+    expect(byText.use?.line).toMatch(/^&\w+ from fit_[0-9a-f]+/);
+    const id = /from (fit_[0-9a-f]+)/.exec(byText.text)![1]!;
+    expect(byText.resolve(id)).toBe(template);
+    expect(byText.resolve('mine')).toBe(rhythm);
+    const said = (text: string, read: typeof resolve) => compileSource(text, undefined, { resolve: read }).diagnostics.map((d) => d.message);
+    const byId = fitsAs('walking_bass', bench, { resolve, main: '&harm' });
+    expect(said(byText.text, byText.resolve)).toEqual(said(byId.text, resolve));
+    expect(byText.fits).toBe(fitsAs('walking_bass', bench, { resolve, main: '&harm' }).fits);
+    // (the same text, the same id: a compile kept by text serves it again)
+    expect(useOn(bench, { text: template }, { resolve, main: '&harm' }).text).toBe(byText.text);
+  });
+
+  it('takes the head’s name from the text’s own, and tells a compile it is given the resolve that reads the text by its id', () => {
+    const seen: string[] = [];
+    const compiled = (text: string, read: typeof resolve) => {
+      seen.push(text);
+      return compileSource(text, undefined, { resolve: read });
+    };
+    const taken = useOn(bench, { text: template, head: '&walk' }, { resolve, main: '&harm', compiled });
+    expect(taken.heads).toEqual(['&walk']);
+    expect(taken.line).toMatch(/^&walk from fit_/);
+    expect(seen.length).toBeGreaterThan(0);
+    expect(taken.used).not.toBeNull();
+  });
+
+  it('writes the union of a collection with a workbench without a compile, as the fit’s own, and renames what collides', () => {
+    expect(unionWithoutJudging(rhythm, bench)).toEqual(fitsAs('mine', bench, { resolve }).union);
+    const there = '&bar meter("4/4")\n&kick s=bd';
+    const kicks = '&kick s=sd step=8n x ~ x ~\n&groove [&kick]';
+    const union = unionWithoutJudging(kicks, there);
+    expect(union.renamed.get('&kick')).toBe('&kick2');
+    expect(union.text).toContain('&kick2 s=sd');
+    // (a text no compile would read: the union is only text)
+    expect(unionWithoutJudging('&a foo(', '&b 1').text).toBe('&b 1\n&a foo(');
   });
 });
