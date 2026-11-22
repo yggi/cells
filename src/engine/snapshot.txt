@@ -2,7 +2,7 @@ oscillator  1 notes  notes 944fddb0425ae315  events df14d0e954311fc1  values 4ea
 tone  40 notes  notes d48a7ddd91fda766  events 9c149648a9383e45  values 04bf76bb6ecdfdbb
 rests  76 notes  notes 42c7005b57768d33  events c385850531ea0af1  values 35719ef8ba4f181c
 semitones  227 notes  notes 881ce1ed6a1c9b4e  events 7052db77b9b8821a  values e0b881161e23c44a
-twovoices  210 notes  notes 914c825e7304f137  events a338dc8c91a43f2d  values 8ec70a1374d011ba
+twovoices  210 notes  notes 914c825e7304f137  events a338dc8c91a43f2d  values 6a09802297e08db5
 steps  130 notes  notes d5210565eb229629  events 2feb384e83164bde  values 88efc24753e9bc8f
 clock  195 notes  notes 86543701f9572577  events 814281b2e85ad67b  values 70d3ec075d4f4a84
 voice  285 notes  notes 5abd963378323175  events a95f8e9c117ae300  values 75a19e085a6cecd2
@@ -19,11 +19,12 @@ mirrors  183 notes  notes 23c9bebcd9eb2f34  events 9d647cd903bc8779  values b997
 variations  144 notes  notes c9bc5a525f3c6d55  events 9bf35b03b0ce4ab1  values ddc6a7af257695db
 chance  451 notes  notes f8618f3b6fbcc5e9  events 75f922da8b76269a  values fb5a97e72babb5c9
 fifths  65 notes  notes c338371cdcec0309  events 0a0b836bbe21e877  values 16443fa1dd266fca
+circle  210 notes  notes 8ab7c4e987475e81  events 5df17ef77db1d02f  values 7541f18b446010cc
 arrangement  124 notes  notes 128b16a317226848  events e6331c929bcf5737  values 4e5d726bca0aae76
 stereo  56 notes  notes d23210bd260e6335  events e9c10974daf63589  values 0b1806e962cefbbc
 waveforms  152 notes  notes af98ebebf3624177  events 6bb60131bc6a7a78  values 85857b1ac8e7ffed
 moving  247 notes  notes 19baf812baae7e0d  events 2dcfc6b9534c6c40  values e76cbaf311e176c4
-style  150 notes  notes 55b0c191a3c60d9a  events 77affbccbe68e119  values 6e1ac462fcae5f5a
+style  150 notes  notes 55b0c191a3c60d9a  events 77affbccbe68e119  values 64a15cb7f30afd5e
 grids  123 notes  notes c48b619498fae94e  events d4a05490c582e2a3  values 73a3617ea0bae3d1
 metronome  67 notes  notes 56b7210ad4f883c9  events 7a421fb8829b74c0  values 2d25d1d75eac48ac
 fm  96 notes  notes a357e7f6250b6df0  events deb17b877796ed64  values a0d2534235872980
@@ -36,7 +37,7 @@ echotape  446 notes  notes f8d8b2d59ece32c5  events 6a8821e87e7a7a1f  values d0f
 worn  40 notes  notes 6412ba2d362fc84e  events 4cb0aec34e27ecd9  values a6b573695c70922a
 dtmf  212 notes  notes a41810e3d88fdf1f  events 3bd1397bdcb95d5a  values e841fd628bff2071
 daytime  171 notes  notes f202a59b6df3d90e  events 10a4f5eae2d6020b  values 10cce8dfa33da9a9
-gate  384 notes  notes 938454806e0cb2ca  events d3c4f0e3f4ed44f5  values 64451bc26d32ec1a
+gate  384 notes  notes 938454806e0cb2ca  events d3c4f0e3f4ed44f5  values 4cda4935f94c372c
 play-in  224 notes  notes 4b7d011642b35a7c  events d24c928bdecf8725  values b856c0590467f268
 midi-out  184 notes  notes 4604886bcb280fd1  events 72e096ca86db2427  values baf9ea6cae1e3ffc
 lullaby  52 notes  notes 7bd4bd55efe1623d  events 1a888f73f2003915  values fe5bda38f490e57d
@@ -56,7 +57,6 @@ bossa  943 notes  notes a8a450ffe6ea89fc  events 4dc6dd57543312c2  values b406bd
 bell  485 notes  notes c73737910ba8f172  events a480940f904c5f29  values 08ce5dddcb5c132d
 prelude  352 notes  notes ff10d06dff1e66dd  events 3e9740ef869e4c0b  values b21c180e262c2513
 pachelbel  184 notes  notes 11022766b735332e  events 9bb27fb7e674936e  values a7a0d1ed382ac5be
-circle  210 notes  notes 8ab7c4e987475e81  events 5df17ef77db1d02f  values 7541f18b446010cc
 pop  716 notes  notes 4a8847e3a0fef5bb  events 849b2ba5a68629fb  values 41457ae17effd5fc
 idm  1280 notes  notes 1514d944d0c46fc5  events 1abc343b428fd162  values af6dce5e955ff523
 alpha  145 notes  notes e46e650280590e98  events 7801311c03387a1f  values 0520d16d5e5d9b5f

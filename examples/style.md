@@ -24,5 +24,7 @@ The tune turns the minor scale's i, VI, III and VII, a bar each, and the bass pl
 &root over=&key step=1m 0 5 2 6
 &bassV s=saw loop=A1 lpf=250..1600 * &style[bite] lpq=6 env=&strike
 &leadV s=tri loop=A3 lpf=500..4000 * &style[mood] env=&(map=adsr .01 .2 .6 .2)
-&out map=sample postgain=2 [&tune * &leadV * .4, &root * &bassV * .5]
+&leadLevel .4
+&bassLevel .5
+&out map=sample postgain=2 [&tune * &leadV * &leadLevel, &root * &bassV * &bassLevel]
 ```

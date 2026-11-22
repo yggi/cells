@@ -204,6 +204,17 @@ describe('a name written in a form that reads it is one wire (#737, #618)', () =
     expect(wire(text, 'b', 'drift')).toHaveLength(1);
   });
 
+  it('a cell that is one number, and notes with their levels, named in a mix are wires (decisions 087, 088)', () => {
+    const text = `&bar meter("4/4") step=100bpm\n&lvl .4\n&roots step=1m 0 5\n&line [&roots * .5]\n&v s=saw loop=A1\n&out map=sample [&line * &v * &lvl]\n`;
+    const edges = writtenGraph(compileSource(text), { card: true }).edges;
+    // (the card reads the number whole; the named notes' own product names its cell; the card's product takes them in)
+    expect(edges.filter((e) => e.from === cellId('lvl') && e.to === cellId('out')).map((e) => e.port)).toEqual(['braid']);
+    expect(edges.filter((e) => e.from === cellId('roots') && e.to === cellId('line')).map((e) => e.port)).toEqual(['braid']);
+    expect(edges.some((e) => e.from === cellId('line') && e.to.startsWith('junction:out'))).toBe(true);
+    // (a sum of values draws each cell it names, once, as it did)
+    expect(wire(`&bar meter("4/4") step=100bpm\n&a 1\n&b 1\n&drift [&a * .5 + &b * .3 + &a * .2]\n${TAIL}`, 'a', 'drift')).toHaveLength(1);
+  });
+
   it('the radio and twelve draw what they write: the drift, the style, the bend', () => {
     const graph = (key: string) => writtenGraph(compileSource(EXAMPLES[key as keyof typeof EXAMPLES].source, undefined, { resolve: resolveSeed }), { card: true }).edges;
     const has = (key: string, from: string, to: string, port: string) => graph(key).some((e) => e.from === cellId(from) && e.to === cellId(to) && e.port === port);

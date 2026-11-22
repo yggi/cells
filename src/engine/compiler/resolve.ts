@@ -1,6 +1,6 @@
 /** Phase 2: the cells — each declaration resolved as a helix over its table, &refs followed (cycles caught). */
-import { valueSumOf } from '../valuesum';
-import { isNote, type Atom, type CellDecl, type Span, type Token } from '../ast';
+import { numberCellOf, valueSumOf } from '../valuesum';
+import { isNote, type Atom, type CellDecl, type Expr, type Span, type Token } from '../ast';
 import { footOf, innerSteps, leaves } from '../subseq';
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell, type Unit } from '../program';
 import { VOICE_MAKERS } from '../attributes';
@@ -88,6 +88,31 @@ function bentOf(d: CellDecl, warn: Ctx['warn'], declOf: (name: string) => CellDe
 
 /** A meter's steps a beat: what its bpm is read through (1 when it has no meter). */
 export const stepsPerBeat = (m: Meter | null): number => (m ? (stepsPerPulse(m) * m.pulses) / beatCount(m) : 1);
+
+/**
+ * The cells a mix reads by value (decisions 087, 088): compile writes a cell that is one number as its number, and notes
+ * with their levels as their product, before a mix is typed, so no reference is left for the graph. They are named here, so
+ * each is a wire: the number cells and the notes with their levels a mix names whole, and, for a cell that is itself notes
+ * with their levels (`&bassLine [&roots * .5]`), the cells its product names.
+ */
+function namedByValue(d: CellDecl, decls: ReadonlyMap<string, CellDecl>, isNotes: (name: string) => boolean): string[] {
+  // (a sum of values draws each cell it names already, a repeat counted: decision 079)
+  if (valueSumOf(d.name, decls) !== null) return [];
+  const exprs = d.braid.kind === 'list' ? d.braid.tokens.flatMap((t) => (t.atom.kind === 'mix' ? t.atom.exprs : [])) : [];
+  const names: string[] = [];
+  const walk = (e: Expr, own: boolean): void => {
+    if (e.k === 'ref') {
+      const n = e.ref.name;
+      if (!decls.has(n) || valueSumOf(n, decls) !== null) return;
+      if (own || numberCellOf(decls.get(n)) !== null || isNotes(n)) names.push(n);
+    } else if (e.k === 'sum') for (const it of e.items) walk(it.e, own);
+    else if (e.k === 'prod') for (const f of e.factors) walk(f, own);
+  };
+  // (a cell that is notes with their levels names the cells of its own product; a mix, the ones it reads whole)
+  const own = isNotes(d.name);
+  for (const e of exprs) walk(e, own);
+  return names;
+}
 
 export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, stacks }: Declared, typed: Typed, sortOf: (name: string) => Sort): Cells {
   const isNotes = notesCells(ctx, decls);
@@ -199,7 +224,10 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
       ...(d.bend ? bentOf(d, warn, (n) => decls.get(n)) : {}),
       ...(d.readsSlot ? { readsSlot: d.readsSlot } : {}),
       ...(d.swingFrom ? { swingFrom: d.swingFrom.name } : {}),
-      ...(d.valueReads ? { valueReads: d.valueReads } : {}),
+      ...(() => {
+        const reads = [...new Set([...(d.valueReads ?? []), ...namedByValue(d, decls, isNotes)])];
+        return reads.length ? { valueReads: reads } : {};
+      })(),
       ...(d.style ? { styleReads: [...new Set(styleRefs(d.style).map((r) => r.name))] } : {}),
       shift: d.shift ?? 0,
       ...(d.tonic ? { tonic: d.tonic.name } : {}),
