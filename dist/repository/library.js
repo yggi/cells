@@ -2,9 +2,12 @@ import { EXAMPLES } from "../engine/examples.js";
 import { RENAMED_IDS } from "../engine/renamed.js";
 import { SEED, seedFragments } from "./seed.js";
 import { EMPTY_LAYER, fragmentProblems } from "./fragments.js";
-import { readPiece } from "../engine/piecefile.js";
-import { partOf, usesIn } from "../engine/use.js";
+import { partOf, signatureHeads, usesIn } from "../engine/use.js";
+import { associationOf } from "./declarations.js";
+import { styleNamesIn } from "./files.js";
+import { SEED_FILES } from "./seed.generated.js";
 import { variantsOf } from "./variants.js";
+const STYLE_NAMES = styleNamesIn(SEED_FILES);
 const FOLDERS = [
     'meters',
     'rhythms',
@@ -24,22 +27,23 @@ const FOLDERS = [
     'modules',
     'laws',
 ];
-export const PARTS = Object.entries(EXAMPLES).flatMap(([key, e]) => {
-    const file = readPiece(e.file);
-    const parts = 'problems' in file ? undefined : file.frontmatter.parts;
-    if (!parts || typeof parts !== 'object' || Array.isArray(parts))
+export const PARTS = Object.entries(EXAMPLES).flatMap(([key, e]) => signatureHeads(e.source).flatMap((name) => {
+    const head = name.slice(1);
+    const text = partOf(e.source, head);
+    if (text === null)
         return [];
-    return Object.entries(parts).map(([head, entry]) => {
-        const text = partOf(e.source, head);
-        if (text === null)
-            throw new Error(`examples/${key}.md: its frontmatter keys a part &${head}, and no signature names it`);
-        const fragment = { id: `${key}/${head}`, text, association: (entry?.association ?? []) };
-        const problems = fragmentProblems(fragment);
-        if (problems.length)
-            throw new Error(`examples/${key}.md, part &${head}: ${problems.join('; ')}`);
-        return fragment;
-    });
-});
+    const declared = associationOf(text
+        .split('\n')
+        .filter((line) => !line.trim().startsWith('*'))
+        .join('\n'), { styles: STYLE_NAMES });
+    if (!declared?.explicit)
+        return [];
+    const fragment = { id: `${key}/${head}`, text, association: declared.association };
+    const problems = [...declared.problems, ...fragmentProblems(fragment)];
+    if (problems.length)
+        throw new Error(`examples/${key}.md, part &${head}: ${problems.join('; ')}`);
+    return [fragment];
+}));
 export const LIBRARY = [...FOLDERS.flatMap((folder) => seedFragments(folder)), ...PARTS];
 export const ofFacet = (facet) => LIBRARY.filter((f) => f.association.some((p) => p.facet === facet));
 const PART_ID = /^[^(/]+\/[^(]+$/;

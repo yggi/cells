@@ -87,7 +87,7 @@ describe("a document's parts in the catalogue (decision 082)", () => {
       facets: ['motif'],
       signature: { names: ['&twinkle'], main: '&key' },
     });
-    expect(twinkle.text.split('\n')[0]).toBe('&twinkle from &key');
+    expect(twinkle.text.split('\n')[0]).toBe('&twinkle from &key style=&(map=style sync=.1 harm=.12 bite=.5 mood=.95) facet=motif');
     expect(seed.filter((e) => e.part?.document === 'kinderlied').map((e) => e.part!.head)).toEqual(['twinkle', 'wonder', 'haenschen', 'hinein', 'heim', 'weinet']);
     expect(seed.findIndex((e) => e.part)).toBe(SEED.length);
   });
