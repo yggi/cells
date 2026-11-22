@@ -1,4 +1,0 @@
-### Added
-
-- A braid fill's answer is kept in a piece file's lockfile (#792, rung 6d of #691; decision 085 §8.2), beside its `uses`, in `answers:` (`- id, fill, args, text`), keyed by a hash of its arguments' core (`argsHash`), so a renamed text keeps it. A piece opens playing its recorded answers without asking the plugin's code. **For a host:** `answersOf(file)` reads them for `compileSource`'s new `answers` option, `withLockfile` records them from `Take.answers`, and the frontmatter's check reads `answers:` as `uses:`. A frontend at an older pin ignores the key and keeps its `uses`.
-- A fill as an argument (decision 085 §8.3): a braid fill's answer is handed to another as text. The `from` lines are taken in the order their fills depend on each other, and two that read each other's fills are an error naming both. A stream's fill, or a refused one, is refused as an argument. No piece sounds different: no seed has a braid fill.
