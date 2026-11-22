@@ -1,5 +1,6 @@
 export { byId, CO_USE_PULL, createRepository, EMPTY_LAYER, fragmentDistance, layerProblems, pointDistance, } from "./repository/fragments.js";
 export { canonicalText, fileFragment, renamedLayer, sameText, usedTogether, useFragments } from "./repository/learned.js";
+export { axedLayer, migrateLayer, MOVED_IDS, movedLayer, movedText, roledLayer, signedLayer } from "./repository/migratelayer.js";
 export { cachedFit, declarations, fitsAs, useOn } from "./repository/fit.js";
 export { holesOf } from "./repository/holes.js";
 export { readFragment, readFragments, writeFragment } from "./repository/files.js";
