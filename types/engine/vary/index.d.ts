@@ -6,7 +6,7 @@ export { backbeatOf, type Anchor } from './anchors';
 export type { Reference } from './reference';
 export { THIRDS, PHRASE_BARS } from './progression';
 /** The operators: the rhythm ones (rung 1), the pitched ones (rung 2) and the harmony's own (rung 3). */
-export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim' | 'third' | 'dominant';
+export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim' | 'third' | 'dominant' | 'swap' | 'substitute';
 /** The operators a frontend gets where it names none, in their order: the rhythm ones. */
 export declare const RHYTHM_OPERATORS: readonly Operator[];
 /** The pitched operators, in their order: for a bass, a lead. */
@@ -17,6 +17,12 @@ export declare const PITCHED_OPERATORS: readonly Operator[];
  * where a frontend asks for one of them: rotate and reverse act on a progression only beside `third` or `dominant`.
  */
 export declare const HARMONY_OPERATORS: readonly Operator[];
+/**
+ * The operators on a form's letters or a song plan's sections (point 10), the slot operators every level shares
+ * (`slots.ts`): rotate and reverse between its anchors, swap two adjacent slots, substitute a slot by another it holds.
+ * A form is varied only where a frontend asks for `swap` or `substitute`, as a progression where it asks for one of its own.
+ */
+export declare const FORM_OPERATORS: readonly Operator[];
 /** Transposition's amounts where a frontend names none, in degrees of the table read. */
 export declare const DEGREES: readonly number[];
 /** A bend's amounts, in degrees of the table read from the note before the last: 1 or 2, either way (yggi/jambot#424). */
@@ -53,6 +59,15 @@ export interface VaryOptions {
      * resolver. A fragment read without one compiles only where it takes nothing.
      */
     readonly resolve?: Resolve;
+    /**
+     * A mask over a line of slots (a progression, a form, a song plan), by its name (`&harm` or `harm`): the slots no
+     * operator moves, in place of the level's own anchors (a progression's cadence, a form's first and last slot); a
+     * negative counts from the end, −1 the last. `{ '&harm': [] }` fixes none; `{ '&chorus': [0, 1, -1] }` keeps a form's
+     * first two letters and its last. The same at every scale.
+     */
+    readonly fixed?: {
+        readonly [line: string]: readonly number[];
+    };
 }
 /**
  * A fragment's anchors on its workbench, derived from its text (decision 052, point 3): the kick's line, the backbeat's,

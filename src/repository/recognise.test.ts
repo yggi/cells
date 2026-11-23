@@ -1,5 +1,5 @@
 // Recognition (decision 055, #224): each of Jambot's 284 variations on E31's bars, each of the bass seeds' 48, and each of
-// the seed progressions' 419 (decision 052, point 8), is
+// the seed progressions' 789 but one (decision 052, points 8 and 10), is
 // recognised as its source's, by its operator, at distance 0, against the whole library; random bars of hits are
 // recognised as nothing; a recognition on a warmed recogniser compiles only the heard text (its milliseconds:
 // `timing.slow.test.ts`).
@@ -116,18 +116,20 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     expect(n).toBe(120);
   });
 
-  it('each of the seed progressions’ 419 (209 in C major, 210 in C minor), by its operator, at distance 0', () => {
+  it('each of the seed progressions’ 789 (394 in C major, 395 in C minor), by its operator, at distance 0; one is a seed itself', () => {
     let n = 0;
     for (const mode of ['major', 'minor']) {
       const workbench = `&bar meter("4/4") step=120bpm\n&key scale(${mode}, C)`;
       for (const f of HARMONY_FRAGMENTS)
         for (const v of variations(f.text, { workbench, operators: HARMONY_OPERATORS })) {
           const [first] = recogniser.recognise(v.apply(f.text), LIBRARY, { workbench });
-          expect([first?.fragment.id, first?.path.map((s) => s.by), first?.distance], `${mode}: ${f.id}, ${v.by}`).toEqual([f.id, [v.by], 0]);
+          // (the montuno's third bar given its second's chord is the vamp to the fourth, a seed: recognised as that seed)
+          const as = f.id === 'montuno' && v.by === 'substitute &harm 2 1' ? ['vamp_to_the_fourth', [], 0] : [f.id, [v.by], 0];
+          expect([first?.fragment.id, first?.path.map((s) => s.by), first?.distance], `${mode}: ${f.id}, ${v.by}`).toEqual(as);
           n++;
         }
     }
-    expect(n).toBe(419);
+    expect(n).toBe(789);
   });
 
   it('a fragment itself by no operator, and a variation of a variation only at depth 2', () => {

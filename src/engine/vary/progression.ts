@@ -7,11 +7,10 @@
  * not varied.
  *
  * Its anchor is the cadence: every step that sounds in the last bar of a four-bar phrase (bars 4, 8, 12 … of a lap that
- * is a multiple of four bars), else in the lap's last bar. Around it, four operators, each giving every variation it can:
+ * is a multiple of four bars), else in the lap's last bar; a frontend's mask (`VaryOptions.fixed`) fixes others instead.
+ * Around it, the slot operators every level shares (`slots.ts`: rotate and reverse each span between two cadence steps,
+ * swap two adjacent chords, substitute a chord by another the progression holds), and two of its own:
  *
- *  - **rotate**: each span between two cadence steps one step later, its last step to its first (the line's rotate, a
- *    level up);
- *  - **reverse**: each span between two cadence steps in reverse order (the line's retrograde, a level up);
  *  - **third**: one step's chord moved a third, every tone n degrees, n each of `THIRDS` (−2, 2): I to vi or iii;
  *  - **dominant**: the secondary dominant of the next step's chord on the second half of a step (Jambot's `themes.ts` at
  *    high harmony): a major triad a fifth above the next chord's root, a dominant seventh where that chord has four tones
@@ -25,6 +24,7 @@ import { resolveIn } from '../helix';
 import type { Meter } from '../meter';
 import { codeShifts, type CompileResult } from '../program';
 import { tapWhole } from './lines';
+import { SLOT_OPERATORS, slotMoves, type SlotOperator } from './slots';
 
 /** A tone of a stack: a degree of the table read, and its accidental in the table's grid steps (−1, 0, 1). */
 export interface Tone {
@@ -54,7 +54,7 @@ export interface Progression {
 
 /** A progression's candidate variation: the operator, its amounts (for `by`), its slots, and what it does, in words. */
 export interface Candidate {
-  readonly operator: 'rotate' | 'reverse' | 'third' | 'dominant';
+  readonly operator: SlotOperator | 'third' | 'dominant';
   readonly amounts: readonly number[];
   readonly slots: readonly Slot[];
   readonly what: string;
@@ -178,38 +178,21 @@ export function progressionKey(p: Progression, slots: readonly Slot[]): string {
     .join('|');
 }
 
-/** Each span between two cadence steps, cyclically (the whole lap where there is none). */
-function spansOf(p: Progression): number[][] {
-  const n = p.slots.length;
-  if (!p.cadence.length) return [Array.from({ length: n }, (_, s) => s)];
-  return p.cadence.map((start, k) => {
-    const end = p.cadence[(k + 1) % p.cadence.length]! + (k + 1 === p.cadence.length ? n : 0);
-    return Array.from({ length: end - start - 1 }, (_, j) => (start + 1 + j) % n);
-  });
-}
-
-/** The slots with each span's places filled from `place` (the span and a place in it to the place it takes). */
-function respanned(p: Progression, place: (span: readonly number[], j: number) => number): Slot[] {
-  const slots = [...p.slots];
-  for (const span of spansOf(p)) for (const [j, step] of span.entries()) slots[step] = p.slots[span[place(span, j)]!]!;
-  return slots;
-}
-
 /**
  * Every candidate variation of a progression by the operators asked, in their order: for each, its rotation, its
- * retrograde, its thirds by step and then by `THIRDS`, its dominants by step. Each moves no cadence step. Whether a
+ * retrograde, its swaps, its substitutions (`slots.ts`), its thirds by step and then by `THIRDS`, its dominants by
+ * step. Each moves no fixed step (its cadence, or the frontend's mask). Whether a
  * candidate plays other notes than its source and the ones before it is the caller's to judge.
  */
-export function progressionCandidates(p: Progression, operators: readonly string[], result: CompileResult): Candidate[] {
+export function progressionCandidates(p: Progression, operators: readonly string[], result: CompileResult, fixed: readonly number[] = p.cadence): Candidate[] {
   const out: Candidate[] = [];
-  const free = (s: number) => !p.cadence.includes(s);
+  const free = (s: number) => !fixed.includes(s);
+  const keys = p.slots.map(slotText);
   const shifts = codeShifts(result);
   const at = (degree: number, alter = 0) => resolveIn(result, p.table, 0, degree, alter, shifts).position;
   for (const operator of operators) {
-    if (operator === 'rotate')
-      out.push({ operator, amounts: [], slots: respanned(p, (span, j) => (j + span.length - 1) % span.length), what: 'each phrase a step later, its last chord to its first' });
-    else if (operator === 'reverse')
-      out.push({ operator, amounts: [], slots: respanned(p, (span, j) => span.length - 1 - j), what: 'each phrase in reverse order, the cadences kept' });
+    if (SLOT_OPERATORS.includes(operator as SlotOperator))
+      for (const m of slotMoves(keys, fixed, [operator])) out.push({ operator: m.operator, amounts: m.amounts, slots: m.from.map((f) => p.slots[f]!), what: m.what });
     else if (operator === 'third')
       p.slots.forEach((slot, s) => {
         if (!free(s) || slot.length !== 1) return;

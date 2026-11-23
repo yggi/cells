@@ -1,5 +1,6 @@
 import type { Meter } from '../meter';
 import { type CompileResult } from '../program';
+import { type SlotOperator } from './slots';
 /** A tone of a stack: a degree of the table read, and its accidental in the table's grid steps (−1, 0, 1). */
 export interface Tone {
     readonly degree: number;
@@ -24,7 +25,7 @@ export interface Progression {
 }
 /** A progression's candidate variation: the operator, its amounts (for `by`), its slots, and what it does, in words. */
 export interface Candidate {
-    readonly operator: 'rotate' | 'reverse' | 'third' | 'dominant';
+    readonly operator: SlotOperator | 'third' | 'dominant';
     readonly amounts: readonly number[];
     readonly slots: readonly Slot[];
     readonly what: string;
@@ -49,10 +50,11 @@ export declare function progressionNotes(p: Progression, slots: readonly Slot[],
 export declare function progressionKey(p: Progression, slots: readonly Slot[]): string;
 /**
  * Every candidate variation of a progression by the operators asked, in their order: for each, its rotation, its
- * retrograde, its thirds by step and then by `THIRDS`, its dominants by step. Each moves no cadence step. Whether a
+ * retrograde, its swaps, its substitutions (`slots.ts`), its thirds by step and then by `THIRDS`, its dominants by
+ * step. Each moves no fixed step (its cadence, or the frontend's mask). Whether a
  * candidate plays other notes than its source and the ones before it is the caller's to judge.
  */
-export declare function progressionCandidates(p: Progression, operators: readonly string[], result: CompileResult): Candidate[];
+export declare function progressionCandidates(p: Progression, operators: readonly string[], result: CompileResult, fixed?: readonly number[]): Candidate[];
 /**
  * A progression's variation as a form on the progression it varies (decision 052, point 7, for rung 3): a copy of it,
  * `base=`, changed on the steps the variation changes, `=` keeping one step and `=!k` k (`base=&harm =!2 [1,3,5]`,
