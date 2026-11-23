@@ -60,7 +60,7 @@ import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written, type 
 import { referenceOf, type Reference } from './reference';
 import { answeredIn } from '../use';
 import { formsOf, FORM_FIXED, type Form } from './form';
-import { fixedOf, SLOT_OPERATORS, slotMoves, slotReference, spansOf } from './slots';
+import { fixedOf, SLOT_OPERATORS, slotMoves, slotReference } from './slots';
 import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf, type Progression } from './progression';
 
 export { backbeatOf, type Anchor } from './anchors';

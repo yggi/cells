@@ -8,7 +8,7 @@ import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written } from
 import { referenceOf } from "./reference.js";
 import { answeredIn } from "../use.js";
 import { formsOf, FORM_FIXED } from "./form.js";
-import { fixedOf, SLOT_OPERATORS, slotMoves, slotReference, spansOf } from "./slots.js";
+import { fixedOf, SLOT_OPERATORS, slotMoves, slotReference } from "./slots.js";
 import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf } from "./progression.js";
 export { backbeatOf } from "./anchors.js";
 export { THIRDS, PHRASE_BARS } from "./progression.js";
