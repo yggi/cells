@@ -10,11 +10,12 @@ export function spansOf(n, fixed) {
         return Array.from({ length: end - start - 1 }, (_, j) => (start + 1 + j) % n);
     });
 }
-export function slotMoves(keys, fixed, operators) {
+export function slotMoves(keys, fixed, operators, empty) {
     const n = keys.length;
     const free = (s) => !fixed.includes(s);
     const identity = Array.from({ length: n }, (_, s) => s);
-    const changes = (from) => from.some((f, s) => keys[f] !== keys[s]);
+    const keyAt = (f) => (f === EMPTY ? empty?.key : keys[f]);
+    const changes = (from) => from.some((f, s) => keyAt(f) !== keys[s]);
     const respanned = (place) => {
         const from = [...identity];
         for (const span of spansOf(n, fixed))
@@ -50,9 +51,26 @@ export function slotMoves(keys, fixed, operators) {
                     push({ operator, amounts: [s, j], from, what: `slot ${s} plays slot ${j}'s` });
                 }
             }
+        else if (operator === 'drop' && empty)
+            for (let s = 0; s < n; s++) {
+                if (!free(s) || keys[s] === empty.key)
+                    continue;
+                const from = [...identity];
+                from[s] = EMPTY;
+                push({ operator, amounts: [s], from, what: `slot ${s} left empty` });
+            }
+        else if (operator === 'add' && empty && empty.fill !== null)
+            for (let s = 0; s < n; s++) {
+                if (!free(s) || keys[s] !== empty.key)
+                    continue;
+                const from = [...identity];
+                from[s] = empty.fill;
+                push({ operator, amounts: [s], from, what: `empty slot ${s} plays slot ${empty.fill}'s` });
+            }
     }
     return out;
 }
+export const EMPTY = -1;
 export function slotReference(name, before, after) {
     const delta = [];
     let kept = 0;
@@ -70,4 +88,13 @@ export function slotReference(name, before, after) {
         return null;
     const form = `base=${name} ${delta.join(' ')}`;
     return { form, line: (cell) => `&${cell} ${form}` };
+}
+export function shiftMoves(n, fixed, amounts, movable) {
+    const out = [];
+    for (let slot = 0; slot < n; slot++)
+        if (!fixed.includes(slot) && movable(slot))
+            for (const by of amounts)
+                if (by !== 0)
+                    out.push({ slot, by });
+    return out;
 }

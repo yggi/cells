@@ -42,10 +42,11 @@ export function declare(ctx: Ctx): Declared {
     else decls.set(c.name, c);
   }
   const mainKey = mainKeyOf(decls);
+  // (a generator's arguments read from cells first, decision 101: a meter written meter(&m) is its meter before any pass reads it)
+  meters(ctx, decls);
   tonics(ctx, decls);
   modes(ctx, decls);
   evens(ctx, decls);
-  meters(ctx, decls);
   swings(ctx, decls);
   movingSwings(ctx, decls);
   movingDepths(ctx, decls);

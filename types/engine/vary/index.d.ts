@@ -6,7 +6,7 @@ export { backbeatOf, type Anchor } from './anchors';
 export type { Reference } from './reference';
 export { THIRDS, PHRASE_BARS } from './progression';
 /** The operators: the rhythm ones (rung 1), the pitched ones (rung 2) and the harmony's own (rung 3). */
-export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim' | 'third' | 'dominant' | 'swap' | 'substitute';
+export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim' | 'third' | 'dominant' | 'swap' | 'substitute' | 'shift';
 /** The operators a frontend gets where it names none, in their order: the rhythm ones. */
 export declare const RHYTHM_OPERATORS: readonly Operator[];
 /** The pitched operators, in their order: for a bass, a lead. */
@@ -23,6 +23,12 @@ export declare const HARMONY_OPERATORS: readonly Operator[];
  * A form is varied only where a frontend asks for `swap` or `substitute`, as a progression where it asks for one of its own.
  */
 export declare const FORM_OPERATORS: readonly Operator[];
+/**
+ * One slot moved n degrees of the table it reads, n each of `degrees` (#910): a note of a pitched line
+ * (`shift &bass 2 1`), a chord of a progression (`shift &harm 1 -1`; its `third` is its shift by a third), a letter of
+ * a form on a grid (`&a` to `&a^1`, a sequence: `shift &chorus 1 2`). Asked by name: no list of a level's holds it.
+ */
+export declare const SHIFT: Operator;
 /** Transposition's amounts where a frontend names none, in degrees of the table read. */
 export declare const DEGREES: readonly number[];
 /** A bend's amounts, in degrees of the table read from the note before the last: 1 or 2, either way (yggi/jambot#424). */
@@ -74,7 +80,15 @@ export interface VaryOptions {
  * the roots on chord changes, and a progression's cadence (each step in the last bar of a four-bar phrase, point 8).
  */
 export declare const anchorsOf: (fragment: string, workbench?: string, resolve?: Resolve) => readonly Anchor[];
-/** Every variation by one operator on one line, in Jambot's order, none playing the notes of its source or of one before it. */
+/**
+ * Every line's fixed steps on its workbench, in the mask's own shape (`VaryOptions.fixed`, #909): its lines', its
+ * progressions' and its forms', as the options give them (the frontend's `keep` and mask, else each level's anchors).
+ * Handed back as the mask, it varies the fragment as it is varied with none: `variations(text, { ...o, fixed: fixedStepsOf(text, o) })`.
+ */
+export declare function fixedStepsOf(fragment: string, options?: VaryOptions): {
+    readonly [line: string]: readonly number[];
+};
+/** Every variation by one operator on one line, in Vary's order, none playing the notes of its source or of one before it. */
 export declare const variations: (fragment: string, options?: VaryOptions) => readonly Variation[];
 /**
  * One note as recognition compares it (#224, decision 055): its onset in whole notes from its lap's start (null where

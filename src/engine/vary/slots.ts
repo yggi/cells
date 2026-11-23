@@ -8,7 +8,10 @@
  *  - **reverse**: each span between two fixed slots in reverse order;
  *  - **swap**: two adjacent free slots exchanged, `swap &x i` the slots i and i + 1;
  *  - **substitute**: one free slot replaced by another slot the line holds, each different one once, by its first place:
- *    `substitute &x i j`, slot i plays what slot j played.
+ *    `substitute &x i j`, slot i plays what slot j played;
+ *  - **drop** and **add** (#911), on a line that has empty slots (a line's rests): a free slot left empty, `drop &x i`;
+ *    an empty free slot given what the line's fill slot plays (a line's loudest step), `add &x i`. Each a substitution:
+ *    of an empty slot, and of the fill.
  *
  * Which slots are fixed is the level's (a progression's cadence, a form's first and last slot), or the frontend's mask
  * (`VaryOptions.fixed`), the same at every scale. A move that changes nothing is left out. Pure.
@@ -20,7 +23,7 @@ export const SLOT_OPERATORS: readonly SlotOperator[] = ['rotate', 'reverse', 'sw
 
 /** A variation of a line of slots: its operator, its amounts (for `by`), where each slot is taken from, and what it does, in words. */
 export interface SlotMove {
-  readonly operator: SlotOperator;
+  readonly operator: SlotOperator | 'drop' | 'add';
   readonly amounts: readonly number[];
   readonly from: readonly number[];
   readonly what: string;
@@ -45,11 +48,12 @@ export function spansOf(n: number, fixed: readonly number[]): number[][] {
  * play alike), its `fixed` slots kept: for each operator, its rotation, its retrograde, its swaps by slot, its
  * substitutions by slot and then by the slot taken from. A move whose slots all play as before is left out.
  */
-export function slotMoves(keys: readonly string[], fixed: readonly number[], operators: readonly string[]): SlotMove[] {
+export function slotMoves(keys: readonly string[], fixed: readonly number[], operators: readonly string[], empty?: Empty): SlotMove[] {
   const n = keys.length;
   const free = (s: number) => !fixed.includes(s);
   const identity = Array.from({ length: n }, (_, s) => s);
-  const changes = (from: readonly number[]) => from.some((f, s) => keys[f] !== keys[s]);
+  const keyAt = (f: number) => (f === EMPTY ? empty?.key : keys[f]);
+  const changes = (from: readonly number[]) => from.some((f, s) => keyAt(f) !== keys[s]);
   const respanned = (place: (span: readonly number[], j: number) => number) => {
     const from = [...identity];
     for (const span of spansOf(n, fixed)) for (const [j, s] of span.entries()) from[s] = span[place(span, j)]!;
@@ -79,8 +83,35 @@ export function slotMoves(keys: readonly string[], fixed: readonly number[], ope
           push({ operator, amounts: [s, j], from, what: `slot ${s} plays slot ${j}'s` });
         }
       }
+    else if (operator === 'drop' && empty)
+      for (let s = 0; s < n; s++) {
+        if (!free(s) || keys[s] === empty.key) continue;
+        const from = [...identity];
+        from[s] = EMPTY;
+        push({ operator, amounts: [s], from, what: `slot ${s} left empty` });
+      }
+    else if (operator === 'add' && empty && empty.fill !== null)
+      for (let s = 0; s < n; s++) {
+        if (!free(s) || keys[s] !== empty.key) continue;
+        const from = [...identity];
+        from[s] = empty.fill;
+        push({ operator, amounts: [s], from, what: `empty slot ${s} plays slot ${empty.fill}'s` });
+      }
   }
   return out;
+}
+
+/** Where a slot is taken from nothing: a move that leaves it empty (`drop`). */
+export const EMPTY = -1;
+
+/**
+ * What an empty slot is on a line that has them (#911): its key (a line's step that strikes nothing), and the slot an
+ * `add` fills an empty one with (a line's loudest step), or null for none. A line of slots with no empty slot (a
+ * progression, a form) takes no drop and no add.
+ */
+export interface Empty {
+  readonly key: string;
+  readonly fill: number | null;
 }
 
 /**
@@ -104,4 +135,15 @@ export function slotReference(name: string, before: readonly string[], after: re
   if (!delta.length) return null;
   const form = `base=${name} ${delta.join(' ')}`;
   return { form, line: (cell) => `&${cell} ${form}` };
+}
+
+/**
+ * One slot moved n degrees (#910), the move every level shares: each free slot `movable` allows, by each of `amounts`,
+ * in that order; the level moves it (a note's pitch, a chord's every tone, a letter `&a` to `&a^n`). A progression's
+ * `third` is its shift by a third (±2).
+ */
+export function shiftMoves(n: number, fixed: readonly number[], amounts: readonly number[], movable: (slot: number) => boolean): { slot: number; by: number }[] {
+  const out: { slot: number; by: number }[] = [];
+  for (let slot = 0; slot < n; slot++) if (!fixed.includes(slot) && movable(slot)) for (const by of amounts) if (by !== 0) out.push({ slot, by });
+  return out;
 }

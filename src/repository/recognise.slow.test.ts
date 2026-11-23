@@ -1,7 +1,7 @@
 // A bounded recogniser over a run of hours (#277): the recognitions of a 3-hour E45 walk (yggi/jambot's
 // `experiments/homeostat.ts`, `regulatedRun`, walked by the radio with the controller closed, every member against its
 // library and what it played lately), replayed on one recogniser at the default capacity. It keeps never more than 512
-// texts, finds what the unbounded recogniser found on every call, and recognises the walk's first ten minutes at hour 3
+// texts, finds what the unbounded recogniser found on every call (but five that #911's drop no longer reaches), and recognises the walk's first ten minutes at hour 3
 // within 1.25 times a fresh recogniser's p95. Unbounded, the same run kept 6,199 texts and 1.36 GB of heap, and a bar's
 // p95 grew from 12.9 ms over its first 300 bars to 17.3 ms over its last (2026-10-27, four cores).
 import { readFileSync } from 'node:fs';
@@ -67,7 +67,15 @@ describe('a bounded recogniser over a 3-hour run (#277)', () => {
       if (JSON.stringify(heard(recogniser, c)) !== JSON.stringify(c[4])) differ.push(`bar ${c[0]}: ${e45.texts[c[1]]!.split('\n')[0]!}`);
       most = Math.max(most, recogniser.size);
     }
-    expect(differ).toEqual([]);
+    // (#911: a step is a slot, so a drop leaves a whole step a rest; these five bars, a groove of the library with one of
+    // the two hats it strikes together on a step left out, were found by that drop, and are no longer a variation of it)
+    expect(differ).toEqual([
+      'bar 141: &kick step=16n &bd:0:.657759 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~',
+      'bar 143: &kick step=16n &bd:0:.670593 ~ ~ ~ ~ ~ ~ ~ &bd:0:.683551 ~ ~ ~ ~ ~ ~ ~',
+      'bar 1203: &kick step=16n &bd:0:.750202 ~ ~ ~ ~ ~ ~ ~ &bd:0:.77773 ~ ~ ~ ~ ~ ~ ~',
+      'bar 4094: &kick step=16n &bd:0:.547833 ~ ~ ~ ~ ~ &bd:0:.416889 ~ &bd:0:.583359 ~ ~ ~ ~ ~ &bd:0:.396801 ~',
+      'bar 4137: &kick step=16n &bd:0:.683551 ~ ~ ~ ~ ~ ~ ~ &bd:0:.547833 ~ ~ ~ ~ ~ ~ ~',
+    ]);
     expect(most).toBe(RECOGNISER_CAPACITY);
 
     // (the walk's first ten minutes again, at hour 3 and on a fresh recogniser warmed alike, bar by bar in turn, so the
