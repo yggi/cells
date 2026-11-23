@@ -215,7 +215,7 @@ describe('the arguments', () => {
     const head = lines('&t step=104bpm', '&bar swing=16n:.6 from bar &t', '&x step=16n 0 0 0 0');
     const arg = lines('&t step=104bpm', '&bar swing=16n:.6 from bar &t', '&x step=16n 0 0 0 0');
     const r = compiled(head);
-    expect([...r.cells.keys()].filter((n) => n.startsWith('bar'))).toEqual(['bar', 'bar_grouping']);
+    expect([...r.cells.keys()].filter((n) => n.startsWith('bar'))).toEqual(['bar', 'bar_meter']);
     expect(r.diagnostics.map((d) => d.message).filter((m) => m.includes('does nothing'))).toEqual([]);
     expect(compiled(head).cells.get('bar')!.meter).toEqual(compiled(arg).cells.get('bar')!.meter);
   });

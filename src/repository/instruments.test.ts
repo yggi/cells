@@ -325,8 +325,8 @@ describe('every rhythm with 13 of the General MIDI kit’s voices plays each hit
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s: the kit after the groove, and the groove after the kit', (id, text) => {
     // (#542: the waltz's beat laps three beats and fits no 4/4: it is heard in 3/4; #646: the aksak's in 7/8, the 12/8's in 12/8)
     const grouping = ({ waltz_drums: '3/4', aksak_drums: '7/8', twelve_eight_drums: '12/8' } as Record<string, string>)[id];
-    const host = (...fragments: string[]) => (grouping ? hosted(...fragments).replace('&grouping meter("4/4")', `&grouping meter("${grouping}")`) : hosted(...fragments));
-    if (grouping) expect(host()).toContain(`&grouping meter("${grouping}")`);
+    const host = (...fragments: string[]) => (grouping ? hosted(...fragments).replace('&meter "4/4"', `&meter "${grouping}"`) : hosted(...fragments));
+    if (grouping) expect(host()).toContain(`&meter "${grouping}"`);
     // (a rhythm has no voice of its own: it plays through a kit, the kit's lines written out after it)
     const alone = played(host(text, coreKit.text), 32);
     expect(alone.hits.length).toBeGreaterThan(0);

@@ -33,7 +33,7 @@ describe('outlineOf', () => {
   it('reads a score: a part a line, the band a part with its performers and instruments inside', () => {
     expect(score.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     expect(outline.parts.map((p) => `${p.key} ${p.id ?? '-'}`)).toEqual([
-      '1 meter',
+      '1 bar',
       '2 diatonic',
       '3 vamp_to_the_seventh',
       '4 funk_bass',
@@ -59,7 +59,7 @@ describe('outlineOf', () => {
 
   it('nests from the ground: each part under what it is taken on, its argument first', () => {
     expect(drawn(outline.ground)).toEqual([
-      '1 meter',
+      '1 bar',
       '  6 &drumlines',
       '    8/3 drums_performer',
       '2 diatonic',
@@ -91,7 +91,7 @@ describe('outlineOf', () => {
       '    8/4 bass_performer',
       '      4 funk_bass',
       '        3 vamp_to_the_seventh',
-      '          1 meter',
+      '          1 bar',
       '          2 diatonic',
       '  8/9 pad',
       '    8/5 pad_performer',

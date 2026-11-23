@@ -328,21 +328,21 @@ describe('the anchors', () => {
     }
   });
 
-  it('the backbeat falls where Jambot’s backbeatOf has it, on each of the seed library’s 13 meters', () => {
+  it('the backbeat falls where Jambot’s backbeatOf has it, on each of the seed library’s 12 meters', () => {
     const eighths = METER_FRAGMENTS.map((f) => {
       const r = compileSource(`${f.text}\n&tempo step=120bpm`);
       return [f.id, backbeatOf(r.cells.get('bar')!.meter!).map((w) => w * 8)];
     });
     // (each of Jambot's meters by its name in cells: the five 4/4s are 4/4; 2/4 and the alla breve, which Jambot doesn't
     // name, are two beats a bar, the second its backbeat)
-    const jambot = (id: string) => {
+    const jambot = (id: string, text: string) => {
       const unnamed = ({ 'bar(meter="2/4")': [2], 'bar(meter="4/4 in 2")': [4] } as Record<string, number[]>)[id];
-      // (the meter's signature: its grouping's, or 4/4, the template's default)
-      const heights = JAMBOT_METERS[/grouping=meter\("([^"]+)"/.exec(id)?.[1] ?? '4/4']!;
+      // (the meter's signature, as its text writes it: meter("3/4"), or its text cell's, &meter "5/4", a template's default)
+      const heights = JAMBOT_METERS[/(?:meter\(|&meter )"([^" ]+)/.exec(text)?.[1] ?? '4/4']!;
       return unnamed ?? jambotBackbeatOf(heights).map((pulse) => heights[pulse]!);
     };
-    expect(eighths).toHaveLength(13);
-    expect(eighths).toEqual(METER_FRAGMENTS.map((f) => [f.id, jambot(f.id)]));
+    expect(eighths).toHaveLength(12);
+    expect(eighths).toEqual(METER_FRAGMENTS.map((f) => [f.id, jambot(f.id, f.text)]));
   });
 });
 
