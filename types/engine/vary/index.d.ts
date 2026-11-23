@@ -88,7 +88,7 @@ export declare const anchorsOf: (fragment: string, workbench?: string, resolve?:
 export declare function fixedStepsOf(fragment: string, options?: VaryOptions): {
     readonly [line: string]: readonly number[];
 };
-/** Every variation by one operator on one line, in Jambot's order, none playing the notes of its source or of one before it. */
+/** Every variation by one operator on one line, in Vary's order, none playing the notes of its source or of one before it. */
 export declare const variations: (fragment: string, options?: VaryOptions) => readonly Variation[];
 /**
  * One note as recognition compares it (#224, decision 055): its onset in whole notes from its lap's start (null where

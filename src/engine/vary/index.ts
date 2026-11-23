@@ -9,8 +9,8 @@
  * Rung 1 has the rhythm operators, each on one line of hits (an entry of a card's mix, `lines.ts`):
  *
  *  - **rotate**: every note one step later on the line's grid, the last wrapping to the first (a Euclid stays one, turned);
- *  - **drop**: one note left out, where the fragment keeps `fewest` notes;
- *  - **add**: a note of the voice the line strikes first, on a step that voice is silent on, at the line's loudest level.
+ *  - **drop**: one step left a rest, where the fragment keeps `fewest` notes (a slot operator, `slots.ts`, #911);
+ *  - **add**: a rest given what the line's loudest step strikes, at its level (a slot operator, #911).
  *
  * Rung 2 has the pitched operators, each on one pitched line (degrees of the table it reads, times a voice), around its
  * anchored notes (the roots on its chord changes, which keep their place and their pitch):
@@ -38,8 +38,8 @@
  * `slots.ts`'s; swap and substitute act on it where asked), and the mask fixes a line's steps in place of its anchors.
  *
  * Each operator acts on the lines it is for: the rhythm ones on lines of hits, the pitched ones on pitched lines.
- * In Jambot's order (yggi/jambot `variations`, so its draws pick the same one): the lines in the order the lap first plays
- * them (by onset, then pitch), and for each its rotation, its drops in the order its notes play, its adds by step, then
+ * In this order (Jambot's until #911): the lines in the order the lap first plays
+ * them (by onset, then pitch), and for each its rotation, its drops by step, its adds by step, then
  * its transpositions in the order of `degrees`, its inversion, its retrograde, its bends in the order of `BENDS`, its trim. None
  * plays the notes of its source or of one given before it (compared as its steps write them: each note's onset, length
  * and voice; nothing is compiled per variation), none strikes one sound twice at one onset, none keeps fewer than
@@ -60,7 +60,7 @@ import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written, type 
 import { referenceOf, type Reference } from './reference';
 import { answeredIn } from '../use';
 import { formsOf, FORM_FIXED, type Form } from './form';
-import { fixedOf, shiftMoves, SLOT_OPERATORS, slotMoves, slotReference } from './slots';
+import { EMPTY, fixedOf, shiftMoves, SLOT_OPERATORS, slotMoves, slotReference } from './slots';
 import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf, type Progression } from './progression';
 
 export { backbeatOf, type Anchor } from './anchors';
@@ -89,6 +89,9 @@ export const HARMONY_OPERATORS: readonly Operator[] = ['rotate', 'reverse', 'thi
  * A form is varied only where a frontend asks for `swap` or `substitute`, as a progression where it asks for one of its own.
  */
 export const FORM_OPERATORS: readonly Operator[] = SLOT_OPERATORS;
+
+/** A line's step that strikes nothing, as `stepKeys` writes it: an empty slot (#911). */
+const REST = JSON.stringify([]);
 
 /** The slot operators a line takes beside its own, on its steps: whatever it strikes or plays, where a frontend asks. */
 const LINE_SLOT_OPERATORS: readonly Operator[] = ['swap', 'substitute'];
@@ -230,7 +233,7 @@ export function fixedStepsOf(fragment: string, options: VaryOptions = {}): { rea
 /** A line's name as an option may write it: `&fill` or `fill`. */
 const named = (name: string) => (name.startsWith('&') ? name : `&${name}`);
 
-/** Every variation by one operator on one line, in Jambot's order, none playing the notes of its source or of one before it. */
+/** Every variation by one operator on one line, in Vary's order, none playing the notes of its source or of one before it. */
 export const variations = (fragment: string, options?: VaryOptions): readonly Variation[] => readVariations(fragment, options).variations.map((v) => v.variation);
 
 /**
@@ -417,7 +420,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
     const stepKeys = Array.from({ length: line.steps }, (_, s) => JSON.stringify(line.notes.filter((n) => n.step === s)));
     const fixedSteps = fixedOfLine(line);
     const movedFrom = (from: readonly number[]) => inOrder(from.flatMap((src, t) => line.notes.filter((n) => n.step === src).map((n) => ({ ...n, step: t }))));
-    const levelsFrom = (from: readonly number[]) => levels && levels.map((_, t) => levels[from[t]!]!);
+    const levelsFrom = (from: readonly number[]) => levels && levels.map((own, t) => (from[t] === EMPTY ? own : levels[from[t]!]!));
     for (const operator of operators) {
       // (each operator on the lines it is for: the rhythm ones on hits, the pitched ones on pitches, swap and substitute on both)
       if (!LINE_SLOT_OPERATORS.includes(operator) && [...PITCHED_OPERATORS, SHIFT].includes(operator) !== !!line.pitched) continue;
@@ -484,19 +487,15 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
           const notes = movedFrom(m.from);
           offer(i, operator, notes, m.amounts.join(' '), written(line, notes, levelsFrom(m.from) ?? undefined), m.what, null);
         }
-      } else if (operator === 'drop')
-        for (const dropped of line.notes.filter((n) => !pinned(line, n))) {
-          const notes = line.notes.filter((n) => n !== dropped);
-          offer(i, operator, notes, dropped.step, written(line, notes), `its ${dropped.voice} on step ${dropped.step} left out`);
-        }
-      else {
-        const voice = line.notes[0]!.voice;
+      } else if (operator === 'drop' || operator === 'add') {
+        // (the slot operators' drop and add on the line's steps, #911: a step left a rest; a rest given the line's loudest
+        // step, its hits and its level, the first loudest by step)
         const loudest = line.notes.reduce((a, b) => (b.level > a.level ? b : a));
-        for (let step = 0; step < line.steps; step++) {
-          if (fixedSteps.includes(step) || line.notes.some((n) => n.step === step && sound(n.voice) === sound(voice))) continue;
-          const notes = inOrder([...line.notes, { step, voice, own: loudest.own, level: loudest.level }]);
-          const louder = levels && levels.map((t, s) => (s === step ? levels[loudest.step]! : t));
-          offer(i, operator, notes, step, written(line, notes, louder), `a ${voice} on step ${step}, as loud as its loudest`);
+        for (const m of slotMoves(stepKeys, fixedSteps, [operator], { key: REST, fill: loudest.step })) {
+          const notes = movedFrom(m.from);
+          const [step] = m.amounts as [number];
+          const what = operator === 'drop' ? `step ${step} left a rest` : `step ${step} given its loudest, step ${loudest.step}'s`;
+          offer(i, operator, notes, step, written(line, notes, levelsFrom(m.from) ?? undefined), what);
         }
       }
     }

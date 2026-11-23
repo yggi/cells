@@ -7,17 +7,19 @@
  * Stateless as the repository is (decision 048):
  * the share of bars recognised, and the ladder it drives, are the frontend's. Pure.
  */
-import { HARMONY_OPERATORS, PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS, SHIFT, type HeardNote, type Operator, type Readings, type VaryOptions } from '../engine/vary';
+import { PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS, type HeardNote, type Operator, type Readings, type VaryOptions } from '../engine/vary';
 import { declWords, splitComment } from '../engine/edit';
 import { readFrom } from '../engine/parser/use';
 import type { Fragment } from './fragments';
 
 /**
- * Every operator, in decision 052's order, each once: what recognition tries where a frontend names none. A progression's
- * own (`third`, `dominant`, point 8) are among them, so a heard progression is known as a seed's variation, and with them
- * rotate and reverse act on a progression too.
+ * What recognition tries where a frontend names none, in decision 052's order: the line operators, and a progression's
+ * own (`third`, `dominant`, point 8), so a heard progression is known as a seed's variation, rotate and reverse acting on
+ * it too. The slot operators that reach every line (`swap`, `substitute`, `shift`, point 11) are asked by name: tried on
+ * every line of every fragment they doubled a recognition's cost (a drum bar's p95 9.0 ms against 6.1, 2026-11-23), past
+ * `timing.slow.test.ts`'s ceiling on CI.
  */
-export const ALL_OPERATORS: readonly Operator[] = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, ...HARMONY_OPERATORS, SHIFT])];
+export const ALL_OPERATORS: readonly Operator[] = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, 'third', 'dominant'] as const)];
 
 /** One step of a path: an operator on one line, as a variation's `by` names it (`drop &hat 6`). */
 export interface PathStep {
@@ -42,7 +44,7 @@ export interface Recognised {
 
 /** What a recognition may say: the workbench both are read under, the tolerance, the depth, and Vary's options. */
 export interface RecogniseOptions extends Omit<VaryOptions, 'operators'> {
-  /** The operators a path may use, in this order; by default all ten (`ALL_OPERATORS`). */
+  /** The operators a path may use, in this order; by default `ALL_OPERATORS`. */
   readonly operators?: readonly Operator[];
   /** The most notes that may differ, a whole number ≥ 0 (the licence's); by default 0, the notes exactly. */
   readonly tolerance?: number;

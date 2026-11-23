@@ -8,7 +8,7 @@ import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written } from
 import { referenceOf } from "./reference.js";
 import { answeredIn } from "../use.js";
 import { formsOf, FORM_FIXED } from "./form.js";
-import { fixedOf, shiftMoves, SLOT_OPERATORS, slotMoves, slotReference } from "./slots.js";
+import { EMPTY, fixedOf, shiftMoves, SLOT_OPERATORS, slotMoves, slotReference } from "./slots.js";
 import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf } from "./progression.js";
 export { backbeatOf } from "./anchors.js";
 export { THIRDS, PHRASE_BARS } from "./progression.js";
@@ -16,6 +16,7 @@ export const RHYTHM_OPERATORS = ['rotate', 'drop', 'add'];
 export const PITCHED_OPERATORS = ['transpose', 'invert', 'reverse', 'bend', 'trim'];
 export const HARMONY_OPERATORS = ['rotate', 'reverse', 'third', 'dominant', 'swap', 'substitute'];
 export const FORM_OPERATORS = SLOT_OPERATORS;
+const REST = JSON.stringify([]);
 const LINE_SLOT_OPERATORS = ['swap', 'substitute'];
 export const SHIFT = 'shift';
 const SLOT_LEVEL = ['third', 'dominant', 'swap', 'substitute', 'shift'];
@@ -203,7 +204,7 @@ function readSome(fragment, options, only) {
         const stepKeys = Array.from({ length: line.steps }, (_, s) => JSON.stringify(line.notes.filter((n) => n.step === s)));
         const fixedSteps = fixedOfLine(line);
         const movedFrom = (from) => inOrder(from.flatMap((src, t) => line.notes.filter((n) => n.step === src).map((n) => ({ ...n, step: t }))));
-        const levelsFrom = (from) => levels && levels.map((_, t) => levels[from[t]]);
+        const levelsFrom = (from) => levels && levels.map((own, t) => (from[t] === EMPTY ? own : levels[from[t]]));
         for (const operator of operators) {
             if (!LINE_SLOT_OPERATORS.includes(operator) && [...PITCHED_OPERATORS, SHIFT].includes(operator) !== !!line.pitched)
                 continue;
@@ -257,20 +258,13 @@ function readSome(fragment, options, only) {
                     offer(i, operator, notes, m.amounts.join(' '), written(line, notes, levelsFrom(m.from) ?? undefined), m.what, null);
                 }
             }
-            else if (operator === 'drop')
-                for (const dropped of line.notes.filter((n) => !pinned(line, n))) {
-                    const notes = line.notes.filter((n) => n !== dropped);
-                    offer(i, operator, notes, dropped.step, written(line, notes), `its ${dropped.voice} on step ${dropped.step} left out`);
-                }
-            else {
-                const voice = line.notes[0].voice;
+            else if (operator === 'drop' || operator === 'add') {
                 const loudest = line.notes.reduce((a, b) => (b.level > a.level ? b : a));
-                for (let step = 0; step < line.steps; step++) {
-                    if (fixedSteps.includes(step) || line.notes.some((n) => n.step === step && sound(n.voice) === sound(voice)))
-                        continue;
-                    const notes = inOrder([...line.notes, { step, voice, own: loudest.own, level: loudest.level }]);
-                    const louder = levels && levels.map((t, s) => (s === step ? levels[loudest.step] : t));
-                    offer(i, operator, notes, step, written(line, notes, louder), `a ${voice} on step ${step}, as loud as its loudest`);
+                for (const m of slotMoves(stepKeys, fixedSteps, [operator], { key: REST, fill: loudest.step })) {
+                    const notes = movedFrom(m.from);
+                    const [step] = m.amounts;
+                    const what = operator === 'drop' ? `step ${step} left a rest` : `step ${step} given its loudest, step ${loudest.step}'s`;
+                    offer(i, operator, notes, step, written(line, notes, levelsFrom(m.from) ?? undefined), what);
                 }
             }
         }
