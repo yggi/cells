@@ -105,7 +105,7 @@ A sound parameter can be a range times cells, so it moves with the music: `lpf=1
 &out map=sample [&t * &v * .4]
 ```
 
-**A bipolar wave is a share from 0 to 1** ([decision 067](https://github.com/yggi/cells/blob/main/docs/decisions/067-a-module-after-its-voices.md) §5): a cell whose values run below 0 (`sin(12)`, `saw(8)`, −1 to 1), read as a parameter's factor or a volume, is read as (1 + x)/2, its middle at .5, so `lpf=200..3000 * &lfo` with `&lfo map=lin loop=.25 sin(12)` sweeps the whole range. A cell that stays at 0 or above is read as written; read as a pitch, a wave is semitones either way.
+**A wave is laid in the range it is read as** ([decision 067](https://github.com/yggi/cells/blob/main/docs/decisions/067-a-module-after-its-voices.md) §5, amended by #884): `sin(12)`, `saw(8)` run from −1 to 1, and a factor or a volume reads a value as written, held at 0 or above, so a wave below 0 is cut off there. Lay it within a range where it is a share, `sin(12, 0..1)` (Strudel's `sine.range(0, 1)`), so `lpf=200..3000 * &lfo` with `&lfo map=lin loop=.25 sin(12, 0..1)` sweeps the whole range. Read as a pitch, a wave is semitones either way.
 
 ```cells
 &bar meter("4/4") step=&tempo

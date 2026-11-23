@@ -25,11 +25,6 @@ export interface Series {
    * as a melody's are), or null where it doesn't play; absent, each step as written.
    */
   readonly drawn?: (e: StepEvent, lap: number) => StepEvent | null;
-  /**
-   * Its values run below 0: a bipolar wave (`sin(12)`, −1 to 1). Read as a share, a volume or a moving parameter's
-   * factor, its −1…1 is 0…1, (1 + x)/2, not cut off at 0 (decision 067 §5); as a pitch, semitones as written.
-   */
-  readonly bipolar?: true;
   /** A sum of values (decision 079): its terms' series, each by its weight, and a constant; read as their weighted sum. */
   readonly sum?: { readonly terms: readonly { readonly series: Series; readonly weight: number }[]; readonly constant: number };
   /** The sums of values its steps splice, each by name (decision 097): a step that reads one is its value while it lasts. */
@@ -212,12 +207,13 @@ function rampedSeries(p: Plan, m: Series, from: number, to: number, valueOf: (e:
  * Levels are the values as written (map=amp: 1 full, 0 silent); a rest is
  * silence; a stream that doesn't move holds its first value.
  */
-export function levelSeries(p: Plan, m: Series, from: number, to: number, written?: number): { at: number; level: number; ramp?: boolean }[] {
+export function levelSeries(p: Plan, m: Series, from: number, to: number, written?: number, signed = false): { at: number; level: number; ramp?: boolean }[] {
   // a sum of values (decision 079): its terms' levels, each by its weight, and the constant, at each change of any term;
   // held to 0…1, the share a factor reads it as
   if (m.sum) {
     const { terms, constant } = m.sum;
-    const parts = terms.map((t) => levelSeries(p, t.series, from, to, written));
+    // (a term is read signed: a line below 0 is an offset downward, and the sum is held where it lands)
+    const parts = terms.map((t) => levelSeries(p, t.series, from, to, written, true));
     const times = [...new Set(parts.flatMap((s) => s.map((x) => x.at)))].sort((a, b) => a - b);
     return (times.length ? times : [from]).map((at) => ({
       at,
@@ -231,12 +227,14 @@ export function levelSeries(p: Plan, m: Series, from: number, to: number, writte
       ...(parts.some((s) => s.some((x) => x.ramp && Math.abs(x.at - at) < EPS)) ? { ramp: true } : {}),
     }));
   }
-  const val = (e: StepEvent) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : m.bipolar ? Math.max(0, (1 + e.value + e.alter) / 2) : Math.max(0, e.value + e.alter));
+  // (a value is what it says: at 0 or above as written, below 0 held at 0 as a level or a factor, signed as a term of a sum)
+  const val = (e: StepEvent) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : signed ? e.value + e.alter : Math.max(0, e.value + e.alter));
+  const none = signed ? -Infinity : -1;
   if (m.events.length === 0) return [{ at: from, level: 0 }];
   // (a line that splices sums of values, decision 097: each step that reads one is that sum while it lasts)
-  if (m.reads?.size) return readingSeries(p, m, from, to, written, val);
+  if (m.reads?.size) return readingSeries(p, m, from, to, written, val, none);
   if (!m.clock) return [{ at: from, level: val(m.events[0]) }];
-  if (m.lin) return rampedSeries(p, m, from, to, (e) => val(e)).map((x) => ({ at: x.at, level: Math.max(0, x.v), ramp: x.ramp }));
+  if (m.lin) return rampedSeries(p, m, from, to, (e) => val(e)).map((x) => ({ at: x.at, level: signed ? x.v : Math.max(0, x.v), ramp: x.ramp }));
   const tm = clocking(p.result, p.statics).map(m.clock);
   let c0 = tm.stepAt(Math.max(0, from)) * m.rate;
   let c1 = tm.stepAt(Math.max(0, to)) * m.rate;
@@ -247,13 +245,13 @@ export function levelSeries(p: Plan, m: Series, from: number, to: number, writte
   const levelAt = (c: number) => {
     const lap = lapOf(c, m.period);
     const local = c - lap * m.period;
-    let best = -1;
+    let best = none;
     for (const e of m.events) {
       if (!(local >= e.step - EPS && local < e.step + e.duration - EPS)) continue;
       const d = drawnOf(m, e, lap);
       if (d) best = Math.max(best, val(d));
     }
-    return best < 0 ? 0 : best;
+    return best === none ? 0 : best;
   };
   // (a note's level is read where it is written, before a swung meter's swing (#287): at the step of this line, as written,
   // that holds the note's written time; a level line on 16n under a lean gives a straight stroke its own level)
@@ -274,7 +272,7 @@ export function levelSeries(p: Plan, m: Series, from: number, to: number, writte
  * it reads, the level of the step sounding then, a step that reads a sum that sum's level at that moment. A step that
  * holds a number is read as `levelSeries` reads it.
  */
-function readingSeries(p: Plan, m: Series, from: number, to: number, written: number | undefined, val: (e: StepEvent) => number) {
+function readingSeries(p: Plan, m: Series, from: number, to: number, written: number | undefined, val: (e: StepEvent) => number, none = -1) {
   const read = new Map([...m.reads!].map(([name, s]) => [name, levelSeries(p, s, from, to, written)]));
   const held = (v: number) => Math.min(1, Math.max(0, v));
   const tm = m.clock ? clocking(p.result, p.statics).map(m.clock) : null;
@@ -284,7 +282,7 @@ function readingSeries(p: Plan, m: Series, from: number, to: number, written: nu
     const c = stepAt(t) + EPS * 10;
     const lap = lapOf(c, m.period);
     const local = c - lap * m.period;
-    let best = -1;
+    let best = none;
     let ramp = false;
     for (const e of tm ? m.events : m.events.slice(0, 1)) {
       if (tm && !(local >= e.step - EPS && local < e.step + e.duration - EPS)) continue;
@@ -294,7 +292,7 @@ function readingSeries(p: Plan, m: Series, from: number, to: number, written: nu
       const v = s ? held(valueThen(s, t, (x) => x.level)) : val(d);
       if (v > best) [best, ramp] = [v, !!s && s.some((x) => x.ramp && Math.abs(x.at - t) < EPS)];
     }
-    return { level: best < 0 ? 0 : best, ramp };
+    return { level: best === none ? 0 : best, ramp };
   };
   const times = new Set<number>([from]);
   for (const s of read.values()) for (const x of s) if (x.at > from + EPS && x.at < to - EPS) times.add(x.at);

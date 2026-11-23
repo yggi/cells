@@ -419,9 +419,7 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
     const events = muted.has(cellId(cell)) ? [] : flatten(result, cell, statics, pick, (n) => muted.has(cellId(n)), shift).filter((e) => !chainMuted(result, e.table, muted));
     // (its steps drawn on each lap as a melody's are, where any is left to a lap, to chance or to a choice)
     const drawn = events.some((e) => e.laps || e.chance !== undefined || e.options || e.chosen) ? (e: StepEvent, lap: number) => thrownIn(result, cell, e, lap) : undefined;
-    // (a cell whose values run below 0 is bipolar, a wave from −1 to 1: read as a share, its −1…1 is 0…1, decision 067 §5)
     const db = m.map?.kind === 'db';
-    const bipolar = !db && events.some((e) => e.value + e.alter < 0 || (e.options ?? []).some((o) => o.value + o.alter < 0));
     const period = Math.max(1, stepsOf(result, cell, pick));
     // (the sums of values its steps splice, each read while its step lasts: decision 097)
     const readNames = [...new Set(events.flatMap((e) => (e.reads ? [e.reads] : [])))];
@@ -435,7 +433,6 @@ export function plan(result: CompileResult, statics: Shifts, muted: ReadonlySet<
       rate: m.rate,
       ...(lap ? comeRound(events, period, lap) : { period, events }),
       ...(drawn ? { drawn } : {}),
-      ...(bipolar ? { bipolar: true as const } : {}),
       ...(readNames.length ? { reads: new Map(readNames.map((n) => [n, series(n, null, 0, 1)])) } : {}),
     };
   };
@@ -906,7 +903,7 @@ function plainEvents(p: Plan, from: number, to: number, outputs: boolean): Playe
       return l.range ? l.range[0] + (l.range[1] - l.range[0]) * x : x;
     };
     // pan= on the line (#739): where a note starting at `at` sits, a balance after its voice's, read at its onset as a
-    // moving parameter is (a bipolar wave a share)
+    // moving parameter is
     const placeAt = (at: number): [number, number] => {
       const l = t.place;
       if (l === null) return [1, 1];

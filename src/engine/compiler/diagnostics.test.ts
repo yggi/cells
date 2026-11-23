@@ -388,7 +388,7 @@ describe('a modular patch (docs/notes/modular.md)', () => {
     expect(params(cv(CV_LAPS))).not.toEqual(params(cv(CV_LAPS - 1)));
     // (a 220 Hz CV is read as one at 20: a point every 1/240 s over the note, as at loop=20)
     expect(params(cv(220))).toEqual(params(cv(CV_LAPS)));
-    // (its points counted, not its text's length: read as a share, a bipolar wave's −1…1 is 0…1, none cut off at 0, decision 067 §5)
+    // (its points counted, not its text's length: a wave laid in 0..1 is a share, decision 067 §5)
     const lpf = params(cv(220))?.['lpf'];
     expect(lpf && 'points' in lpf ? lpf.points.length : 0).toBeLessThanOrEqual(121);
   });

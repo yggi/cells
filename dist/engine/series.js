@@ -134,10 +134,10 @@ function rampedSeries(p, m, from, to, valueOf) {
     out.push({ at: to, v: valueAt(c1 - 1e-6), ramp: true });
     return out;
 }
-export function levelSeries(p, m, from, to, written) {
+export function levelSeries(p, m, from, to, written, signed = false) {
     if (m.sum) {
         const { terms, constant } = m.sum;
-        const parts = terms.map((t) => levelSeries(p, t.series, from, to, written));
+        const parts = terms.map((t) => levelSeries(p, t.series, from, to, written, true));
         const times = [...new Set(parts.flatMap((s) => s.map((x) => x.at)))].sort((a, b) => a - b);
         return (times.length ? times : [from]).map((at) => ({
             at,
@@ -145,15 +145,16 @@ export function levelSeries(p, m, from, to, written) {
             ...(parts.some((s) => s.some((x) => x.ramp && Math.abs(x.at - at) < EPS)) ? { ramp: true } : {}),
         }));
     }
-    const val = (e) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : m.bipolar ? Math.max(0, (1 + e.value + e.alter) / 2) : Math.max(0, e.value + e.alter));
+    const val = (e) => (m.db ? Math.pow(10, (e.value + e.alter) / 20) : signed ? e.value + e.alter : Math.max(0, e.value + e.alter));
+    const none = signed ? -Infinity : -1;
     if (m.events.length === 0)
         return [{ at: from, level: 0 }];
     if (m.reads?.size)
-        return readingSeries(p, m, from, to, written, val);
+        return readingSeries(p, m, from, to, written, val, none);
     if (!m.clock)
         return [{ at: from, level: val(m.events[0]) }];
     if (m.lin)
-        return rampedSeries(p, m, from, to, (e) => val(e)).map((x) => ({ at: x.at, level: Math.max(0, x.v), ramp: x.ramp }));
+        return rampedSeries(p, m, from, to, (e) => val(e)).map((x) => ({ at: x.at, level: signed ? x.v : Math.max(0, x.v), ramp: x.ramp }));
     const tm = clocking(p.result, p.statics).map(m.clock);
     let c0 = tm.stepAt(Math.max(0, from)) * m.rate;
     let c1 = tm.stepAt(Math.max(0, to)) * m.rate;
@@ -164,7 +165,7 @@ export function levelSeries(p, m, from, to, written) {
     const levelAt = (c) => {
         const lap = lapOf(c, m.period);
         const local = c - lap * m.period;
-        let best = -1;
+        let best = none;
         for (const e of m.events) {
             if (!(local >= e.step - EPS && local < e.step + e.duration - EPS))
                 continue;
@@ -172,7 +173,7 @@ export function levelSeries(p, m, from, to, written) {
             if (d)
                 best = Math.max(best, val(d));
         }
-        return best < 0 ? 0 : best;
+        return best === none ? 0 : best;
     };
     const w = written === undefined ? NaN : clocking(p.result, p.statics).written(m.clock).stepAt(Math.max(0, written)) * m.rate;
     const out = [{ at: from, level: levelAt(Number.isFinite(w) ? w : c0) }];
@@ -189,7 +190,7 @@ export function levelSeries(p, m, from, to, written) {
     }
     return out;
 }
-function readingSeries(p, m, from, to, written, val) {
+function readingSeries(p, m, from, to, written, val, none = -1) {
     const read = new Map([...m.reads].map(([name, s]) => [name, levelSeries(p, s, from, to, written)]));
     const held = (v) => Math.min(1, Math.max(0, v));
     const tm = m.clock ? clocking(p.result, p.statics).map(m.clock) : null;
@@ -198,7 +199,7 @@ function readingSeries(p, m, from, to, written, val) {
         const c = stepAt(t) + EPS * 10;
         const lap = lapOf(c, m.period);
         const local = c - lap * m.period;
-        let best = -1;
+        let best = none;
         let ramp = false;
         for (const e of tm ? m.events : m.events.slice(0, 1)) {
             if (tm && !(local >= e.step - EPS && local < e.step + e.duration - EPS))
@@ -211,7 +212,7 @@ function readingSeries(p, m, from, to, written, val) {
             if (v > best)
                 [best, ramp] = [v, !!s && s.some((x) => x.ramp && Math.abs(x.at - t) < EPS)];
         }
-        return { level: best < 0 ? 0 : best, ramp };
+        return { level: best === none ? 0 : best, ramp };
     };
     const times = new Set([from]);
     for (const s of read.values())

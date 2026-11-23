@@ -70,7 +70,7 @@ An axis may be an offset chain: a sum of the style's own value on it and the lev
 &dsect step=1m 0 .2 .4 .6
 ```
 
-A level that is a number cell (`&dsong -.1`) is a signed offset; a stepped cell with a value below 0 is a bipolar wave, read as a share, its −1…1 as 0…1 (decision 067 §5), so a stepped offset is written from 0 up, or as a number cell (#884).
+A level below 0 is a signed offset (`&dsong -.1`, or a stepped `&dsect step=1m 0 -.1 -.2`), the sum held to the axis where it lands (#884).
 
 
 ## A value by name: &x[slot]

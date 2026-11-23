@@ -47,7 +47,7 @@ export const unitsOf = (decls: ReadonlyMap<string, CellDecl>, d: CellDecl): Unit
       ...(level !== undefined ? { level } : {}),
     }));
   if (b.kind === 'scan') return scanOf(b.steps).positions.map(note);
-  if (b.kind === 'wave') return waveValues(b.shape, b.n).map(note);
+  if (b.kind === 'wave') return waveValues(b.shape, b.n, b.range).map(note);
   // blank: the identity of the table below — entry i is index i
   return Array.from({ length: lengthOf(decls, o) }, (_, i) => note(i));
 };

@@ -451,25 +451,46 @@ type Generator = (s: LineScanner, start: number) => Braid;
 /** What each waveform is, in words. */
 const WAVE_NAMES: Readonly<Record<WaveShape, string>> = { sin: 'a sine', saw: 'a saw', tri: 'a triangle', square: 'a square' };
 
-/** sin(n), saw(n), tri(n), square(n): one cycle of a waveform in n steps. */
+/** sin(n), saw(n), tri(n), square(n): one cycle of a waveform in n steps; with a range after the steps, laid within it. */
 const parseWave =
   (shape: WaveShape): Generator =>
   (s, start) => {
-    const { args, span } = numbers(s, shape, start);
-    const [n] = args;
-    if (args.length !== 1 || n < 2) s.fail(`${shape}(n): one cycle of ${WAVE_NAMES[shape]} in n steps, n ≥ 2`, start, span.len);
-    return { kind: 'wave', shape, n, span };
+    const form = `${shape}(n) or ${shape}(n, lo..hi)`;
+    s.i++; // (
+    s.skipSpace();
+    const n = s.int(`the steps of ${shape}(…)`, NUMBER_PLACES.args, shape);
+    s.skipSpace();
+    let range: [number, number] | undefined;
+    if (s.peek() === ',') {
+      s.i++;
+      s.skipSpace();
+      const num = /-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)/y;
+      const lo = s.match(num);
+      if (lo === null || !s.text.startsWith('..', s.i)) s.fail(`${form}: a range after the steps, as in ${shape}(${n}, 0..1)`, start, s.i - start);
+      s.i += 2;
+      const hi = s.match(num);
+      if (hi === null) s.fail(`${form}: a range after the steps, as in ${shape}(${n}, 0..1)`, start, s.i - start);
+      range = [parseFloat(lo!), parseFloat(hi!)];
+      s.skipSpace();
+    }
+    s.expect(')', `')' to close ${shape}(…)`);
+    const span = s.span(start);
+    if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
+    if (n < 2) s.fail(`${form}: one cycle of ${WAVE_NAMES[shape]} in n steps, n ≥ 2, within a range if one is written`, start, span.len);
+    return { kind: 'wave', shape, n, ...(range ? { range } : {}), span };
   };
 
 /**
- * A waveform's n values, −1 … 1: Strudel's bipolar signals (sine2, saw2, tri2, square2) at each step's start, i/n of
+ * A waveform's n values, −1 … 1, or within a range (`sin(12, 0..1)`): Strudel's bipolar signals (sine2, saw2, tri2, square2) at each step's start, i/n of
  * the cycle — a sine from 0 up, a saw from −1 up to just short of 1, a triangle from −1 up to 1 at the half and back,
  * a square −1 for the first half and 1 for the second.
  */
-export function waveValues(shape: WaveShape, n: number): number[] {
+export function waveValues(shape: WaveShape, n: number, range?: readonly [number, number]): number[] {
   const at = (t: number) =>
     shape === 'sin' ? Math.sin(2 * Math.PI * t) : shape === 'saw' ? 2 * t - 1 : shape === 'tri' ? (t < 0.5 ? 4 * t - 1 : 3 - 4 * t) : Math.floor(2 * t) % 2 ? 1 : -1;
-  return Array.from({ length: n }, (_, i) => +at(i / n).toFixed(6) + 0);
+  // (within a range, `sin(12, 0..1)`: Strudel's `sine.range(0, 1)`, the wave's −1…1 laid between its two ends)
+  const laid = (x: number) => (range ? range[0] + ((range[1] - range[0]) * (1 + x)) / 2 : x);
+  return Array.from({ length: n }, (_, i) => +laid(at(i / n)).toFixed(6) + 0);
 }
 
 /** A tonic as a note name: C, F#, Bb (a pitch class). */
@@ -623,9 +644,9 @@ export function parseFifths(s: LineScanner, start: number): { braid: Braid; shif
 /** The waveforms share one entry of the reference (one form, sin(n), on the tutorial's ladder). */
 const WAVE_SYNTAX = syntax(
   'generator',
-  'sin(n) · saw(n) · tri(n) · square(n)',
-  "One cycle of a waveform in n steps, from −1 to 1, as Strudel's bipolar signals (sine2, saw2, tri2, square2) at each step: a sine from 0, a saw rising from −1, a triangle rising from −1 to 1 at the half and falling back, a square −1 then 1. A waveform, or a slow swell.",
-  ['&sine loop=220 sin(12)', '&ramp loop=220 saw(8)', '&swell map=lin loop=.25 tri(4)', '&pulse loop=110 square(2)'],
+  'sin(n) · saw(n) · tri(n) · square(n) · sin(n, lo..hi)',
+  "One cycle of a waveform in n steps, from −1 to 1, as Strudel's bipolar signals (sine2, saw2, tri2, square2) at each step: a sine from 0, a saw rising from −1, a triangle rising from −1 to 1 at the half and falling back, a square −1 then 1. A waveform, or a slow swell. A range after the steps lays the wave within it, `sin(12, 0..1)` (Strudel's `sine.range(0, 1)`): a share a factor reads, as a wave below 0 is cut off at 0.",
+  ['&sine loop=220 sin(12)', '&ramp loop=220 saw(8)', '&swell map=lin loop=.25 tri(4)', '&pulse loop=110 square(2)', '&lfo map=lin loop=.5 sin(12, 0..1)'],
   'braid.md',
 );
 
