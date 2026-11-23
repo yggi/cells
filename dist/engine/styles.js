@@ -275,10 +275,17 @@ export function readStyles(parsed, scope) {
     const slotReads = new Map();
     let changed = false;
     const reslotted = (e, d) => {
-        if (e.k === 'sum')
-            return { ...e, items: e.items.map((it) => ({ ...it, e: reslotted(it.e, d) })) };
-        if (e.k === 'prod')
-            return { ...e, factors: e.factors.map((f) => reslotted(f, d)) };
+        if (e.k === 'sum') {
+            const items = e.items.map((it) => {
+                const x = reslotted(it.e, d);
+                return x === it.e ? it : { ...it, e: x };
+            });
+            return items.every((it, k) => it === e.items[k]) ? e : { ...e, items };
+        }
+        if (e.k === 'prod') {
+            const factors = e.factors.map((f) => reslotted(f, d));
+            return factors.every((f, k) => f === e.factors[k]) ? e : { ...e, factors };
+        }
         if (e.k !== 'ref' || e.ref.pick?.kind !== 'at' || !e.ref.pick.abs)
             return e;
         const target = decls.get(e.ref.name);
