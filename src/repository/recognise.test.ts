@@ -1,4 +1,5 @@
-// Recognition (decision 055, #224): each of Jambot's 284 variations on E31's bars, and each of the bass seeds' 48, is
+// Recognition (decision 055, #224): each of Jambot's 284 variations on E31's bars, each of the bass seeds' 48, and each of
+// the seed progressions' 419 (decision 052, point 8), is
 // recognised as its source's, by its operator, at distance 0, against the whole library; random bars of hits are
 // recognised as nothing; a recognition on a warmed recogniser compiles only the heard text (its milliseconds:
 // `timing.slow.test.ts`).
@@ -8,7 +9,7 @@ import { readFrom } from '../engine/parser/use';
 import { gmDrumNote } from '../engine/midi';
 import { describe, expect, it, vi } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
-import { PITCHED_OPERATORS, variations } from '../engine/vary';
+import { HARMONY_OPERATORS, PITCHED_OPERATORS, variations } from '../engine/vary';
 import { LIBRARY, resolveSeed } from './library';
 import { expand } from '../engine/use';
 import { createRepository, EMPTY_LAYER, type Fragment } from './fragments';
@@ -18,6 +19,7 @@ import { seedFragments } from './seed';
 import { answered } from './answered';
 
 const BASS_FRAGMENTS = seedFragments('bass');
+const HARMONY_FRAGMENTS = seedFragments('harmony');
 
 vi.mock('../engine/compile', async (original) => {
   const actual = await original<typeof import('../engine/compile')>();
@@ -114,6 +116,20 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     expect(n).toBe(120);
   });
 
+  it('each of the seed progressions’ 419 (209 in C major, 210 in C minor), by its operator, at distance 0', () => {
+    let n = 0;
+    for (const mode of ['major', 'minor']) {
+      const workbench = `&bar meter("4/4") step=120bpm\n&key scale(${mode}, C)`;
+      for (const f of HARMONY_FRAGMENTS)
+        for (const v of variations(f.text, { workbench, operators: HARMONY_OPERATORS })) {
+          const [first] = recogniser.recognise(v.apply(f.text), LIBRARY, { workbench });
+          expect([first?.fragment.id, first?.path.map((s) => s.by), first?.distance], `${mode}: ${f.id}, ${v.by}`).toEqual([f.id, [v.by], 0]);
+          n++;
+        }
+    }
+    expect(n).toBe(419);
+  });
+
   it('a fragment itself by no operator, and a variation of a variation only at depth 2', () => {
     const funk = LIBRARY.find((f) => f.id === 'funk_drums')!;
     expect(recogniser.recognise(funk.text, LIBRARY, DRUM_OPTIONS).map((r) => [r.fragment.id, r.path.length, r.distance])).toEqual([['funk_drums', 0, 0]]);
@@ -183,10 +199,16 @@ describe('a pitched voice by its place, a bar of a longer fragment, and the lear
   it('a bar of a vamp, its fifth, is recognised as the vamp to the seventh from its bar 4', () => {
     // (and, since #572, as the axis progression's fourth bar, its VII, found first: named on #572, #542)
     // (and, since #542, as the circle of fifths' third bar, its vii°)
+    // (and, since the harmony's operators joined recognition's default, decision 052 point 8, as a bar of four seeds with
+    // one chord moved a third onto vii°, each after the seeds that play it as written)
     expect(found(recogniser.recognise('&harm over=&key step=1m [6,8,10]', LIBRARY, { workbench: BASS }))).toEqual([
       'fifths_sequence [] bar 2 at 0',
       'axis_progression [] bar 3 at 0',
       'vamp_to_the_seventh [] bar 4 at 0',
+      'korobeiniki_changes [third &harm 2 2] bar 2 at 0',
+      'montuno [third &harm 2 2] bar 2 at 0',
+      'vamp_to_the_fifth [third &harm 4 2] bar 4 at 0',
+      'haunted_progression [third &harm 6 2] bar 6 at 0',
     ]);
   });
 

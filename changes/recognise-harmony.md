@@ -1,0 +1,3 @@
+### Changed
+
+- **Recognition hears a progression's variations** (decision 052, point 8): `ALL_OPERATORS`, recognition's default, gains `third` and `dominant`, so a heard progression that is a seed's chord moved a third or with a secondary dominant is recognised as that seed by that `by` (`dark_cadence`, `third &harm 2 -2`), at distance 0: each of the seed progressions' 419 variations in C major and minor, about 4 ms each. **What a frontend sees at its next pin:** a recognition that names no operators can now return a progression's variation, after the fragments that play the heard text as written; Jambot names its operators, and sees nothing new.
