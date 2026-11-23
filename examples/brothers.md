@@ -23,7 +23,7 @@ description: "Big beat, an original in the manner of the Chemical Brothers: grit
 &riff tags="riff" step=&riffBar*2 label="the riff" [0,7] ~ [0,7] [3,10] ~ [5,12] ~ [3,10]
 &siren tags="siren" step=&sirenBar/8 0
 &wail tags="siren" map=lin loop=&bar 0 12 0
-&sub tags="sub" step=&subBar 0 ~ 0 [-2|0]
+&sub seed=4356969851792802 tags="sub" step=&subBar 0 ~ 0 [-2|0]
 &roll tags="build" step=&buildBar 0!4 0*2!4 0*4!4 0*8!4
 &lift tags="build" step=&buildBar/32 0
 &up tags="build" map=lin loop=&bar/32 0 .3 1 0

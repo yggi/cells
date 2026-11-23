@@ -22,7 +22,7 @@ description: "For the test bench, in the spirit of Hainbach: old sine generators
 &dial map=ratios 1 1.5 2 2.25 3 3.75 4.5 6 8 label="the dial: a harmonic series, on 110 Hz"
 &drones over=&dial step=1m label="the sine generator: long tones" 0 ~ [1,4] ~ 2 [0,5] ~ 3 ~ [2,6] ~ ~
 &drift map=lin loop=.031 0 .08 0 -.11 0
-&beeps over=&dial step=8n label="the test oscillator" 7? ~!3 8?.7 ~!4 6? ~!6
+&beeps seed=7036520198142829 over=&dial step=8n label="the test oscillator" 7? ~!3 8?.7 ~!4 6? ~!6
 &swells step=1m/2 label="the noise sweep" 0 ~ ~ 0
 &sweep map=lin loop=.0625 .05 1 .2 .05
 

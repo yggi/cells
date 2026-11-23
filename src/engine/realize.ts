@@ -17,7 +17,7 @@ import { ExpansionLimit, flatten, stepsOf, type StepEvent } from './flatten';
 import { cellId } from './ids';
 import { refsOf, stepsPerSecond } from './readers';
 import { VOICE_PARAMS } from './attributes';
-import { drawKeyOf } from './drawkey';
+import { drawSeedOf } from './drawkey';
 import { heldAt, levelSeries, modulation, paramAt, paramTracks, pitchOf, valueThen, type ParamTrack, type Series, type VoiceParam } from './series';
 import { warpOf } from './physics';
 import { tapShare } from './meter';
@@ -202,7 +202,7 @@ function thrownIn(result: CompileResult, cell: string, e: StepEvent, lap: number
   if (e.laps && mod(lap, e.laps.of) !== e.laps.is) return null;
   if (e.chance === undefined && !e.options && !e.chosen) return e;
   // (keyed on what the cell plays, not its name or its spelling: a text renamed or respelled draws as it did, #481)
-  const seed = `${result.cells.get(cell)?.seed ?? 0}|${drawKeyOf(result)(cell)}`;
+  const seed = drawSeedOf(result)(cell);
   // [a b|c]: each choice it is in drawn once a lap of its own frame (keyed where that lap begins), as [a|b|c] is; its id
   // is where it stands in the braid, the flattened cell's name before it left out
   for (const c of e.chosen ?? []) if (Math.floor(chanceOf(`${seed}|${lap + c.lap}|${c.at.toFixed(6)}|${c.id.replace(/^[^:/]*:/, '')}|picks`) * c.of) !== c.is) return null;

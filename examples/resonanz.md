@@ -16,7 +16,7 @@ description: "The building site again, now the metal itself rings: struck plate,
 &reel step=104bpm motor=1.4 mass=1 friction=.1 wow=.02 0
 &hammer step=8n label="the hammer: where on the plate" 1 ~ 5 ~ ~ 3 7 ~ 1 ~ ~ 6 ~ 2 ~ 4
 &beam step=4n label="the beam" 4 ~ ~ 0 ~ 4 ~ ~
-&kick step=2n label="the spring, kicked" 3 ~ ~ 3?
+&kick seed=3342005430301331 step=2n label="the spring, kicked" 3 ~ ~ 3?
 &pluck step=4n label="the wire" 2 ~ 2 2 ~ ~ 6 ~
 &plate body=plate loop=D3 ring=3 hard=.85 board=none 0
 &girder body=bar loop=G2 ring=2.5 hard=.9 board=none 0

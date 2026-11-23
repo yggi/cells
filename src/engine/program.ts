@@ -85,6 +85,8 @@ export interface ResolvedCell {
   readonly chance: number;
   /** Its sequence of chance (seed=, else from its name). */
   readonly seed: number;
+  /** Whether the cell writes a `seed=`: its draws are then keyed on it alone, not on what the cell carries (decision 098, #779). */
+  readonly seeded: boolean;
   /** size=: how large it's drawn, against the others (1). */
   readonly size: number;
   /** tags= on a cell: its clusters in the graph (on the piece's card, tags= are the piece's). */
