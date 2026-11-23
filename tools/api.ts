@@ -85,7 +85,7 @@ export const ENTRY_POINTS: readonly { readonly match: string; readonly entry: En
   // Time.
   { match: 'engine/time/', entry: '@yggi/cells/time' },
   // Repository: fragments, their fit and learning, and a fragment read as cells means it (reading/*, ruled 2026-11-16).
-  ...['fragments', 'learned', 'fit', 'holes', 'files', 'decompose', 'recognise', 'extract', 'audition', 'catalogue', 'corefragment', 'hits', 'answered'].map(
+  ...['fragments', 'learned', 'lineage', 'fit', 'holes', 'files', 'decompose', 'recognise', 'extract', 'audition', 'catalogue', 'corefragment', 'hits', 'answered'].map(
     (m): { match: string; entry: Entry } => ({
       match: `repository/${m}`,
       entry: '@yggi/cells/repository',

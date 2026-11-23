@@ -33,10 +33,10 @@ Each step of the plan moves a count in the ledger: the symbols a frontend reache
 | `@yggi/cells/inspect` | language | read a compiled piece: its cells, pitches, clocks, values, written graph | 22 |
 | `@yggi/cells/midi` | language | text to MIDI notes and hits, MIDI files, keys, the performer | 28 |
 | `@yggi/cells/time` | language | analysis of what plays: scalograms, structure, motifs | 11 |
-| `@yggi/cells/repository` | repository | query, fit and learn; a fragment read as cells means it | 23 |
+| `@yggi/cells/repository` | repository | query, fit and learn; a fragment read as cells means it | 24 |
 | `@yggi/cells/library` | library | the seed, styles, kit, roles, modes, the band; every vocabulary as values | 13 |
 | (leaves for Cell studio, decision 086) | | the view: drawing only | 5 |
-| (internal) | | named by no entry point | 53 |
+| (internal) | | named by no entry point | 52 |
 
 #### `@yggi/cells`
 
@@ -78,11 +78,11 @@ Nothing on the root index today.
 
 #### `@yggi/cells/repository`
 
-Planned modules: `engine/parser/use`, `engine/reading/chords`, `engine/reading/mood`, `engine/reading/point`, `engine/reading/style`, `engine/reading/voice`, `engine/references`, `engine/renamed`, `engine/takein`, `engine/use`, `repository/answered`, `repository/audition`, `repository/catalogue`, `repository/corefragment`, `repository/decompose`, `repository/extract`, `repository/files`, `repository/fit`, `repository/fragments`, `repository/hits`, `repository/holes`, `repository/learned`, `repository/recognise`.
+Planned modules: `engine/parser/use`, `engine/reading/chords`, `engine/reading/mood`, `engine/reading/point`, `engine/reading/style`, `engine/reading/voice`, `engine/references`, `engine/renamed`, `engine/takein`, `engine/use`, `repository/answered`, `repository/audition`, `repository/catalogue`, `repository/corefragment`, `repository/decompose`, `repository/extract`, `repository/files`, `repository/fit`, `repository/fragments`, `repository/hits`, `repository/holes`, `repository/learned`, `repository/lineage`, `repository/recognise`.
 
 Exported by its entry point, `src/repository.ts` (120): `ALL_OPERATORS`, `Audition`, `AuditionOptions`, `BAR_4_4`, `BY`, `Bar`, `CO_USE_PULL`, `CatalogueEntry`, `ClockNeed`, `DecomposeOptions`, `Decomposition`, `EMPTY_LAYER`, `ExtractOptions`, `Extraction`, `Filed`, `Filing`, `FitAs`, `Found`, `Fragment`, `FragmentCore`, `FragmentFile`, `FragmentFileProblems`, `FragmentRef`, `FromLine`, `HarmReading`, `Hit`, `HitLine`, `HitsOptions`, `HitsRead`, `Holes`, `LearnedLayer`, `LearnedPoint`, `LibraryFile`, `LineNote`, `Merged`, `Meta`, `NoExtraction`, `PathStep`, `QUALITY_STACKS`, `QueryOptions`, `RENAMED_IDS`, `ReadChord`, `RecogniseOptions`, `Recognised`, `Recogniser`, `Reference`, `Repository`, `RepositoryOptions`, `StylePoint`, `StyleReading`, `TakenIn`, `TimingReading`, `Union`, `Use`, `UseOn`, `UseOnOptions`, `UsedPair`, `VARIES`, `VOICES`, `Voice`, `VoiceLandmark`, `VoiceReading`, `WeightedPoint`, `ancestry`, `answered`, `audition`, `bodyOf`, `byId`, `cachedFit`, `canonicalText`, `catalogue`, `chordOf`, `coreFragment`, `createRecogniser`, `createRepository`, `declarations`, `decompose`, `expand`, `expansion`, `extract`, `familyOf`, `fileFragment`, `fitsAs`, `fragmentDistance`, `fragmentHash`, `fromLine`, `hasFrom`, `headsOf`, `hitsOf`, `holesOf`, `layerProblems`, `originOf`, `partDistance`, `partOf`, `partsOf`, `playedHeadsOf`, `pointDistance`, `readChords`, `readFragment`, `readFragments`, `readFrom`, `readHarm`, `readPoint`, `readStyle`, `readTiming`, `readVoice`, `references`, `rootOf`, `sameText`, `signatureOf`, `takeIn`, `unionOf`, `useFragments`, `useOn`, `usedTogether`, `variationMeta`, `voiceOf`, `wordOf`, `writeFragment`, `writtenOut`.
 
-On the root index today (73): `ALL_OPERATORS`, `Audition`, `AuditionOptions`, `CatalogueEntry`, `ClockNeed`, `DecomposeOptions`, `Decomposition`, `EMPTY_LAYER`, `ExtractOptions`, `Extraction`, `Filed`, `Filing`, `FitAs`, `Found`, `Fragment`, `FragmentCore`, `FragmentFile`, `FragmentFileProblems`, `FromLine`, `Holes`, `LearnedLayer`, `LearnedPoint`, `LibraryFile`, `LineNote`, `Merged`, `Meta`, `NoExtraction`, `PathStep`, `QueryOptions`, `RENAMED_IDS`, `RecogniseOptions`, `Recognised`, `Recogniser`, `Reference`, `Repository`, `StylePoint`, `TakenIn`, `Use`, `UseOn`, `UseOnOptions`, `UsedPair`, `WeightedPoint`, `audition`, `bodyOf`, `canonicalText`, `catalogue`, `coreFragment`, `createRecogniser`, `createRepository`, `decompose`, `expand`, `extract`, `fileFragment`, `fitsAs`, `fragmentHash`, `fromLine`, `headsOf`, `holesOf`, `layerProblems`, `playedHeadsOf`, `pointDistance`, `readFragment`, `readFragments`, `references`, `sameText`, `signatureOf`, `takeIn`, `useFragments`, `useOn`, `usedTogether`, `wordOf`, `writeFragment`, `writtenOut`.
+On the root index today (80): `ALL_OPERATORS`, `Audition`, `AuditionOptions`, `BY`, `CatalogueEntry`, `ClockNeed`, `DecomposeOptions`, `Decomposition`, `EMPTY_LAYER`, `ExtractOptions`, `Extraction`, `Filed`, `Filing`, `FitAs`, `Found`, `Fragment`, `FragmentCore`, `FragmentFile`, `FragmentFileProblems`, `FromLine`, `Holes`, `LearnedLayer`, `LearnedPoint`, `LibraryFile`, `LineNote`, `Merged`, `Meta`, `NoExtraction`, `PathStep`, `QueryOptions`, `RENAMED_IDS`, `RecogniseOptions`, `Recognised`, `Recogniser`, `Reference`, `Repository`, `StylePoint`, `TakenIn`, `Use`, `UseOn`, `UseOnOptions`, `UsedPair`, `VARIES`, `WeightedPoint`, `ancestry`, `audition`, `bodyOf`, `canonicalText`, `catalogue`, `coreFragment`, `createRecogniser`, `createRepository`, `decompose`, `expand`, `extract`, `familyOf`, `fileFragment`, `fitsAs`, `fragmentHash`, `fromLine`, `headsOf`, `holesOf`, `layerProblems`, `originOf`, `playedHeadsOf`, `pointDistance`, `readFragment`, `readFragments`, `references`, `rootOf`, `sameText`, `signatureOf`, `takeIn`, `useFragments`, `useOn`, `usedTogether`, `variationMeta`, `wordOf`, `writeFragment`, `writtenOut`.
 
 #### `@yggi/cells/library`
 
@@ -91,10 +91,6 @@ Planned modules: `engine/compiler/declare`, `engine/dough-params`, `engine/examp
 Exported by its entry point, `src/library.ts` (57): `AXES`, `AXIS_NAMES`, `Axis`, `CENTRE`, `DOUGH_PARAMS`, `DOUGH_SOURCES`, `DRUM_ROLES`, `EXAMPLES`, `Example`, `ExampleKey`, `FACETS`, `FEEL_PARTS`, `FoundInstrument`, `GM_KIT`, `INSTRUMENT_REACH`, `LIBRARY`, `MIDI_FILE`, `NOTE_NAMES`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SCALES`, `SECTION_KINDS`, `SECTION_TYPES`, `SLOTS`, `STYLES`, `Style`, `TONAL_SCALES`, `TUTORIAL`, `TagKind`, `VOICE_KIT`, `VoicedPart`, `backbeatOf`, `bandAt`, `bandLine`, `bjorklund`, `canonicalTags`, `fromId`, `headOf`, `instrumentsAt`, `isLibraryFragment`, `kitVoiceOf`, `midiOf`, `mod`, `modeBrightness`, `modeName`, `nearestStyle`, `noteName`, `parseTag`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `tagKind`, `tagName`, `usesOf`.
 
 On the root index today (24): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example`, `ExampleKey`, `FoundInstrument`, `LIBRARY`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SLOTS`, `STYLES`, `Style`, `VoicedPart`, `bandAt`, `instrumentsAt`, `nearestStyle`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `usesOf`.
-
-#### On the root index, planned for no entry point
-
-`ancestry` (repository/lineage), `BY` (repository/lineage), `familyOf` (repository/lineage), `originOf` (repository/lineage), `rootOf` (repository/lineage), `variationMeta` (repository/lineage), `VARIES` (repository/lineage).
 
 ### What the frontends reach by a module path
 
