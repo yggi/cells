@@ -22,23 +22,23 @@ description: "An original in the manner of Einstürzende Neubauten: struck metal
 &beam tags="metal" map=ratios 1 2.756 5.404 8.933 16 label="beam: 1 : 2.76 : 5.40 : 8.93"
 &pipe tags="metal" map=ratios 1 2.42 4.37 6.71 8 label="pipe"
 &plate tags="metal" map=ratios 1 1.59 2.14 2.30 2.65 2.92 4 label="plate"
-&beams tags="metal" over=&beam step=&metalBar*4 [0,1,2,3] ~!2 [0,1,2,3]? ~!2 [0,1,2,3] ~!3 [0,1,2,3] ~ [0,2]? ~ [0,1,2,3] [1,3]?.7
-&pipes tags="metal" over=&pipe step=&metalBar*4 ~ ~ [0,1,2,3] ~ [1|2]? [0,1,2,3] ~ [0,1,2,3]? ~ ~ [0,1,2,3] ~ ~ [1,2,3]? [0,1,2,3] ~
+&beams seed=6622608107367484 tags="metal" over=&beam step=&metalBar*4 [0,1,2,3] ~!2 [0,1,2,3]? ~!2 [0,1,2,3] ~!3 [0,1,2,3] ~ [0,2]? ~ [0,1,2,3] [1,3]?.7
+&pipes seed=352379644757011 tags="metal" over=&pipe step=&metalBar*4 ~ ~ [0,1,2,3] ~ [1|2]? [0,1,2,3] ~ [0,1,2,3]? ~ ~ [0,1,2,3] ~ ~ [1,2,3]? [0,1,2,3] ~
 &plates tags="metal" over=&plate step=&plateBar ~ [0,1,2,3,4,5] ~ [0,1,2,3,4,5]
 
 # ---- the low end: a sub-bass kick, four on the floor; a crushed riff on E; the Bassfeder
 &kick tags="low" step=&subBar 0!4
 &riff tags="low" step=&riffBar*4 0 0 1 0 ~ 0 7 0 6 ~ 0 1 0 ~ 3 -2
 &accent tags="low" map=amp step=16n 1 .5 .8 .5 0 .6 1 .5 .9 0 .6 .8 .5 0 1 .7
-&feder tags="low" step=&federBar*2 0 ~ ~ 0? 0 ~ [0|-5] ~
+&feder seed=327647601126874 tags="low" step=&federBar*2 0 ~ ~ 0? 0 ~ [0|-5] ~
 
 # ---- tools: the grinder (noise that swells, now it can), the drill (a whine that wobbles)
-&grind tags="tools" step=&grindBar/2 0 0?.4
+&grind seed=8042777887391054 tags="tools" step=&grindBar/2 0 0?.4
 &swell tags="tools" map=amp step=8n .2 .5 1 .7
-&drill tags="tools" step=&drillBar 0? ~!3 0?.7 ~ 7? ~
+&drill seed=3791443339696003 tags="tools" step=&drillBar 0? ~!3 0?.7 ~ 7? ~
 &edge tags="tools" map=lin loop=.37 .2 1 .4
 # ---- the scream: a saw sliding, and breath, through filters moving between vowels
-&schrei tags="scream" step=&schreiBar/2 0 ~ 0?.5 ~
+&schrei seed=6564991197536049 tags="scream" step=&schreiBar/2 0 ~ 0?.5 ~
 &slide tags="scream" map=lin loop=&bar/2 0 7 12 9 -2 0
 &vowel tags="scream" map=lin loop=.83 .3 1 .55 .8 .3
 

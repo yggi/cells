@@ -16,11 +16,11 @@ description: "Slow, serene and looping: four soft chords with bells drifting abo
 &major scan(2 2 1 2 2 2 1) label="{mode} on {tonic}"
 &chords over=&major step=1m/4 label="Dmaj7 · Bm9 · Gmaj7 · A6" [0,2,4,6] [-2,0,2,4,8] [-4,-2,0,2] [-3,-1,1,2]
 &roots over=&major step=1m/4 -7 -9 -11 -10
-&a1 7 9? 11 13?.4
-&a2 5 7? 9 11?.4
-&a3 3 5? 7 9?.4
-&a4 4 6? 8 9?.4
-&arp over=&major step=8n label="the bells" &a1!8 &a2!8 &a3!8 &a4!8
+&a1 seed=3354976822747905 7 9? 11 13?.4
+&a2 seed=8902845909757633 5 7? 9 11?.4
+&a3 seed=2704494309091379 3 5? 7 9?.4
+&a4 seed=1113305061577325 4 6? 8 9?.4
+&arp seed=3183938156543531 over=&major step=8n label="the bells" &a1!8 &a2!8 &a3!8 &a4!8
 &breath map=lin loop=&bar/24 .15 .8 .35 .15
 
 &pad s=saw loop=D3 lpf=300..1800 * &breath room=.6 env=&(map=adsr 2.5 1 .8 4) pitch=&(map=lin loop=.11 0 .06 0 -.06 0)

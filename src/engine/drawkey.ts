@@ -31,6 +31,24 @@ const nine = (x: number) => +x.toPrecision(9);
 
 const keyed = new WeakMap<CompileResult, (cell: string) => string>();
 
+/**
+ * The seed a cell's draws are thrown from (#779, decision 098): the one it writes, `seed=n`, alone: a cell that writes one
+ * draws the same under any edit to what it carries (a `role=`, a `part=`, a label, its steps), and two that write one number
+ * draw alike. A cell that writes none is thrown from what it plays (`drawKeyOf`), as before. A written seed `n` is read as
+ * the key `n` in base 36 under the default seed 0, so the seed Normalise writes for a cell, its content key as a number, throws
+ * the dice it threw.
+ */
+export function drawSeedOf(result: CompileResult): (cell: string) => string {
+  const key = drawKeyOf(result);
+  return (cell) => {
+    const c = result.cells.get(cell);
+    return `${c && !c.seeded ? c.seed : 0}|${key(cell)}`;
+  };
+}
+
+/** A cell's content key as the number a `seed=` writes: the same dice, thrown from the seed (`drawSeedOf`). */
+export const keyAsSeed = (key: string): number => parseInt(key, 36);
+
 /** What a program's cells draw on, by name (see the module's comment); a name the program doesn't hold is its own key. */
 export function drawKeyOf(result: CompileResult): (cell: string) => string {
   const known = keyed.get(result);
@@ -42,6 +60,8 @@ export function drawKeyOf(result: CompileResult): (cell: string) => string {
     if (k !== undefined) return k;
     const c = result.cells.get(name);
     if (!c) return name;
+    // (a cell that writes a seed is that seed, whatever it carries, to the cells that read it too: #779)
+    if (c.seeded) return c.seed.toString(36);
     if (seen.has(name)) return '↺';
     const inner = new Set([...seen, name]);
     let steps: unknown[] = [];

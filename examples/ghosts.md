@@ -21,9 +21,9 @@ description: Dark and looping, in the manner of an instrumental Nine Inch Nails 
 &grit map=lin loop=.0435 .15 .7 .3 .15                       # 23 s
 &haze map=lin loop=.0345 .1 .5 .9 .1                         # 29 s
 &hiss step=1m/4 0
-&kick step=8n 0 ~ ~ 0? ~ ~ 0?.7 ~
-&metal step=16n ~!2 0?.75 ~!4 0?.6 ~!3 0?.8 ~ 0?.7 ~!2
-&glitch step=32n [0|7|12]?.94
+&kick seed=5157375652339238 step=8n 0 ~ ~ 0? ~ ~ 0?.7 ~
+&metal seed=8501275419899268 step=16n ~!2 0?.75 ~!4 0?.6 ~!3 0?.8 ~ 0?.7 ~!2
+&glitch seed=3984869331103389 step=32n [0|7|12]?.94
 
 &piano pan=.36 s=tri loop=D4 lpf=3000 room=.45 delaytime=&bar*4/3 delay=.2 delayfeedback=.35 env=&(map=adsr .002 1.6 0 1.8) pitch=&(map=lin loop=.19 0 .05 0 -.05 0)
 &cello pan=.62 s=saw loop=D3 lpf=700 room=.5 env=&(map=adsr .6 1 .8 2)
