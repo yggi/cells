@@ -32,5 +32,6 @@ A fit with no argument named takes, as a template's main argument, the one cell 
 - **A plain meter line fits 75 fragments at Bossa nova's point, not 165:** the rhythms, the layers, the open fragments, the counts and the song forms.
 - **The song forms still take the bar as their intensity:** they read it as a value in a sum, as a count reads its levels, so no kind tells them apart. A workbench that offers its `&song`, or a host that names it, settles it (#920 keeps it).
 - **Jambot's bench** of a meter, a key and a harmony: the meter no longer meets a walking bass's `&harm`. The key and the harmony still do, so one is offered or named, as before.
+- **Its cost is the reading's, found once a template:** how a template reads its main argument is the template's and its arguments', whatever the workbench, so it is kept across queries and asked before the copy is compiled over a cell. `timing.slow.test.ts`'s three fitting queries take what they took before it (6.1–6.4 s here against `main`'s 6.4 s; 9.1 s when it read each cell's copy anew).
 - `firstguess.ts` judges a part's clock with a harmony standing in for its main argument, where the bar stood in by accident.
 - Tests: `fit.test.ts`, `fitsas.test.ts`.

@@ -20,7 +20,7 @@
  *
  * **A repository's query** asks `cachedFit` (#587): `fitsAs` over the repository's own fragments, cached by text.
  */
-import type { Diagnostic } from '../engine/ast';
+import type { CellDecl, Diagnostic } from '../engine/ast';
 import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
 import { fromLine } from '../engine/references';
@@ -406,8 +406,10 @@ function mainOn(
       (d) => !standNames.has(STAND_IN_SAID.exec(d.message)?.[1] ?? ''),
     ).length;
   // (a cell meets a parameter only where the copy reads it as what it is, decision 104: its kind against each read)
-  const written = new Map(parse(bench).cells.map((d) => [d.name, d] as const));
-  const kindOf = kindsOf(alone);
+  // (the workbench's lines and kinds, once a compiled workbench: every template a query tries reads the same)
+  const seen = workbenchKinds.get(alone) ?? { written: new Map(parse(bench).cells.map((d) => [d.name, d] as const)), kindOf: kindsOf(alone) };
+  workbenchKinds.set(alone, seen);
+  const { written, kindOf } = seen;
   const kind = (name: string): Kind | null => {
     const d = written.get(name);
     // (a meter: the root meter, the one with a tempo, decision 095, or a braid written meter(…); not a scale, whose scan reads
@@ -416,8 +418,20 @@ function mainOn(
     const k = kindOf(name);
     return k === 'meter' ? 'table' : k;
   };
-  const meets = (cell: string) =>
-    compiles(cell) && readAsItIs(cell.slice(1), kind(cell.slice(1)), alone.cells.get(cell.slice(1))?.steps ?? 0, [bench, takeLine(heads, id, args, cell)].join('\n'), resolve);
+  // (how the template's copy reads its main argument, once: the same reads whichever cell fills it)
+  let paths: readonly string[] | null = null;
+  const readsOfMain = () => {
+    if (paths) return paths;
+    // (and across queries: the reads are the template's and its arguments', whatever the workbench, by the library's resolver)
+    const byResolve = mainReadsCache.get(resolve) ?? new Map<string, readonly string[]>();
+    mainReadsCache.set(resolve, byResolve);
+    const key = `${id}\u0000${JSON.stringify(args ?? null)}`;
+    paths = byResolve.get(key) ?? mainReads(takeLine(heads, id, args, `&${MAIN_STAND_IN}`), resolve);
+    byResolve.set(key, paths);
+    return paths;
+  };
+  // (the reading first: it is the template's, found once, where a compile is the copy's over each cell)
+  const meets = (cell: string) => readAsItIs(kind(cell.slice(1)), alone.cells.get(cell.slice(1))?.steps ?? 0, readsOfMain) && compiles(cell);
   const offers = parse(bench).offers;
   const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
   // (two that meet are already none: the rest isn't compiled)
@@ -430,37 +444,49 @@ function mainOn(
 const CLOCK = /^(step|paramClocks)(\.|$)/;
 const TABLE = /^over$/;
 
+/** A compiled workbench's lines by name and its cells' kinds (decision 104), kept with the compile the fit's cache holds. */
+const workbenchKinds = new WeakMap<CompileResult, { readonly written: ReadonlyMap<string, CellDecl>; readonly kindOf: (name: string) => Kind | null }>();
+
+/** How each template reads its main argument (`mainReads`), by the library's resolver and the template with its arguments. */
+const mainReadsCache = new WeakMap<Resolve, Map<string, readonly string[]>>();
+
+/** The name the main argument is read under while its reads are found: no workbench writes it. */
+const MAIN_STAND_IN = 'fitMainArgument';
+
 /**
- * Whether a template's copy, in `text`, reads the cell `name` as what it is wherever it reads it (decision 104), its kind
- * against each read:
+ * How a template's copy, in `text`, reads its main argument, given as `MAIN_STAND_IN`: the path of each read
+ * (`reads.ts`), and `play` for a gate's part (`play=&part^$-12`, a parameter `reads.ts` doesn't list yet, #825). The
+ * copy's lines are those the expansion adds; the workbench's own aren't counted.
+ */
+function mainReads(text: string, resolve: Resolve): readonly string[] {
+  const own = new Set(parse(text).cells.map((d) => d.name));
+  const copy = parse(expansion(text, { resolve }).text).cells.filter((d) => !own.has(d.name));
+  const played = (d: (typeof copy)[number]) => (typeof d.params.play === 'string' && /^&?([A-Za-z_]\w*)/.exec(d.params.play)?.[1] === MAIN_STAND_IN ? ['play'] : []);
+  return copy.flatMap((d) => [
+    ...readsOf(d)
+      .filter((r) => r.name === MAIN_STAND_IN)
+      .map((r) => r.path),
+    ...played(d),
+  ]);
+}
+
+/**
+ * Whether a template reads its main argument, a cell of this kind, as what it is wherever it reads it (decision 104):
  * - **a meter** only as a clock (`step=&bar`, `&bar:beat`) or its levels as values in an expression (a count's
  *   `[.9 + &bar * -.3]`), and somewhere: not as a key, a phrase or a part, nor read nowhere;
  * - **a text** never: a generator's argument alone (decision 101);
  * - **a lone note** (`&tonic D`, steps of one) only as a tonic: no key, phrase, part or value;
  * - as **a table** (`over=`): a table, a line (a harmony), a blank (a key turned), or steps;
  * - as **a part** (a gate's `play=`): a line or steps.
- * The copy's lines are those the expansion adds; the workbench's own aren't counted.
+ * The reads are found only where the kind could refuse one (`paths`, lazily): a table, a line or a blank meets every read.
  */
-function readAsItIs(name: string, kind: Kind | null, steps: number, text: string, resolve: Resolve): boolean {
+function readAsItIs(kind: Kind | null, steps: number, paths: () => readonly string[]): boolean {
   if (kind === 'text') return false;
-  const own = new Set(parse(text).cells.map((d) => d.name));
-  const copy = parse(expansion(text, { resolve }).text).cells.filter((d) => !own.has(d.name));
-  // (a gate's part, `play=&part^$-12`, is a parameter `reads.ts` doesn't list yet, #825: read here, as `play`)
-  const played = (d: (typeof copy)[number]) => (typeof d.params.play === 'string' && /^&?([A-Za-z_]\w*)/.exec(d.params.play)?.[1] === name ? ['play'] : []);
-  const paths = copy.flatMap((d) => [
-    ...readsOf(d)
-      .filter((r) => r.name === name)
-      .map((r) => r.path),
-    ...played(d),
-  ]);
-  if (kind === 'meter') return paths.length > 0 && paths.every((p) => CLOCK.test(p) || p.includes('.exprs.'));
-  // (a lone note is a tonic: `&tonic D` is no key, no phrase, no part, no value)
-  if (kind === 'steps' && steps === 1) return paths.every((p) => p === 'tonic');
-  return paths.every((p) => {
-    if (TABLE.test(p)) return kind === 'table' || kind === 'line' || kind === 'blank' || kind === 'steps';
-    if (p === 'play') return kind === 'line' || kind === 'steps';
-    return true;
-  });
+  if (kind === 'table' || kind === 'line' || kind === 'blank' || (kind === 'steps' && steps > 1)) return true;
+  const read = paths();
+  if (kind === 'meter') return read.length > 0 && read.every((p) => CLOCK.test(p) || p.includes('.exprs.'));
+  if (kind === 'steps' && steps === 1) return read.every((p) => p === 'tonic');
+  return read.every((p) => !TABLE.test(p) && p !== 'play');
 }
 
 /** A name clear of the workbench's: the name, else the first `name<n>`, n from 2, that the workbench doesn't write. */

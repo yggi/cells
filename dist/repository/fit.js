@@ -230,8 +230,9 @@ function mainOn(bench, id, heads, args, compiled, stand, resolve) {
     const alone = compiled([bench, ...stand].join('\n'));
     const standNames = new Set(stand.map((l) => l.split(' ')[0]));
     const compiles = (cell) => !newDiagnostics(compiled([bench, takeLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).filter((d) => !standNames.has(STAND_IN_SAID.exec(d.message)?.[1] ?? '')).length;
-    const written = new Map(parse(bench).cells.map((d) => [d.name, d]));
-    const kindOf = kindsOf(alone);
+    const seen = workbenchKinds.get(alone) ?? { written: new Map(parse(bench).cells.map((d) => [d.name, d])), kindOf: kindsOf(alone) };
+    workbenchKinds.set(alone, seen);
+    const { written, kindOf } = seen;
     const kind = (name) => {
         const d = written.get(name);
         if ((name === alone.mainMeter && d?.step && !d.step.whole) || (d?.braid.kind === 'list' && d.braid.perBeat !== undefined))
@@ -239,7 +240,18 @@ function mainOn(bench, id, heads, args, compiled, stand, resolve) {
         const k = kindOf(name);
         return k === 'meter' ? 'table' : k;
     };
-    const meets = (cell) => compiles(cell) && readAsItIs(cell.slice(1), kind(cell.slice(1)), alone.cells.get(cell.slice(1))?.steps ?? 0, [bench, takeLine(heads, id, args, cell)].join('\n'), resolve);
+    let paths = null;
+    const readsOfMain = () => {
+        if (paths)
+            return paths;
+        const byResolve = mainReadsCache.get(resolve) ?? new Map();
+        mainReadsCache.set(resolve, byResolve);
+        const key = `${id}\u0000${JSON.stringify(args ?? null)}`;
+        paths = byResolve.get(key) ?? mainReads(takeLine(heads, id, args, `&${MAIN_STAND_IN}`), resolve);
+        byResolve.set(key, paths);
+        return paths;
+    };
+    const meets = (cell) => readAsItIs(kind(cell.slice(1)), alone.cells.get(cell.slice(1))?.steps ?? 0, readsOfMain) && compiles(cell);
     const offers = parse(bench).offers;
     const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
     const meeting = [];
@@ -250,29 +262,31 @@ function mainOn(bench, id, heads, args, compiled, stand, resolve) {
 }
 const CLOCK = /^(step|paramClocks)(\.|$)/;
 const TABLE = /^over$/;
-function readAsItIs(name, kind, steps, text, resolve) {
-    if (kind === 'text')
-        return false;
+const workbenchKinds = new WeakMap();
+const mainReadsCache = new WeakMap();
+const MAIN_STAND_IN = 'fitMainArgument';
+function mainReads(text, resolve) {
     const own = new Set(parse(text).cells.map((d) => d.name));
     const copy = parse(expansion(text, { resolve }).text).cells.filter((d) => !own.has(d.name));
-    const played = (d) => (typeof d.params.play === 'string' && /^&?([A-Za-z_]\w*)/.exec(d.params.play)?.[1] === name ? ['play'] : []);
-    const paths = copy.flatMap((d) => [
+    const played = (d) => (typeof d.params.play === 'string' && /^&?([A-Za-z_]\w*)/.exec(d.params.play)?.[1] === MAIN_STAND_IN ? ['play'] : []);
+    return copy.flatMap((d) => [
         ...readsOf(d)
-            .filter((r) => r.name === name)
+            .filter((r) => r.name === MAIN_STAND_IN)
             .map((r) => r.path),
         ...played(d),
     ]);
-    if (kind === 'meter')
-        return paths.length > 0 && paths.every((p) => CLOCK.test(p) || p.includes('.exprs.'));
-    if (kind === 'steps' && steps === 1)
-        return paths.every((p) => p === 'tonic');
-    return paths.every((p) => {
-        if (TABLE.test(p))
-            return kind === 'table' || kind === 'line' || kind === 'blank' || kind === 'steps';
-        if (p === 'play')
-            return kind === 'line' || kind === 'steps';
+}
+function readAsItIs(kind, steps, paths) {
+    if (kind === 'text')
+        return false;
+    if (kind === 'table' || kind === 'line' || kind === 'blank' || (kind === 'steps' && steps > 1))
         return true;
-    });
+    const read = paths();
+    if (kind === 'meter')
+        return read.length > 0 && read.every((p) => CLOCK.test(p) || p.includes('.exprs.'));
+    if (kind === 'steps' && steps === 1)
+        return read.every((p) => p === 'tonic');
+    return read.every((p) => !TABLE.test(p) && p !== 'play');
 }
 function clearOf(bench, name) {
     const taken = namesIn(bench);
