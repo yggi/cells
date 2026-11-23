@@ -8,7 +8,7 @@ import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written } from
 import { referenceOf } from "./reference.js";
 import { answeredIn } from "../use.js";
 import { formsOf, FORM_FIXED } from "./form.js";
-import { fixedOf, SLOT_OPERATORS, slotMoves, slotReference } from "./slots.js";
+import { EMPTY, fixedOf, shiftMoves, SLOT_OPERATORS, slotMoves, slotReference } from "./slots.js";
 import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf } from "./progression.js";
 export { backbeatOf } from "./anchors.js";
 export { THIRDS, PHRASE_BARS } from "./progression.js";
@@ -16,8 +16,10 @@ export const RHYTHM_OPERATORS = ['rotate', 'drop', 'add'];
 export const PITCHED_OPERATORS = ['transpose', 'invert', 'reverse', 'bend', 'trim'];
 export const HARMONY_OPERATORS = ['rotate', 'reverse', 'third', 'dominant', 'swap', 'substitute'];
 export const FORM_OPERATORS = SLOT_OPERATORS;
+const REST = JSON.stringify([]);
 const LINE_SLOT_OPERATORS = ['swap', 'substitute'];
-const SLOT_LEVEL = ['third', 'dominant', 'swap', 'substitute'];
+export const SHIFT = 'shift';
+const SLOT_LEVEL = ['third', 'dominant', 'swap', 'substitute', 'shift'];
 export const DEGREES = [-2, -1, 1, 2];
 export const BENDS = [-2, -1, 1, 2];
 export const TRIM_FEWEST = 2;
@@ -39,6 +41,32 @@ function read(source, workbench = '', resolve) {
 }
 const playedBy = (lines) => new Set(lines.flatMap((l) => [l.trigger, l.card.name, ...(l.levels ? [l.levels.cell] : [])]));
 export const anchorsOf = (fragment, workbench, resolve) => read(fragment, workbench, resolve).anchors;
+function fixedLookup(anchors, keep, mask) {
+    const kept = new Set(keep.map(named));
+    return (name, n, own) => {
+        const every = Array.from({ length: n }, (_, s) => s);
+        if (kept.has(name))
+            return every;
+        const given = mask?.[name] ?? mask?.[name.slice(1)];
+        if (given)
+            return fixedOf(given, n);
+        if (own)
+            return fixedOf(own, n);
+        const mine = anchors.filter((a) => a.line === name);
+        return mine.some((a) => a.step === undefined)
+            ? every
+            : fixedOf(mine.map((a) => a.step), n);
+    };
+}
+export function fixedStepsOf(fragment, options = {}) {
+    const { lines, anchors, own, progressions, forms } = read(fragment, options.workbench, options.resolve);
+    const fixedFor = fixedLookup(anchors, options.keep ?? [], options.fixed);
+    return Object.fromEntries([
+        ...lines.filter((l) => own.has(l.trigger)).map((l) => [l.name, fixedFor(l.name, l.steps)]),
+        ...progressions.map((p) => [p.name, fixedFor(p.name, p.slots.length, p.cadence)]),
+        ...forms.map((f) => [f.name, fixedFor(f.name, f.slots.length, FORM_FIXED)]),
+    ]);
+}
 const named = (name) => (name.startsWith('&') ? name : `&${name}`);
 export const variations = (fragment, options) => readVariations(fragment, options).variations.map((v) => v.variation);
 export function readVariations(fragment, options = {}) {
@@ -50,16 +78,10 @@ function readSome(fragment, options, only) {
     const { lines, anchors, result, own, progressions, forms } = read(fragment, workbench, resolve);
     if (!result)
         return { notes: null, span: null, bar: null, variations: [] };
-    const maskOf = (name) => options.fixed?.[name] ?? options.fixed?.[name.slice(1)];
-    const lineFixed = (line) => {
-        const mask = maskOf(line.name);
-        return mask ? fixedOf(mask, line.steps) : null;
-    };
-    const left = new Set([...anchors.filter((a) => a.step === undefined && !maskOf(a.line)).map((a) => a.line), ...keep.map(named)]);
-    const pinned = (line, n) => {
-        const fixed = lineFixed(line);
-        return fixed ? fixed.includes(n.step) : anchors.some((a) => a.line === line.name && a.step === n.step);
-    };
+    const fixedFor = fixedLookup(anchors, keep, options.fixed);
+    const lineFixed = new Map(lines.map((l) => [l.name, fixedFor(l.name, l.steps)]));
+    const fixedOfLine = (line) => lineFixed.get(line.name);
+    const pinned = (line, n) => fixedOfLine(line).includes(n.step);
     const onset = (i, step) => {
         const w = lines[i].stepWhole;
         return w === null ? `${i}@${step}` : (step * w).toFixed(9);
@@ -82,18 +104,14 @@ function readSome(fragment, options, only) {
     const meter = lines.find((l) => l.meter)?.meter ?? chords.find((h) => h.meter)?.meter ?? null;
     const span = laps.length && laps.every((l) => l !== null) ? laps.reduce((a, b) => lcm(a, b)) : null;
     const bar = meter ? meter.pulses / meter.unit : null;
-    const played = slotsPlayed(forms, fragment, workbench, resolve);
-    const formNotes = (f, from, k) => [f, ...(f.partner ? [f.partner] : [])].flatMap((g, h) => from.map((src, i) => ({ at: null, key: `form#${k}.${h} ${i} ${played(g, src)}` })));
-    const identity = (f) => f.slots.map((_, i) => i);
-    const fixed = [...chords.flatMap((h) => h.notes), ...forms.flatMap((f, k) => formNotes(f, identity(f), k))];
+    const played = slotsPlayed(forms, fragment, workbench, resolve, degrees);
+    const formNotes = (f, after, k) => [after.main, ...(after.partner ? [after.partner] : [])].flatMap((tokens, h) => tokens.map((token, i) => ({ at: null, key: `form#${k}.${h} ${i} ${played(h ? f.partner : f, token)}` })));
+    const asWritten = (f) => ({ main: f.slots, ...(f.partner ? { partner: f.partner.slots } : {}) });
+    const fixed = [...chords.flatMap((h) => h.notes), ...forms.flatMap((f, k) => formNotes(f, asWritten(f), k))];
     const fixedBut = (name, notes) => [
         ...chords.flatMap((h) => (h.name === name ? notes : h.notes)),
-        ...forms.flatMap((f, k) => (f.name.slice(1) === name ? notes : formNotes(f, identity(f), k))),
+        ...forms.flatMap((f, k) => (f.name.slice(1) === name ? notes : formNotes(f, asWritten(f), k))),
     ];
-    const fixedOn = (name, n, own) => {
-        const mask = options.fixed?.[name] ?? options.fixed?.[name.slice(1)];
-        return mask ? fixedOf(mask, n) : fixedOf(own, n);
-    };
     const noteKeys = lines.map((l, i) => keysOf(i, l.notes));
     const strikeKeys = lines.map((l, i) => strikesOf(i, l.notes));
     const total = lines.reduce((sum, l) => sum + l.notes.length, 0);
@@ -176,7 +194,7 @@ function readSome(fragment, options, only) {
     };
     const order = lines
         .map((_, i) => i)
-        .filter((i) => lines[i].notes.length > 0 && own.has(lines[i].trigger) && !left.has(lines[i].name) && (!only || only.line === lines[i].name))
+        .filter((i) => lines[i].notes.length > 0 && own.has(lines[i].trigger) && fixedOfLine(lines[i]).length < lines[i].steps && (!only || only.line === lines[i].name))
         .sort((a, b) => first(a)[0] - first(b)[0] || first(a)[1] - first(b)[1]);
     for (const i of order) {
         const line = lines[i];
@@ -184,14 +202,13 @@ function readSome(fragment, options, only) {
         const [before, last] = line.notes.slice(-2);
         const ends = line.notes.length >= 2 && !pinned(line, last);
         const stepKeys = Array.from({ length: line.steps }, (_, s) => JSON.stringify(line.notes.filter((n) => n.step === s)));
-        const fixedSteps = lineFixed(line) ??
-            fixedOf(line.notes.filter((n) => pinned(line, n)).map((n) => n.step), line.steps);
+        const fixedSteps = fixedOfLine(line);
         const movedFrom = (from) => inOrder(from.flatMap((src, t) => line.notes.filter((n) => n.step === src).map((n) => ({ ...n, step: t }))));
-        const levelsFrom = (from) => levels && levels.map((_, t) => levels[from[t]]);
+        const levelsFrom = (from) => levels && levels.map((own, t) => (from[t] === EMPTY ? own : levels[from[t]]));
         for (const operator of operators) {
-            if (!LINE_SLOT_OPERATORS.includes(operator) && PITCHED_OPERATORS.includes(operator) !== !!line.pitched)
+            if (!LINE_SLOT_OPERATORS.includes(operator) && [...PITCHED_OPERATORS, SHIFT].includes(operator) !== !!line.pitched)
                 continue;
-            if (line.notes.some((n) => n.hold) && !['transpose', 'invert'].includes(operator))
+            if (line.notes.some((n) => n.hold) && !['transpose', 'invert', 'shift'].includes(operator))
                 continue;
             if (operator === 'bend') {
                 if (ends)
@@ -206,6 +223,11 @@ function readSome(fragment, options, only) {
                 const notes = line.notes.filter((x) => x !== last);
                 offer(i, operator, notes, last.step, written(line, notes), `its last note, on step ${last.step}, left out: the one before it held`);
             }
+            else if (operator === 'shift')
+                for (const { slot, by } of shiftMoves(line.steps, fixedSteps, degrees, (s) => line.notes.some((x) => x.step === s))) {
+                    const notes = line.notes.map((x) => (x.step === slot ? { ...x, pitch: moved(x.pitch, 1, by) } : x));
+                    offer(i, operator, notes, `${slot} ${by}`, written(line, notes), `its note on step ${slot} ${by > 0 ? 'up' : 'down'} ${Math.abs(by)} degree${Math.abs(by) === 1 ? '' : 's'}`, null);
+                }
             else if (operator === 'transpose')
                 for (const n of degrees) {
                     const notes = line.notes.map((x) => (pinned(line, x) ? x : { ...x, pitch: moved(x.pitch, 1, n) }));
@@ -236,31 +258,21 @@ function readSome(fragment, options, only) {
                     offer(i, operator, notes, m.amounts.join(' '), written(line, notes, levelsFrom(m.from) ?? undefined), m.what, null);
                 }
             }
-            else if (operator === 'drop')
-                for (const dropped of line.notes.filter((n) => !pinned(line, n))) {
-                    const notes = line.notes.filter((n) => n !== dropped);
-                    offer(i, operator, notes, dropped.step, written(line, notes), `its ${dropped.voice} on step ${dropped.step} left out`);
-                }
-            else {
-                const voice = line.notes[0].voice;
+            else if (operator === 'drop' || operator === 'add') {
                 const loudest = line.notes.reduce((a, b) => (b.level > a.level ? b : a));
-                for (let step = 0; step < line.steps; step++) {
-                    if (lineFixed(line)?.includes(step) || line.notes.some((n) => n.step === step && sound(n.voice) === sound(voice)))
-                        continue;
-                    const notes = inOrder([...line.notes, { step, voice, own: loudest.own, level: loudest.level }]);
-                    const louder = levels && levels.map((t, s) => (s === step ? levels[loudest.step] : t));
-                    offer(i, operator, notes, step, written(line, notes, louder), `a ${voice} on step ${step}, as loud as its loudest`);
+                for (const m of slotMoves(stepKeys, fixedSteps, [operator], { key: REST, fill: loudest.step })) {
+                    const notes = movedFrom(m.from);
+                    const [step] = m.amounts;
+                    const what = operator === 'drop' ? `step ${step} left a rest` : `step ${step} given its loudest, step ${loudest.step}'s`;
+                    offer(i, operator, notes, step, written(line, notes, levelsFrom(m.from) ?? undefined), what);
                 }
             }
         }
     }
     const base = signature(-1, []);
     const slotLevel = !!only || operators.some((o) => SLOT_LEVEL.includes(o));
-    const keyOf = (p, slots, f, from) => [
-        base,
-        ...progressions.map((q) => (q === p ? progressionKey(q, slots) : progressionKey(q, q.slots))),
-        ...forms.map((g) => (g === f ? from : identity(g)).map((i) => `${played(g, i)}${g.partner ? `/${played(g.partner, i)}` : ''}`).join(' ')),
-    ].join('#');
+    const formKey = (g, after) => after.main.map((t, i) => `${played(g, t)}${g.partner ? `/${played(g.partner, after.partner[i])}` : ''}`).join(' ');
+    const keyOf = (p, slots, f, after) => [base, ...progressions.map((q) => (q === p ? progressionKey(q, slots) : progressionKey(q, q.slots))), ...forms.map((g) => formKey(g, g === f ? after : asWritten(g)))].join('#');
     if (progressions.length || forms.length)
         seen.add(keyOf(null, null, null, null));
     const offerSlots = (name, rule, amounts, what, braids, sig, notes, reference) => {
@@ -286,11 +298,11 @@ function readSome(fragment, options, only) {
         out.push({ variation, notes: [...heardKeys.flat(), ...notes] });
     };
     for (const p of progressions) {
-        if (!slotLevel || left.has(p.name) || (only && only.line !== p.name))
+        if (!slotLevel || (only && only.line !== p.name))
             continue;
         const k = chords.findIndex((h) => h.name === p.name.slice(1));
-        const asked = operators.filter((o) => HARMONY_OPERATORS.includes(o));
-        for (const c of progressionCandidates(p, asked, result, fixedOn(p.name, p.slots.length, p.cadence))) {
+        const asked = operators.filter((o) => HARMONY_OPERATORS.includes(o) || o === SHIFT);
+        for (const c of progressionCandidates(p, asked, result, fixedFor(p.name, p.slots.length, p.cadence), degrees)) {
             const braid = progressionBraid(c.slots);
             const w = wordsOf(p.name.slice(1));
             const reference = w && progressionReference(p, c.slots, [...w.head, ...w.attrs, ...braid]);
@@ -298,25 +310,41 @@ function readSome(fragment, options, only) {
         }
     }
     for (const [k, f] of forms.entries()) {
-        if (!slotLevel || left.has(f.name) || (only && only.line !== f.name))
+        if (!slotLevel || (only && only.line !== f.name))
             continue;
-        const asked = operators.filter((o) => FORM_OPERATORS.includes(o));
-        const keys = f.slots.map((_, i) => `${played(f, i)}${f.partner ? `/${played(f.partner, i)}` : ''}`);
-        for (const m of slotMoves(keys, fixedOn(f.name, f.slots.length, FORM_FIXED), asked)) {
-            const braids = new Map([[f.name.slice(1), m.from.map((i) => f.slots[i])]]);
-            if (f.partner)
-                braids.set(f.partner.name.slice(1), m.from.map((i) => f.partner.slots[i]));
-            offerSlots(f.name, m.operator, m.amounts, m.what, braids, keyOf(null, null, f, m.from), fixedBut(f.name.slice(1), formNotes(f, m.from, k)), formReference(f, m.from));
+        const keys = f.slots.map((t, i) => `${played(f, t)}${f.partner ? `/${played(f.partner, f.partner.slots[i])}` : ''}`);
+        const fixedSlots = fixedFor(f.name, f.slots.length, FORM_FIXED);
+        const offerForm = (operator, amounts, what, after) => {
+            const braids = new Map([[f.name.slice(1), after.main]]);
+            if (f.partner && after.partner)
+                braids.set(f.partner.name.slice(1), after.partner);
+            offerSlots(f.name, operator, amounts, what, braids, keyOf(null, null, f, after), fixedBut(f.name.slice(1), formNotes(f, after, k)), formReference(f, after));
+        };
+        for (const operator of operators) {
+            if (operator === 'shift') {
+                if (!f.partner && f.attrs.some((a) => a.startsWith('step=')))
+                    for (const { slot, by } of shiftMoves(f.slots.length, fixedSlots, degrees, (s) => shiftedToken(f.slots[s], 1) !== null)) {
+                        const main = f.slots.map((t, s) => (s === slot ? shiftedToken(t, by) : t));
+                        offerForm(operator, [slot, by], `its letter on slot ${slot} moved ${by} degree${Math.abs(by) === 1 ? '' : 's'}`, { main });
+                    }
+            }
+            else if (FORM_OPERATORS.includes(operator))
+                for (const m of slotMoves(keys, fixedSlots, [operator])) {
+                    const main = m.from.map((i) => f.slots[i]);
+                    offerForm(m.operator, m.amounts, m.what, { main, ...(f.partner ? { partner: m.from.map((i) => f.partner.slots[i]) } : {}) });
+                }
         }
     }
     return { notes: [...heardKeys.flat(), ...fixed], span, bar, variations: out };
 }
-function slotsPlayed(forms, fragment, workbench = '', resolve) {
+function slotsPlayed(forms, fragment, workbench = '', resolve, degrees = DEGREES) {
     const cells = new Map();
     const lines = [];
     for (const f of forms)
         for (const g of [f, ...(f.partner ? [f.partner] : [])])
-            for (const token of g.attrs.some((x) => x.startsWith('step=')) ? g.slots : []) {
+            for (const token of g.attrs.some((x) => x.startsWith('step='))
+                ? [...g.slots, ...g.slots.flatMap((t) => degrees.map((n) => shiftedToken(t, n)).filter((x) => x !== null))]
+                : []) {
                 const key = `${g.attrs.join(' ')}|${token}`;
                 if (cells.has(key))
                     continue;
@@ -340,27 +368,27 @@ function slotsPlayed(forms, fragment, workbench = '', resolve) {
                 catch {
                 }
     }
-    return (g, slot) => {
-        const key = `${g.attrs.join(' ')}|${g.slots[slot]}`;
-        return keys.get(key) || g.slots[slot];
-    };
+    return (g, token) => keys.get(`${g.attrs.join(' ')}|${token}`) || token;
 }
-function formReference(f, from) {
-    const ref = slotReference(f.name, f.slots, from.map((i) => f.slots[i]));
+function formReference(f, after) {
+    const ref = slotReference(f.name, f.slots, after.main);
     if (!ref)
         return null;
     const written = (g, slots) => [...g.head, ...g.attrs, ...slots].join(' ').length;
     const p = f.partner;
-    const pref = p &&
-        slotReference(p.name, p.slots, from.map((i) => p.slots[i]));
+    const pref = p && after.partner && slotReference(p.name, p.slots, after.partner);
     const length = ref.line(f.name.slice(1)).length + (pref ? pref.line(p.name.slice(1)).length : 0);
-    const whole = written(f, from.map((i) => f.slots[i])) +
-        (p
-            ? written(p, from.map((i) => p.slots[i]))
-            : 0);
+    const whole = written(f, after.main) + (p && after.partner ? written(p, after.partner) : 0);
     if (length > whole)
         return null;
     return p && pref ? { ...ref, partner: { of: p.name, ...pref } } : ref;
+}
+function shiftedToken(token, n) {
+    const m = /^&([A-Za-z_][A-Za-z0-9_]*)(?:\^(-?\d+))?$/.exec(token);
+    if (!m)
+        return null;
+    const k = Number(m[2] ?? 0) + n;
+    return k === 0 ? `&${m[1]}` : `&${m[1]}^${k}`;
 }
 function lcm(a, b) {
     const gcd = (x, y) => (y ? gcd(y, x % y) : x);
@@ -406,7 +434,7 @@ export function variationBy(fragment, by, options = {}) {
     const variations = readSome(fragment, options, { line: m[2], operator: m[1] }).variations;
     return variations.find((v) => v.variation.by === by.trim())?.variation ?? null;
 }
-const OPERATORS = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, ...HARMONY_OPERATORS])];
+const OPERATORS = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, ...HARMONY_OPERATORS, SHIFT])];
 export function varied(fragment, draw, options) {
     drawn(draw, 1);
     const all = variations(fragment, options);

@@ -2,7 +2,7 @@ import { declWords } from "../edit.js";
 import { resolveIn } from "../helix.js";
 import { codeShifts } from "../program.js";
 import { tapWhole } from "./lines.js";
-import { SLOT_OPERATORS, slotMoves, slotReference } from "./slots.js";
+import { shiftMoves, SLOT_OPERATORS, slotMoves, slotReference } from "./slots.js";
 export const THIRDS = [-2, 2];
 export const PHRASE_BARS = 4;
 const TONE = /^(-?\d+)([#b])?$/;
@@ -99,7 +99,7 @@ export function progressionKey(p, slots) {
         .join(' '))
         .join('|');
 }
-export function progressionCandidates(p, operators, result, fixed = p.cadence) {
+export function progressionCandidates(p, operators, result, fixed = p.cadence, degrees = [-2, -1, 1, 2]) {
     const out = [];
     const free = (s) => !fixed.includes(s);
     const keys = p.slots.map(slotText);
@@ -109,16 +109,13 @@ export function progressionCandidates(p, operators, result, fixed = p.cadence) {
         if (SLOT_OPERATORS.includes(operator))
             for (const m of slotMoves(keys, fixed, [operator]))
                 out.push({ operator: m.operator, amounts: m.amounts, slots: m.from.map((f) => p.slots[f]), what: m.what });
-        else if (operator === 'third')
-            p.slots.forEach((slot, s) => {
-                if (!free(s) || slot.length !== 1)
-                    return;
-                for (const n of THIRDS) {
-                    const slots = [...p.slots];
-                    slots[s] = [slot[0].map((t) => ({ ...t, degree: t.degree + n }))];
-                    out.push({ operator, amounts: [s, n], slots, what: `its chord on step ${s} a third ${n > 0 ? 'up' : 'down'}` });
-                }
-            });
+        else if (operator === 'third' || operator === 'shift')
+            for (const { slot: s, by: n } of shiftMoves(p.slots.length, fixed, operator === 'third' ? THIRDS : degrees, (s) => p.slots[s].length === 1)) {
+                const slots = [...p.slots];
+                slots[s] = [p.slots[s][0].map((t) => ({ ...t, degree: t.degree + n }))];
+                const what = operator === 'third' ? `a third ${n > 0 ? 'up' : 'down'}` : `${Math.abs(n)} degree${Math.abs(n) === 1 ? '' : 's'} ${n > 0 ? 'up' : 'down'}`;
+                out.push({ operator, amounts: [s, n], slots, what: `its chord on step ${s} ${what}` });
+            }
         else if (operator === 'dominant')
             p.slots.forEach((slot, s) => {
                 if (!free(s) || slot.length !== 1)

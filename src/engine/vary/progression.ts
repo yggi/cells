@@ -24,7 +24,7 @@ import { resolveIn } from '../helix';
 import type { Meter } from '../meter';
 import { codeShifts, type CompileResult } from '../program';
 import { tapWhole } from './lines';
-import { SLOT_OPERATORS, slotMoves, slotReference, type SlotOperator } from './slots';
+import { shiftMoves, SLOT_OPERATORS, slotMoves, slotReference, type SlotOperator } from './slots';
 
 /** A tone of a stack: a degree of the table read, and its accidental in the table's grid steps (−1, 0, 1). */
 export interface Tone {
@@ -54,7 +54,7 @@ export interface Progression {
 
 /** A progression's candidate variation: the operator, its amounts (for `by`), its slots, and what it does, in words. */
 export interface Candidate {
-  readonly operator: SlotOperator | 'third' | 'dominant';
+  readonly operator: SlotOperator | 'drop' | 'add' | 'third' | 'dominant' | 'shift';
   readonly amounts: readonly number[];
   readonly slots: readonly Slot[];
   readonly what: string;
@@ -184,7 +184,13 @@ export function progressionKey(p: Progression, slots: readonly Slot[]): string {
  * step. Each moves no fixed step (its cadence, or the frontend's mask). Whether a
  * candidate plays other notes than its source and the ones before it is the caller's to judge.
  */
-export function progressionCandidates(p: Progression, operators: readonly string[], result: CompileResult, fixed: readonly number[] = p.cadence): Candidate[] {
+export function progressionCandidates(
+  p: Progression,
+  operators: readonly string[],
+  result: CompileResult,
+  fixed: readonly number[] = p.cadence,
+  degrees: readonly number[] = [-2, -1, 1, 2],
+): Candidate[] {
   const out: Candidate[] = [];
   const free = (s: number) => !fixed.includes(s);
   const keys = p.slots.map(slotText);
@@ -193,15 +199,14 @@ export function progressionCandidates(p: Progression, operators: readonly string
   for (const operator of operators) {
     if (SLOT_OPERATORS.includes(operator as SlotOperator))
       for (const m of slotMoves(keys, fixed, [operator])) out.push({ operator: m.operator, amounts: m.amounts, slots: m.from.map((f) => p.slots[f]!), what: m.what });
-    else if (operator === 'third')
-      p.slots.forEach((slot, s) => {
-        if (!free(s) || slot.length !== 1) return;
-        for (const n of THIRDS) {
-          const slots = [...p.slots];
-          slots[s] = [slot[0]!.map((t) => ({ ...t, degree: t.degree + n }))];
-          out.push({ operator, amounts: [s, n], slots, what: `its chord on step ${s} a third ${n > 0 ? 'up' : 'down'}` });
-        }
-      });
+    else if (operator === 'third' || operator === 'shift')
+      // (one chord moved n degrees, `slots.ts`'s shift: a third its shift by a third, ±2)
+      for (const { slot: s, by: n } of shiftMoves(p.slots.length, fixed, operator === 'third' ? THIRDS : degrees, (s) => p.slots[s]!.length === 1)) {
+        const slots = [...p.slots];
+        slots[s] = [p.slots[s]![0]!.map((t) => ({ ...t, degree: t.degree + n }))];
+        const what = operator === 'third' ? `a third ${n > 0 ? 'up' : 'down'}` : `${Math.abs(n)} degree${Math.abs(n) === 1 ? '' : 's'} ${n > 0 ? 'up' : 'down'}`;
+        out.push({ operator, amounts: [s, n], slots, what: `its chord on step ${s} ${what}` });
+      }
     else if (operator === 'dominant')
       p.slots.forEach((slot, s) => {
         if (!free(s) || slot.length !== 1) return;
