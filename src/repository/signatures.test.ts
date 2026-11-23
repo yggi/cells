@@ -19,7 +19,8 @@ const SOUND = lines('&v s=sine loop=C4', '&out [&heard * &v]');
 /** A workbench for a template, by its main parameter: what it reads, given, and a line that plays the copy. */
 const WORKBENCH: Record<string, (head: string, use: string) => string> = {
   '&tempo': (head, use) => lines(`${head} from ${use} 120bpm`, '&heard step=8n 0 2', SOUND),
-  '&tonic': (head, use) => lines(METER, `${head} from ${use} D`, '&heard over=&key step=8n 0 1 2', SOUND),
+  // (a key read from its tonic, or a melodic scale on it, #719: a line over what it defines)
+  '&tonic': (head, use) => lines(METER, `${head} from ${use} D`, `&heard over=${head.includes('&key') ? '&key' : head} step=8n 0 1 2`, SOUND),
   '&key': (head, use) => lines(METER, KEY, `${head} from ${use} &key`, '&heard step=8n &x', SOUND),
   '&harm': (head, use) => lines(METER, KEY, '&harm over=&key step=1m [0,2,4] [3,5,7]', `${head} from ${use} &harm`, '&heard step=8n &x', SOUND),
   '&call': (head, use) => lines(METER, KEY, '&m over=&key step=8n 0 2 4 7', `${head} from ${use} &m`, '&heard step=8n &x', SOUND),
@@ -40,8 +41,8 @@ const templates = LIBRARY.filter((f) => signatureOf(f.text) && !f.association.so
 const NOTHING_PLAYS = 'Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])';
 
 describe('the seed library’s signatures', () => {
-  it('182 templates (#799: the metric accent and the breathing pulse; #810: the nine section kinds and the seven song forms; #772: the law five_to_twelve; #572: ten more, two stabs, three bass lines, a harmony and four motifs; #542: ten more, three harmonies, three bass lines and four motifs, then eleven more, four beats, four bass lines, a harmony and two motifs; #540: five harmonies; #637: the 26 rhythms, now 32 with #646’s two): the meters, modes, harmonies, bass lines, motifs, forms, section kinds, song forms, the stabs, the performers, the four instruments that read a style, the band and the rhythms; the rest collections', () => {
-    expect(templates).toHaveLength(182);
+  it('187 templates (#719: the melodic scales, the pentatonic two; #799: the metric accent and the breathing pulse; #810: the nine section kinds and the seven song forms; #772: the law five_to_twelve; #572: ten more, two stabs, three bass lines, a harmony and four motifs; #542: ten more, three harmonies, three bass lines and four motifs, then eleven more, four beats, four bass lines, a harmony and two motifs; #540: five harmonies; #637: the 26 rhythms, now 32 with #646’s two): the meters, modes, harmonies, bass lines, motifs, forms, section kinds, song forms, the stabs, the performers, the four instruments that read a style, the band and the rhythms; the rest collections', () => {
+    expect(templates).toHaveLength(187);
     const collections = LIBRARY.filter((f) => !signatureOf(f.text)).map((f) => f.id);
     expect(collections).toContain('gm_kit');
     expect(collections).toContain('upright_bass');
