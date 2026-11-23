@@ -9,6 +9,7 @@ What goes inside a cell: generators, and how to pick from, shift and transpose a
 - An interval can be **`geo(r, n, k …)`**: r^(k/n) for each k, a geometric series; `x!n` repeats it n times.
 - **`euclid(k, n)`** — k hits spread evenly over n steps (`euclid(3, 8)` is the tresillo); `euclid(k, n, shift)` turned right by shift steps, as Strudel's `(k, n, r)`: `euclid(3, 8, 2)` is `x.x..x..`. The same rhythm inside one step is Strudel's `x(k,n,r)` on that step: `0(3,8,2)`, `&bd(3,8)` ([cell.md](cell.md)).
 - **`sin(n)`** — one cycle of a sine in n steps (a voice's waveform); **`saw(n)`**, **`tri(n)`**, **`square(n)`** the same for a saw, a triangle and a square. Each runs −1…1 from the start of its cycle, as Strudel's bipolar signals (`sine2`, `saw2`, `tri2`, `square2`) taken at each step: `saw(4)` is −1 −.5 0 .5, `tri(4)` −1 0 1 0, `square(4)` −1 −1 1 1. A range after the steps lays the wave within it, `sin(12, 0..1)` (Strudel's `sine.range(0, 1)`): the share a factor reads, since a value below 0 is held at 0 there (decision 067 §5, amended by #884).
+- **A generator's argument may be a cell** that is one value, filled as the piece is built ([decision 101](https://github.com/yggi/cells/blob/main/docs/decisions/101-a-text-cell.md), after 093): a number (`euclid(&k, 8)` with `&k 3`), or a **text cell**, a cell whose braid is one text in quotes (`meter(&meter)` with `&meter "3/4"`). A fragment's parameter passes a generator's argument so: `&bar from bar(meter="3/4") &tempo`. A text is read by a generator alone.
 - **A root** is a bare grid: `&edo19 cycle=19` ([tuning.md](tuning.md)).
 
 ```cells
@@ -17,6 +18,10 @@ What goes inside a cell: generators, and how to pick from, shift and transpose a
 &hits euclid(5, 12)
 &wave sin(12) loop=220
 &ramp saw(8) loop=110
+&k 3
+&tresillo2 euclid(&k, 8)
+&sig "7/8"
+&aksak meter(&sig) step=120bpm
 ```
 
 ## Picks and shifts

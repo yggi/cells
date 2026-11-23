@@ -204,7 +204,23 @@ export type Braid =
    * `perBeat` marks a list as a meter: the compiler reads that it is there (`compiler/resolve.ts`, and `base=` keeps it,
    * `parser/base.ts`), and so does Cell studio's roll (yggi/cell-studio src/layout/roll.ts @ df4bb5b); its value nothing reads.
    */
-  | { readonly kind: 'list'; readonly tokens: readonly Token[]; readonly perBeat?: number; readonly signature?: Signature }
+  | {
+      readonly kind: 'list';
+      readonly tokens: readonly Token[];
+      readonly perBeat?: number;
+      readonly signature?: Signature;
+      /**
+       * A generator's call whose value arguments read cells (decision 101): `meter(&m)`, `euclid(&k, 8)`. Compile fills
+       * each cell's value into the call and parses it again (declare.ts); until then its tokens are none.
+       */
+      readonly deferred?: {
+        readonly generator: string;
+        readonly call: string;
+        /** Where the call is written. */
+        readonly at: Span;
+        readonly reads: readonly { readonly ref: Ref; readonly kind: 'number' | 'text'; readonly from: number; readonly to: number }[];
+      };
+    }
   /** Running totals of intervals: scan(2 2 1 2 2 2 1) → 0 2 4 5 7 9 11, lap 12. Scales, meters, rhythms. */
   | {
       readonly kind: 'scan';
@@ -386,6 +402,11 @@ export interface CellDecl {
    * stream's laps one by one (#792).
    */
   readonly fill?: { readonly fragment: string | null; readonly name: string | null; readonly clock: string | null };
+  /**
+   * A text cell (decision 101): its braid one text in quotes, `&meter "3/4"`, read only by a generator's argument as the
+   * piece is built (`meter(&meter)`), as a cell that is one number is (093). It plays nothing.
+   */
+  readonly text?: string;
   /** An unnamed cell, written where it's used (`&( … )`): its body as written. */
   readonly lambda?: string;
   readonly over: Ref | null;

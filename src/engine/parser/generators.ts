@@ -287,42 +287,49 @@ function parseMeter(s: LineScanner, start: number): Braid {
       return String(f.value);
     }
     const n = s.match(/[1-9][0-9]*(?:n\.?|t)(?![0-9A-Za-z])|[0-9]+/y);
-    if (n === null) s.fail(`${what}: in quotes ("4/4"), a number, a note value (16n) or free(…)`);
+    if (n === null) s.fail(`${what}: in quotes ("4/4"), a number, a note value (16n), a cell (&meter) or free(…)`);
     return n!;
   };
   const sig = arg('the time signature');
-  const written = WRITTEN.test(sig);
-  const grouping = written ? null : groupingOf(sig);
   s.skipSpace();
-  let sub = 1;
-  let stepWhole: number | null = null;
+  let step: { text: string; at: number } | null = null;
   if (s.peek() === ',') {
     s.i++;
     s.skipSpace();
     const at = s.i;
-    const text = arg('the step: steps a pulse, or its note value');
-    const whole = noteValue(text);
-    if (whole !== null) {
-      // (a note value: so many steps a pulse of the signature, or the step of levels written out)
-      if (grouping) {
-        const per = 1 / grouping.unit / whole;
-        if (!(Math.abs(per - Math.round(per)) < 1e-9 && Math.round(per) >= 1 && Math.round(per) <= 8))
-          s.fail(`meter("${sig}", ${text}): the step divides the pulse, ${noteName(1 / grouping.unit) ?? `a 1/${grouping.unit}`}, into 1 to 8 steps`, at, text.length);
-        sub = Math.round(per);
-      } else stepWhole = whole;
-    } else sub = Math.max(1, Math.min(8, parseInt(text, 10) || 1));
+    step = { text: arg('the step: steps a pulse, or its note value'), at };
     s.skipSpace();
   }
   s.expect(')', `')' to close meter(…)`);
   const span = s.span(start);
   if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
+  const built = meterBraid(sig, step?.text ?? null, span);
+  if (typeof built !== 'string') return built;
+  if (step && built.startsWith(`meter("${sig}", ${step.text})`)) s.fail(built, step.at, step.text.length);
+  return s.fail(built, start, span.len);
+}
+
+/** meter(signature, step)'s braid, or what is wrong with it. */
+function meterBraid(sig: string, stepText: string | null, span: Span): Braid | string {
+  const written = WRITTEN.test(sig);
+  const grouping = written ? null : groupingOf(sig);
+  let sub = 1;
+  let stepWhole: number | null = null;
+  if (stepText !== null) {
+    const whole = noteValue(stepText);
+    if (whole !== null) {
+      // (a note value: so many steps a pulse of the signature, or the step of levels written out)
+      if (grouping) {
+        const per = 1 / grouping.unit / whole;
+        if (!(Math.abs(per - Math.round(per)) < 1e-9 && Math.round(per) >= 1 && Math.round(per) <= 8))
+          return `meter("${sig}", ${stepText}): the step divides the pulse, ${noteName(1 / grouping.unit) ?? `a 1/${grouping.unit}`}, into 1 to 8 steps`;
+        sub = Math.round(per);
+      } else stepWhole = whole;
+    } else sub = Math.max(1, Math.min(8, parseInt(stepText, 10) || 1));
+  }
   const numbers = meterNumbers(sig, sub);
   if (!numbers.length)
-    s.fail(
-      `meter("${sig}"): a time signature (x/2 x/4 x/8 x/16: 4/4, 6/8, 7/8, 2/2), groups as sizes ("2+2+3" of eighths, "2+2+3/4" of quarters; each 2, 3, 4 or 6), or levels like "*.-.+.-." (* the bar, + - : ; beats, the higher the stronger, . the eighth, , finer)`,
-      start,
-      span.len,
-    );
+    return `meter("${sig}"): a time signature (x/2 x/4 x/8 x/16: 4/4, 6/8, 7/8, 2/2), groups as sizes ("2+2+3" of eighths, "2+2+3/4" of quarters; each 2, 3, 4 or 6), or levels like "*.-.+.-." (* the bar, + - : ; beats, the higher the stronger, . the eighth, , finer)`;
   const tokens = numbers.map((value) => ({ atom: { kind: 'note' as const, value, alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }));
   // (written out: its beats each mark but . and , (#15, item 3: (a)), its step's note value its pulse where given)
   const beatsOf = (): number[] => {
@@ -753,4 +760,78 @@ export const isGenerator = (word: string) => word in GENERATORS || word in RETIR
 
 export function parseGenerator(s: LineScanner, name: string, start: number): Braid {
   return (GENERATORS[name]?.parse ?? RETIRED_GENERATORS[name])(s, start);
+}
+
+/**
+ * The arguments of each generator that are values, by position, and the kind each takes (decision 101, after 093): a
+ * value argument may read a cell that is one value of its kind, filled as the piece is built. Not values: scan's list,
+ * spell's table (a cell it reads by reference), scale's mode and tonic (read by its cell), even's arguments (093's own
+ * path, its phase stepped at each bar line).
+ */
+export const VALUE_ARGS: Readonly<Record<string, Readonly<Record<number, 'number' | 'text'>>>> = {
+  euclid: { 0: 'number', 1: 'number', 2: 'number' },
+  sin: { 0: 'number' },
+  saw: { 0: 'number' },
+  tri: { 0: 'number' },
+  square: { 0: 'number' },
+  meter: { 0: 'text', 1: 'number' },
+  spell: { 0: 'text', 2: 'text' },
+};
+
+/** A generator's call whose value arguments read cells (decision 101): its text, each cell read where it is written. */
+interface Deferred {
+  readonly generator: string;
+  /** The call as written, `meter(&m, 2)`. */
+  readonly call: string;
+  readonly at: Span;
+  readonly reads: readonly { readonly ref: Ref; readonly kind: 'number' | 'text'; readonly from: number; readonly to: number }[];
+}
+
+/**
+ * A generator's call (the scanner at its '('): parsed, or, where a value argument reads a cell (decision 101), deferred,
+ * a placeholder braid with the call, which compile fills once the cells' values are known (declare.ts) and parses again.
+ */
+export function parseGeneratorCall(s: LineScanner, name: string, start: number): Braid {
+  const values = VALUE_ARGS[name];
+  if (!values || s.peek() !== '(') return parseGenerator(s, name, start);
+  // (its arguments at the top level: split at commas outside quotes and brackets, up to the ')' that closes it)
+  const open = s.i;
+  const args: { from: number; to: number }[] = [];
+  let depth = 0;
+  let quoted = false;
+  let at = open + 1;
+  let close = -1;
+  for (let i = open + 1; i < s.text.length; i++) {
+    const c = s.text[i]!;
+    if (c === '"') quoted = !quoted;
+    else if (quoted) continue;
+    else if ('([{'.includes(c)) depth++;
+    else if (')]}'.includes(c) && depth > 0) depth--;
+    else if ((c === ',' || c === ')') && depth === 0) {
+      args.push({ from: at, to: i });
+      at = i + 1;
+      if (c === ')') {
+        close = i;
+        break;
+      }
+    }
+  }
+  const reads: Deferred['reads'][number][] = [];
+  args.forEach((a, k) => {
+    const kind = values[k];
+    const raw = s.text.slice(a.from, a.to);
+    const m = /^\s*&([A-Za-z_][A-Za-z0-9_]*)\s*$/.exec(raw);
+    if (!kind || !m) return;
+    const from = a.from + raw.indexOf('&');
+    const to = from + 1 + m[1]!.length;
+    const back = s.i;
+    s.i = to;
+    reads.push({ ref: { name: m[1]!, span: s.place(from) } as Ref, kind, from: from - start, to: to - start });
+    s.i = back;
+  });
+  if (close < 0 || !reads.length) return parseGenerator(s, name, start);
+  s.i = close + 1;
+  const span = s.span(start);
+  if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
+  return { kind: 'list', tokens: [], span, deferred: { generator: name, call: s.text.slice(start, close + 1), at: span, reads } } as Braid;
 }

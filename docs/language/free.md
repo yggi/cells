@@ -40,10 +40,10 @@ The places, from the parser's own table:
 | scan(n …) (an interval) | ✓ | ✗ read as the piece is built | `&mode scan(2 2 free(1, 1..2) 2 2 2 1)` |
 | scan(n!k …) (an interval’s repeat) | ✓ whole | ✗ read as the piece is built | `&map scan(1!free(4, 1..8) 2)` |
 | geo(r, n, k …) | ✓ | ✗ read as the piece is built | `&series scan(geo(free(5, 2..8), 25, 0 10 5))` |
-| euclid(k, n, r) · sin(n) … | ✓ whole | ✗ read as the piece is built | `&hits euclid(free(3, 0..8), 8) step=8` |
+| euclid(k, n, r) · sin(n) … | ✓ whole | `&k`, a cell that is one number, filled as the piece is built (decisions 093, 101) | `&hits euclid(free(3, 0..8), 8) step=8` |
 | even(k, n, phase) (an argument) | ✓ whole | `&k`, a cell that is one number, filled as the piece is built (decision 093); a mode’s name only as even(7, 12)’s phase; a key’s phase may step, read at each bar line | `&key scale(even(7, 12, free(3, 0..6)), D)` |
 | fifths(n) | ✓ whole | ✗ read as the piece is built | `&circle fifths(free(1, 0..11))` |
-| meter(n, n) | ✓ | ✗ read as the piece is built | `&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm` |
+| meter(n, n) | ✓ | `&k`, filled as the piece is built (decision 101): a text cell for its signature (`&meter "3/4"`), a cell that is one number for its step | `&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm` |
 | map=edo(n) · map=ed(n, r) · map=midi(c, p) | ✓ whole | ✗ read as the piece is built | `&edo map=edo(free(19, 5..31))` |
 | map=ed(r) | ✓ | ✗ read as the piece is built | `&bp map=ed(13, free(3, 1.5..4))` |
 | 0 2 4 (a step of a braid) | ✓ | a cell plays there (`&k`, spliced) | `&tune step=2 0 free(2, 0..7) 4` |
