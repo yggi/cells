@@ -44,7 +44,7 @@ describe('what a cell is: one table of kinds (#782)', () => {
         "band": 3,
         "blank": 70,
         "card": 94,
-        "envelope": 439,
+        "envelope": 440,
         "fill": 10,
         "gate": 25,
         "grid": 12,
@@ -70,7 +70,7 @@ describe('what a cell is: one table of kinds (#782)', () => {
         "table": 52,
         "tape": 6,
         "tempo": 80,
-        "voice": 391,
+        "voice": 392,
         "volume": 53,
         "wave": 16,
       }

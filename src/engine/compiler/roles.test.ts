@@ -21,7 +21,7 @@ describe('the roles an attribute acts on, over every example (#782)', () => {
     }
     expect(Object.fromEntries([...count].sort())).toMatchInlineSnapshot(`
       {
-        "(none)": 954,
+        "(none)": 955,
         "card": 93,
         "card + clock": 1,
         "carrier + voice": 12,
@@ -41,7 +41,7 @@ describe('the roles an attribute acts on, over every example (#782)', () => {
         "note": 208,
         "resonator + voice": 15,
         "scope": 10,
-        "voice": 379,
+        "voice": 380,
       }
     `);
   });
