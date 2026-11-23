@@ -4,7 +4,7 @@
  * MIDI's kick, 36, by its `note=`) and the backbeat (a line every note of which strikes the snare or a drum that
  * stands for it, the clap, the side stick or the electric snare, on the meter's backbeat). Rung 2 has the pitched lines' one: the root on a chord change (a note of a line over a
  * harmony, a braid of stacks, whose onset is where the chord in force changes or its lap starts, and which plays that
- * chord's root, its degree 0 or a lap of it). The cadence joins with harmony (rung 3). Pure.
+ * chord's root, its degree 0 or a lap of it). Rung 3's, a progression's cadence, is read with the progression (`progression.ts`). Pure.
  */
 import { flatten } from '../flatten';
 import type { Meter } from '../meter';
@@ -17,7 +17,7 @@ export interface Anchor {
   readonly line: string;
   /** One note's step on the line's grid (a root on a change); absent, the whole line. */
   readonly step?: number;
-  readonly reason: 'kick' | 'backbeat' | 'root';
+  readonly reason: 'kick' | 'backbeat' | 'root' | 'cadence';
 }
 
 const KICK = 36;

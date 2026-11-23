@@ -16,7 +16,12 @@ import { holesOf } from '../repository/holes';
 import { anchorsOf, PITCHED_OPERATORS, variations } from './vary';
 
 const DECISION = resolve(import.meta.dirname, '../../docs/decisions/052-variations-as-operators.md');
-const blocks = [...readFileSync(DECISION, 'utf8').matchAll(/^```cells\n([\s\S]*?)^```/gm)].map((m) => m[1]);
+// (point 2's examples: point 8's, a progression's, are held by `vary/harmony.test.ts`)
+const blocks = [
+  ...readFileSync(DECISION, 'utf8')
+    .split('\n### 8.')[0]!
+    .matchAll(/^```cells\n([\s\S]*?)^```/gm),
+].map((m) => m[1]);
 
 interface Example {
   readonly label: string;

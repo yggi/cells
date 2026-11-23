@@ -1,6 +1,6 @@
 # 052 · The ladder's variations are operators in cells, from a fragment's text to texts: rotate, drop and add first, then transpose, invert and reverse; anchors derived from the text; which and when stays the frontend's
 
-**Date:** 2026-10-20 · **Status:** accepted (owner, 2026-10-20: "all as suggested", the eight questions in point 6 as recommended) · Issues: #208, #49, #81, #29, #46, yggi/jambot#423, yggi/jambot#424, yggi/jambot#425 · Point 7 added by #293 (accepted, owner, 2026-10-27: `base=` rather than `mask`, "it is more powerful")
+**Date:** 2026-10-20 · **Status:** accepted (owner, 2026-10-20: "all as suggested", the eight questions in point 6 as recommended) · Issues: #208, #49, #81, #29, #46, yggi/jambot#423, yggi/jambot#424, yggi/jambot#425 · Point 7 added by #293 (accepted, owner, 2026-10-27: `base=` rather than `mask`, "it is more powerful") · Points 8 and 9 added by #208 (owner, 2026-11-23: the two harmony operators with rotate and reverse a level up, the cadence the last bar of each four, a variation replayed by its `by:`)
 
 ## Context
 
@@ -256,7 +256,7 @@ Why derived:
 - On each of the five seeds, on its own workbench: every variation plays other notes than its source and the others; the root on each chord change plays as before; every other note plays what the language's own form plays: `&x^n` for each n, `degree(inverse(&x), 2f)`, the retrograde within each span. Up to 30 variations (5 × 6); the pull request names any left out, and why.
 - The lead's (yggi/jambot#424) map onto these: lift is transpose by 2 and turn over is invert, each reproducing the first two ways of the lead's `varied` (before its nudge) note for note on its shapes, in Jambot's tree; bending the last note and dropping it (the note before held to the bar's end) join as operators of their own when that rung starts: **bend** and **trim** (#267), pitched operators after reverse. The lead's drop is `trim`, not a pitched `drop`: an operator's name acts on one kind of line, and `drop`, a rhythm operator a frontend gets where it names none, would then leave the last note of a pitched line out for a frontend that asked only for the rhythm ones.
 
-**Rung 3, harmony** (yggi/jambot#425): substitution by a secondary dominant toward a slot and a slot reharmonised by a third, with the cadence as their anchor, specified with numbers when yggi/jambot#425's seed progressions are files.
+**Rung 3, harmony** (yggi/jambot#425): substitution by a secondary dominant toward a slot and a slot reharmonised by a third, with the cadence as their anchor, specified with numbers when yggi/jambot#425's seed progressions are files. *Since #208 (2026-11-23):* point 8.
 
 No rung changes how any piece sounds: no snapshot moves, and nothing of #29 is needed (every operator writes forms the language has).
 
@@ -288,6 +288,67 @@ Point 6.6 kept a variation's own text, and the path only in `by:`; a text that p
 - **Point 2's "why not" answered in part:** a reference keeps an anchor inside a line (`base=&x^n` and the anchor written), and stands beside its source, not alone: the layer still files the text.
 - **Measured** (`src/engine/vary/reference.test.ts`): over the 14 seed rhythms (Jambot's options) and the 5 bass lines on both of their workbenches, Vary gives 535 variations, **472 with a reference**; every one plays the notes of its variation (S2) read where the line was, and each is no longer than the line written out by `bare`, 470 shorter. Of the four operators that had a form before (rotate, transpose, invert, reverse), 63 of 73. None is given on the Euclid lines (their 33 adds and drops, 3 rotations), the claves' rotations (5, a last run), and 22 more where the line written out is no longer. Reading a reference costs no compile.
 - **Recognition** (decision 055) reads a reference as its path, with no search: a heard text that uses a fragment (`use &hats from "Electro swing drums"`) and writes one of its variations' forms on a line it takes (`&hats2 base=&hats =!3 ~`, an entry `&hats[<<]`, `&late step=8n &gypsy^-2`) is that fragment by that operator, at distance 0, with no compile of the heard text.
+
+
+### 8. A progression is a line one level up (rung 3, #208)
+
+A progression is varied as a line is, a level up (#51, one shape at every level): its steps are chords where a line's are notes, its cadence is its anchor where a bass line's is the root on a chord change. `src/engine/vary/progression.ts`.
+
+- **A progression** is a harmony the fragment defines itself: a cell no line plays, stepped on the meter, each step a stack of degrees of the table it reads, a run written `!n`, or a step's two halves (`[[1,3,5] [4,6#,8]]`), each tone a degree with at most one accidental: every seed progression (17 of 17) and what Jambot's `progressionText` writes. One written otherwise is not read, and not varied.
+- **Its cadence:** every step that sounds in the last bar of a four-bar phrase (bars 4, 8, 12 … of a lap of 4k bars), else in the lap's last bar (`PHRASE_BARS`, 4). It is an anchor, `reason: 'cadence'`, and `anchorsOf` gives it. This settles point 3's "rung 3 settles its place", as yggi/jambot#425 asks: "never the cadence in the fourth bar".
+- **Four operators** (`HARMONY_OPERATORS`), in this order:
+
+| operator | what it does to a progression | `by:` |
+|---|---|---|
+| **rotate** | each phrase between two cadences a step later, its last chord to its first (a line's rotate) | `rotate &harm` |
+| **reverse** | each phrase between two cadences in reverse order (a line's retrograde, `&x[::-1]` a span) | `reverse &harm` |
+| **third** | one step's chord moved a third, every tone n degrees, n in −2, 2 (`THIRDS`): I to vi or iii | `third &harm <step> <n>` |
+| **dominant** | the secondary dominant of the next step's chord on a step's second half: a major triad a fifth above that chord's root (a dominant seventh where it has four tones or more), each tone the stack's degree with the accidental the key needs, in the octave nearest the chord before it (Jambot's `themes.ts` at high harmony) | `dominant &harm <step>` |
+
+- `third` and `dominant` act on a step of one chord; `dominant` gives none into a chord on the step's own root, into a diminished triad, or after a chord already its dominant (a ii–V–I has none: Jambot's `alreadyItsDominant`).
+- **Asked by name:** a progression is varied only where a frontend asks for `third` or `dominant`; `rotate` and `reverse` then act on it too, so a frontend that asks for the line operators alone (Jambot's drums, bass and lead, Cell studio's default) gets what it got before, to the variation.
+- **The key spells it:** a dominant's accidentals are read from the workbench's key (`&key scale(minor, C)`: V/VI is E♭ major, the key's own III), so a frontend varies a progression on the key it plays it in.
+- **Other chords:** each plays other chords than its source and every one before it (S2, the chords keyed as they sound: onset, length, tones sorted); its cadence plays as before.
+- **No reference** (point 7) yet: a progression's variation is filed as its text.
+- **Measured** (`src/engine/vary/harmony.test.ts`): on the 17 seed progressions over 4/4 and C, **209 variations in major and 210 in minor**; a vamp of one or two chords by its thirds alone (12 each), a progression by all four. Each compiles, plays other chords than its source and the others, keeps its cadence's chords, and does what its operator says; each seed's variations, its compile included, in under 4 ms (the test's bound 10 ms; #425's ask is under 5 ms beyond the compile).
+
+A progression and three of its 11 variations, on its workbench; the fourth bar, V, is its cadence:
+
+```cells
+# source: I vi IV V, a bar each, the host's meter and key first
+&bar meter("4/4") step=120bpm
+&key scale(major, C)
+&harm over=&key step=1m cycle=4 [0,2,4] [5,7,9] [3,5,7] [4,6,8]
+```
+
+```cells
+# by: rotate &harm
+&bar meter("4/4") step=120bpm
+&key scale(major, C)
+&harm over=&key step=1m cycle=4 [3,5,7] [0,2,4] [5,7,9] [4,6,8]
+```
+
+```cells
+# by: third &harm 2 -2
+&bar meter("4/4") step=120bpm
+&key scale(major, C)
+&harm over=&key step=1m cycle=4 [0,2,4] [5,7,9] [1,3,5] [4,6,8]
+```
+
+```cells
+# by: dominant &harm 0
+&bar meter("4/4") step=120bpm
+&key scale(major, C)
+&harm over=&key step=1m cycle=4 [[0,2,4] [2,4#,6]] [5,7,9] [3,5,7] [4,6,8]
+```
+
+### 9. A variation replayed by its `by:` (#208)
+
+A filed variation records its origin as `varies: <id>` and `by: <operator> <line> [<amount> …]` (point 4). **`variationBy(text, by, options)`** gives back the one variation a `by:` names, made on its source's text with the options it was made under (the workbench, `keep`, `fewest`, `degrees`, `resolve`), without making the others: only that line's variations by that operator are made. So a frontend that keeps `varies`, `by` and the workbench rebuilds the variation's text from its source, and a lineage is a path it can replay, step by step, from a seed.
+
+- **Why:** Jambot stores a groove variation by its source and `by` and rebuilds it by making every variation and finding the one of that `by` (`rebuiltGroove`, yggi/jambot#553); with a third part (harmony) and a fourth (Cell studio's vary) that would be written again for each.
+- **The same variation:** for every `by` that `variations` gives, `variationBy` gives that variation (its `after` the same; tested over every seed progression in both keys and a groove). A `by:` the text has none of (its line anchored or kept, its step a cadence, an unknown operator) gives null. One that `variations` leaves out as playing the notes of a variation before it, by another operator or line, is still given: `variationBy` doesn't make those.
+- **Its amounts** are the variation's, as `by:` writes them: a step (`drop &hat 6`), degrees (`transpose &bass -1`), or both (`third &harm 2 -2`).
 
 ## Why
 
