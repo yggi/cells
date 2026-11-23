@@ -83,4 +83,16 @@ export declare const GENERATORS: Readonly<Record<string, {
 }>>;
 export declare const isGenerator: (word: string) => boolean;
 export declare function parseGenerator(s: LineScanner, name: string, start: number): Braid;
+/**
+ * The arguments of each generator that are values, by position, and the kind each takes (decision 101, after 093): a
+ * value argument may read a cell that is one value of its kind, filled as the piece is built. Not values: scan's list,
+ * spell's table (a cell it reads by reference), scale's mode and tonic (read by its cell), even's arguments (093's own
+ * path, its phase stepped at each bar line).
+ */
+export declare const VALUE_ARGS: Readonly<Record<string, Readonly<Record<number, 'number' | 'text'>>>>;
+/**
+ * A generator's call (the scanner at its '('): parsed, or, where a value argument reads a cell (decision 101), deferred,
+ * a placeholder braid with the call, which compile fills once the cells' values are known (declare.ts) and parses again.
+ */
+export declare function parseGeneratorCall(s: LineScanner, name: string, start: number): Braid;
 export {};

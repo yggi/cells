@@ -9,7 +9,7 @@ import { IDENT, LineScanner } from './scanner';
 import { OPERATIONS, parseToken, pushStep } from './braid';
 import { FREE_BRAID_WHOLE } from './free';
 import { NUMBER_PLACES } from './numbers';
-import { isGenerator, parseFifths, parseGenerator, parseScale } from './generators';
+import { isGenerator, parseFifths, parseGeneratorCall, parseScale } from './generators';
 import { MODE_WORDS } from '../../theory/modes';
 import { atTap, parseMap, parseStep } from './values';
 import { syntax, type Syntax } from './syntax';
@@ -791,8 +791,18 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   // an envelope's slots by name (attack=.3..0.01 * &style[bite]): its braid, in the slots' order, once the line is read
   const adsr = new Map<string, number>();
 
+  // a text cell (decision 101): its braid one text in quotes, `&meter "3/4"`
+  let text: string | null = null;
   while (!s.done()) {
     const at = s.i;
+    if (s.peek() === '"') {
+      const quoted = s.match(/"[^"]*"/y);
+      if (quoted === null) s.fail('A text in quotes ends with a quote: "3/4"', at, 1);
+      if (text !== null || generator || tokens.length) s.fail('A text cell is one text alone, &meter "3/4": a cell has one braid', at, quoted!.length);
+      if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
+      text = quoted!.slice(1, -1);
+      continue;
+    }
     const word = s.match(IDENT);
     if (word !== null && s.peek() === '=') {
       s.i++;
@@ -929,7 +939,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       continue;
     }
     if (word !== null && isGenerator(word) && s.peek() === '(') {
-      if (generator || tokens.length) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, word.length);
+      if (generator || tokens.length || text !== null) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, word.length);
       if (word === 'fifths') {
         // fifths(n): the circle, turned n fifths round (the cell's shift)
         const f = parseFifths(s, at);
@@ -940,7 +950,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
         const sc = parseScale(s, at);
         generator = { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}), ...(sc.even ? { even: sc.even } : {}) };
         scaleKey = sc.key;
-      } else generator = parseGenerator(s, word, at);
+      } else generator = parseGeneratorCall(s, word, at);
       continue;
     }
     if (word !== null && (OPERATIONS as readonly string[]).includes(word) && s.peek() === '(') {
@@ -965,6 +975,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       s.fail(`free(${freeSteps})${mod}: a modifier goes on its steps, inside the parentheses: free([${freeSteps}]${mod})`, at, mod.length);
     }
     if (generator) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, 1);
+    if (text !== null) s.fail('A text cell is one text alone, &meter "3/4": a cell has one braid', at, 1);
     pushStep(s, tokens, parseToken(s));
   }
 
@@ -1120,6 +1131,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     ...(playMove ? { playMove } : {}),
     braid,
     ...(fill ? { fill } : {}),
+    ...(text !== null ? { text } : {}),
     frees: [...s.frees],
   };
 }

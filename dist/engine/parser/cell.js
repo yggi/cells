@@ -7,7 +7,7 @@ import { IDENT, LineScanner } from "./scanner.js";
 import { OPERATIONS, parseToken, pushStep } from "./braid.js";
 import { FREE_BRAID_WHOLE } from "./free.js";
 import { NUMBER_PLACES } from "./numbers.js";
-import { isGenerator, parseFifths, parseGenerator, parseScale } from "./generators.js";
+import { isGenerator, parseFifths, parseGeneratorCall, parseScale } from "./generators.js";
 import { MODE_WORDS } from "../../theory/modes.js";
 import { atTap, parseMap, parseStep } from "./values.js";
 import { syntax } from "./syntax.js";
@@ -653,8 +653,20 @@ export function parseBody(s, head) {
     let freeSteps = '';
     const axes = new Map();
     const adsr = new Map();
+    let text = null;
     while (!s.done()) {
         const at = s.i;
+        if (s.peek() === '"') {
+            const quoted = s.match(/"[^"]*"/y);
+            if (quoted === null)
+                s.fail('A text in quotes ends with a quote: "3/4"', at, 1);
+            if (text !== null || generator || tokens.length)
+                s.fail('A text cell is one text alone, &meter "3/4": a cell has one braid', at, quoted.length);
+            if (!s.atBoundary())
+                s.fail(`Unexpected '${s.peek()}'`);
+            text = quoted.slice(1, -1);
+            continue;
+        }
         const word = s.match(IDENT);
         if (word !== null && s.peek() === '=') {
             s.i++;
@@ -789,7 +801,7 @@ export function parseBody(s, head) {
             continue;
         }
         if (word !== null && isGenerator(word) && s.peek() === '(') {
-            if (generator || tokens.length)
+            if (generator || tokens.length || text !== null)
                 s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, word.length);
             if (word === 'fifths') {
                 const f = parseFifths(s, at);
@@ -802,7 +814,7 @@ export function parseBody(s, head) {
                 scaleKey = sc.key;
             }
             else
-                generator = parseGenerator(s, word, at);
+                generator = parseGeneratorCall(s, word, at);
             continue;
         }
         if (word !== null && OPERATIONS.includes(word) && s.peek() === '(') {
@@ -830,6 +842,8 @@ export function parseBody(s, head) {
         }
         if (generator)
             s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, 1);
+        if (text !== null)
+            s.fail('A text cell is one text alone, &meter "3/4": a cell has one braid', at, 1);
         pushStep(s, tokens, parseToken(s));
     }
     if (axes.size) {
@@ -945,6 +959,7 @@ export function parseBody(s, head) {
         ...(playMove ? { playMove } : {}),
         braid,
         ...(fill ? { fill } : {}),
+        ...(text !== null ? { text } : {}),
         frees: [...s.frees],
     };
 }
