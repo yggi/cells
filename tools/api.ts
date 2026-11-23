@@ -78,7 +78,7 @@ export const ENTRY_POINTS: readonly { readonly match: string; readonly entry: En
     'attributes',
   ].map((m): { match: string; entry: Entry } => ({ match: `engine/${m}`, entry: '@yggi/cells/inspect' })),
   // MIDI, and the folder that writes cells from notes.
-  ...['midi', 'midiclock', 'midifile', 'midiimport', 'midiexport', 'miditext', 'keys', 'perform/', 'fold/'].map((m): { match: string; entry: Entry } => ({
+  ...['midi', 'notesof', 'midiclock', 'midifile', 'midiimport', 'midiexport', 'miditext', 'keys', 'perform/', 'fold/'].map((m): { match: string; entry: Entry } => ({
     match: `engine/${m}`,
     entry: '@yggi/cells/midi',
   })),

@@ -8,6 +8,7 @@
  * land here.
  */
 export { channelTable, DEFAULT_BEND_RANGE, gmDrumNote, kitNotes, legatoNotes, midiNote, noteOf, rotationChannels, routable, router, routesOf, rowsOf, velocityOf, type ChannelTable, type OutputChoice, type Route, type Routes, } from './engine/midi';
+export { notesOf, type NotesOptions, type PlayedNote } from './engine/notesof';
 export { mainMeter, ticksBetween, type ClockTicks } from './engine/midiclock';
 export { isMidi, readMidi, writeMidi, type Smf } from './engine/midifile';
 export { cellsFromMidi, type Imported, type StoryStep } from './engine/midiimport';

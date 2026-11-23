@@ -1,4 +1,5 @@
 export { channelTable, DEFAULT_BEND_RANGE, gmDrumNote, kitNotes, legatoNotes, midiNote, noteOf, rotationChannels, routable, router, routesOf, rowsOf, velocityOf, } from "./engine/midi.js";
+export { notesOf } from "./engine/notesof.js";
 export { mainMeter, ticksBetween } from "./engine/midiclock.js";
 export { isMidi, readMidi, writeMidi } from "./engine/midifile.js";
 export { cellsFromMidi } from "./engine/midiimport.js";
