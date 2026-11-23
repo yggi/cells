@@ -86,8 +86,8 @@ describe('pan= on a voice: where it sits in stereo (#10 F3)', () => {
     const still = gains(tune + '&space map=lin .25\n&v s=sine loop=C4 pan=&space\n&out map=sample [&t * &v * .5]');
     expect(still).toEqual(gains(tune + '&v s=sine loop=C4 pan=.25\n&out map=sample [&t * &v * .5]'));
   });
-  it('a range times cells, a bipolar wave read as a share (decision 067 §5): 0..1 * sin(4) sweeps from the centre to the right and back', () => {
-    const g = gains('&t step=2 0 4 7 9\n&lfo map=lin step=2 sin(4)\n&v s=sine loop=C4 pan=0..1 * &lfo\n&out map=sample [&t * &v * .5]');
+  it('a range times cells, a wave laid in 0..1 (decision 067 §5, #884): 0..1 * sin(4, 0..1) sweeps from the centre to the right and back', () => {
+    const g = gains('&t step=2 0 4 7 9\n&lfo map=lin step=2 sin(4, 0..1)\n&v s=sine loop=C4 pan=0..1 * &lfo\n&out map=sample [&t * &v * .5]');
     expect(g).toEqual(['v 0.5000,0.5000', 'v 0.0000,0.5000', 'v 0.5000,0.5000']);
   });
   it('a moving pan= is in the gains, not a parameter a frontend has to play', () => {

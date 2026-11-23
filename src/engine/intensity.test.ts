@@ -56,7 +56,8 @@ describe('a section’s intensity: its song’s plus its kind’s offset, a sum 
     expect(levels(drive, '&level * &drumsDrive')).toEqual([0.25, 0.5, 0.75, 0.25, 0.5, 0.75, 0.25, 0.5].map((e) => Math.round(0.8 * (0.65 + 0.35 * e) * 1e6) / 1e6));
   });
 
-  it('a line below 0 stays a bipolar wave in a sum (decision 067 §5): an offset is a constant or a gain, not a signed line', () => {
-    expect(levels(['&song step=1m .5', '&breakdown step=1m -.45', '&i [&song + &breakdown]'])).toEqual(Array<number>(8).fill(0.775));
+  it('a line below 0 is a signed offset in a sum (#884): the sum is held where it lands, not read as a wave', () => {
+    expect(levels(['&song step=1m .5', '&breakdown step=1m -.45', '&i [&song + &breakdown]'])).toEqual(Array<number>(8).fill(0.05));
+    expect(levels(['&song step=1m .5', '&breakdown step=1m -.7', '&i [&song + &breakdown]'])).toEqual([]); // (held at 0: silent)
   });
 });

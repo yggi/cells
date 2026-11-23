@@ -16,7 +16,7 @@ What is missing is that a filter can't stand on its own, after a mix: `lpf=` on 
 | VCF | a voice's `lpf=` `lpq=` `hpf=` `hpq=`, each moving: `lpf=70..4800 * &eg * &lfo`, the range the knob and the attenuator | plays, on a voice only |
 | VCA | an envelope or a level in a product, or an instrument: `&vca [&eg * &level * &in]` (a mix used like a voice, [mix.md](../language/mix.md#instruments)) | plays, nested too |
 | EG | a `map=adsr` cell; the seed's [envelopes](../../fragments/expression/02-envelopes.md) | plays |
-| LFO | a braid turned slowly, `&lfo map=lin loop=&bar/16 sin(12)` (a bipolar wave, −1 to 1, read as a share from 0 to 1: decision 067 §5); the seed's [vibrato](../../fragments/expression/01-vibrato.md) | plays as CV, into any moving parameter or `pitch=` |
+| LFO | a braid turned slowly, `&lfo map=lin loop=&bar/16 sin(12, 0..1)` (a wave laid in 0 to 1, a share: decision 067 §5); the seed's [vibrato](../../fragments/expression/01-vibrato.md) | plays as CV, into any moving parameter or `pitch=` |
 | sequencer | a stepped line, quantised by `over=&key`; a transposer as a coarser pitch held under it, `(&seq + &changes)` | plays |
 | sample and hold | a stepped cell, `&sh note=70 map=lin step=8n .3 .9 .5 .2`, its values left to chance with `?` | plays |
 | clock, divider | a meter and its taps (`step=16n`, `loop=&bar/8`) | plays |
@@ -46,7 +46,7 @@ The VCF and the echo are written twice, once on each oscillator, since a filter 
 &changes step=1m/2 0 5 3 -2
 &accent map=amp step=16n 1 .4 .6 .4 .9 .4 .6 .4 1 .4 .6 .4 .9 .5 .7 .5
 &contour map=adsr .002 .22 .1 .08
-&sweep map=lin loop=&bar/16 sin(12)
+&sweep map=lin loop=&bar/16 sin(12, 0..1)
 &jitter step=8n [0|.25|.5|.75|1]
 &drift loop=&bar/8 map=lin 0 .12 0
 &amp map=adsr .002 .3 .5 .06
@@ -102,7 +102,7 @@ Expanded, it is `&vcf lpf=70..4800 * &contour * &sweep lpq=4..16 * &jitter … [
 1. **A sound parameter on a mix does nothing.** `&vcf lpf=… [&saw, &sub]` warns `lpf= acts on a voice`; the VCA (an instrument with an envelope) plays. This is the one gap in the patch.
 2. **…and silently, once the mix carries a sound parameter of its own.** `&vcf delay=.3 … from lowpass(…)` (the head given an attribute) compiles with no diagnostic and drops the filter: the events carry no `lpf`. A silent case (a bug to file).
 3. **`&vcf lpf=800 &vco`**, a voice's braid naming a voice, compiles with no diagnostic and plays `&vcf` at C4, ignoring `&vco` (a bug to file: say it, or read it as the mix).
-4. **An oscillator read as CV is silent CV.** `&lfo s=sine loop=.5` into `lpf=… * &lfo` holds the cutoff at its bottom; `&lfo loop=.5 sin(12)` sweeps it. A patcher reaches for the first. Either `s=` gives a CV cell its wave (an LFO is a VCO turned slowly: one idea, not two), or a diagnostic says to write the braid.
+4. **An oscillator read as CV is silent CV.** `&lfo s=sine loop=.5` into `lpf=… * &lfo` holds the cutoff at its bottom; `&lfo loop=.5 sin(12, 0..1)` sweeps it. A patcher reaches for the first. Either `s=` gives a CV cell its wave (an LFO is a VCO turned slowly: one idea, not two), or a diagnostic says to write the braid.
 5. **CV at an audio rate is automation, not filter FM.** `lpf=… * &a` with `&a loop=220 sin(12)` expands to some 29 000 characters of points per note; nothing says it. A bound for a diagnostic (a CV faster than this many laps a second: choose it and name it; 30 Hz a guess).
 6. **An inline envelope as an argument fails.** `vca(eg=&(map=adsr .002 .3 .5 .06))` errors `map=adsr takes four numbers`; the same as a named cell plays (065 §5–6: a bug to file).
 7. **No CV sum.** `* (&a + &b)` is a parse error; products and a range cover offset, attenuation and a VCA on CV.

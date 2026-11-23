@@ -1,4 +1,4 @@
-# 067 · An instrument with sound parameters is a module after its voices; the modules are fragments, named in the language's words; a cable patched in opens at zero; a bipolar wave read as a share is (1 + x)/2
+# 067 · An instrument with sound parameters is a module after its voices; the modules are fragments, named in the language's words; a cable patched in opens at zero; a wave is laid in the range it is read as, sin(12, 0..1)
 
 **Date:** 2026-11-04 · **Status:** accepted (owner, 2026-11-04: the rule "as proposed"; on a parameter both on an instrument and its voice, "B", in series; on `distort=` and `crush=`, "B", on the instrument's sum; the names "as recommended. our names, lowpass, high pass"; a `vco` "yes, even if it's minimal"; a CV sum "yes"; a cable into a fixed parameter "C now, E later") · Issues: #423, #432, #431, #424–#428, #81 · Note: [modular.md](../notes/modular.md)
 
@@ -40,14 +40,14 @@ Both renderers already play one chain per voice cell (grit, filters, pan, gain),
 An edit that patches `&lfo` into `lpf=800` writes `lpf=800..800 * &lfo`: the cable is in and its depth is zero, so nothing moves until the range is opened (in the graph, on the jack), as an attenuator turned down. No depth is made up, and the sound doesn't jump.
 Once the CV sum is built (§3), the edit writes the panel's own shape, the knob plus an attenuated CV, `lpf=800 + 0..0 * &lfo` (its spelling settled with the sum).
 
-### 5. A bipolar wave read as a share is (1 + x)/2
+### 5. A wave is laid in the range it is read as: `sin(12, 0..1)` *(amended by #884; it was "a wave is laid in the range it is read as, sin(12, 0..1)")*
 
-(The owner, 2026-11-04, on #463: "no cutoff at 0, read as (1+x)/2".)
+(The owner, 2026-11-04, on #463: "no cutoff at 0, read as (1+x)/2"; and 2026-11-23 on #884: "the current behaviour is too much magic. hard switch".)
 
-- **A cell whose values run below 0 is bipolar**, a wave from −1 to 1 (`sin(12)`, `saw(8)`, `tri(4)`, `square(2)`, or any braid written so).
-- **Read as a share**, a moving parameter's factor (`lpf=70..4800 * &lfo`) or a volume (`[&tune * &tremolo * &v]`), its −1…1 is 0…1, (1 + x)/2: its middle at .5, so an LFO patched into a jack sweeps the whole range, where it was cut off at 0 and silent for half its cycle.
-- **A cell that stays at 0 or above is read as written**, as before; `map=db` keeps its decibels; read as a pitch (`pitch=`, a pitch sum) a wave is semitones either way, as written.
-- No example's events move: none read a bipolar cell as a share (the event snapshot holds).
+- **A value is what it says.** A cell below 0 is no wave by being below 0: read as a share, a volume or a parameter's factor it is held at 0 (a level of 0 is silent), and as a term of a sum (079) it is signed, the sum held to 0…1 where it lands (096). `map=db` keeps its decibels; read as a pitch (`pitch=`, a pitch sum) a wave is semitones either way, as written.
+- **A wave is written in the range it is read in.** `sin(n)`, `saw(n)`, `tri(n)`, `square(n)` run −1…1 as Strudel's bipolar signals; a range after the steps lays them within it, `sin(12, 0..1)`: Strudel's `sine.range(0, 1)`, its unipolar `sine`. Parse-time sugar: the braid's values are the laid ones (`lo + (hi − lo)(1 + x)/2`, each to six places). `lpf=70..4800 * &lfo` with `&lfo map=lin loop=.5 sin(12, 0..1)` sweeps the whole range; the `lfo` module writes its sine so.
+- **One example's events moved by rounding alone:** `patchbay` (the `lfo` module): its values hash, since the cell now holds 0…1, and its events by at most 0.0022 of a value near 2657 (six places rounded once where they were rounded then halved). No note moves.
+- **No migration (the owner, #884: "no migrations anymore before 1.0"):** a text that read a bipolar cell as a share without a range plays its negative half held at 0.
 
 ## Why not
 

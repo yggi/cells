@@ -1484,8 +1484,8 @@ describe('chance: x?p, [a|b|c], chance=, seed= — reproducible, and new each la
     expect(dropped.length).toBeLessThan(400 * 0.6);
     expect(levels('<.2 .8>').gains.slice(0, 4)).toEqual([0.2, 0.8, 0.2, 0.8]);
   });
-  // (decision 067 §5, the owner on #463: a bipolar wave read as a share is (1 + x)/2, not cut off at 0)
-  it('a bipolar cell read as a share, a level or a parameter’s factor, is (1 + x)/2; one at 0 or above as written; a pitch in semitones', () => {
+  // (decision 067 §5 as amended by #884: a value is what it says; a wave is laid in the range it is read as, sin(4, 0..1))
+  it('a value below 0 is held at 0 as a share, a level or a parameter’s factor, a wave is laid in 0..1 by its range; a pitch in semitones', () => {
     // (a parameter's factor: the cutoff of each of four notes; a volume: their levels, a level of 0 silent)
     const cutoffs = (cell: string) => {
       const r = compileSource(`&t step=10 0\n&l step=10 ${cell}\n&v s=sine loop=C4 lpf=0..1000 * &l\n&out loop=SAMPLE_RATE map=sample [&t * &v]`);
@@ -1497,11 +1497,12 @@ describe('chance: x?p, [a|b|c], chance=, seed= — reproducible, and new each la
       expect(r.diagnostics).toEqual([]);
       return events(r, 0, 0.4).map((e) => e.levels[0]!.level);
     };
-    expect(cutoffs('-1 -.5 0 .5')).toEqual([0, 250, 500, 750]);
-    expect(gains('-1 -.5 0 .5')).toEqual([0.25, 0.5, 0.75]);
+    expect(cutoffs('-1 -.5 0 .5')).toEqual([0, 0, 0, 500]);
+    expect(gains('-1 -.5 0 .5')).toEqual([0.5]);
     expect(cutoffs('0 .5 1 .25')).toEqual([0, 500, 1000, 250]);
-    // (sin(4): 0 1 0 −1, read as .5 1 .5 0)
-    expect(cutoffs('sin(4)')).toEqual([500, 1000, 500, 0]);
+    // (sin(4): 0 1 0 −1, below 0 held at 0; laid in 0..1 it is .5 1 .5 0, Strudel's sine)
+    expect(cutoffs('sin(4)')).toEqual([0, 1000, 0, 0]);
+    expect(cutoffs('sin(4, 0..1)')).toEqual([500, 1000, 500, 0]);
     // (as a pitch: a vibrato in semitones, either way)
     const r = compileSource('&t step=10 0\n&vib loop=1 sin(4)\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [(&t + &vib) * &v]');
     const semis = events(r, 0, 1).map((e) => Math.round(12 * Math.log2(e.freq / 261.6256)) + (e.bends[0] ? Math.round(e.bends[0].cents / 100) : 0));

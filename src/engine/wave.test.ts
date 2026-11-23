@@ -53,7 +53,17 @@ describe('waveforms from braids', () => {
     const m = mags(wave('&v loop=440 map=lin tri(2)'));
     expect(m[1]).toBeLessThan(1e-6);
     expect(m[2] / m[0]).toBeCloseTo(1 / 9, 2);
-    expect(parse('&v saw(1)').diagnostics[0]?.message).toBe('saw(n): one cycle of a saw in n steps, n ≥ 2');
+    expect(parse('&v saw(1)').diagnostics[0]?.message).toMatch(/^saw\(n\) or saw\(n, lo\.\.hi\): one cycle of a saw in n steps, n ≥ 2/);
+    expect(parse('&v saw(4, 1)').diagnostics[0]?.message).toMatch(/a range after the steps, as in saw\(4, 0\.\.1\)/);
+  });
+
+  it('a range after the steps lays the wave within it: sin(n, lo..hi) is Strudel’s sine.range(lo, hi) (#884)', () => {
+    expect(waveValues('sin', 4, [0, 1])).toEqual([0.5, 1, 0.5, 0]);
+    expect(waveValues('saw', 4, [0, 1])).toEqual([0, 0.25, 0.5, 0.75]);
+    expect(waveValues('tri', 4, [-1, 1])).toEqual(waveValues('tri', 4));
+    expect(waveValues('square', 2, [0.2, 0.8])).toEqual([0.2, 0.8]);
+    expect(parse('&v sin(4, 0..1)').diagnostics).toEqual([]);
+    expect(parse('&v tri(8, -.5..0.5)').diagnostics).toEqual([]);
   });
 
   it('rests are silence; chords average; map=&table looks values up first', () => {

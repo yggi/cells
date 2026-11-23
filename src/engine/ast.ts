@@ -224,7 +224,7 @@ export type Braid =
       readonly phaseCell?: { readonly name: string; readonly k: number; readonly n: number };
     }
   /** One cycle of a waveform in n steps, −1 … 1, as Strudel's bipolar signals sampled at each step's start: sin(n) sin(2πi/n), saw(n) a ramp up, tri(n) up then down, square(n) −1 then 1. */
-  | { readonly kind: 'wave'; readonly shape: WaveShape; readonly n: number; readonly span: Span };
+  | { readonly kind: 'wave'; readonly shape: WaveShape; readonly n: number; readonly range?: readonly [number, number]; readonly span: Span };
 
 /** `even(k, n, phase)`'s arguments, each a number or a cell that is one number, filled as the piece is built (decision 093). */
 export interface EvenArgs {

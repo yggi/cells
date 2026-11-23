@@ -40,6 +40,6 @@ export const unitsOf = (decls, d) => {
     if (b.kind === 'scan')
         return scanOf(b.steps).positions.map(note);
     if (b.kind === 'wave')
-        return waveValues(b.shape, b.n).map(note);
+        return waveValues(b.shape, b.n, b.range).map(note);
     return Array.from({ length: lengthOf(decls, o) }, (_, i) => note(i));
 };
