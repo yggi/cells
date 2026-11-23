@@ -40,8 +40,8 @@ const templates = LIBRARY.filter((f) => signatureOf(f.text) && !f.association.so
 const NOTHING_PLAYS = 'Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])';
 
 describe('the seed library’s signatures', () => {
-  it('180 templates (#810: the nine section kinds and the seven song forms; #772: the law five_to_twelve; #572: ten more, two stabs, three bass lines, a harmony and four motifs; #542: ten more, three harmonies, three bass lines and four motifs, then eleven more, four beats, four bass lines, a harmony and two motifs; #540: five harmonies; #637: the 26 rhythms, now 32 with #646’s two): the meters, modes, harmonies, bass lines, motifs, forms, section kinds, song forms, the stabs, the performers, the four instruments that read a style, the band and the rhythms; the rest collections', () => {
-    expect(templates).toHaveLength(180);
+  it('182 templates (#799: the metric accent and the breathing pulse; #810: the nine section kinds and the seven song forms; #772: the law five_to_twelve; #572: ten more, two stabs, three bass lines, a harmony and four motifs; #542: ten more, three harmonies, three bass lines and four motifs, then eleven more, four beats, four bass lines, a harmony and two motifs; #540: five harmonies; #637: the 26 rhythms, now 32 with #646’s two): the meters, modes, harmonies, bass lines, motifs, forms, section kinds, song forms, the stabs, the performers, the four instruments that read a style, the band and the rhythms; the rest collections', () => {
+    expect(templates).toHaveLength(182);
     const collections = LIBRARY.filter((f) => !signatureOf(f.text)).map((f) => f.id);
     expect(collections).toContain('gm_kit');
     expect(collections).toContain('upright_bass');
@@ -56,7 +56,9 @@ describe('the seed library’s signatures', () => {
     // (a rhythm: its drums optional, each the kit's own line by default, #637)
     for (const f of RHYTHM_FRAGMENTS) expect(signatureOf(f.text)!.main, f.id).toBeNull();
     const rhythms = new Set(RHYTHM_FRAGMENTS.map((f) => f.id));
-    for (const f of templates.filter((t) => !instruments.includes(t.id) && t.id !== 'band' && !rhythms.has(t.id)))
+    // (a built-in braid fill: its arguments all optional, #799)
+    expect(signatureOf(LIBRARY.find((f) => f.id === 'metric_accent')!.text)!.main).toBeNull();
+    for (const f of templates.filter((t) => !instruments.includes(t.id) && t.id !== 'band' && t.id !== 'metric_accent' && !rhythms.has(t.id)))
       expect(signatureOf(f.text)!.main, f.id).toMatch(/^&(tempo|tonic|key|harm|call|a|drumlines|bassline|padline|stabline|leadline|day|song)$/);
   });
 
@@ -69,11 +71,13 @@ describe('the seed library’s signatures', () => {
         ? lines(METER, KEY, '&bassline over=&key step=4n 0 2', '* from band(bassline=&bassline)')
         : RHYTHM_FRAGMENTS.some((f) => f.id === id)
           ? lines(METER, `* from ${quoted(id)}`, `&out map=sample [${names.at(-1)}]`)
-          : main === null
-            ? lines(METER, KEY, '&line over=&key step=8n 0 2 4', `&x from ${quoted(id)}`, '&out map=sample [&line * &x]')
-            : /line(s)?$/.test(main)
-              ? PERFORMER(head, quoted(id), main)
-              : WORKBENCH[main]!(head, quoted(id));
+          : id === 'metric_accent'
+            ? lines(METER, KEY, '&line over=&key step=16n 0 2 4 2', `&x from ${quoted(id)}`, '&v s=sine loop=C4', '&out map=sample [&line * &x * &v]')
+            : main === null
+              ? lines(METER, KEY, '&line over=&key step=8n 0 2 4', `&x from ${quoted(id)}`, '&out map=sample [&line * &x]')
+              : /line(s)?$/.test(main)
+                ? PERFORMER(head, quoted(id), main)
+                : WORKBENCH[main]!(head, quoted(id));
     const r = compileSource(names.includes('&bell') ? lines(piece, '* from gm_kit') : piece, undefined, { resolve: resolveSeed });
     // (a performer is a role cell over a gate: no sound of its own, so it plays on a card, as it does written out by hand)
     expect(r.diagnostics.map((d) => d.message)).toEqual(main !== null && /line(s)?$/.test(main) ? [NOTHING_PLAYS] : []);

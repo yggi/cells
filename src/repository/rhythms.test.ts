@@ -23,6 +23,7 @@ import { holesOf } from './holes';
 import { resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { seedFragments } from './seed';
+import { answered } from './answered';
 
 const METER_FRAGMENTS = seedFragments('meters');
 const RHYTHM_FRAGMENTS = seedFragments('rhythms');
@@ -57,7 +58,7 @@ const coreKit = expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, 
  * fill on a host by hand.
  */
 const linesAlone = (text: string) =>
-  text
+  answered(text)
     .split('\n')
     .filter((l) => readFrom(l.trim()) === undefined)
     .join('\n');
@@ -117,7 +118,7 @@ const CLAVES: Record<string, { bars: number; strokes: number[] }> = {
 const drumBars = e31.witnesses.map((w) => ({ ...w, fragment: byId(wordOf(`${w.preset} drums`)) }));
 
 describe('the rhythm fragments', () => {
-  it('are E31’s eight drum bars, one per preset, six claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, the ones read from the examples (#572, #542) the four written for the styles placed by hand (#542) and the two for 7/8 and 12/8 (#646), every point associated as the facet rhythm', () => {
+  it('are E31’s eight drum bars, one per preset, six claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, the ones read from the examples (#572, #542) the four written for the styles placed by hand (#542) and the two for 7/8 and 12/8 (#646), and one whose levels a plugin writes (#799), every point associated as the facet rhythm', () => {
     expect(RHYTHM_FRAGMENTS.map((f) => f.id)).toEqual([
       ...Object.keys(PRESETS).map((p) => wordOf(`${p} drums`)),
       ...Object.keys(CLAVES),
@@ -126,6 +127,7 @@ describe('the rhythm fragments', () => {
       ...Object.keys(READ),
       ...Object.keys(PLACED),
       ...Object.keys(METERED),
+      ...Object.keys(ANSWERED),
     ]);
     expect(RHYTHM_FRAGMENTS.flatMap((f) => f.association.map((wp) => wp.facet))).toEqual(RHYTHM_FRAGMENTS.map(() => 'rhythm'));
   });
@@ -169,14 +171,14 @@ describe('every line of every rhythm has a role', () => {
   // otherwise through a performer: the owner's call, #717)
   const UNROLED = ['electro_swing_drums'];
 
-  it('each line a kit plays reads as the drums with one of the feel’s roles: 31 of 32 fragments, the exceptions listed', () => {
+  it('each line a kit plays reads as the drums with one of the feel’s roles: 32 of 33 fragments, the exceptions listed', () => {
     const roled = RHYTHM_FRAGMENTS.filter((f) => {
       const roles = [...rolesOf(f.text, f.id).values()];
       expect(roles.length, f.id).toBeGreaterThan(0);
       return roles.every((r) => r?.part === 'drums' && r.role !== undefined);
     }).map((f) => f.id);
     expect(RHYTHM_FRAGMENTS.map((f) => f.id).filter((id) => !roled.includes(id))).toEqual(UNROLED);
-    expect(roled).toHaveLength(31);
+    expect(roled).toHaveLength(32);
   });
 
   it('the salsa’s tumbao is an ostinato, its clave a clave and its cáscara a hat; with no role=, a line reads as none (shown firing)', () => {
@@ -318,6 +320,10 @@ const METERED: Record<string, string[]> = {
   aksak_drums: ['&bd', '&hh', '&sd'],
   twelve_eight_drums: ['&bd', '&rd', '&sd'],
 };
+/** The one whose levels a built-in plugin-fragment writes (#799): its hats' accents `metric_accent`'s. */
+const ANSWERED: Record<string, string[]> = {
+  breathing_drums: ['&bd', '&hh'],
+};
 const METER_OF: Record<string, string> = {
   waltz_drums: 'meter(grouping=meter("3/4"))',
   aksak_drums: 'meter(grouping=meter("7/8"))',
@@ -329,7 +335,7 @@ describe('the rhythms’ holes (decision 054, rung 2)', () => {
     '%s defines no voice, and every name it strikes is a drum it declares, the kit’s own its default (#637)',
     (id, text) => {
       expect(text.split('\n').filter((l) => / (s|loop)=/.test(l))).toEqual([]);
-      const struck = [...(STRUCK[id] ?? LIFTED[id] ?? WRITTEN[id] ?? READ[id] ?? PLACED[id] ?? METERED[id] ?? ['&claves'])].sort();
+      const struck = [...(STRUCK[id] ?? LIFTED[id] ?? WRITTEN[id] ?? READ[id] ?? PLACED[id] ?? METERED[id] ?? ANSWERED[id] ?? ['&claves'])].sort();
       expect([...signatureOf(text)!.optional].sort()).toEqual(struck);
       expect(text.split('\n')[1]).toBe(`${signatureOf(text)!.optional.join(', ')} from gm_kit`);
       // (as its lines alone, before #637, each was a sound hole the piece filled by its name)
