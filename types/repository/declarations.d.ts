@@ -3,6 +3,11 @@ import type { StylePoint, WeightedPoint } from './fragments';
 export type StyleNames = ReadonlyMap<string, StylePoint>;
 /** The facet a seed folder's fragments are found as (§3): `fragments/modes/` is `mode`. */
 export declare const FOLDER_FACETS: Readonly<Record<string, string>>;
+/**
+ * The axes a facet's points speak to, where they are fewer than all (decision 099, after 076 §2): a meter, a rhythm, a
+ * performer, a module or a form leaves `mood` out, so a style named in its declaration is read on the other three.
+ */
+export declare const FACET_AXES: Readonly<Record<string, readonly string[]>>;
 /** The words a declaration's attributes reserve: no template has a parameter of either name (§4). */
 export declare const RESERVED: readonly ["style", "facet"];
 /** Whether a line of code is a declaration: a signature, or `* from` with no id (its attributes after `from`). */

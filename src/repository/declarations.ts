@@ -7,7 +7,8 @@
  *   * from style=(&synthPop | &(map=style sync=.3 harm=.45 bite=.65 mood=.5) * .5) facet=instrument
  *   * from facet=module
  *
- * - `style=` is a point, `&funk` (a style of `styles`, followed wherever it is placed) or inline,
+ * - `style=` is a point, `&funk` (a style of `styles`, followed wherever it is placed, on the axes its facet speaks to:
+ *   a meter's `&funk` is Funk's sync, harm and bite, decision 099) or inline,
  *   `&(map=style sync=.3 bite=.55 ± .1)`: its axes by name, any of them (a point may leave an axis out, decision 041),
  *   or all four in order; `± r` is the point's reach on that axis, kept and read by no query yet (§6). `* w` is its
  *   weight, 1 where left out; `( a | b )` is a set, found at each.
@@ -51,6 +52,20 @@ export const FOLDER_FACETS: Readonly<Record<string, string>> = {
   styles: 'style',
 };
 
+/**
+ * The axes a facet's points speak to, where they are fewer than all (decision 099, after 076 §2): a meter, a rhythm, a
+ * performer, a module or a form leaves `mood` out, so a style named in its declaration is read on the other three.
+ */
+export const FACET_AXES: Readonly<Record<string, readonly string[]>> = Object.fromEntries(
+  ['meter', 'rhythm', 'performer', 'module', 'form'].map((f) => [f, AXIS_NAMES.filter((a) => a !== 'mood')] as const),
+);
+
+/** A style's point on the axes a facet speaks to (decision 099): the whole point where the facet speaks to all, or none is named. */
+const onAxes = (point: StylePoint, facet: string | undefined): StylePoint => {
+  const axes = facet === undefined ? undefined : FACET_AXES[facet];
+  return axes ? Object.fromEntries(Object.entries(point).filter(([a]) => axes.includes(a))) : point;
+};
+
 /** The words a declaration's attributes reserve: no template has a parameter of either name (§4). */
 export const RESERVED = ['style', 'facet'] as const;
 
@@ -87,10 +102,10 @@ export interface Declared {
 }
 
 /** One point of a `style=`: a name, or an inline style, its axes by name or in order. */
-function readPoint(text: string, styles: StyleNames): { point: StylePoint; reach?: StylePoint } | string {
+function readPoint(text: string, styles: StyleNames, facet?: string): { point: StylePoint; reach?: StylePoint } | string {
   if (/^&[A-Za-z_][A-Za-z0-9_]*$/.test(text)) {
     const point = styles.get(text.slice(1));
-    return point ? { point } : `style=${text}: no style of that name in styles`;
+    return point ? { point: onAxes(point, facet) } : `style=${text}: no style of that name in styles`;
   }
   const inline = /^&\(\s*map=style\s+([\s\S]*)\)$/.exec(text);
   if (!inline) return `style=${text}: a style, &funk, or an inline one, &(map=style sync=.3 bite=.55)`;
@@ -119,13 +134,13 @@ function readPoint(text: string, styles: StyleNames): { point: StylePoint; reach
 }
 
 /** A `style=`'s points, each with its weight: a point, a point * w, or a set ( a | b * w ). */
-function readStyle(text: string, styles: StyleNames): { point: StylePoint; weight: number; reach?: StylePoint }[] | string {
+function readStyle(text: string, styles: StyleNames, facet?: string): { point: StylePoint; weight: number; reach?: StylePoint }[] | string {
   const set = /^\(([\s\S]*)\)$/.exec(text);
   const members = set ? splitTop(set[1]!, '|') : [text];
   const out: { point: StylePoint; weight: number; reach?: StylePoint }[] = [];
   for (const raw of members) {
     const m = /^([\s\S]*?)(?:\s*\*\s*(-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)))?$/.exec(raw.trim())!;
-    const read = readPoint(m[1]!.trim(), styles);
+    const read = readPoint(m[1]!.trim(), styles, facet);
     if (typeof read === 'string') return read;
     const weight = m[2] === undefined ? 1 : parseFloat(m[2]);
     if (!(weight > 0)) return `style=${text}: a weight is a number above 0`;
@@ -182,7 +197,7 @@ export function readDeclaration(code: string, options: { readonly facet?: string
   }
   const extra = { ...(facet === undefined ? {} : { facet }), ...(Object.keys(args).length ? { args } : {}) };
   if (style === null) return { points: [{ point: {}, weight: 1, ...extra }], problems };
-  const read = readStyle(style, options.styles);
+  const read = readStyle(style, options.styles, facet);
   if (typeof read === 'string') return { points: [], problems: [...problems, read] };
   return { points: read.map(({ point, weight, reach }) => ({ point, weight, ...extra, ...(reach ? { reach } : {}) })), problems };
 }
