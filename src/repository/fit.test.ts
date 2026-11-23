@@ -280,7 +280,23 @@ function sameLines(first: string, second: string): string[] {
 
 describe('two drum bars on one workbench', () => {
   // (each bar's lines, as a collection's: the union of two texts by their lines; a groove taken by its `from` line, #637, is the cost test's workbench)
-  const bars = e31.witnesses.map((w) => ({ preset: w.preset, bpm: w.bpm, hits: w.hits, text: linesAlone(rhythm(wordOf(`${w.preset} drums`))) }));
+  // (a rim stroke where the bar's euclid's levels are metric_accent's, #799: at its sixteenth's level, 127·√level, as MIDI
+  // out strikes it; every other hit as E31's band wrote it)
+  const heard = (hits: (typeof e31.witnesses)[number]['hits'], text: string) => {
+    const line = text.split('\n').find((l) => l.startsWith('&euclidLevel map=amp step=16n '));
+    const levels = line
+      ? line
+          .replace(/^&euclidLevel map=amp step=16n /, '')
+          .split(' ')
+          .map(Number)
+      : null;
+    return levels ? hits.map((h) => (h.note === 37 ? { ...h, velocity: Math.round(127 * Math.sqrt(Math.min(1, levels[h.step]!))) } : h)) : hits;
+  };
+  const bars = e31.witnesses.map((w) => {
+    const id = wordOf(`${w.preset} drums`);
+    const text = linesAlone(rhythm(id));
+    return { preset: w.preset, bpm: w.bpm, hits: /from metric_accent/.test(rhythm(id)) ? heard(w.hits, text) : w.hits, text };
+  });
   const pairs = bars.flatMap((a) => bars.filter((b) => b !== a).map((b) => [a.preset, b.preset, a, b] as const));
   const lines = (text: string) => text.split('\n');
 

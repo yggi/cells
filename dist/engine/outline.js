@@ -94,7 +94,12 @@ export function outlineOf(result, { facetsOf = () => [] } = {}) {
         const { line, id, within, cells } = made.get(key);
         const take = within === null ? takes.get(line) : undefined;
         const outer = within === null ? undefined : takes.get(line);
-        const heads = take?.names ? headsOf(take) : take || outer ? headsOf((take ?? outer)).filter((h) => cells.includes(h)) : cells.filter((c) => !result.cells.get(c)?.lambda);
+        const named = (outer?.names ?? []).map((n) => n.slice(1));
+        const heads = take?.names
+            ? headsOf(take)
+            : take || outer
+                ? headsOf((take ?? outer)).filter((h) => cells.includes(h) && !named.includes(h))
+                : cells.filter((c) => !result.cells.get(c)?.lambda);
         return {
             key,
             line,

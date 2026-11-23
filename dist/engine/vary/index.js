@@ -6,6 +6,7 @@ import { declWords, setBraid } from "../edit.js";
 import { anchorsAmong } from "./anchors.js";
 import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written } from "./lines.js";
 import { referenceOf } from "./reference.js";
+import { answeredIn } from "../use.js";
 import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionsOf } from "./progression.js";
 export { backbeatOf } from "./anchors.js";
 export { THIRDS, PHRASE_BARS } from "./progression.js";
@@ -15,7 +16,8 @@ export const HARMONY_OPERATORS = ['rotate', 'reverse', 'third', 'dominant'];
 export const DEGREES = [-2, -1, 1, 2];
 export const BENDS = [-2, -1, 1, 2];
 export const TRIM_FEWEST = 2;
-function read(fragment, workbench = '', resolve) {
+function read(source, workbench = '', resolve) {
+    const fragment = resolve ? answeredIn(source, resolve) : source;
     const own = new Set(declarations(fragment).map((l) => l.name));
     const bench = declarations(workbench)
         .filter((l) => !own.has(l.name))

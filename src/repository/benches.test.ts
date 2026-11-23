@@ -24,9 +24,10 @@ const SENT: Record<string, [string, number]> = {
   techno_drums: ['9519e0ef', 224],
   deep_house_drums: ['b61199ca', 120],
   ambient_drums: ['6a2f2372', 144],
-  lo_fi_hip_hop_drums: ['4f755bb6', 136],
-  funk_drums: ['737e888c', 192],
-  bossa_nova_drums: ['b559941c', 128],
+  // (#799: the three below send their rim at metric_accent's levels, so their hashes moved; their counts did not)
+  lo_fi_hip_hop_drums: ['19c5cbd0', 136],
+  funk_drums: ['c2ee90ba', 192],
+  bossa_nova_drums: ['7c8bf0ae', 128],
   swing_jazz_drums: ['0204bcbe', 112],
   son_clave_3_2: ['e26ed209', 20],
   son_clave_2_3: ['59aedae1', 20],
