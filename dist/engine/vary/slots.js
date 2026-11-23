@@ -71,3 +71,12 @@ export function slotReference(name, before, after) {
     const form = `base=${name} ${delta.join(' ')}`;
     return { form, line: (cell) => `&${cell} ${form}` };
 }
+export function shiftMoves(n, fixed, amounts, movable) {
+    const out = [];
+    for (let slot = 0; slot < n; slot++)
+        if (!fixed.includes(slot) && movable(slot))
+            for (const by of amounts)
+                if (by !== 0)
+                    out.push({ slot, by });
+    return out;
+}

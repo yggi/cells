@@ -7,7 +7,7 @@
  * Stateless as the repository is (decision 048):
  * the share of bars recognised, and the ladder it drives, are the frontend's. Pure.
  */
-import { HARMONY_OPERATORS, PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS, type HeardNote, type Operator, type Readings, type VaryOptions } from '../engine/vary';
+import { HARMONY_OPERATORS, PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS, SHIFT, type HeardNote, type Operator, type Readings, type VaryOptions } from '../engine/vary';
 import { declWords, splitComment } from '../engine/edit';
 import { readFrom } from '../engine/parser/use';
 import type { Fragment } from './fragments';
@@ -17,7 +17,7 @@ import type { Fragment } from './fragments';
  * own (`third`, `dominant`, point 8) are among them, so a heard progression is known as a seed's variation, and with them
  * rotate and reverse act on a progression too.
  */
-export const ALL_OPERATORS: readonly Operator[] = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, ...HARMONY_OPERATORS])];
+export const ALL_OPERATORS: readonly Operator[] = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, ...HARMONY_OPERATORS, SHIFT])];
 
 /** One step of a path: an operator on one line, as a variation's `by` names it (`drop &hat 6`). */
 export interface PathStep {

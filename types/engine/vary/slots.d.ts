@@ -43,3 +43,12 @@ export declare function slotReference(name: string, before: readonly string[], a
     form: string;
     line: (cell: string) => string;
 } | null;
+/**
+ * One slot moved n degrees (#910), the move every level shares: each free slot `movable` allows, by each of `amounts`,
+ * in that order; the level moves it (a note's pitch, a chord's every tone, a letter `&a` to `&a^n`). A progression's
+ * `third` is its shift by a third (±2).
+ */
+export declare function shiftMoves(n: number, fixed: readonly number[], amounts: readonly number[], movable: (slot: number) => boolean): {
+    slot: number;
+    by: number;
+}[];

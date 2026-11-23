@@ -25,7 +25,7 @@ export interface Progression {
 }
 /** A progression's candidate variation: the operator, its amounts (for `by`), its slots, and what it does, in words. */
 export interface Candidate {
-    readonly operator: SlotOperator | 'third' | 'dominant';
+    readonly operator: SlotOperator | 'third' | 'dominant' | 'shift';
     readonly amounts: readonly number[];
     readonly slots: readonly Slot[];
     readonly what: string;
@@ -54,7 +54,7 @@ export declare function progressionKey(p: Progression, slots: readonly Slot[]): 
  * step. Each moves no fixed step (its cadence, or the frontend's mask). Whether a
  * candidate plays other notes than its source and the ones before it is the caller's to judge.
  */
-export declare function progressionCandidates(p: Progression, operators: readonly string[], result: CompileResult, fixed?: readonly number[]): Candidate[];
+export declare function progressionCandidates(p: Progression, operators: readonly string[], result: CompileResult, fixed?: readonly number[], degrees?: readonly number[]): Candidate[];
 /**
  * A progression's variation as a form on the progression it varies (decision 052, point 7, for rung 3): a copy of it,
  * `base=`, changed on the steps the variation changes, `=` keeping one step and `=!k` k (`base=&harm =!2 [1,3,5]`,
