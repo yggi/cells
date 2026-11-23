@@ -64,7 +64,7 @@ export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, pl
             ...Object.keys(d.params).map((k) => [k, d.paramSpans[k] ?? d.span]),
             ...Object.entries(d.paramCells ?? {}).map(([k, pc]) => [k, pc.span]),
             ...Object.entries(d.paramClocks ?? {}).map(([k, st]) => [k, st.span]),
-            ...['env', 'pitch', 'title'].filter((k) => d[k]).map((k) => [k, k === 'title' ? d.span : d[k].span]),
+            ...['env', 'pitch'].filter((k) => d[k]).map((k) => [k, d[k].span]),
         ];
         for (const [k, span] of written) {
             const a = ATTRIBUTES[k];

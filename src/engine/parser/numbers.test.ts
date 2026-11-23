@@ -51,7 +51,6 @@ const ROWS: Readonly<Record<keyof typeof NUMBER_PLACES, readonly [string, string
   args: ['&hits euclid(X, 8) step=8', '3', 'free(3, 0..8)', BUILT, BUILT],
   evenArg: ['&key scale(even(7, 12, X), D)', '3', 'free(3, 0..6)', 'ok', NOT_HERE],
   fifths: ['&circle fifths(X)', '1', 'free(1, 0..11)', BUILT, BUILT],
-  phase: ['&key scale(2, X)', '3', 'free(3, 0..6)', BUILT, BUILT],
   meter: ['&bar meter(X) step=90bpm', '"4/4"', 'free(2, 0..3, "2/4 3/4 4/4 6/8")', BUILT, BUILT],
   grid: ['&edo map=edo(X)', '19', 'free(19, 5..31)', BUILT, BUILT],
   ratio: ['&bp map=ed(13, X)', '3', 'free(3, 1.5..4)', BUILT, BUILT],
@@ -62,7 +61,6 @@ const ROWS: Readonly<Record<keyof typeof NUMBER_PLACES, readonly [string, string
   pick: ['&tune step=2 &motif[X]', '0', 'free(0, 0..3)', BUILT, BUILT],
   turn: ['&canon step=2 &theme[>>X]', '4', 'free(4, 0..7)', BUILT, BUILT],
   move: ['&tune step=2 &motif^X', '1', 'free(1, -7..7)', BUILT, BUILT],
-  tier: ['&piece title="Steps" tags="tutorial" tier=X', '1', 'free(1, 1..9)', BUILT, BUILT, FIXED],
   hitNumber: ['&beat step=8 &bd:X', '0', 'free(0, 0..1)', BUILT, BUILT, FIXED],
 };
 

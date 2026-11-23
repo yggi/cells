@@ -14,7 +14,7 @@ The piece writes only what is its own: the tempo and the swing, the key's tonic,
 &key from harmonic_minor D
 &harm from vamp_to_the_fifth &key
 &bassline from walking_bass &harm
-&kick, &clap, &hats, &ticks from electro_swing_drums
+&kick, &clap, &hats, &ticks, &ghosts from electro_swing_drums
 &stabline from charleston_stabs &harm
 &bass, &bassOut from bass_performer(bassLevel=&bassLevel, bassV=&bassV) &bassline
 &stab, &stabOut from stab_performer(stabLevel=&stabLevel, keysV=&keysV) &stabline
@@ -35,14 +35,14 @@ The key is harmonic minor, from the library, on the tonic its line gives it, D (
 
 ## The beat
 
-`electro_swing_drums`, used above: a kick on every beat, the clap on two and four, the open hat on every swung off-beat; a sixteenth hat with some strokes left to chance and a ghost of the snare on the last.
-The piece takes its four limbs by name and hands them to the drummer as a stack, `&drumlines`, each times its level in the form below; the fragment's own `&groove` mix it leaves.
+`electro_swing_drums`, used above: a kick on every beat, the clap on two and four, the open hat on every swung off-beat; a sixteenth hat with some strokes left to chance, and a ghost of the snare on the last, a line of its own (`&ghosts`).
+The piece takes its five limbs by name and hands them to the drummer as a stack, `&drumlines`, each times its level in the form below; the fragment's own `&groove` mix it leaves.
 The crackle is the piece's own, a record's: a tick of noise on a few sixteenths, by chance.
 
 ```cells
-&drumlines [&kick * &kickForm, &clap * &clapForm, &hats, &ticks]
-&crackle step=16n 0?.8!16
-&beatNote label="The beat is a fragment: &kick, &clap, &hats and &ticks come from Electro swing drums, their levels in their hits." about=(&kick &clap &hats &ticks)
+&drumlines [&kick * &kickForm, &clap * &clapForm, &hats, &ticks, &ghosts]
+&crackle seed=8623846738299929 step=16n 0?.8!16
+&beatNote label="The beat is a fragment: &kick, &clap, &hats, &ticks and &ghosts come from Electro swing drums, their levels in their hits." about=(&kick &clap &hats &ticks &ghosts)
 ```
 
 ## The stabs

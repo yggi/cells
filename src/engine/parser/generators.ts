@@ -5,7 +5,7 @@ import { syntax, type Syntax } from './syntax';
 import type { LineScanner } from './scanner';
 import { parseFree } from './free';
 import { NUMBER_PLACES } from './numbers';
-import { agogic as agogicPositions, diatonicSteps, even as evenPositions, intervals, MODE_WORDS, SCALES, scaleOfPhase } from '../../theory/modes';
+import { agogic as agogicPositions, diatonicSteps, even as evenPositions, intervals, MODE_WORDS, SCALES } from '../../theory/modes';
 import { TONAL_SCALES } from '../../theory/tonal';
 
 /** scan(…): intervals, separated by spaces or commas; any positive numbers. */
@@ -474,7 +474,6 @@ export function waveValues(shape: WaveShape, n: number): number[] {
 
 /** A tonic as a note name: C, F#, Bb (a pitch class). */
 const TONICS: Readonly<Record<string, number>> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-const tonicName = (pc: number) => ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'][((pc % 12) + 12) % 12];
 
 /** The start of the name of the key a `scale(…)` declares (`key:λ3_8`): a cell whose `over=` names one reads its own scale(…). */
 export const SCALE_KEY = 'key:λ';
@@ -483,8 +482,7 @@ export const SCALE_KEY = 'key:λ';
  * `scale(name, tonic)`: a scale by name over the 12 turned to its tonic. What it stands for is two cells: the key (the
  * 12, `shift=` the tonic: a note name, a number, a cell holding one (`&tonic`, #290) or free(…)) and the scale's steps over it, `scan(…)`. The key is declared
  * here, unnamed and not drawn (`key:…`); the scan and the key are the caller's to place — a cell's own braid reading
- * through it, or a table of its own after over=. The old `scale(tonic, phase)` (a mode by number) still reads, with a
- * warning that says it by name.
+ * through it, or a table of its own after over=.
  */
 export function parseScale(s: LineScanner, start: number): { steps: number[]; key: Ref; span: Span; mode?: Ref; even?: EvenArgs } {
   s.i++; // (
@@ -495,8 +493,7 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
   let tonicRef: Ref | null = null;
   let modeRef: Ref | null = null;
   let evenArgs: EvenArgs | null = null;
-  const legacy = s.match(/-?[0-9]+/y);
-  const quoted = legacy === null ? s.match(/"[^"]*"/y) : null;
+  const quoted = s.match(/"[^"]*"/y);
   if (quoted !== null) {
     // Strudel's spelling (decision 027): "D:minor", "F#:harmonic:minor", the tonic first, the name's words after colons:
     // a name of tonal's, as Strudel reads it (whole:tone, bebop:major, messiaen's:mode:#2), or one of ours (minorpentatonic)
@@ -519,20 +516,6 @@ export function parseScale(s: LineScanner, start: number): { steps: number[]; ke
     tonicText = String(tonic);
     s.skipSpace();
     s.expect(')', "')' to close scale(…)");
-  } else if (legacy !== null) {
-    // scale(tonic, phase): the mode by its number, darkest first
-    s.skipSpace();
-    s.expect(',', "',' then the mode — better by name: scale(minor, A)");
-    s.skipSpace();
-    const at = s.i;
-    const phase = s.int('the mode, 0 (the darkest) to 6', NUMBER_PLACES.phase);
-    if (phase > 6) s.fail(`scale(tonic, phase): the phase is a mode, 0 (the darkest, Locrian) to 6 (the brightest, Lydian) — not ${phase}`, at, String(phase).length);
-    tonic = parseInt(legacy, 10);
-    tonicText = legacy;
-    steps = intervals(evenPositions(7, 12, phase), 12);
-    s.skipSpace();
-    s.expect(')', "')' to close scale(…)");
-    s.warn(`scale(${tonic}, ${phase}) is written scale(${scaleOfPhase(phase)}, ${tonicName(tonic)}): the mode by name, then the tonic`, start, s.i - start);
   } else {
     const at = s.i;
     if (s.text.startsWith('even(', s.i) || s.text.startsWith('scan(', s.i)) {

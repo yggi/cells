@@ -112,9 +112,7 @@ export function parse(whole: string): ParseResult {
 /**
  * A piece's card: its title, its description, its tags and its tier. From a file (`piecefile.ts`, decision 047): the
  * frontmatter's title, tags, tier and description (else the label of a card its text still has: a note named `&piece`,
- * as a text written before the description moved there). From a text written the old way: the first note with a
- * title=, its title=, label=, tags= and tier= (a warning says they now go in the frontmatter, and Shorten moves them
- * there).
+ * as a text written before the description moved there). A text with no file has none: the card's `title=` and `tier=` are retired (#643).
  */
 export interface PieceMeta {
   readonly title: string;
@@ -151,7 +149,7 @@ function card(title: string, label: string, tagList: readonly string[], tier: nu
 /** The name of the card a text keeps when its file's frontmatter doesn't say what the piece is yet (display.md). */
 export const CARD = 'piece';
 
-/** A piece's card, from a file or from a text written the old way; null without a title. */
+/** A piece's card, from a file; null for a text, which has none, and for a file without a title. */
 export function pieceMeta(source: string): PieceMeta | null {
   if (isPieceFile(source)) {
     const file = readPiece(source);
@@ -163,7 +161,5 @@ export function pieceMeta(source: string): PieceMeta | null {
     // (the frontmatter's description, else the label of the card the text still has)
     return card(title, typeof description === 'string' ? description : (note?.label ?? ''), tagList, typeof tier === 'number' ? tier : null, note?.name ?? null);
   }
-  const d = parse(source).cells.find((c) => c.title);
-  if (!d) return null;
-  return card(d.title!, d.label ?? '', (d.tags ?? '').split(','), d.tier ?? null, d.name);
+  return null;
 }

@@ -24,7 +24,7 @@ export { shorten, shortenAll, type ShortenOptions } from './engine/shorten';
 export { normalise } from './engine/normalise';
 export { migrate } from './engine/migrate';
 export { toCore, type Core, type CoreOptions, type Interface } from './engine/core';
-export { anchorsOf, varied, variations, type Anchor, type Operator, type Variation, type VaryOptions } from './engine/vary';
+export { anchorsOf, variationBy, varied, variations, type Anchor, type Operator, type Variation, type VaryOptions } from './engine/vary';
 export { fold } from './engine/fold';
 export { hints, MIN_NOTES, type Hint, type RepeatHint, type Span as HintSpan, type Transform } from './engine/fold/hints';
 export { cellsFromMidi } from './engine/midiimport';
@@ -49,7 +49,6 @@ export {
   type PieceFrontmatter,
 } from './engine/piecefile';
 export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
-export { movedCard } from './engine/shorten/card';
 export { jacksOf, patch, unpatch, PatchError, type Jack } from './engine/patch';
 export { codeShifts } from './engine/program';
 export { resetPhysics } from './engine/physics';

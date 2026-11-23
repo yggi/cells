@@ -160,7 +160,6 @@ export const NUMBER_PLACES = {
     example: '&key scale(even(7, 12, free(3, 0..6)), D)',
   }),
   fifths: place({ form: 'fifths(n)', name: 'fifths', whole: true, cell: BUILT, example: '&circle fifths(free(1, 0..11))' }),
-  phase: place({ form: 'scale(t, phase) (retired)', name: 'phase', whole: true, min: 0, max: 6, cell: BUILT, example: '&key scale(2, free(3, 0..6))' }),
   meter: place({ form: 'meter(n, n)', name: 'meter', key: 'choice', cell: BUILT, example: '&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm' }),
   grid: place({ form: 'map=edo(n) · map=ed(n, r) · map=midi(c, p)', name: 'grid', whole: true, min: 1, cell: BUILT, example: '&edo map=edo(free(19, 5..31))' }),
   ratio: place({ form: 'map=ed(r)', name: 'ratio', cell: BUILT, example: '&bp map=ed(13, free(3, 1.5..4))' }),
@@ -184,12 +183,5 @@ export const NUMBER_PLACES = {
   turn: place({ form: '&x[<<n] · &x[>>n]', name: 'turn', whole: true, min: 0, cell: BUILT, example: '&canon step=2 &theme[>>free(4, 0..7)]' }),
   move: place({ form: '&x^n · &x^$n · degree(&x, n)', name: 'move', whole: true, cell: BUILT, example: '&tune step=2 &motif &motif^free(1, -7..7)' }),
   // a number left as it is
-  tier: place({
-    form: 'tier=n',
-    name: 'tier',
-    fixed: "the tutorial's order, not the piece's",
-    cell: BUILT,
-    example: '&piece title="Steps" tags="tutorial" tier=1',
-  }),
   hitNumber: place({ form: '&x:n (a hit’s number)', name: 'hit', fixed: 'a pitched hit is not yet: it is 0', cell: BUILT, example: '&beat step=8 &bd:0' }),
 } as const satisfies Readonly<Record<string, NumberPlace>>;

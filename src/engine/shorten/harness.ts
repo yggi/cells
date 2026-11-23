@@ -15,7 +15,7 @@ export { samePiece, sameNotes, SAMENESS_SECONDS } from '../sameness';
 export interface Suggestion {
   readonly id: string;
   /** (`gate`, `tap`, `swing` and `section` are Migrate's since v0.16 and never offered: kept in the type so a frontend's switch on them still typechecks) */
-  readonly kind: 'run' | 'phrase' | 'fraction' | 'same' | 'default' | 'progression' | 'degree' | 'pan' | 'gate' | 'alias' | 'tap' | 'swing' | 'section' | 'card';
+  readonly kind: 'run' | 'phrase' | 'fraction' | 'same' | 'default' | 'progression' | 'degree' | 'pan' | 'gate' | 'alias' | 'tap' | 'swing' | 'section';
   /** In a sentence: what it does. */
   readonly title: string;
   /** What was written, and what it becomes (short excerpts). */
@@ -23,7 +23,7 @@ export interface Suggestion {
   readonly after: string;
   /** The structure saved (decision 049's measure, `structure`): leaves, attribute values and cells. Characters before #157. */
   readonly saving: number;
-  /** The rewrite: the text, shorter or migrated; for a `card`, the piece as a file (decision 047). */
+  /** The rewrite: the text, shorter or migrated. */
   readonly apply: (source: string) => string;
 }
 

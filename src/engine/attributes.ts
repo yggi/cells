@@ -46,7 +46,7 @@ export interface Attribute {
   readonly clock?: true;
   /** It is a frequency or a rate, in Hz (lpf=1200, wanderhz=.5): its slider over a wide range runs on a log scale. */
   readonly hz?: true;
-  /** Not in the reference: a spelling a text no longer writes (the card's `title=` `tier=`, still read with a warning), or one only a built-in plugin-fragment's block writes (`law=`): what says it now. */
+  /** Not in the reference: one only a built-in plugin-fragment's block writes (`law=`): what says it now. */
   readonly old?: string;
   /** Named before it is built (some of its values warn and play as the default): in the reference, taught on no tier yet. */
   readonly stub?: true;
@@ -79,19 +79,13 @@ export const CORE: Readonly<Record<string, Attribute>> = {
   size: core('how large it’s drawn, against the others: 2 twice, .5 half', 'display.md'),
   laps: core('how many laps it plays, then it ends', 'time.md'),
   chance: core('what a bare x? means here: the probability it is dropped, or free() for a slider', 'cell.md'),
-  seed: core('a different sequence of chance', 'cell.md'),
-  // (the card's title= and tier=: the old spelling, still read; its file's frontmatter says them now, Shorten moves them: decision 047)
-  title: { ...core('on a note: the piece’s title (its card), the old spelling: its file’s frontmatter holds it', 'display.md', ['note']), old: 'title: in the frontmatter' },
-  tags: core('on a cell: its clusters in the graph, comma-separated (on the piece’s card, the old spelling of its tags: its file’s frontmatter holds them)', 'display.md'),
+  seed: core("the seed a cell's chance is thrown from, which no edit to the cell moves", 'cell.md'),
+  tags: core('on a cell: its clusters in the graph, comma-separated', 'display.md'),
   about: core('on a note: the cells it explains', 'display.md', ['note']),
   style: core(
     'its style: a map=style cell, &(map=style …), or a mix of them by weight; or a range from one to another over its scope (style=&funk..&bossa). On the note &style, the section’s, read by axis (&style[bite])',
     'style.md',
   ),
-  tier: {
-    ...core('on a piece’s card: its tier of the tutorial (1 the first), the old spelling: its file’s frontmatter holds it', 'display.md', ['note']),
-    old: 'tier: in the frontmatter',
-  },
 };
 
 /** Parameters: `key=value`, a number (or free()), a word or a cell — the voice's, and the physical cells'. */

@@ -7,7 +7,7 @@ export interface Anchor {
     readonly line: string;
     /** One note's step on the line's grid (a root on a change); absent, the whole line. */
     readonly step?: number;
-    readonly reason: 'kick' | 'backbeat' | 'root';
+    readonly reason: 'kick' | 'backbeat' | 'root' | 'cadence';
 }
 /** Where a meter's backbeat falls, each in whole notes from the bar's start: 4/4's second and fourth beats, 6/8's second. */
 export declare function backbeatOf(meter: Meter): number[];

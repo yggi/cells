@@ -62,7 +62,6 @@ export declare const NUMBER_PLACES: {
     readonly args: NumberPlace;
     readonly evenArg: NumberPlace;
     readonly fifths: NumberPlace;
-    readonly phase: NumberPlace;
     readonly meter: NumberPlace;
     readonly grid: NumberPlace;
     readonly ratio: NumberPlace;
@@ -73,6 +72,5 @@ export declare const NUMBER_PLACES: {
     readonly pick: NumberPlace;
     readonly turn: NumberPlace;
     readonly move: NumberPlace;
-    readonly tier: NumberPlace;
     readonly hitNumber: NumberPlace;
 };

@@ -31,30 +31,35 @@ describe('map=edo(n) is map=ed(n, 2)', () => {
   });
 });
 
-describe('scale(tonic, phase) is a key and a mode written out', () => {
+describe('scale(mode, tonic) is a key and a mode written out', () => {
   // the seven modes by brightness (decision 002: phase 0 darkest … 6 brightest), written by hand
   const MODES = ['1 2 2 1 2 2 2', '1 2 2 2 1 2 2', '2 1 2 2 1 2 2', '2 1 2 2 2 1 2', '2 2 1 2 2 1 2', '2 2 1 2 2 2 1', '2 2 2 1 2 2 1'];
+  const PHASE: Record<string, number> = { locrian: 0, phrygian: 1, minor: 2, aeolian: 2, dorian: 3, mixolydian: 4, major: 5, ionian: 5, lydian: 6 };
+  const LETTER: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  const tonicOf = (t: string) => (/^-?\d+$/.test(t) ? +t : LETTER[t[0]!]! + (t[1] === '#' ? 1 : t[1] === 'b' ? -1 : 0));
   const writtenOut = (source: string) => {
     const tables = new Map<string, string>();
-    const body = source.replace(/over=scale\((-?\d+),\s*(\d+)\)/g, (_, tonic: string, phase: string) => {
-      const name = `sc${tonic.replace('-', 'm')}x${phase}`;
-      tables.set(name, `&key${name} shift=${tonic}\n&${name} over=&key${name} scan(${MODES[+phase]})`);
+    const body = source.replace(/over=scale\((\w+),\s*(-?\w+#?b?)\)/g, (all, mode: string, tonic: string) => {
+      if (!(mode in PHASE)) return all;
+      const shift = tonicOf(tonic);
+      const name = `sc${mode}x${String(shift).replace('-', 'm')}`;
+      tables.set(name, `&key${name} shift=${shift}\n&${name} over=&key${name} scan(${MODES[PHASE[mode]!]})`);
       return `over=&${name}`;
     });
     return `${body}\n${[...tables.values()].join('\n')}`;
   };
   it.each([
-    [0, 5],
-    [0, 2],
-    [2, 3],
-    [7, 5],
-    [-3, 0],
-    [5, 6],
-  ])('scale(%i,%i)', (tonic, phase) => {
-    const src = `&t over=scale(${tonic},${phase}) step=8 0 1 2 3 4 5 6 7 -1 9\n&v s=saw loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]`;
+    ['major', 'C'],
+    ['minor', 'C'],
+    ['dorian', 'D'],
+    ['major', 'G'],
+    ['locrian', 'Ab'],
+    ['lydian', 'F'],
+  ])('scale(%s, %s)', (mode, tonic) => {
+    const src = `&t over=scale(${mode}, ${tonic}) step=8 0 1 2 3 4 5 6 7 -1 9\n&v s=saw loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]`;
     expect(sounds(writtenOut(src))).toEqual(sounds(src));
   });
-  const scaled = examples.filter(([, p]) => /over=scale\(/.test(p.source));
+  const scaled = examples.filter(([, p]) => /over=scale\(\w+,/.test(p.source));
   it('the examples that use it', () => expect(scaled.length).toBeGreaterThan(0));
   it.each(scaled)('%s', (_, { source }) => {
     expect(sounds(writtenOut(source))).toEqual(sounds(source));

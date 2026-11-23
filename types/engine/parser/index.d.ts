@@ -7,9 +7,7 @@ export declare function parse(whole: string): ParseResult;
 /**
  * A piece's card: its title, its description, its tags and its tier. From a file (`piecefile.ts`, decision 047): the
  * frontmatter's title, tags, tier and description (else the label of a card its text still has: a note named `&piece`,
- * as a text written before the description moved there). From a text written the old way: the first note with a
- * title=, its title=, label=, tags= and tier= (a warning says they now go in the frontmatter, and Shorten moves them
- * there).
+ * as a text written before the description moved there). A text with no file has none: the card's `title=` and `tier=` are retired (#643).
  */
 export interface PieceMeta {
     readonly title: string;
@@ -24,5 +22,5 @@ export interface PieceMeta {
 export declare const plainLabel: (label: string) => string;
 /** The name of the card a text keeps when its file's frontmatter doesn't say what the piece is yet (display.md). */
 export declare const CARD = "piece";
-/** A piece's card, from a file or from a text written the old way; null without a title. */
+/** A piece's card, from a file; null for a text, which has none, and for a file without a title. */
 export declare function pieceMeta(source: string): PieceMeta | null;

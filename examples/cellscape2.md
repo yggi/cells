@@ -15,12 +15,12 @@ description: "No octaves, no beat, no instruments: sines and noise on Stockhause
 &steps map=ed(25, 5) label="25 steps to 5:1, no octave"
 
 # mixtures, Stockhausen's sound: five sines a few steps apart, held long — some, by chance
-&constellations over=&steps step=0.11 label="constellations: 11 mixtures, nine seconds each" [0,1,2,3,4]?.2 ~ [8,10,12,14,16]? [3,6,9,12,15]?.4 ~ [20,25,30,35,40]?.3 [5,7,9,11,13] ~ [12,15,18,21,24]? ~ [1,5,9,13,17]?.4
-&mirror over=&steps step=0.11 label="its retrograde, 8 steps higher" &constellations[::-1]^$8
+&constellations seed=5969502722198160 over=&steps step=0.11 label="constellations: 11 mixtures, nine seconds each" [0,1,2,3,4]?.2 ~ [8,10,12,14,16]? [3,6,9,12,15]?.4 ~ [20,25,30,35,40]?.3 [5,7,9,11,13] ~ [12,15,18,21,24]? ~ [1,5,9,13,17]?.4
+&mirror seed=6027648193023166 over=&steps step=0.11 label="its retrograde, 8 steps higher" &constellations[::-1]^$8
 # high glints: few, chosen — how few is yours (chance=)
-&glints over=&steps step=1.7 chance=free(.82, 0.4..1) label="glints: 7 steps" [50|53|57|61|66]? ~ [44|48|52]? ~ ~ [58|63|70]? ~
+&glints seed=5623837928614392 over=&steps step=1.7 chance=free(.82, 0.4..1) label="glints: 7 steps" [50|53|57|61|66]? ~ [44|48|52]? ~ ~ [58|63|70]? ~
 # ripples: 13 steps, some chosen, some by chance
-&ripples over=&steps step=2.3 label="ripples: 13 steps" 26 [29|31] 33? 27 [35|38]? 30 ~ 32? [28|36] 34 ~ 31? 37?
+&ripples seed=7224192300250191 over=&steps step=2.3 label="ripples: 13 steps" 26 [29|31] 33? 27 [35|38]? 30 ~ 32? [28|36] 34 ~ 31? 37?
 # two low sines a step apart, beating; each slides on a prime of its own
 &lowA over=&steps step=0.029 -8
 &lowB over=&steps step=0.029 -7

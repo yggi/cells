@@ -24,10 +24,8 @@ export interface FileOptions {
 
 /** Normalise (src/engine/normalise's `normalise`), its rewrites kept to `rules` when given. */
 function normaliseText(source: string, options: NormaliseOptions, rules?: ReadonlySet<string>): { source: string; steps: string[] } {
-  // (it writes every migration before its own rules, for a minor version: a retired form is read the old way)
-  const old = { ...options, old: true };
-  const find = normalisations(old);
-  return rewriteAll(source, rules ? (src, result) => find(src, result).filter((r) => rules.has(r.rule)) : find, ROUNDS, old);
+  const find = normalisations(options);
+  return rewriteAll(source, rules ? (src, result) => find(src, result).filter((r) => rules.has(r.rule)) : find, ROUNDS, options);
 }
 
 /** A file's text in the canonical spelling, and what each rewrite did. */

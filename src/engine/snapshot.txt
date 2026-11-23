@@ -20,7 +20,7 @@ breve  200 notes  notes 597912bbbe91209b  events a6dabd8dcd7d4731  values e7a7cf
 canon  320 notes  notes 375d44f193024265  events f521280b943e2c85  values 4b9c9ca22cf03c56
 mirrors  183 notes  notes 23c9bebcd9eb2f34  events 9d647cd903bc8779  values b997631113696254
 variations  144 notes  notes c9bc5a525f3c6d55  events 9bf35b03b0ce4ab1  values ddc6a7af257695db
-chance  451 notes  notes f8618f3b6fbcc5e9  events 75f922da8b76269a  values fb5a97e72babb5c9
+chance  442 notes  notes 4f046f7cc12a4c39  events c10e5ef5bfd455b8  values fb5a97e72babb5c9
 fifths  65 notes  notes c338371cdcec0309  events 0a0b836bbe21e877  values 16443fa1dd266fca
 cycle  152 notes  notes 85f8459d2b9881b1  events 6f8f6b62d2fe04c8  values 435a94ec34dffc63
 circle  210 notes  notes 8ab7c4e987475e81  events 5df17ef77db1d02f  values 7541f18b446010cc
@@ -76,7 +76,7 @@ baustelle  1049 notes  notes aee427b93092d78f  events 12dc414d9bbcb396  values 7
 focus  86 notes  notes 7e242313a41a5055  events c66e5c7b3e3dd6e2  values 1b4fbefff1925201
 hypercell  560 notes  notes 8e168d3557f376f6  events 2a407b1755b89341  values c35825c07b01d457
 onemore  1278 notes  notes 8a6182da943067c4  events 44ab1601d84cd1e1  values 1493478e9ae87d46
-electroswing  768 notes  notes 9b3bb866be7cc07d  events e644f18576f06802  values 20a0ca6047fe23be
+electroswing  764 notes  notes 51f8f1ac7fa98185  events da41ca56397562f2  values 1b123740fbc949bc
 spooky  337 notes  notes 5dc16868f844480c  events 1773d7b4a674dd8f  values 18aa44951572c61d
 kinderlied  259 notes  notes 803ed28acb5f9993  events 040e1ce9f829d5be  values 19a7bd98252e9f72
 radio  276 notes  notes 7a50a8491248f00f  events 1274b1f7288cd2e3  values ba316e2502f3a63f

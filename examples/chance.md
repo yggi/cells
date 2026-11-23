@@ -13,8 +13,8 @@ description: "A line that is never quite the same twice round: steps that may no
 &tempo step=free(moderato)
 &key scale(major)
 
-&tune over=&key step=8n 0 2 [4|5|7] 4 [2|7] 0 [4|9] ~
-&hats step=16n 0 0? 0 0?.7 0 0? 0 0?.2
+&tune seed=5908040194758744 over=&key step=8n 0 2 [4|5|7] 4 [2|7] 0 [4|9] ~
+&hats seed=4974002491104326 step=16n 0 0? 0 0?.7 0 0? 0 0?.2
 &ghosts chance=.75 seed=3 step=16n 0?!8
 
 &lead s=tri loop=C5 env=&(map=adsr .005 .2 .3 .2)

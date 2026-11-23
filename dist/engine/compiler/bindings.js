@@ -1,6 +1,5 @@
 import { DOUGH_SOURCES } from "../dough-params.js";
 import { ATTRIBUTES, memberParams, VOICE_MAKERS, VOICE_PARAMS } from "../attributes.js";
-import { canonicalTag, TUTORIAL } from "../tags.js";
 import { isMidiCard } from "../program.js";
 import { notesCells } from "./sorts.js";
 import { noSound } from "./band.js";
@@ -197,7 +196,6 @@ export function bindVoices(ctx, decls, given, typed) {
         if (v && !v.root && !v.kit && !soundHead(v.name) && !b.pitches.some((t) => t.ref.name === v.name))
             cells.set(v.name, { ...v, voice: true });
     }
-    const card = [...decls].find(([, d]) => d.title)?.[0];
     for (const [name, d] of decls) {
         const c = cells.get(name);
         if (!c)
@@ -212,20 +210,10 @@ export function bindVoices(ctx, decls, given, typed) {
                     unknownCell(r.name, r.span);
         if (d.about) {
             if (!c.note)
-                error('about= belongs on a note: a cell with a label= (or title=) and nothing else', d.about[0].span);
+                error('about= belongs on a note: a cell with a label= and nothing else', d.about[0].span);
             for (const r of d.about)
                 if (!decls.has(r.name))
                     unknownCell(r.name, r.span);
-        }
-        if (d.tier != null && d.title && !(d.tags ?? '').split(',').some((t) => canonicalTag(t.trim()) === TUTORIAL))
-            warn('tier= puts a piece in a tier of the tutorial; without tags="tutorial" it is ignored', d.paramSpans.tier ?? d.span);
-        if (d.tier != null && !d.title)
-            error('tier= belongs on a piece’s card: the note with its title=', d.paramSpans.tier ?? d.span);
-        if (name === card && c.note) {
-            const moved = ['title', 'tags', 'tier'].filter((k) => d[k] != null);
-            const list = (forms) => (forms.length > 1 ? `${forms.slice(0, -1).join(', ')} and ${forms.at(-1)}` : forms[0]);
-            const many = moved.length > 1;
-            warn(`${list(moved.map((k) => `${k}=`))} on the piece’s card ${many ? 'go' : 'goes'} in its file’s frontmatter now (${moved.map((k) => `${k}:`).join(' ')}): Shorten moves ${many ? 'them' : 'it'} there (decision 047)`, d.paramSpans.title ?? d.span);
         }
         if (!c.voice)
             continue;

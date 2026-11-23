@@ -32,9 +32,7 @@ interface Body {
   show: string | null;
   label: string | null;
   laps: number | null;
-  title: string | null;
   tags: string | null;
-  tier: number | null;
   about: Ref[] | null;
   style: StyleSpec | null;
   reach: Record<string, number> | null;
@@ -101,7 +99,7 @@ const whole =
     b.paramSpans[key] = s.place(at);
   };
 const text =
-  (key: 'title' | 'tags' | 'label', example: string): Reader =>
+  (key: 'tags' | 'label', example: string): Reader =>
   (s, b, _word, start) => {
     const at = s.i;
     const q = s.match(/"([^"]*)"/y);
@@ -266,23 +264,10 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
     },
   },
   seed: { form: 'seed=n', examples: ['&ghost seed=7 step=4 0? 0? 0? 0?'], read: (s, b) => (b.seed = s.int('a whole number after seed=', NUMBER_PLACES.seed)) },
-  title: { form: 'title="text"', examples: ['&piece title="Swing blues" tags="genre:jazz, rhythm" label="A blues in F."'], read: text('title', 'title="Swing blues"') },
   tags: {
     form: 'tags="tag, tag"',
     examples: ['&lead tags="melody" s=saw loop=C4', '&beam tags="metal" map=ratios 1 2.756 5.404'],
     read: text('tags', 'tags="jazz, blues"'),
-  },
-  tier: {
-    form: 'tier=n',
-    examples: ['&piece title="Steps: a tune on one line" tags="tutorial" tier=1 label="Numbers, rests, holds and repeats."'],
-    read: (s, b, word, at) => {
-      // its tier of the tutorial: 1, 2, 3 … (a number as it is: the tutorial's order, not the piece's)
-      s.free(NUMBER_PLACES.tier);
-      const n = s.match(/[0-9]+(?![0-9.])/y);
-      if (n === null || !(parseInt(n, 10) >= 1 && parseInt(n, 10) <= 9999)) s.fail('tier= is a tier of the tutorial, 1 to 9999: tier=1', at, word.length + 1);
-      b.tier = parseInt(n!, 10);
-      b.paramSpans.tier = s.place(at);
-    },
   },
   style: {
     form: 'style=&s · style=[&a * w, &b * w] · style=a..b · style=a..b * &curve',
@@ -671,7 +656,9 @@ const RETIRED_KEYS: Readonly<Record<string, string>> = {
   init: 'init= is now shift=',
   out: 'out= is now a command: out(voice, &cell) / step(&meter, bpm=…)',
   time: 'time= is now a command: out(voice, &cell) / step(&meter, bpm=…)',
-  rung: 'rung= is now tier= (decision 020): the tutorial is in tiers, tier=1 to tier=9',
+  rung: 'rung= is retired: a piece’s tier is `tier:` in its file’s frontmatter',
+  title: 'title= is retired: a piece’s title is `title:` in its file’s frontmatter',
+  tier: 'tier= is retired: a piece’s tier is `tier:` in its file’s frontmatter',
   ...RETIRED_PARAMS,
 };
 
@@ -687,7 +674,7 @@ export const LINE_SYNTAX: readonly Syntax[] = [
   syntax(
     'line',
     '&name label="…"',
-    'A note: a cell with only a label= (and title=, tags=, about=) explains, in the graph; it does nothing.',
+    'A note: a cell with only a label= (and tags=, about=) explains, in the graph; it does nothing.',
     ['&why label="The bass walks down a fifth each bar."'],
     'display.md',
   ),
@@ -767,9 +754,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     show: null,
     label: null,
     laps: null,
-    title: null,
     tags: null,
-    tier: null,
     about: null,
     style: null,
     reach: null,
@@ -1083,9 +1068,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     pitch,
     show,
     label,
-    title,
     tags,
-    tier,
     about,
     style,
     laps,
@@ -1119,9 +1102,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     pitch,
     show,
     label,
-    title,
     tags,
-    tier,
     about: about ?? undefined,
     ...(style ? { style } : {}),
     laps,

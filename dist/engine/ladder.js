@@ -468,10 +468,8 @@ export function formsUsed(source, options = {}) {
             ['laps', d.laps],
             ['chance', d.chance],
             ['seed', d.seed],
-            ['title', d.title],
             ['tags', d.tags],
             ['about', d.about],
-            ['tier', d.tier],
             ['style', d.style],
         ])
             if (v !== null && v !== undefined)

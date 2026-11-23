@@ -1,4 +1,4 @@
-&piece title="Golden reference" tags="basics" label="One of every kind of wheel and edge, in one graph: the gallery's reference picture." about=&out
+&piece tags="basics" label="One of every kind of wheel and edge, in one graph: the gallery's reference picture." about=&out
 # time, and the tables a melody reads
 &bar scan(27 23 26 24) step=free(96bpm, 60..160)
 &key shift=free(0, -6..6)

@@ -16,9 +16,7 @@ interface Body {
     show: string | null;
     label: string | null;
     laps: number | null;
-    title: string | null;
     tags: string | null;
-    tier: number | null;
     about: Ref[] | null;
     style: StyleSpec | null;
     reach: Record<string, number> | null;

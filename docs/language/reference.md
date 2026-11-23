@@ -7,7 +7,7 @@ Every form the parser reads, what it means and an example: generated from the pa
 ## Lines
 
 - `&name …`: A cell: one per line, its name first, then its attributes (key=value) and its braid, in any order. [→](cell.md) `&theme over=&major step=&bar 0 2 4 5`
-- `&name label="…"`: A note: a cell with only a label= (and title=, tags=, about=) explains, in the graph; it does nothing. [→](display.md) `&why label="The bass walks down a fifth each bar."`
+- `&name label="…"`: A note: a cell with only a label= (and tags=, about=) explains, in the graph; it does nothing. [→](display.md) `&why label="The bass walks down a fifth each bar."`
 - `off`: Switched off: it, and everything that reads through it or plays it, is silent (and hidden from the graph). [→](cell.md) `&drums off over=&kit step=&bar 0 1`
 - `# …` · `// …`: A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere. [→](cell.md) `&tune step=2 0 2 4  # the opening`
 - `… +` · `… *` · `… ,` · `… [`: A line ending in +, *, a comma or [ continues on the next one (a long mix). [→](cell.md)
@@ -125,8 +125,8 @@ An attribute is `key=value`, anywhere on a cell's line, each at most once (`step
 - `size=x`: How large it’s drawn, against the others: 2 twice, .5 half. [→](display.md) `&theme size=2 step=2 0 2 4`
 - `laps=n`: How many laps it plays, then it ends. [→](time.md) `&bar meter("4/4") step=84bpm laps=30`
 - `chance=p` · `chance=free(p, 0..1)`: What a bare x? means here: the probability it is dropped, or free() for a slider. [→](cell.md) `&ghost chance=.8 step=4 0? 0? 0? 0?` · `&ghost chance=free(.7, 0..1) step=4 0? 0?`
-- `seed=n`: A different sequence of chance. [→](cell.md) `&ghost seed=7 step=4 0? 0? 0? 0?`
-- `tags="tag, tag"`: On a cell: its clusters in the graph, comma-separated (on the piece’s card, the old spelling of its tags: its file’s frontmatter holds them) [→](display.md) `&lead tags="melody" s=saw loop=C4` · `&beam tags="metal" map=ratios 1 2.756 5.404`
+- `seed=n`: The seed a cell's chance is thrown from, which no edit to the cell moves. [→](cell.md) `&ghost seed=7 step=4 0? 0? 0? 0?`
+- `tags="tag, tag"`: On a cell: its clusters in the graph, comma-separated. [→](display.md) `&lead tags="melody" s=saw loop=C4` · `&beam tags="metal" map=ratios 1 2.756 5.404`
 - `about=&cell` · `about=(&a &b …)`: On a note: the cells it explains — on a note (a label= and nothing else) [→](display.md) `&fenvNote label="The filter opens on every note." about=&fenv` · `&why label="Two cells at once." about=(&fenv &accent)`
 - `style=&s` · `style=[&a * w, &b * w]` · `style=a..b` · `style=a..b * &curve`: Its style: a map=style cell, &(map=style …), or a mix of them by weight; or a range from one to another over its scope (style=&funk..&bossa). On the note &style, the section’s, read by axis (&style[bite]) [→](style.md) `&style label="Funk" style=&funk` · `&style label="close to Funk, then Bossa nova" style=[&funk * .8, &bossa * .2]..&bossa`
 

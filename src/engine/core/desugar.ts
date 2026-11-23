@@ -60,7 +60,7 @@ export const FAMILIES: readonly Family[] = [
   },
   {
     key: 'inert',
-    rows: '2, 85–90 a note, `label=` `show=` `size=` `tags=` `about=` `title=` `tier=`',
+    rows: '2, 85–90 a note, `label=` `show=` `size=` `tags=` `about=`',
     rewrite: (text) => inert(text),
   },
   {
@@ -667,10 +667,10 @@ function named(text: string): string {
 }
 
 /** The attributes that say how a cell is drawn or named, never how it sounds (068: outside, inert). */
-const INERT = /^(?:label|show|size|about|title|tier)=/;
+const INERT = /^(?:label|show|size|about)=/;
 
 /**
- * What plays nothing left out (068's rows 2 and 85–90, inert): a note (a cell with a label or a title and nothing else)
+ * What plays nothing left out (068's rows 2 and 85–90, inert): a note (a cell with a label and nothing else)
  * and the attributes that draw or name a cell. The core is for a machine reader: what a piece plays, not how it is drawn.
  */
 function inert(text: string): string {

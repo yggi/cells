@@ -25,6 +25,11 @@
  *  - **trim**: the last note left out, the note before it then held to the lap's end (a line holds a note to the next
  *    onset), where the line keeps `TRIM_FEWEST` notes (the lead's drop: a rhythm `drop` leaves any one note out).
  *
+ * Rung 3 has a progression's operators (`progression.ts`, decision 052, point 8): a harmony the fragment defines, varied
+ * as a line one level up around its cadence (the last bar of each four-bar phrase): rotate and reverse each phrase, a
+ * chord moved a third (`third`), a secondary dominant on a step's second half (`dominant`); only where a frontend asks
+ * for `third` or `dominant`, after every line. `variationBy` gives back one variation from its `by:` (point 9).
+ *
  * Each operator acts on the lines it is for: the rhythm ones on lines of hits, the pitched ones on pitched lines.
  * In Jambot's order (yggi/jambot `variations`, so its draws pick the same one): the lines in the order the lap first plays
  * them (by onset, then pitch), and for each its rotation, its drops in the order its notes play, its adds by step, then
@@ -47,18 +52,27 @@ import { anchorsAmong, type Anchor } from './anchors';
 import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written, type Line, type LineNote } from './lines';
 import { referenceOf, type Reference } from './reference';
 import { answeredIn } from '../use';
+import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionsOf, type Progression } from './progression';
 
 export { backbeatOf, type Anchor } from './anchors';
 export type { Reference } from './reference';
+export { THIRDS, PHRASE_BARS } from './progression';
 
-/** The operators: the rhythm ones (rung 1) and the pitched ones (rung 2). */
-export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim';
+/** The operators: the rhythm ones (rung 1), the pitched ones (rung 2) and the harmony's own (rung 3). */
+export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim' | 'third' | 'dominant';
 
 /** The operators a frontend gets where it names none, in their order: the rhythm ones. */
 export const RHYTHM_OPERATORS: readonly Operator[] = ['rotate', 'drop', 'add'];
 
 /** The pitched operators, in their order: for a bass, a lead. */
 export const PITCHED_OPERATORS: readonly Operator[] = ['transpose', 'invert', 'reverse', 'bend', 'trim'];
+
+/**
+ * The operators on a progression (rung 3), in their order: the line's rotate and reverse a level up, each phrase between
+ * its cadences, then a chord a third away and a secondary dominant. A progression is varied by these alone, and only
+ * where a frontend asks for one of them: rotate and reverse act on a progression only beside `third` or `dominant`.
+ */
+export const HARMONY_OPERATORS: readonly Operator[] = ['rotate', 'reverse', 'third', 'dominant'];
 
 /** Transposition's amounts where a frontend names none, in degrees of the table read. */
 export const DEGREES: readonly number[] = [-2, -1, 1, 2];
@@ -103,7 +117,11 @@ export interface VaryOptions {
 }
 
 /** A fragment read under its workbench: the workbench's lines it doesn't write itself, then its own. */
-function read(source: string, workbench = '', resolve?: Resolve): { lines: Line[]; anchors: Anchor[]; result: CompileResult | null; own: ReadonlySet<string> } {
+function read(
+  source: string,
+  workbench = '',
+  resolve?: Resolve,
+): { lines: Line[]; anchors: Anchor[]; result: CompileResult | null; own: ReadonlySet<string>; progressions: Progression[] } {
   // (a plugin's from line read as the lines it answers, so a groove's levels a plugin writes are lines to vary by, #799)
   const fragment = resolve ? answeredIn(source, resolve) : source;
   const own = new Set(declarations(fragment).map((l) => l.name));
@@ -112,12 +130,20 @@ function read(source: string, workbench = '', resolve?: Resolve): { lines: Line[
     .map((l) => l.written);
   const text = [...bench, fragment].join('\n');
   const result = compileSource(text, undefined, resolve ? { resolve } : {});
-  if (!result.ok) return { lines: [], anchors: [], result: null, own };
+  if (!result.ok) return { lines: [], anchors: [], result: null, own, progressions: [] };
   const lines = linesOf(text, result);
-  return { lines, anchors: anchorsAmong(lines, result), result, own };
+  const progressions = progressionsOf(fragment, result, own, playedBy(lines));
+  const cadences = progressions.flatMap((p) => p.cadence.map((step): Anchor => ({ line: p.name, step, reason: 'cadence' })));
+  return { lines, anchors: [...anchorsAmong(lines, result), ...cadences], result, own, progressions };
 }
 
-/** A fragment's anchors on its workbench, derived from its text (decision 052, point 3): the kick's line, the backbeat's, the roots on chord changes. */
+/** The cells a fragment's lines play: their triggers, their cards and their cells of levels. */
+const playedBy = (lines: readonly Line[]): ReadonlySet<string> => new Set(lines.flatMap((l) => [l.trigger, l.card.name, ...(l.levels ? [l.levels.cell] : [])]));
+
+/**
+ * A fragment's anchors on its workbench, derived from its text (decision 052, point 3): the kick's line, the backbeat's,
+ * the roots on chord changes, and a progression's cadence (each step in the last bar of a four-bar phrase, point 8).
+ */
 export const anchorsOf = (fragment: string, workbench?: string, resolve?: Resolve): readonly Anchor[] => read(fragment, workbench, resolve).anchors;
 
 /** A line's name as an option may write it: `&fill` or `fill`. */
@@ -153,8 +179,14 @@ export interface Readings {
 
 /** `variations`, each with its notes as recognition compares them, and the source's. */
 export function readVariations(fragment: string, options: VaryOptions = {}): Readings {
-  const { workbench, operators = RHYTHM_OPERATORS, keep = [], fewest = 1, degrees = DEGREES, resolve } = options;
-  const { lines, anchors, result, own } = read(fragment, workbench, resolve);
+  return readSome(fragment, options);
+}
+
+/** `readVariations`, or only one line's by one operator (`variationBy`): the same variations, made alike. */
+function readSome(fragment: string, options: VaryOptions, only?: { line: string; operator: Operator }): Readings {
+  const { workbench, keep = [], fewest = 1, degrees = DEGREES, resolve } = options;
+  const operators = only ? [only.operator] : (options.operators ?? RHYTHM_OPERATORS);
+  const { lines, anchors, result, own, progressions } = read(fragment, workbench, resolve);
   if (!result) return { notes: null, span: null, bar: null, variations: [] };
   const left = new Set([...anchors.filter((a) => a.step === undefined).map((a) => a.line), ...keep.map(named)]);
   const pinned = (line: Line, n: LineNote) => anchors.some((a) => a.line === line.name && a.step === n.step);
@@ -177,12 +209,13 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
     });
   };
   const heardKeys = lines.map((l, i) => heardOf(i, l.notes));
-  const chords = harmoniesOf(result, own, lines);
+  const chords = harmoniesOf(result, own, lines, progressions);
   const laps = [...lines.map((l) => (l.stepWhole === null ? null : l.steps * l.stepWhole)), ...chords.map((h) => h.lap)];
   const meter = lines.find((l) => l.meter)?.meter ?? chords.find((h) => h.meter)?.meter ?? null;
   const span = laps.length && laps.every((l) => l !== null) ? laps.reduce((a, b) => lcm(a!, b!)) : null;
   const bar = meter ? meter.pulses / meter.unit : null;
   const fixed = chords.flatMap((h) => h.notes);
+  const fixedBut = (name: string, notes: readonly HeardNote[]) => chords.flatMap((h) => (h.name === name ? notes : h.notes));
   const noteKeys = lines.map((l, i) => keysOf(i, l.notes));
   const strikeKeys = lines.map((l, i) => strikesOf(i, l.notes));
   const total = lines.reduce((sum, l) => sum + l.notes.length, 0);
@@ -275,7 +308,7 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
   };
   const order = lines
     .map((_, i) => i)
-    .filter((i) => lines[i]!.notes.length > 0 && !left.has(lines[i]!.name))
+    .filter((i) => lines[i]!.notes.length > 0 && !left.has(lines[i]!.name) && (!only || only.line === lines[i]!.name))
     .sort((a, b) => first(a)[0] - first(b)[0] || first(a)[1] - first(b)[1]);
   for (const i of order) {
     const line = lines[i]!;
@@ -339,6 +372,37 @@ export function readVariations(fragment: string, options: VaryOptions = {}): Rea
       }
     }
   }
+  // (then each progression, after every line: by the harmony's operators, where one of its own is asked; S2 against the
+  // source and every variation before it, as a line's, its chords keyed as they sound)
+  const base = signature(-1, []);
+  const harmonic = !!only || operators.some((o) => o === 'third' || o === 'dominant');
+  const keyOf = (p: Progression, slots: Progression['slots']) => `${base}#${progressions.map((q) => (q === p ? progressionKey(q, slots) : progressionKey(q, q.slots))).join('#')}`;
+  if (progressions.length) seen.add(keyOf(progressions[0]!, progressions[0]!.slots));
+  for (const p of progressions) {
+    if (!harmonic || left.has(p.name) || (only && only.line !== p.name)) continue;
+    const k = chords.findIndex((h) => h.name === p.name.slice(1));
+    const asked = operators.filter((o) => HARMONY_OPERATORS.includes(o));
+    for (const c of progressionCandidates(p, asked, result)) {
+      const sig = keyOf(p, c.slots);
+      if (seen.has(sig)) continue;
+      seen.add(sig);
+      const braid = progressionBraid(c.slots);
+      const w = wordsOf(p.name.slice(1));
+      const amount = c.amounts.length ? ` ${c.amounts.join(' ')}` : '';
+      const variation: Variation = {
+        id: `vary:${c.operator}:${p.name}${c.amounts.map((a) => `:${a}`).join('')}:${out.length}`,
+        tool: 'vary',
+        rule: c.operator,
+        title: `${p.name}: ${c.what}`,
+        before: w ? [...w.head, ...w.attrs, ...w.braid].join(' ') : '',
+        after: w ? [...w.head, ...w.attrs, ...braid].join(' ') : '',
+        apply: (source) => setBraid(source, p.name.slice(1), braid),
+        line: p.name,
+        by: `${c.operator} ${p.name}${amount}`,
+      };
+      out.push({ variation, notes: [...heardKeys.flat(), ...fixedBut(p.name.slice(1), progressionNotes(p, c.slots, k))] });
+    }
+  }
   return { notes: [...heardKeys.flat(), ...fixed], span, bar, variations: out };
 }
 
@@ -354,9 +418,14 @@ function lcm(a: number, b: number): number {
  * which is a stack (`[0,2,4]`); its chords' degrees as notes (its name, the table it reads, the degree, its accidental),
  * each a step long, its lap and its meter.
  */
-function harmoniesOf(result: CompileResult, own: ReadonlySet<string>, lines: readonly Line[]): { notes: HeardNote[]; lap: number; meter: Meter | null }[] {
-  const played = new Set(lines.flatMap((l) => [l.trigger, l.card.name, ...(l.levels ? [l.levels.cell] : [])]));
-  const out: { notes: HeardNote[]; lap: number; meter: Meter | null }[] = [];
+function harmoniesOf(
+  result: CompileResult,
+  own: ReadonlySet<string>,
+  lines: readonly Line[],
+  progressions: readonly Progression[],
+): { name: string; notes: HeardNote[]; lap: number; meter: Meter | null }[] {
+  const played = playedBy(lines);
+  const out: { name: string; notes: HeardNote[]; lap: number; meter: Meter | null }[] = [];
   for (const name of own) {
     const cell = result.cells.get(name);
     if (!cell?.step || played.has(name) || cell.voice) continue;
@@ -368,8 +437,12 @@ function harmoniesOf(result: CompileResult, own: ReadonlySet<string>, lines: rea
     for (const e of events) at.set(e.step, (at.get(e.step) ?? 0) + 1);
     if (![...at.values()].some((n) => n > 1)) continue;
     const k = out.length;
-    const notes = events.map((e) => ({ at: e.step * whole, key: `${whole * e.duration} chords#${k} ${e.table}:${e.tableShift}:${e.value}:${e.alter}:${e.transpose ?? 0}` }));
-    out.push({ notes, lap: cell.steps * whole, meter });
+    // (a progression Vary reads keys its chords as it writes them, so a variation's are keyed alike: the same keys)
+    const p = progressions.find((q) => q.name === `&${name}`);
+    const notes = p
+      ? progressionNotes(p, p.slots, k)
+      : events.map((e) => ({ at: e.step * whole, key: `${whole * e.duration} chords#${k} ${e.table}:${e.tableShift}:${e.value}:${e.alter}:${e.transpose ?? 0}` }));
+    out.push({ name, notes, lap: cell.steps * whole, meter });
   }
   return out;
 }
@@ -402,6 +475,27 @@ export function drawn(draw: number, n: number): number {
   if (!(draw >= 0 && draw < 1)) throw new Error(`varied: draw ${draw} is outside [0, 1)`);
   return Math.floor(draw * n);
 }
+
+/** A `by:` as `Variation.by` writes it: the operator, the line, its amounts. */
+const BY = /^([a-z]+) (&[A-Za-z_][A-Za-z0-9_]*)((?: -?\d+)*)$/;
+
+/**
+ * The variation a `by:` names (decision 052, point 9): `drop &hat 6`, `transpose &bass -1`, `third &harm 2 -2`, made on
+ * the fragment's text under the same options as `variations`, without making the others: only that line's variations by
+ * that operator. So a filed variation's text is rebuilt from its source, its `by:` and the options it was made with
+ * (Jambot's rebuilt layer, a lineage replayed). Null where the text gives none of that name (its line anchored or kept,
+ * or the variation playing its source). One `variations` leaves out as playing the notes of a variation before it, by
+ * another operator or line, is still given here.
+ */
+export function variationBy(fragment: string, by: string, options: VaryOptions = {}): Variation | null {
+  const m = BY.exec(by.trim());
+  if (!m || !OPERATORS.includes(m[1] as Operator)) return null;
+  const variations = readSome(fragment, options, { line: m[2]!, operator: m[1] as Operator }).variations;
+  return variations.find((v) => v.variation.by === by.trim())?.variation ?? null;
+}
+
+/** Every operator, as a `by:` may name it. */
+const OPERATORS: readonly Operator[] = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, ...HARMONY_OPERATORS])];
 
 /** The variation `drawn` picks of the n `variations` gives; null where there is none. A draw outside [0, 1) is an error. */
 export function varied(fragment: string, draw: number, options?: VaryOptions): Variation | null {

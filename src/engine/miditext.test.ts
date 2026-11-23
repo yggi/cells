@@ -34,7 +34,7 @@ describe('a MIDI file as text', () => {
 
   it('is told from a piece by its first line', () => {
     expect(isMidiText('# a file\n\nmidi format=1 ppq=96\n')).toBe(true);
-    expect(isMidiText('&piece title="midi"\n')).toBe(false);
+    expect(isMidiText('&piece label="midi"\n')).toBe(false);
     expect(isMidiText('# midi\n&bar scan(1)')).toBe(false);
   });
 

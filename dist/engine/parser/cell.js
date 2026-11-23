@@ -200,23 +200,10 @@ export const KEYS = {
         },
     },
     seed: { form: 'seed=n', examples: ['&ghost seed=7 step=4 0? 0? 0? 0?'], read: (s, b) => (b.seed = s.int('a whole number after seed=', NUMBER_PLACES.seed)) },
-    title: { form: 'title="text"', examples: ['&piece title="Swing blues" tags="genre:jazz, rhythm" label="A blues in F."'], read: text('title', 'title="Swing blues"') },
     tags: {
         form: 'tags="tag, tag"',
         examples: ['&lead tags="melody" s=saw loop=C4', '&beam tags="metal" map=ratios 1 2.756 5.404'],
         read: text('tags', 'tags="jazz, blues"'),
-    },
-    tier: {
-        form: 'tier=n',
-        examples: ['&piece title="Steps: a tune on one line" tags="tutorial" tier=1 label="Numbers, rests, holds and repeats."'],
-        read: (s, b, word, at) => {
-            s.free(NUMBER_PLACES.tier);
-            const n = s.match(/[0-9]+(?![0-9.])/y);
-            if (n === null || !(parseInt(n, 10) >= 1 && parseInt(n, 10) <= 9999))
-                s.fail('tier= is a tier of the tutorial, 1 to 9999: tier=1', at, word.length + 1);
-            b.tier = parseInt(n, 10);
-            b.paramSpans.tier = s.place(at);
-        },
     },
     style: {
         form: 'style=&s · style=[&a * w, &b * w] · style=a..b · style=a..b * &curve',
@@ -581,12 +568,14 @@ const RETIRED_KEYS = {
     init: 'init= is now shift=',
     out: 'out= is now a command: out(voice, &cell) / step(&meter, bpm=…)',
     time: 'time= is now a command: out(voice, &cell) / step(&meter, bpm=…)',
-    rung: 'rung= is now tier= (decision 020): the tutorial is in tiers, tier=1 to tier=9',
+    rung: 'rung= is retired: a piece’s tier is `tier:` in its file’s frontmatter',
+    title: 'title= is retired: a piece’s title is `title:` in its file’s frontmatter',
+    tier: 'tier= is retired: a piece’s tier is `tier:` in its file’s frontmatter',
     ...RETIRED_PARAMS,
 };
 export const LINE_SYNTAX = [
     syntax('line', '&name …', 'A cell: one per line, its name first, then its attributes (key=value) and its braid, in any order.', ['&theme over=&major step=&bar 0 2 4 5'], 'cell.md'),
-    syntax('line', '&name label="…"', 'A note: a cell with only a label= (and title=, tags=, about=) explains, in the graph; it does nothing.', ['&why label="The bass walks down a fifth each bar."'], 'display.md'),
+    syntax('line', '&name label="…"', 'A note: a cell with only a label= (and tags=, about=) explains, in the graph; it does nothing.', ['&why label="The bass walks down a fifth each bar."'], 'display.md'),
     syntax('line', 'off', 'Switched off: it, and everything that reads through it or plays it, is silent (and hidden from the graph).', ['&drums off over=&kit step=&bar 0 1'], 'cell.md'),
     syntax('line', '# … · // …', 'A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere.', ['&tune step=2 0 2 4  # the opening'], 'cell.md'),
     syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
@@ -634,9 +623,7 @@ export function parseBody(s, head) {
         show: null,
         label: null,
         laps: null,
-        title: null,
         tags: null,
-        tier: null,
         about: null,
         style: null,
         reach: null,
@@ -921,7 +908,7 @@ export function parseBody(s, head) {
     const playMove = b.playMove && braid.kind !== 'blank'
         ? { ...(b.playMove.transpose ? { transpose: b.playMove.transpose } : {}), ...(b.playMove.degree ? { degree: b.playMove.degree } : {}) }
         : null;
-    const { over, base, shift, step, map, stride, cycle, env, pitch, show, label, title, tags, tier, about, style, laps, chance, seed, size, swing, bend, swingMoves, legato, params, paramSpans, paramCells, paramClocks, } = b;
+    const { over, base, shift, step, map, stride, cycle, env, pitch, show, label, tags, about, style, laps, chance, seed, size, swing, bend, swingMoves, legato, params, paramSpans, paramCells, paramClocks, } = b;
     return {
         name: head.name,
         span: head.span,
@@ -940,9 +927,7 @@ export function parseBody(s, head) {
         pitch,
         show,
         label,
-        title,
         tags,
-        tier,
         about: about ?? undefined,
         ...(style ? { style } : {}),
         laps,

@@ -35,7 +35,6 @@ import { FROM_FORM, HEAD_FLAGS, isAttribute, readFrom, topTokens, type FromForm 
 import { counts } from './core/desugar';
 import type { Diagnostic, Span } from './ast';
 import { STYLE } from './style';
-import { BOUND_BY_NAME, byNameMessage } from './byname';
 import type { CompileOptions, LockedAnswer, Origin, Resolve, Take } from './program';
 import { BY_FRAGMENT, type PluginFragment, type Refusal } from './fills';
 import { WIRE, wireArg } from './wire';
@@ -679,12 +678,6 @@ function renamesOf(from: FromUse, lines: readonly Line[], id: string, say: (mess
   return { names, lacking };
 }
 
-/** Read the old way, at a piece's level: the names it defines, and where a parameter it filled by name is said. */
-interface OldBinding {
-  readonly defines: ReadonlySet<string>;
-  readonly warn: (message: string) => void;
-}
-
 /** A piece's own lines, as a `*` from a template meets them: the names it defines, and what each of its lines reads. */
 interface Level {
   readonly defines: ReadonlySet<string>;
@@ -711,7 +704,6 @@ function give(
   run: Run,
   say: (message: string) => void,
   taken: Set<string>,
-  old?: OldBinding,
   level?: Level,
 ): Given {
   const { id, from } = entry;
@@ -733,7 +725,7 @@ function give(
     return { taken: { id, names: asked, lines: sharedLines(theirs), resolved: true }, copy: [] };
   }
   if (signatures.length > 1) say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
-  return instantiate(from, id, signatures[0]!, path, text, resolve, run, say, taken, old, level);
+  return instantiate(from, id, signatures[0]!, path, text, resolve, run, say, taken, level);
 }
 
 /**
@@ -752,7 +744,6 @@ function instantiate(
   run: Run,
   say: (message: string) => void,
   taken: Set<string>,
-  old?: OldBinding,
   level?: Level,
 ): Given {
   const full = fragmentLines(path, text, resolve, run, say);
@@ -784,11 +775,6 @@ function instantiate(
   if (from.head.length && !one) say(`The attributes before from are the head's, and this line takes ${names.size} heads from ${quoted(id)}: write them on each head's own line`);
   // (the arguments: a bare reference is that cell, anything else a cell of the copy's)
   const args = new Map((from.args ?? []).map((a) => [a.name, a.value] as const));
-  // (read the old way: a parameter the library read by name before it declared it, filled by the piece's cell of its
-  // name, BOUND_BY_NAME)
-  const readByName = old ? (BOUND_BY_NAME.get(id) ?? []).filter((p) => optional.includes(p) && !args.has(p) && old.defines.has(p)) : [];
-  for (const p of readByName) args.set(p, `&${p}`);
-  if (readByName.length) old!.warn(byNameMessage(id, readByName, `${from.id}(${[...args].map(([k, v]) => `${k}=${v}`).join(', ')})`));
   for (const k of args.keys())
     if (!optional.includes(k))
       say(`${quoted(id)} takes no ${k}=: ${optional.length ? `its optional parameters are ${optional.map((o) => `${o}=`).join(', ')}` : 'it has no optional parameters'}`);
@@ -931,7 +917,7 @@ function instantiate(
   for (const p of sharedValued) copy.push({ ...lineOf(inherited(names.get(p)!, byName.get(p)!.code, asCell(values.get(p)!, p, own))), origin: byName.get(p)!.origin ?? [] });
   // (a parameter's default a collection gives is shared by its name: a cell of the piece's of that name stands in for it,
   // which the line doesn't say, so it is said here, but where the piece's line is the default's word for word, #637)
-  if (level?.warn && !old)
+  if (level?.warn)
     for (const o of optional)
       if (!definesOwn.has(o) && !values.has(o) && level.defines.has(o) && reached.has(o) && level.codes.get(o) !== byName.get(o)?.code)
         level.warn(`The piece defines &${o}, and ${quoted(id)} takes its &${o} from a collection by default: pass yours, ${from.id}(${o}=&${o}), or rename it`);
@@ -1007,7 +993,7 @@ export interface Expansion {
 }
 
 /** The expansion of a text (see the module's comment), its `use` and `from` lines resolved by `options`. */
-export function expansion(text: string, { resolve, locked = [], old = false, plugins: theirs = [], answers: lockedAnswers = [] }: CompileOptions = {}): Expansion {
+export function expansion(text: string, { resolve, locked = [], plugins: theirs = [], answers: lockedAnswers = [] }: CompileOptions = {}): Expansion {
   const plugins: Plugins = theirs.length ? new Map([...BY_FRAGMENT, ...theirs.map((f) => [f.fragment, f] as const)]) : BY_FRAGMENT;
   const own = linesOf(text);
   const uses = own.flatMap((l) => {
@@ -1056,9 +1042,6 @@ export function expansion(text: string, { resolve, locked = [], old = false, plu
     hashes[i] = hash;
     if (recorded && !hashIs(recorded, theirs))
       diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });
-    const binding = old
-      ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) }
-      : undefined;
     const g = give(
       u,
       [id],
@@ -1073,7 +1056,6 @@ export function expansion(text: string, { resolve, locked = [], old = false, plu
       },
       say,
       taken,
-      binding,
       {
         ...level,
         warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }),

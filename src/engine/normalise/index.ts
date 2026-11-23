@@ -32,6 +32,7 @@ import { libraryCells, libraryLines, libraryTemplates, takenArguments, type Libr
 import { narrowestFroms } from './narrowest';
 import { interfaceNames } from './names';
 import { evenScan, swingClock } from './meter';
+import { seeds } from './seeds';
 import { migrations } from '../migrate';
 
 /** What Normalise reads besides the text: the compile's options, and the library whose lines a piece takes by `use`. */
@@ -65,12 +66,11 @@ export const normalisations =
       ...takenArguments(source),
       ...libraryCells(source, options.library),
       ...narrowestFroms(source, options.resolve),
+      ...seeds(source, result),
     ];
   };
 
 /** A text in the canonical spelling, one rewrite at a time, each playing the same notes; the steps are what each did. */
 export const normalise = (source: string, options?: NormaliseOptions): { source: string; steps: string[] } => {
-  // (it writes Migrate's rule before its own: a `from` line is read the old way)
-  const old = { ...options, old: true };
-  return rewriteAll(source, normalisations(old), ROUNDS, old);
+  return rewriteAll(source, normalisations(options), ROUNDS, options);
 };

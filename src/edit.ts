@@ -48,7 +48,6 @@ export {
 } from './engine/vary';
 export { linesOf, tapWhole } from './engine/vary/lines';
 export { shorten, shortenAll, type ShortenOptions, type Suggestion } from './engine/shorten';
-export { movedCard } from './engine/shorten/card';
 export { normalise } from './engine/normalise';
 export { migrate } from './engine/migrate';
 export { toCore, type Core, type CoreOptions, type Interface } from './engine/core';

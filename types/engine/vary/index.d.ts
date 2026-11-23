@@ -4,12 +4,19 @@ import { type Anchor } from './anchors';
 import { type Reference } from './reference';
 export { backbeatOf, type Anchor } from './anchors';
 export type { Reference } from './reference';
-/** The operators: the rhythm ones (rung 1) and the pitched ones (rung 2). */
-export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim';
+export { THIRDS, PHRASE_BARS } from './progression';
+/** The operators: the rhythm ones (rung 1), the pitched ones (rung 2) and the harmony's own (rung 3). */
+export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim' | 'third' | 'dominant';
 /** The operators a frontend gets where it names none, in their order: the rhythm ones. */
 export declare const RHYTHM_OPERATORS: readonly Operator[];
 /** The pitched operators, in their order: for a bass, a lead. */
 export declare const PITCHED_OPERATORS: readonly Operator[];
+/**
+ * The operators on a progression (rung 3), in their order: the line's rotate and reverse a level up, each phrase between
+ * its cadences, then a chord a third away and a secondary dominant. A progression is varied by these alone, and only
+ * where a frontend asks for one of them: rotate and reverse act on a progression only beside `third` or `dominant`.
+ */
+export declare const HARMONY_OPERATORS: readonly Operator[];
 /** Transposition's amounts where a frontend names none, in degrees of the table read. */
 export declare const DEGREES: readonly number[];
 /** A bend's amounts, in degrees of the table read from the note before the last: 1 or 2, either way (yggi/jambot#424). */
@@ -47,7 +54,10 @@ export interface VaryOptions {
      */
     readonly resolve?: Resolve;
 }
-/** A fragment's anchors on its workbench, derived from its text (decision 052, point 3): the kick's line, the backbeat's, the roots on chord changes. */
+/**
+ * A fragment's anchors on its workbench, derived from its text (decision 052, point 3): the kick's line, the backbeat's,
+ * the roots on chord changes, and a progression's cadence (each step in the last bar of a four-bar phrase, point 8).
+ */
 export declare const anchorsOf: (fragment: string, workbench?: string, resolve?: Resolve) => readonly Anchor[];
 /** Every variation by one operator on one line, in Jambot's order, none playing the notes of its source or of one before it. */
 export declare const variations: (fragment: string, options?: VaryOptions) => readonly Variation[];
@@ -81,5 +91,14 @@ export interface Readings {
 export declare function readVariations(fragment: string, options?: VaryOptions): Readings;
 /** The index a draw in [0, 1) takes of n: ⌊draw · n⌋, the one Jambot's `pick(draw, ones)` takes for every draw. */
 export declare function drawn(draw: number, n: number): number;
+/**
+ * The variation a `by:` names (decision 052, point 9): `drop &hat 6`, `transpose &bass -1`, `third &harm 2 -2`, made on
+ * the fragment's text under the same options as `variations`, without making the others: only that line's variations by
+ * that operator. So a filed variation's text is rebuilt from its source, its `by:` and the options it was made with
+ * (Jambot's rebuilt layer, a lineage replayed). Null where the text gives none of that name (its line anchored or kept,
+ * or the variation playing its source). One `variations` leaves out as playing the notes of a variation before it, by
+ * another operator or line, is still given here.
+ */
+export declare function variationBy(fragment: string, by: string, options?: VaryOptions): Variation | null;
 /** The variation `drawn` picks of the n `variations` gives; null where there is none. A draw outside [0, 1) is an error. */
 export declare function varied(fragment: string, draw: number, options?: VaryOptions): Variation | null;
