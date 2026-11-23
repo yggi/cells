@@ -7,10 +7,10 @@ source: seed
 &band, &drums, &bass, &pad, &stab, &lead, &drumsOut, &bassOut, &padOut, &stabOut, &leadOut, &bassV, &padV, &keysV, &leadV, &sound, &midi from (&drumlines, &bassline, &padline, &stabline, &leadline, &bassLevel, &padLevel, &stabLevel, &leadLevel, &style, &intensity) style=&(map=style sync=.5 harm=.5 bite=.5)
 &band &drums &bass &pad &stab &lead
 &drums, &drumsOut from drums_performer(drumsDrive=&drumsDrive) &drumlines
-&bass, &bassOut from bass_performer(bassLevel=&bassLevel, bassV=&bassV, bassDrive=&bassDrive) &bassline
-&pad, &padOut from pad_performer(padLevel=&padLevel, padV=&padV) &padline
-&stab, &stabOut from stab_performer(stabLevel=&stabLevel, keysV=&keysV, stabDrive=&stabDrive) &stabline
-&lead, &leadOut from lead_performer(leadLevel=&leadLevel, leadV=&leadV) &leadline
+&bass, &bassOut from bass_performer(bassLevel=&bassLevel, bassV=&bassV, bassDrive=&bassDrive, style=&style) &bassline
+&pad, &padOut from pad_performer(padLevel=&padLevel, padV=&padV, style=&style) &padline
+&stab, &stabOut from stab_performer(stabLevel=&stabLevel, keysV=&keysV, stabDrive=&stabDrive, style=&style) &stabline
+&lead, &leadOut from lead_performer(leadLevel=&leadLevel, leadV=&leadV, style=&style) &leadline
 &bassV from bass(style=&style)
 &padV from pad(style=&style)
 &keysV from keys(style=&style)
@@ -39,7 +39,7 @@ The default band (decision 063 §1, #391): who plays a score, on what, and where
 
 **Its head, `&band`,** is decision 061's table of performers: the five role cells, `&drums`, `&bass`, `&pad`, `&stab` and `&lead`, so a score's selector over the band (`&form over=&band step=1m …`) reads the client's players. Who plays when is the score's; who they are, the band's.
 
-**The performers** are the seed library's five (decisions 058 and 061), each a copy taken by its signature (decision 065): its role and its gate, `&bass, &bassOut from bass_performer(bassLevel=&bassLevel, bassV=&bassV) &bassline`. The part each plays is the score's, passed as the band's argument (`bassline=&bassline`), and so are its levels (`bassLevel=&bassLevel`). A level the score doesn't pass is the band's own, one level of .8, the performers' default. A part it doesn't pass rests (decision 063 §4).
+**The performers** are the seed library's five (decisions 058 and 061), each a copy taken by its signature (decision 065): its role and its gate, `&bass, &bassOut from bass_performer(bassLevel=&bassLevel, bassV=&bassV, style=&style) &bassline`. The pitched four take the band's `&style` too, as their instruments do (the drummer has none: its sounds are its kit's, and style reaches its drums through the score's lines). The part each plays is the score's, passed as the band's argument (`bassline=&bassline`), and so are its levels (`bassLevel=&bassLevel`). A level the score doesn't pass is the band's own, one level of .8, the performers' default. A part it doesn't pass rests (decision 063 §4).
 
 **Its intensity** (decision 096): `&intensity`, an optional parameter, the section's from 0 to 1 (the song's plus its kind's offset, a sum the score writes: `&intensity [&song + -.45]` for a breakdown), its own 1. The band drives three of its performers by it, each a sum on the velocity's scale, Jambot's dynamics lifted (yggi/jambot `packages/engine/src/dynamics.ts` @ 602cb26, `baseVelocityOf`): the drums `[&intensity * .35 + .65]`, the bass `[&intensity * .25 + .75]`, the stab `[&intensity * .2222 + .7778]` (its 70 + 20e over 90). The pad's velocity reads the bite beside the energy, and the lead's no energy, so neither is driven. At its own 1 every drive is 1: a score that writes no intensity plays its levels as written.
 
