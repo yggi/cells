@@ -137,19 +137,19 @@ describe('source edits', () => {
 
 describe('editor operations', () => {
   const src = `&bar scan(27 23 26 24) step=84bpm      # the clock
-&theme over=scale(0,2) step=&bar 0@2 [0, 4, 7] &m[<<] ~   // tune
+&theme over=scale(minor, C) step=&bar 0@2 [0, 4, 7] &m[<<] ~   // tune
 &mix [&theme * &lead,
       &pedal * &bass]
 &lead s=saw loop=261.63 off`;
 
   it('splits words outside brackets', () => {
-    expect(splitWords('&a [0, 4, 7] over=scale(0, 2) &b[1:3]')).toEqual(['&a', '[0, 4, 7]', 'over=scale(0, 2)', '&b[1:3]']);
+    expect(splitWords('&a [0, 4, 7] over=scale(minor, C) &b[1:3]')).toEqual(['&a', '[0, 4, 7]', 'over=scale(minor, C)', '&b[1:3]']);
   });
 
   it('reads a declaration: head, attributes, braid', () => {
     expect(declWords(src, 'theme')).toEqual({
       head: ['&theme'],
-      attrs: ['over=scale(0,2)', 'step=&bar'],
+      attrs: ['over=scale(minor, C)', 'step=&bar'],
       braid: ['0@2', '[0, 4, 7]', '&m[<<]', '~'],
     });
     expect([...attrsOf(src, 'lead')]).toEqual([
@@ -161,10 +161,10 @@ describe('editor operations', () => {
 
   it('replaces a braid, keeping attributes and the comment', () => {
     const a = setBraid(src, 'theme', ['0', '2', '&m']);
-    expect(a.split('\n')[1]).toMatch(/^&theme over=scale\(0,2\) step=&bar 0 2 &m\s+\/\/ tune$/);
+    expect(a.split('\n')[1]).toMatch(/^&theme over=scale\(minor, C\) step=&bar 0 2 &m\s+\/\/ tune$/);
     expect(a.split('\n')[1].indexOf('//')).toBe(src.split('\n')[1].indexOf('//')); // the comment keeps its column
     expect(compileSource(setBraid(src, 'theme', ['0', '2', '4'])).cells.get('theme')!.units).toHaveLength(3);
-    expect(setBraid(src, 'theme', []).split('\n')[1]).toMatch(/^&theme over=scale\(0,2\) step=&bar\s+\/\/ tune$/);
+    expect(setBraid(src, 'theme', []).split('\n')[1]).toMatch(/^&theme over=scale\(minor, C\) step=&bar\s+\/\/ tune$/);
     expect(setBraid(src, 'mix', ['0'])).toBe(src); // a mix over several lines is left alone
   });
 
@@ -252,13 +252,13 @@ describe('editor operations', () => {
 });
 
 describe('renaming and splitting', () => {
-  const src = `&theme over=scale(0,2) step=&bar 0 2 &m[<<] # &theme stays in comments
+  const src = `&theme over=scale(minor, C) step=&bar 0 2 &m[<<] # &theme stays in comments
 &themes 1 2
 &mix [&theme * &lead]
 &tune &theme &themes`;
   it('renames a cell and every reference, not look-alikes or comments', () => {
     const a = renameCell(src, 'theme', 'royal');
-    expect(a).toBe(`&royal over=scale(0,2) step=&bar 0 2 &m[<<] # &theme stays in comments
+    expect(a).toBe(`&royal over=scale(minor, C) step=&bar 0 2 &m[<<] # &theme stays in comments
 &themes 1 2
 &mix [&royal * &lead]
 &tune &royal &themes`);

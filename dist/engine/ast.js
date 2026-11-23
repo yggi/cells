@@ -6,7 +6,7 @@ export const pickLabel = (p) => {
 };
 export const shiftLabel = (shift) => (shift === 0 ? '' : `[${shift < 0 ? '<<' : '>>'}${Math.abs(shift) === 1 ? '' : Math.abs(shift)}]`);
 export const refLabel = (r) => (r.slot ? `[${r.slot}]` : pickLabel(r.pick) || shiftLabel(r.shift)) + (r.degree ? `^${r.degree}` : '') + (r.transpose ? `^$${r.transpose}` : '');
-export const isNote = (d) => !!(d.label || d.title) &&
+export const isNote = (d) => !!d.label &&
     d.braid.kind === 'blank' &&
     d.over === null &&
     d.step === null &&

@@ -128,8 +128,5 @@ export function pieceMeta(source) {
         const tagList = Array.isArray(tags) ? tags.filter((t) => typeof t === 'string') : [];
         return card(title, typeof description === 'string' ? description : (note?.label ?? ''), tagList, typeof tier === 'number' ? tier : null, note?.name ?? null);
     }
-    const d = parse(source).cells.find((c) => c.title);
-    if (!d)
-        return null;
-    return card(d.title, d.label ?? '', (d.tags ?? '').split(','), d.tier ?? null, d.name);
+    return null;
 }

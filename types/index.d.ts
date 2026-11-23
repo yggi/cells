@@ -37,7 +37,6 @@ export { writeWav, type WavFormat } from './engine/wavfile';
 export { EXAMPLES, type Example, type ExampleKey } from './engine/examples';
 export { isPieceFile, lockChanges, lockfileOf, readPiece, textLockfile, withLockfile, writePiece, type LockChange, type PieceFile, type PieceFileProblems, type PieceFrontmatter, } from './engine/piecefile';
 export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
-export { movedCard } from './engine/shorten/card';
 export { jacksOf, patch, unpatch, PatchError, type Jack } from './engine/patch';
 export { codeShifts } from './engine/program';
 export { resetPhysics } from './engine/physics';

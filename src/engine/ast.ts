@@ -423,12 +423,9 @@ export interface CellDecl {
   readonly show?: string | null;
   /** A name to show instead of &name — or, on a cell with nothing else, a note in the graph. */
   readonly label?: string | null;
-  /** On a note: the piece's title (the first note with one is the piece's card). */
-  readonly title?: string | null;
   /** On a note: the piece's tags, comma-separated. */
   readonly tags?: string | null;
   /** On a piece's card: its tier of the tutorial (1 the first). */
-  readonly tier?: number | null;
   /** On a note: the cells it explains, drawn as links from the note (`about=&fenv`, `about=(&fenv &accent)`). */
   readonly about?: readonly Ref[];
   /** style= (decision 063): its style, or a range over its scope; on the note `&style`, the section's, which a pick reads by axis. */
@@ -486,11 +483,11 @@ export interface CellDecl {
 }
 
 /**
- * A note: a cell with a label= (or title=) and nothing else, no braid, clock, table, map or sound. It does nothing; it
+ * A note: a cell with a label= and nothing else, no braid, clock, table, map or sound. It does nothing; it
  * explains, in the graph's margin (display.md).
  */
 export const isNote = (d: CellDecl): boolean =>
-  !!(d.label || d.title) &&
+  !!d.label &&
   d.braid.kind === 'blank' &&
   d.over === null &&
   d.step === null &&

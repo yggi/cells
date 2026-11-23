@@ -336,9 +336,9 @@ describe('the nits of #250', () => {
   it('the shift= warning points at shift=, not the cell’s name', () => {
     expect(spans(`&mel step=1 shift=100000000 0 2\n${PLAY}`)).toEqual([expect.objectContaining({ severity: 'warning', line: 1, col: 13, len: 15 })]);
   });
-  it('rung= says it is tier= now', () => {
-    expect(spans('&a title="x" tags="tutorial" rung=3\n&v s=sine loop=A4')).toEqual([
-      { severity: 'error', message: 'rung= is now tier= (decision 020): the tutorial is in tiers, tier=1 to tier=9', line: 1, col: 30, len: 4 },
+  it('rung= says it is retired', () => {
+    expect(spans('&a label="x" tags="tutorial" rung=3\n&v s=sine loop=A4')).toEqual([
+      { severity: 'error', message: 'rung= is retired: a piece’s tier is `tier:` in its file’s frontmatter', line: 1, col: 30, len: 4 },
     ]);
   });
   it('fifths(n) past a lap says it climbs, and how fifths(note) differs', () => {

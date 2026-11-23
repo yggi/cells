@@ -21,35 +21,35 @@ const errors = (src: string) =>
 describe('degree(&x, n) and inverse(&x): a reference’s values moved before its table reads them (#31)', () => {
   const motif = '&m 0 1 2\n';
   it('degree(&m, 1) is a step up the scale: C D E → D E F', () => {
-    expect(hz(motif + '&t over=scale(0,5) step=2 degree(&m, 1)' + tail)).toEqual([294, 330, 349]);
+    expect(hz(motif + '&t over=scale(major, C) step=2 degree(&m, 1)' + tail)).toEqual([294, 330, 349]);
   });
   it('degree(&m, -1) a step down, past the tonic: C D E → B C D', () => {
-    expect(hz(motif + '&t over=scale(0,5) step=2 degree(&m, -1)' + tail)).toEqual([247, 262, 294]);
+    expect(hz(motif + '&t over=scale(major, C) step=2 degree(&m, -1)' + tail)).toEqual([247, 262, 294]);
   });
   it('inverse(&m) mirrors round the first degree: C D E → C B A', () => {
-    expect(hz(motif + '&t over=scale(0,5) step=2 inverse(&m)' + tail)).toEqual([262, 247, 220]);
+    expect(hz(motif + '&t over=scale(major, C) step=2 inverse(&m)' + tail)).toEqual([262, 247, 220]);
   });
   it('nested, they compose: degree(inverse(&m), 4) mirrors round the third degree: C D E → G F E', () => {
-    expect(hz(motif + '&t over=scale(0,5) step=2 degree(inverse(&m), 4)' + tail)).toEqual([392, 349, 330]);
+    expect(hz(motif + '&t over=scale(major, C) step=2 degree(inverse(&m), 4)' + tail)).toEqual([392, 349, 330]);
   });
   it('degree is in the table’s steps, ^$n in the grid’s: over a scale they differ; ^n is degree(…)', () => {
-    expect(hz(motif + '&t over=scale(0,5) step=2 &m^$1' + tail)).toEqual([277, 311, 349]);
-    expect(hz(motif + '&t over=scale(0,5) step=2 &m^1' + tail)).toEqual(hz(motif + '&t over=scale(0,5) step=2 degree(&m, 1)' + tail));
+    expect(hz(motif + '&t over=scale(major, C) step=2 &m^$1' + tail)).toEqual([277, 311, 349]);
+    expect(hz(motif + '&t over=scale(major, C) step=2 &m^1' + tail)).toEqual(hz(motif + '&t over=scale(major, C) step=2 degree(&m, 1)' + tail));
   });
   it('a step like any other: picks inside, modifiers after', () => {
-    expect(hz(motif + '&t over=scale(0,5) step=2 degree(&m[::-1], 2)!2' + tail, 2.9)).toEqual([392, 349, 330, 392, 349, 330]);
+    expect(hz(motif + '&t over=scale(major, C) step=2 degree(&m[::-1], 2)!2' + tail, 2.9)).toEqual([392, 349, 330, 392, 349, 330]);
   });
   it('chords, choices and accidentals move with it (an accidental mirrored with its note)', () => {
-    expect(hz('&m [0,2,4]\n&t over=scale(0,5) step=2 degree(&m, 1)' + tail, 0.4)).toEqual([294, 349, 440]);
-    expect(hz('&m 3#\n&t over=scale(0,5) step=2 inverse(&m)' + tail, 0.4)).toEqual([hz('&t over=scale(0,5) step=2 -3b' + tail, 0.4)[0]]);
-    const r = compileSource('&m [0|2]\n&t over=scale(0,5) step=2 degree(&m, 1)' + tail);
+    expect(hz('&m [0,2,4]\n&t over=scale(major, C) step=2 degree(&m, 1)' + tail, 0.4)).toEqual([294, 349, 440]);
+    expect(hz('&m 3#\n&t over=scale(major, C) step=2 inverse(&m)' + tail, 0.4)).toEqual([hz('&t over=scale(major, C) step=2 -3b' + tail, 0.4)[0]]);
+    const r = compileSource('&m [0|2]\n&t over=scale(major, C) step=2 degree(&m, 1)' + tail);
     expect(r.ok).toBe(true);
   });
 
   describe('laws, on what plays', () => {
     const shapes = ['0 2 4 2', '4 3 2 1 0@2', '[0,2,4] ~ 5 7', '0 -1 6# 2'];
     for (const m of shapes) {
-      const src = (braid: string) => `&m ${m}\n&t over=scale(2,3) step=4 ${braid}` + tail;
+      const src = (braid: string) => `&m ${m}\n&t over=scale(dorian, D) step=4 ${braid}` + tail;
       it(`inverse(inverse(&m)) = &m · degree(degree(&m, a), b) = degree(&m, a + b) · inverse(degree(&m, k)) = degree(inverse(&m), -k)  [${m}]`, () => {
         expect(plays(src('inverse(inverse(&m))'))).toEqual(plays(src('&m')));
         expect(plays(src('degree(degree(&m, 2), -5)'))).toEqual(plays(src('degree(&m, -3)')));
@@ -62,8 +62,8 @@ describe('degree(&x, n) and inverse(&x): a reference’s values moved before its
           [3, '[>>3]'],
           [-2, '[<<2]'],
         ] as const) {
-          const named = `&m ${m}\n&scale over=scale(2,3)\n&t over=&scale step=4 degree(&m, ${k})` + tail;
-          const wrapped = `&m ${m}\n&scale over=scale(2,3)\n&w over=&scale${shifted} &m\n&t over=&scale step=4 &w` + tail;
+          const named = `&m ${m}\n&scale over=scale(dorian, D)\n&t over=&scale step=4 degree(&m, ${k})` + tail;
+          const wrapped = `&m ${m}\n&scale over=scale(dorian, D)\n&w over=&scale${shifted} &m\n&t over=&scale step=4 &w` + tail;
           expect(plays(named)).toEqual(plays(wrapped));
         }
       });

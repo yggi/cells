@@ -31,7 +31,7 @@ export const FAMILIES = [
     },
     {
         key: 'inert',
-        rows: '2, 85–90 a note, `label=` `show=` `size=` `tags=` `about=` `title=` `tier=`',
+        rows: '2, 85–90 a note, `label=` `show=` `size=` `tags=` `about=`',
         rewrite: (text) => inert(text),
     },
     {
@@ -558,7 +558,7 @@ function named(text) {
     }));
     return keys.length ? `${next.replace(/\s+$/, '')}\n${keys.join('\n')}` : text;
 }
-const INERT = /^(?:label|show|size|about|title|tier)=/;
+const INERT = /^(?:label|show|size|about)=/;
 function inert(text) {
     let now = text;
     for (const d of parse(text).cells)

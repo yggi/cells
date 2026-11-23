@@ -7,10 +7,10 @@
  * Drunken Sailor before #10's corpus round: a melody line read through a shifted table (&B over=&lead[<<]),
  * motifs reading the table of whoever splices them, and drums read by number through a kit (&kit).
  */
-export const SAILOR_WITH_KIT = `&piece title="Drunken Sailor: D Dorian, with a kit" tags="genre:world, genre:folk, modal, rhythm" label="Drunken Sailor in D Dorian, with a fiddle, a bass and a drum kit." about=&mix
+export const SAILOR_WITH_KIT = `&piece tags="genre:world, genre:folk, modal, rhythm" label="Drunken Sailor in D Dorian, with a fiddle, a bass and a drum kit." about=&mix
 # D Dorian. The second line is the first, read one step lower (&lead[<<]).
 &bar scan(3 3 3 3) step=free(112bpm, 90..140)
-&lead over=scale(2,3)
+&lead over=scale(dorian, D)
 
 &m1 4!4
 &m2 4 4 0 2

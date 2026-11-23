@@ -95,11 +95,6 @@ describe("pieceMeta: a piece's card", () => {
     expect(pieceMeta(withLine(2, 'name: x'))).toBeNull();
     expect(pieceMeta(withLine(4, 'tier: x'))).toBeNull();
   });
-
-  it('reads a file the same as the text written the old way', () => {
-    const old = '&piece title="Steps: a tune on one line" tags="tutorial, rhythm" tier=1 label="Numbers, rests, holds." about=&out\n&tune step=4 0 2 ~ 4@2';
-    expect(pieceMeta(good)).toEqual(pieceMeta(old));
-  });
 });
 
 describe('a file of cells blocks with no frontmatter (#212)', () => {

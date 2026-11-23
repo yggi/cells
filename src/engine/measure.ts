@@ -10,7 +10,7 @@
  * - **A copy** (`base=&x`, decision 026) is measured as written, its own steps (`=!3 12@2`: two leaves), not the braid
  *   the parser resolves it to; its `base=` is an attribute value.
  * - **An attribute value** is each `key=value` a line writes (in an unnamed cell `&( … )` too), and each flag (`off`,
- *   `oneshot`). How a cell is shown and named costs nothing: `label=` `show=` `tags=` `title=` `tier=` `about=` `size=`.
+ *   `oneshot`). How a cell is shown and named costs nothing: `label=` `show=` `tags=` `about=` `size=`.
  * - **A cell** is every cell declared, an unnamed one too, but a note (a cell that only explains: `isNote`).
  * - **A `from` line** (decision 054) is one leaf, a reference: the used fragment's lines are the library's, nowhere in the
  *   piece. Its fragment is read through `resolve` while the text is normalised.
@@ -35,7 +35,7 @@ export interface CellStructure extends Structure {
 }
 
 /** The attributes that only show or name a cell: they cost nothing. */
-const FREE = new Set(['label', 'show', 'tags', 'title', 'tier', 'about', 'size']);
+const FREE = new Set(['label', 'show', 'tags', 'about', 'size']);
 
 const exprLeaves = (e: Expr): number =>
   e.k === 'ref' || e.k === 'num' ? 1 : e.k === 'sum' ? e.items.reduce((n, i) => n + exprLeaves(i.e), 0) : e.factors.reduce((n, f) => n + exprLeaves(f), 0);

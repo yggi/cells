@@ -14,8 +14,6 @@
  *  - aliases.ts:   Strudel's or dough's name for a parameter where ours is shorter: cutoff= → lpf= (decision 027)
  *  - (Migrate's four, gates, taps, swing and sections, were offered here for v0.15, delegated, and left in v0.16:
  *    a retired form is Migrate's, decision 049, #157)
- *  - card.ts:      a migration: a card that says what the piece is (title= tags= tier=) as a piece file, those in its
- *                  frontmatter (decision 047); its rewrite is a file, not a text, so shortenAll never takes it
  *
  * Each rule returns rewrites (../rewrite.ts), each one checked by the rule; a rewrite is offered as a suggestion, its
  * saving measured on the result (harness.ts: the cells a rule may touch, the measure). The note-for-note check is the
@@ -35,7 +33,6 @@ import { progressions } from './progressions';
 import { wrappers } from './wrappers';
 import { stereo } from './stereo';
 import { aliases } from './aliases';
-import { card } from './card';
 
 export type { Suggestion } from './harness';
 
@@ -68,9 +65,8 @@ export function shorten(source: string, options: ShortenOptions = {}): Suggestio
     ...wrappers(source, result, options),
     ...stereo(source, result, options),
     ...aliases(source, result),
-    ...card(source, options),
   ];
-  const kept = result.takes?.length ? found.filter((r) => r.rule === 'card' || keepsUsed(r, source, options, overridden(result))) : found;
+  const kept = result.takes?.length ? found.filter((r) => keepsUsed(r, source, options, overridden(result))) : found;
   // (the structure saved first; a respelling, which saves none, by the characters it saves)
   const chars = new Map(kept.map((r) => [r.id, savesChars(source, r) ?? 0]));
   return kept
@@ -84,7 +80,7 @@ export function shorten(source: string, options: ShortenOptions = {}): Suggestio
  * the respellings Shorten keeps until #27 rules their rows (`alias`, Normalise's;
  * `fraction`, `progression`), each offered by its rule where it is shorter in characters.
  */
-const RESPELLINGS: ReadonlySet<Suggestion['kind']> = new Set(['card', 'alias', 'fraction', 'progression']);
+const RESPELLINGS: ReadonlySet<Suggestion['kind']> = new Set(['alias', 'fraction', 'progression']);
 
 const overridden = (r: ReturnType<typeof compileSource>) =>
   (r.takes ?? [])
@@ -111,10 +107,8 @@ export function shortenAll(source: string, rounds = 60, options: ShortenOptions 
   let now = source;
   const steps: string[] = [];
   for (let i = 0; i < rounds; i++) {
-    // (the card's migration rewrites the text as a file: the text is shortened, the file is the frontend's to make; and
-    // the best that sounds as the text did: each rule checks its own, and this checks what they miss, #477)
+    // (the best that sounds as the text did: each rule checks its own, and this checks what they miss, #477)
     const taken = shorten(now, options)
-      .filter((s) => s.kind !== 'card')
       .map((s) => ({ best: s, next: s.apply(now) }))
       .find(({ next }) => soundsIdentical(now, next, undefined, options));
     if (!taken) break;
