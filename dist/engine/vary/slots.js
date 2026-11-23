@@ -53,3 +53,21 @@ export function slotMoves(keys, fixed, operators) {
     }
     return out;
 }
+export function slotReference(name, before, after) {
+    const delta = [];
+    let kept = 0;
+    for (const [s, slot] of after.entries()) {
+        if (slot === before[s]) {
+            kept++;
+            continue;
+        }
+        if (kept)
+            delta.push(kept === 1 ? '=' : `=!${kept}`);
+        delta.push(slot);
+        kept = 0;
+    }
+    if (!delta.length)
+        return null;
+    const form = `base=${name} ${delta.join(' ')}`;
+    return { form, line: (cell) => `&${cell} ${form}` };
+}

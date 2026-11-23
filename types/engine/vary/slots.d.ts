@@ -33,3 +33,13 @@ export declare function spansOf(n: number, fixed: readonly number[]): number[][]
  * substitutions by slot and then by the slot taken from. A move whose slots all play as before is left out.
  */
 export declare function slotMoves(keys: readonly string[], fixed: readonly number[], operators: readonly string[]): SlotMove[];
+/**
+ * A line of slots varied, as a form on the line it varies (decision 052, point 7, at every scale): a copy of it, `base=`,
+ * changed on the slots the variation changes, `=` keeping one slot and `=!k` k, slots past the last change kept
+ * (`base=&harm =!2 [1,3,5]`, `base=&chorus = &b`); a cell that plays it reads the line's own clock and table. Null where
+ * no slot changes. `before` and `after` are the slots as written.
+ */
+export declare function slotReference(name: string, before: readonly string[], after: readonly string[]): {
+    form: string;
+    line: (cell: string) => string;
+} | null;

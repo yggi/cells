@@ -34,6 +34,8 @@
  * Point 10 has a form's (`form.ts`): a form's letters or a song plan's sections (with its plan of who plays, carried slot
  * for slot), varied two levels up around its first and last slot. The operators a progression and a form share are one
  * set, `slots.ts` (rotate, reverse, swap, substitute), and a frontend's mask (`fixed`) fixes other slots at any scale.
+ * Point 11 takes them down to a line: its steps, rests among them, are its slots (its rotate and its reverse are
+ * `slots.ts`'s; swap and substitute act on it where asked), and the mask fixes a line's steps in place of its anchors.
  *
  * Each operator acts on the lines it is for: the rhythm ones on lines of hits, the pitched ones on pitched lines.
  * In Jambot's order (yggi/jambot `variations`, so its draws pick the same one): the lines in the order the lap first plays

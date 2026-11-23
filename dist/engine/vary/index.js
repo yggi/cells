@@ -8,7 +8,7 @@ import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written } from
 import { referenceOf } from "./reference.js";
 import { answeredIn } from "../use.js";
 import { formsOf, FORM_FIXED } from "./form.js";
-import { fixedOf, SLOT_OPERATORS, slotMoves } from "./slots.js";
+import { fixedOf, SLOT_OPERATORS, slotMoves, slotReference, spansOf } from "./slots.js";
 import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf } from "./progression.js";
 export { backbeatOf } from "./anchors.js";
 export { THIRDS, PHRASE_BARS } from "./progression.js";
@@ -16,6 +16,7 @@ export const RHYTHM_OPERATORS = ['rotate', 'drop', 'add'];
 export const PITCHED_OPERATORS = ['transpose', 'invert', 'reverse', 'bend', 'trim'];
 export const HARMONY_OPERATORS = ['rotate', 'reverse', 'third', 'dominant', 'swap', 'substitute'];
 export const FORM_OPERATORS = SLOT_OPERATORS;
+const LINE_SLOT_OPERATORS = ['swap', 'substitute'];
 const SLOT_LEVEL = ['third', 'dominant', 'swap', 'substitute'];
 export const DEGREES = [-2, -1, 1, 2];
 export const BENDS = [-2, -1, 1, 2];
@@ -49,8 +50,16 @@ function readSome(fragment, options, only) {
     const { lines, anchors, result, own, progressions, forms } = read(fragment, workbench, resolve);
     if (!result)
         return { notes: null, span: null, bar: null, variations: [] };
-    const left = new Set([...anchors.filter((a) => a.step === undefined).map((a) => a.line), ...keep.map(named)]);
-    const pinned = (line, n) => anchors.some((a) => a.line === line.name && a.step === n.step);
+    const maskOf = (name) => options.fixed?.[name] ?? options.fixed?.[name.slice(1)];
+    const lineFixed = (line) => {
+        const mask = maskOf(line.name);
+        return mask ? fixedOf(mask, line.steps) : null;
+    };
+    const left = new Set([...anchors.filter((a) => a.step === undefined && !maskOf(a.line)).map((a) => a.line), ...keep.map(named)]);
+    const pinned = (line, n) => {
+        const fixed = lineFixed(line);
+        return fixed ? fixed.includes(n.step) : anchors.some((a) => a.line === line.name && a.step === n.step);
+    };
     const onset = (i, step) => {
         const w = lines[i].stepWhole;
         return w === null ? `${i}@${step}` : (step * w).toFixed(9);
@@ -129,7 +138,7 @@ function readSome(fragment, options, only) {
             words.set(name, declWords(fragment, name));
         return words.get(name);
     };
-    const offer = (i, operator, notes, amount, braids, what, about = amount) => {
+    const offer = (i, operator, notes, amount, braids, what, about = typeof amount === 'number' ? amount : null) => {
         if (!braids || total - lines[i].notes.length + notes.length < fewest)
             return;
         if (!struckOnce(i, notes))
@@ -174,8 +183,13 @@ function readSome(fragment, options, only) {
         const levels = line.levels?.tokens;
         const [before, last] = line.notes.slice(-2);
         const ends = line.notes.length >= 2 && !pinned(line, last);
+        const stepKeys = Array.from({ length: line.steps }, (_, s) => JSON.stringify(line.notes.filter((n) => n.step === s)));
+        const fixedSteps = lineFixed(line) ??
+            fixedOf(line.notes.filter((n) => pinned(line, n)).map((n) => n.step), line.steps);
+        const movedFrom = (from) => inOrder(from.flatMap((src, t) => line.notes.filter((n) => n.step === src).map((n) => ({ ...n, step: t }))));
+        const levelsFrom = (from) => levels && levels.map((_, t) => levels[from[t]]);
         for (const operator of operators) {
-            if (PITCHED_OPERATORS.includes(operator) !== !!line.pitched)
+            if (!LINE_SLOT_OPERATORS.includes(operator) && PITCHED_OPERATORS.includes(operator) !== !!line.pitched)
                 continue;
             if (line.notes.some((n) => n.hold) && !['transpose', 'invert'].includes(operator))
                 continue;
@@ -205,16 +219,25 @@ function readSome(fragment, options, only) {
                 offer(i, operator, notes, null, written(line, notes), `every note mirrored about its first`, 2 * f);
             }
             else if (operator === 'reverse') {
-                const notes = inOrder(reversed(line, (n) => pinned(line, n)));
-                offer(i, operator, notes, null, written(line, notes), 'its notes in reverse order between its anchors');
+                for (const m of slotMoves(stepKeys, fixedSteps, [operator])) {
+                    const notes = movedFrom(m.from);
+                    offer(i, operator, notes, null, written(line, notes), 'its notes in reverse order between its anchors');
+                }
             }
             else if (operator === 'rotate') {
-                const notes = inOrder(line.notes.map((n) => ({ ...n, step: (n.step + 1) % line.steps })));
-                const turned = levels && [levels.at(-1), ...levels.slice(0, -1)];
-                offer(i, operator, notes, null, written(line, notes, turned, true), 'every note a step later, the last to the first');
+                for (const m of slotMoves(stepKeys, fixedSteps, [operator])) {
+                    const notes = movedFrom(m.from);
+                    offer(i, operator, notes, null, written(line, notes, levelsFrom(m.from) ?? undefined, !fixedSteps.length), 'every note a step later, the last to the first');
+                }
+            }
+            else if (operator === 'swap' || operator === 'substitute') {
+                for (const m of slotMoves(stepKeys, fixedSteps, [operator])) {
+                    const notes = movedFrom(m.from);
+                    offer(i, operator, notes, m.amounts.join(' '), written(line, notes, levelsFrom(m.from) ?? undefined), m.what, null);
+                }
             }
             else if (operator === 'drop')
-                for (const dropped of line.notes) {
+                for (const dropped of line.notes.filter((n) => !pinned(line, n))) {
                     const notes = line.notes.filter((n) => n !== dropped);
                     offer(i, operator, notes, dropped.step, written(line, notes), `its ${dropped.voice} on step ${dropped.step} left out`);
                 }
@@ -222,7 +245,7 @@ function readSome(fragment, options, only) {
                 const voice = line.notes[0].voice;
                 const loudest = line.notes.reduce((a, b) => (b.level > a.level ? b : a));
                 for (let step = 0; step < line.steps; step++) {
-                    if (line.notes.some((n) => n.step === step && sound(n.voice) === sound(voice)))
+                    if (lineFixed(line)?.includes(step) || line.notes.some((n) => n.step === step && sound(n.voice) === sound(voice)))
                         continue;
                     const notes = inOrder([...line.notes, { step, voice, own: loudest.own, level: loudest.level }]);
                     const louder = levels && levels.map((t, s) => (s === step ? levels[loudest.step] : t));
@@ -283,7 +306,7 @@ function readSome(fragment, options, only) {
             const braids = new Map([[f.name.slice(1), m.from.map((i) => f.slots[i])]]);
             if (f.partner)
                 braids.set(f.partner.name.slice(1), m.from.map((i) => f.partner.slots[i]));
-            offerSlots(f.name, m.operator, m.amounts, m.what, braids, keyOf(null, null, f, m.from), fixedBut(f.name.slice(1), formNotes(f, m.from, k)), null);
+            offerSlots(f.name, m.operator, m.amounts, m.what, braids, keyOf(null, null, f, m.from), fixedBut(f.name.slice(1), formNotes(f, m.from, k)), formReference(f, m.from));
         }
     }
     return { notes: [...heardKeys.flat(), ...fixed], span, bar, variations: out };
@@ -322,6 +345,23 @@ function slotsPlayed(forms, fragment, workbench = '', resolve) {
         return keys.get(key) || g.slots[slot];
     };
 }
+function formReference(f, from) {
+    const ref = slotReference(f.name, f.slots, from.map((i) => f.slots[i]));
+    if (!ref)
+        return null;
+    const written = (g, slots) => [...g.head, ...g.attrs, ...slots].join(' ').length;
+    const p = f.partner;
+    const pref = p &&
+        slotReference(p.name, p.slots, from.map((i) => p.slots[i]));
+    const length = ref.line(f.name.slice(1)).length + (pref ? pref.line(p.name.slice(1)).length : 0);
+    const whole = written(f, from.map((i) => f.slots[i])) +
+        (p
+            ? written(p, from.map((i) => p.slots[i]))
+            : 0);
+    if (length > whole)
+        return null;
+    return p && pref ? { ...ref, partner: { of: p.name, ...pref } } : ref;
+}
 function lcm(a, b) {
     const gcd = (x, y) => (y ? gcd(y, x % y) : x);
     const [x, y] = [Math.round(a * 3840), Math.round(b * 3840)];
@@ -351,26 +391,6 @@ function harmoniesOf(result, own, lines, progressions) {
             : events.map((e) => ({ at: e.step * whole, key: `${whole * e.duration} chords#${k} ${e.table}:${e.tableShift}:${e.value}:${e.alter}:${e.transpose ?? 0}` }));
         out.push({ name, notes, lap: cell.steps * whole, meter });
     }
-    return out;
-}
-function reversed(line, anchored) {
-    const at = new Map(line.notes.map((n) => [n.step, n]));
-    const fixed = line.notes.filter(anchored).map((n) => n.step);
-    const spans = [];
-    if (!fixed.length)
-        spans.push(Array.from({ length: line.steps }, (_, s) => s));
-    else
-        for (const [k, start] of fixed.entries()) {
-            const end = fixed[(k + 1) % fixed.length] + (k + 1 === fixed.length ? line.steps : 0);
-            spans.push(Array.from({ length: end - start - 1 }, (_, j) => (start + 1 + j) % line.steps));
-        }
-    const out = line.notes.filter(anchored);
-    for (const span of spans)
-        for (const [j, step] of span.entries()) {
-            const n = at.get(span[span.length - 1 - j]);
-            if (n)
-                out.push({ ...n, step });
-        }
     return out;
 }
 export function drawn(draw, n) {

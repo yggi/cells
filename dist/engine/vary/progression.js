@@ -2,7 +2,7 @@ import { declWords } from "../edit.js";
 import { resolveIn } from "../helix.js";
 import { codeShifts } from "../program.js";
 import { tapWhole } from "./lines.js";
-import { SLOT_OPERATORS, slotMoves } from "./slots.js";
+import { SLOT_OPERATORS, slotMoves, slotReference } from "./slots.js";
 export const THIRDS = [-2, 2];
 export const PHRASE_BARS = 4;
 const TONE = /^(-?\d+)([#b])?$/;
@@ -162,21 +162,6 @@ function dominantOf(target, here, at) {
     return ways.sort((a, b) => away(a) - away(b))[0] ?? null;
 }
 export function progressionReference(p, slots, written) {
-    const delta = [];
-    let kept = 0;
-    for (const [s, slot] of slots.entries()) {
-        if (slotText(slot) === slotText(p.slots[s])) {
-            kept++;
-            continue;
-        }
-        if (kept)
-            delta.push(kept === 1 ? '=' : `=!${kept}`);
-        delta.push(slotText(slot));
-        kept = 0;
-    }
-    if (!delta.length)
-        return null;
-    const form = `base=${p.name} ${delta.join(' ')}`;
-    const line = (name) => `&${name} ${form}`;
-    return line(p.name.slice(1)).length <= written.join(' ').length ? { form, line } : null;
+    const ref = slotReference(p.name, p.slots.map(slotText), slots.map(slotText));
+    return ref && ref.line(p.name.slice(1)).length <= written.join(' ').length ? ref : null;
 }
