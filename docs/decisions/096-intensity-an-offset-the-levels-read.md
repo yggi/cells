@@ -38,7 +38,7 @@ So a section is at least two things: an intensity on one scale, and an arrangeme
 - **what it can't say:**
   - a cell that is one number (088) is refused as a term of a sum: `&song .7` then `[&song + -.45]` gives "A number is a gain or a pitch: it needs a voice";
   - a sum is held to 0 to 1 at its own cell (079), a term of another sum too: `&build [-.15 + &rise * .45]` then `[&song + &build]` reads 0.5 at the build's first bar, not 0.35;
-  - a line whose values run below 0 is bipolar (decision 067 §5): `&breakdown step=1m -.45` reads as 0.275 in a sum, a wave's share;
+  - a line whose values run below 0 is a signed offset in a sum (#884, amending 067 §5): `&breakdown step=1m -.45` with `&song step=1m .5` reads .05, the sum held to 0 to 1 where it lands;
   - MIDI out sends a level's square root as its velocity (`velocityOf`, the square law): a factor of the level scales the velocity by its root, so Jambot's factors, on the velocity, are read twice.
 
 ## Decision
@@ -81,7 +81,7 @@ So a section is at least two things: an intensity on one scale, and an arrangeme
 **Why not** a word of its own for an offset (`map=offset intensity=-.45`, #571's sketch): 079's sum already means a weighted sum, and an offset is a term in it.
 **Why not** the band thinning the density: thinning chooses notes, which is composing, and the band plays what the score writes. E46's density follows the energy (r 0.91) because Jambot's composer reads it, and it reads `&intensity` the same way.
 **Why not** one scalar for everything: the kind moves the layers, the velocity, the register and the bite past the energy (E46). A single number can't say a breakdown's arrangement.
-**Why not** signed lines as offsets (`&breakdown step=1m -.45`): a line below 0 is a bipolar wave (067 §5), and reading it otherwise in a sum would change every wave summed there.
+**Why not** signed lines as offsets (`&breakdown step=1m -.45`) *(answered by #884: they are offsets now; a wave below 0 was the reason, and a wave is laid in its range, `sin(12, 0..1)`, 067 §5)*.
 **Why not** a sum held only where it is read, so an offset could be a sum of its own (`&build [-.15 + &rise * .45]`): then `&intensity` itself, a term of each drive's sum, would go unheld into the drives, and a breakdown at a quiet song would drive a level below Jambot's. Holding a sum at its own cell, as 079 does, keeps `&intensity` within 0 to 1 wherever it is read.
 **Why not** a drive read once, a factor of the level: a level's square root is the velocity, so it would scale the velocity by the drive's root (the drums at an intensity of 0.25 sent at 109, not 94). Refitting the weights to the level's scale, a line through the same ends, misses Jambot's velocities by up to 2.36 steps on the drums (1.02 on the bass, 0.79 on the stab), past yggi/jambot#645's bound of 2. Read twice it scales the velocity by the drive exactly, as Jambot's dynamics do; the level and the sound card's amplitude stay on the one square law.
 **Why not** a typical intensity on each style now (an attribute beside the tempo's `step=`): nothing measures one yet, Jambot's own table covers 11 of its 23 presets (the rest fall back to their bite), and a hand-placed number would be the kind of point 076 took energy off. The reader comes first (#809).

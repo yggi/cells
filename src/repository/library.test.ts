@@ -22,6 +22,7 @@ const MOTIF_FRAGMENTS = ofFacet('motif');
 const FORM_FRAGMENTS = seedFragments('forms');
 const BAND_FRAGMENTS = seedFragments('bands');
 const MODULE_FRAGMENTS = seedFragments('modules');
+const MELODIC_FRAGMENTS = seedFragments('melodic');
 
 const library = createRepository(LIBRARY);
 const meters = createRepository(METER_FRAGMENTS);
@@ -46,8 +47,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the law five_to_twelve (#772), the thirteen meters, the thirty-three rhythms (#799: the breathing pulse), the seventeen bass lines, the seventeen harmonies, the twenty-nine instruments, the vibrato, the envelopes and the metric accent (#799), the nine modes, the five performers, the three stab lines, the fifty-six motifs, the six forms, the nine section kinds and the seven song forms (#810), the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: two hundred and fifteen (#572, #542, #540, #646)', () => {
-    expect(LIBRARY).toHaveLength(218);
+  it('is the law five_to_twelve (#772), the thirteen meters, the thirty-three rhythms (#799: the breathing pulse), the seventeen bass lines, the seventeen harmonies, the twenty-nine instruments, the vibrato, the envelopes and the metric accent (#799), the nine modes, the five melodic scales (#719), the five performers, the three stab lines, the fifty-six motifs, the six forms, the nine section kinds and the seven song forms (#810), the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: two hundred and twenty-three (#572, #542, #540, #646, #719)', () => {
+    expect(LIBRARY).toHaveLength(223);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'bass')).toEqual(BASS_FRAGMENTS);
@@ -55,6 +56,7 @@ describe('the library', () => {
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'instrument')).toEqual(INSTRUMENT_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'expression')).toEqual(EXPRESSION_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f)[0] === 'mode')).toEqual(MODE_FRAGMENTS);
+    expect(LIBRARY.filter((f) => facetsOf(f).join() === 'melodic')).toEqual(MELODIC_FRAGMENTS.filter((f) => f.association.length));
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'performer')).toEqual(PERFORMER_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'stab')).toEqual(STAB_FRAGMENTS);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'motif')).toEqual(MOTIF_FRAGMENTS);
@@ -71,13 +73,14 @@ describe('the library', () => {
       INSTRUMENT_FRAGMENTS.length,
       EXPRESSION_FRAGMENTS.length,
       MODE_FRAGMENTS.length,
+      MELODIC_FRAGMENTS.length,
       PERFORMER_FRAGMENTS.length,
       STAB_FRAGMENTS.length,
       MOTIF_FRAGMENTS.length,
       FORM_FRAGMENTS.length,
       BAND_FRAGMENTS.length,
       STYLE_FRAGMENTS.length,
-    ]).toEqual([13, 33, 17, 17, 29, 3, 9, 5, 3, 56, 6, 1, 1]);
+    ]).toEqual([13, 33, 17, 17, 29, 3, 9, 5, 5, 3, 56, 6, 1, 1]);
   });
 
   it('resolves no retired id, and a seed id as its own text (#196, #643)', () => {
@@ -183,8 +186,8 @@ describe('the points proposed for two more presets (#349)', () => {
   // 076's axes Swing jazz (ionian) and Spooky (harmonic minor) are told apart by their mood, so the dark cadence no
   // longer reaches it, and nothing moves, #572)
   it('change nothing Jambot’s eight presets find first, in any facet, nor how far it is', () => {
-    // (seventeen with the section kinds, which no query returns, and the song forms, which are new: #810)
-    expect(facets).toHaveLength(17);
+    // (seventeen with the section kinds, which no query returns, and the song forms, which are new: #810; eighteen with the melodic scales, #719)
+    expect(facets).toHaveLength(18);
     const NAMES = ['Synth-pop', 'Techno', 'Deep house', 'Ambient', 'Lo-fi hip hop', 'Funk', 'Bossa nova', 'Swing jazz'];
     const first = (r: typeof library, point: StylePoint, facet: string) => ranked(r.query(point, 1, {}, { facet }));
     const moved = PRESETS.flatMap((point, i) =>

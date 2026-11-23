@@ -47,11 +47,11 @@ export declare function evenTable(s: LineScanner, start: number): Extract<Braid,
 }>;
 type Generator = (s: LineScanner, start: number) => Braid;
 /**
- * A waveform's n values, −1 … 1: Strudel's bipolar signals (sine2, saw2, tri2, square2) at each step's start, i/n of
+ * A waveform's n values, −1 … 1, or within a range (`sin(12, 0..1)`): Strudel's bipolar signals (sine2, saw2, tri2, square2) at each step's start, i/n of
  * the cycle — a sine from 0 up, a saw from −1 up to just short of 1, a triangle from −1 up to 1 at the half and back,
  * a square −1 for the first half and 1 for the second.
  */
-export declare function waveValues(shape: WaveShape, n: number): number[];
+export declare function waveValues(shape: WaveShape, n: number, range?: readonly [number, number]): number[];
 /** The start of the name of the key a `scale(…)` declares (`key:λ3_8`): a cell whose `over=` names one reads its own scale(…). */
 export declare const SCALE_KEY = "key:\u03BB";
 /**

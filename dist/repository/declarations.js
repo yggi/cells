@@ -9,6 +9,7 @@ export const FOLDER_FACETS = {
     harmony: 'harmony',
     instruments: 'instrument',
     laws: 'law',
+    melodic: 'melodic',
     meters: 'meter',
     modes: 'mode',
     modules: 'module',

@@ -269,6 +269,7 @@ export type Braid = {
     readonly kind: 'wave';
     readonly shape: WaveShape;
     readonly n: number;
+    readonly range?: readonly [number, number];
     readonly span: Span;
 };
 /** `even(k, n, phase)`'s arguments, each a number or a cell that is one number, filled as the piece is built (decision 093). */

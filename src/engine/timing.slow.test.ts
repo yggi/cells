@@ -7,8 +7,9 @@ import { compileSource } from './compile';
 import { liveAt } from './live';
 import { EXAMPLES } from './examples';
 import { codeShifts } from './program';
-import { variations, varied, type Variation } from './vary';
+import { FORM_OPERATORS, HARMONY_OPERATORS, variations, varied, type Variation } from './vary';
 import { resolveSeed } from '../repository/library';
+import { seedFragments } from '../repository/seed';
 
 describe('what the engine costs', () => {
   // (as `routing.test.ts` works them out: a piece is opened or edited and this runs once, so a sign if one example is slow)
@@ -37,4 +38,45 @@ describe('what the engine costs', () => {
       }
     expect(performance.now() - t0).toBeLessThan(10_000);
   });
+
+  // (from `vary/harmony.test.ts` and `vary/form.test.ts`, out of the quick tier: the slot operators, swap and substitute,
+  // nearly double a progression's variations, 419 to 789 over C, and CI's loaded quick run read 15.6 ms for the
+  // twelve-bar's; the quick tests still count every variation and check each is given back by its `by`)
+  it('Vary varies every seed progression in under 10 ms, its compile included, the median of 7 runs', () => {
+    const options = { workbench: '&bar meter("4/4") step=120bpm\n&key scale(major, C)', operators: HARMONY_OPERATORS };
+    for (const { id, text } of seedFragments('harmony')) {
+      variations(text, options);
+      expect(
+        medianMs(() => variations(text, options)),
+        id,
+      ).toBeLessThan(10);
+    }
+  });
+
+  // (on `vary/form.test.ts`'s benches: a form's holes filled by two motifs, a song plan on its song)
+  it('Vary varies every seed form and song plan in under 15 ms, the median of 7 runs', () => {
+    const benches = {
+      forms: '&bar meter("4/4") step=120bpm\n&key scale(major, C)\n&a over=&key step=8n 0 2 4 2\n&call over=&key step=8n 7 5 3 1',
+      songs: '&bar meter("4/4") step=120bpm\n&song .55',
+    };
+    for (const [facet, workbench] of Object.entries(benches))
+      for (const { id, text } of seedFragments(facet)) {
+        const options = { workbench, operators: FORM_OPERATORS, resolve: resolveSeed };
+        variations(text, options);
+        expect(
+          medianMs(() => variations(text, options)),
+          id,
+        ).toBeLessThan(15);
+      }
+  });
 });
+
+/** The median of 7 runs of `run`, in milliseconds: a garbage collection or a loaded machine stalls one run, not the median. */
+function medianMs(run: () => unknown): number {
+  const times = Array.from({ length: 7 }, () => {
+    const t0 = performance.now();
+    run();
+    return performance.now() - t0;
+  }).sort((a, b) => a - b);
+  return times[3]!;
+}

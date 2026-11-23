@@ -101,15 +101,10 @@ describe('Vary on a form and a song plan (decision 052, point 10)', () => {
       });
     });
 
-  it('gives 186 in all, each fragment in under 15 ms (the median of 7 runs)', () => {
+  // (each fragment's in under 15 ms: a wall-clock ceiling, in `timing.slow.test.ts`)
+  it('gives 186 in all', () => {
     let n = 0;
-    for (const { id, text, bench } of [...FORMS, ...SONGS]) {
-      n += variations(text, OPTIONS(bench)).length;
-      expect(
-        medianMs(() => variations(text, OPTIONS(bench))),
-        id,
-      ).toBeLessThan(15);
-    }
+    for (const { text, bench } of [...FORMS, ...SONGS]) n += variations(text, OPTIONS(bench)).length;
     expect(n).toBe(186);
   });
 
@@ -260,14 +255,4 @@ function check(v: Variation, text: string) {
     const pairOf = new Map(before.map((s, k) => [s, pb[k]]));
     expect(pa, v.by).toEqual(after.map((s) => pairOf.get(s)));
   }
-}
-
-/** The median of 7 runs of `run`, in milliseconds: a garbage collection or a loaded machine stalls one run, not the median. */
-function medianMs(run: () => unknown): number {
-  const times = Array.from({ length: 7 }, () => {
-    const t0 = performance.now();
-    run();
-    return performance.now() - t0;
-  }).sort((a, b) => a - b);
-  return times[3]!;
 }

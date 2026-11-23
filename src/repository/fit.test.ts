@@ -29,6 +29,7 @@ const RHYTHM_FRAGMENTS = seedFragments('rhythms');
 const INSTRUMENT_FRAGMENTS = seedFragments('instruments');
 const EXPRESSION_FRAGMENTS = seedFragments('expression');
 const MODE_FRAGMENTS = seedFragments('modes');
+const MELODIC_FRAGMENTS = seedFragments('melodic');
 const BAND_FRAGMENTS = seedFragments('bands');
 const MODULE_FRAGMENTS = seedFragments('modules');
 vi.mock('../engine/compile', async (original) => {
@@ -357,7 +358,8 @@ describe('a query given the workbench', () => {
     const open = [...INSTRUMENT_FRAGMENTS, ...EXPRESSION_FRAGMENTS, ...STYLE_FRAGMENTS, ...BAND_FRAGMENTS, ...MODULE_FRAGMENTS.filter((f) => !signatureOf(f.text)?.main)].map(
       (f) => f.id,
     );
-    const modes = MODE_FRAGMENTS.map((f) => f.id);
+    // (and a melodic scale that leaves the key reads its tonic too, the blues, #719)
+    const modes = [...MODE_FRAGMENTS, ...MELODIC_FRAGMENTS.filter((f) => signatureOf(f.text)?.main === '&tonic')].map((f) => f.id);
     // (the rhythms that fit 4/4: all but the waltz's, #542, whose lines lap three beats)
     const isRhythm = (id: string) => RHYTHM_FRAGMENTS.some((f) => f.id === id) && FITS[id]!.includes('meter');
     // (a mode's main parameter is its tonic, and a query that names no argument takes the one cell that meets it, decision
@@ -432,7 +434,8 @@ describe('what it costs', () => {
       // not the 9 modes, named or not: no cell of a workbench of drums meets a tonic, its meter said to be no note (#613); a
       // performer's part, a filter's input and a stab line's &harm are holes no workbench of drums fills)
       const kinds = [...RHYTHM_FRAGMENTS, ...INSTRUMENT_FRAGMENTS, ...EXPRESSION_FRAGMENTS, ...STYLE_FRAGMENTS, ...MODULE_FRAGMENTS, ...BAND_FRAGMENTS];
-      const modes = MODE_FRAGMENTS.map((f) => f.id);
+      // (and a melodic scale that leaves the key reads its tonic too, the blues, #719)
+      const modes = [...MODE_FRAGMENTS, ...MELODIC_FRAGMENTS.filter((f) => signatureOf(f.text)?.main === '&tonic')].map((f) => f.id);
       expect(
         first.every((f) => kinds.some((k) => k.id === f.fragment.id)),
         JSON.stringify(first.map((f) => f.fragment.id)),
