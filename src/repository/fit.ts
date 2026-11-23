@@ -28,6 +28,7 @@ import type { CompileResult, Resolve, Take } from '../engine/program';
 import { expansion, fragmentHash, signatureOf } from '../engine/use';
 import { parse, readFrom } from '../engine/parser';
 import { braidReadsOf } from '../engine/compiler/builtin';
+import { readsOf } from '../engine/reads';
 import { clockNeeds, holesOf, linesRead, meterMeets, readOnlyAsSound, standIn, type ClockNeed, type TappedNeed } from './holes';
 
 /** A collection's lines added to a workbench: the text, and what became of the fragment's names there. */
@@ -395,13 +396,24 @@ function mainOn(
   args: UseOnOptions['args'],
   compiled: (text: string) => CompileResult,
   stand: readonly string[],
+  resolve: Resolve,
 ): string | null {
   const alone = compiled([bench, ...stand].join('\n'));
   const standNames = new Set(stand.map((l) => l.split(' ')[0]!));
-  const meets = (cell: string) =>
+  const compiles = (cell: string) =>
     !newDiagnostics(compiled([bench, takeLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).filter(
       (d) => !standNames.has(STAND_IN_SAID.exec(d.message)?.[1] ?? ''),
     ).length;
+  // (a meter meets a parameter only where the copy reads it as a meter, decision 104: as a clock, or its levels as values in an
+  // expression, a count's accents; not as a table, `over=` (a key, a chord), a phrase spliced, or nothing at all)
+  // (a meter: the piece's root meter, the one with a tempo (decision 095), or a cell whose braid is written meter(…),
+  // `&grouping meter("4/4")`; not a scale, whose scan reads as a meter too, nor a clock of the wall, a law's day)
+  const written = new Map(parse(bench).cells.map((d) => [d.name, d] as const));
+  const isMeter = (name: string) => {
+    const d = written.get(name);
+    return name === alone.mainMeter || (d?.braid.kind === 'list' && d.braid.perBeat !== undefined);
+  };
+  const meets = (cell: string) => compiles(cell) && (!isMeter(cell.slice(1)) || readAsMeter(cell.slice(1), [bench, takeLine(heads, id, args, cell)].join('\n'), resolve));
   const offers = parse(bench).offers;
   const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
   // (two that meet are already none: the rest isn't compiled; a text cell is a generator's argument alone, decision 101, so
@@ -410,6 +422,20 @@ function mainOn(
   const isText = (n: string) => alone.cells.get(n.slice(1))?.text !== undefined;
   for (const n of named) if (!heads.includes(n) && !isText(n) && meets(n) && meeting.push(n) > 1) return null;
   return meeting[0] ?? null;
+}
+
+/**
+ * Whether a text reads a meter, `name`, as a meter wherever its copy of a template reads it (decision 104): as a clock
+ * (`step=&bar`, `&bar:beat`) or its levels as values in an expression (`[.9 + &bar * -.3]`), and somewhere. Read as a
+ * table (`over=&bar`), spliced as a step of a braid, or read nowhere, it is no meter argument. The copy's lines are those
+ * the expansion adds; the workbench's own aren't counted.
+ */
+function readAsMeter(name: string, text: string, resolve: Resolve): boolean {
+  const own = new Set(parse(text).cells.map((d) => d.name));
+  const copy = parse(expansion(text, { resolve }).text).cells.filter((d) => !own.has(d.name));
+  const reads = copy.flatMap((d) => readsOf(d).filter((r) => r.name === name));
+  const asMeter = (path: string) => path.includes('.exprs.') || /^(step|paramClocks)(\.|$)/.test(path) || path.startsWith('clockOf');
+  return reads.length > 0 && reads.every((r) => asMeter(r.path));
 }
 
 /** A name clear of the workbench's: the name, else the first `name<n>`, n from 2, that the workbench doesn't write. */
@@ -450,7 +476,7 @@ function useById(bench: string, id: string, options: UseOnOptions): UseOn {
   const stand = holesOf(text, compiled, options.resolve)
     .sounds.filter((s) => !namesIn(bench).has(s.slice(1)))
     .map(standIn);
-  const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand) : null);
+  const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand, options.resolve) : null);
   const left = signature.names.length === 1 ? heads : heads.map((h, i) => (h === signature.names[i] ? h : `${h}=${signature.names[i]!.slice(1)}`));
   const line = takeLine(left, id, options.args, main);
   return { text: written(line), line, heads, main, used: usedBy(written(line)), resolve: options.resolve };

@@ -34,6 +34,7 @@ const MELODIC_FRAGMENTS = seedFragments('melodic');
 const LAYER_FRAGMENTS = [...seedFragments('fills'), ...seedFragments('counts')];
 const BAND_FRAGMENTS = seedFragments('bands');
 const MODULE_FRAGMENTS = seedFragments('modules');
+const SONG_FRAGMENTS = seedFragments('songs');
 vi.mock('../engine/compile', async (original) => {
   const actual = await original<typeof import('../engine/compile')>();
   return { ...actual, compileSource: vi.fn(actual.compileSource) };
@@ -355,9 +356,16 @@ describe('a query given the workbench', () => {
     // which fit any workbench: they use no name, or read what they take in as a sound; a filter module's input is its main
     // argument, `&in`, which a workbench of a meter alone has no cell for, #587; and the band, which declares every input
     // it reads, each a tacet or the centre by default, #560)
-    const open = [...INSTRUMENT_FRAGMENTS, ...EXPRESSION_FRAGMENTS, ...STYLE_FRAGMENTS, ...BAND_FRAGMENTS, ...MODULE_FRAGMENTS.filter((f) => !signatureOf(f.text)?.main)].map(
-      (f) => f.id,
-    );
+    // (and the song forms, which take the bar as their intensity: a meter read as a value, as a count reads its levels, is one
+    // decision 104 lets meet; a workbench that offers its &song, or a host that names it, says otherwise; #920 keeps it)
+    const open = [
+      ...INSTRUMENT_FRAGMENTS,
+      ...EXPRESSION_FRAGMENTS,
+      ...STYLE_FRAGMENTS,
+      ...BAND_FRAGMENTS,
+      ...SONG_FRAGMENTS,
+      ...MODULE_FRAGMENTS.filter((f) => !signatureOf(f.text)?.main),
+    ].map((f) => f.id);
     // (and a melodic scale that leaves the key reads its tonic too, the blues, #719)
     const modes = [...MODE_FRAGMENTS, ...MELODIC_FRAGMENTS.filter((f) => signatureOf(f.text)?.main === '&tonic')].map((f) => f.id);
     // (the rhythms that fit 4/4: all but the waltz's, #542, whose lines lap three beats)
@@ -370,35 +378,19 @@ describe('a query given the workbench', () => {
     // (a mode's main parameter is its tonic, and a query that names no argument takes the one cell that meets it, decision
     // 075: on a workbench of a meter alone, none, since a meter read as a tonic is said to be no note, #613; a query that
     // names the mode's argument fits a mode only where that cell is, #587)
-    // (a bar's workbench is its plain line, `&bar meter("4/4") step=…` and its text cell, which no parameter takes, decision 101:
-    // it fits what that line fits; there a fragment whose main parameter a meter meets takes the bar, a form its phrase, as a
-    // plain meter line always did. Of the rhythms and the layers, exactly those that fit 4/4; every open fragment)
-    const PLAIN = '&bar meter("4/4") step=120bpm';
-    expect(fitting).toEqual(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: PLAIN }).map((f) => f.fragment.id));
-    const rhythmic = (id: string) => RHYTHM_FRAGMENTS.some((f) => f.id === id) || LAYER_FRAGMENTS.some((f) => f.id === id);
-    expect(fitting.filter(rhythmic)).toEqual(all.filter((id) => rhythmic(id) && isRhythm(id)));
+    expect(fitting).toEqual(all.filter((id) => isRhythm(id) || open.includes(id)));
     const named = { arguments: { mode: '&tonic' } };
-    expect(
-      r
-        .query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('bar'), ...named })
-        .map((f) => f.fragment.id)
-        .filter((id) => !modes.includes(id)),
-    ).toEqual(fitting.filter((id) => !modes.includes(id)));
+    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('bar'), ...named }).map((f) => f.fragment.id)).toEqual(all.filter((id) => isRhythm(id) || open.includes(id)));
     const toned = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: `${bench('bar')}\n&tonic D`, ...named }).map((f) => f.fragment.id);
-    expect(modes.filter((id) => all.includes(id) && !toned.includes(id))).toEqual([]);
+    expect(toned).toEqual(all.filter((id) => isRhythm(id) || open.includes(id) || modes.includes(id)));
     // (of the rhythms, only Ghost drums, Kinderlied drums and the three beats read from the examples (#572) fit 7/8: their lines
     // lap the bar, its half, the beat or the eighth, and nothing a sixteenth off the beat; and the aksak's, written for it, #646)
-    expect(
-      r
-        .query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('odd_meter(meter="7/8")'), ...named })
-        .map((f) => f.fragment.id)
-        .filter(rhythmic),
-    ).toEqual(
+    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('odd_meter(meter="7/8")'), ...named }).map((f) => f.fragment.id)).toEqual(
       all.filter(
         (id) =>
-          rhythmic(id) &&
-          (layerFits(id, 'odd_meter(meter="7/8")') ||
-            ['ghost_drums', 'kinderlied_drums', 'acid_drums', 'happy_hardcore_drums', 'elektro_drums', 'shanty_drums', 'quiet_pulse', 'aksak_drums'].includes(id)),
+          open.includes(id) ||
+          layerFits(id, 'odd_meter(meter="7/8")') ||
+          ['ghost_drums', 'kinderlied_drums', 'acid_drums', 'happy_hardcore_drums', 'elektro_drums', 'shanty_drums', 'quiet_pulse', 'aksak_drums'].includes(id),
       ),
     );
     expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { facet: 'meter', workbench: bench('bar') })).toEqual([]);
@@ -455,9 +447,7 @@ describe('what it costs', () => {
       // (the rhythms, the instruments, the vibrato, the envelopes, the styles, the band and the modules, a filter over the one voice that meets its input;
       // not the 9 modes, named or not: no cell of a workbench of drums meets a tonic, its meter said to be no note (#613); a
       // performer's part, a filter's input and a stab line's &harm are holes no workbench of drums fills)
-      // (and, the meter a plain line since decision 103, those whose main parameter a meter meets, as on any plain meter line:
-      // a performer's part, a song form's sections, a melodic scale's key; a meter a part or a phrase is #920's question)
-      const takesTheBar = [...seedFragments('performers'), ...seedFragments('songs'), ...MELODIC_FRAGMENTS];
+      // (and the song forms, the bar their intensity: decision 104's limit, #920)
       const kinds = [
         ...RHYTHM_FRAGMENTS,
         ...LAYER_FRAGMENTS,
@@ -466,7 +456,7 @@ describe('what it costs', () => {
         ...STYLE_FRAGMENTS,
         ...MODULE_FRAGMENTS,
         ...BAND_FRAGMENTS,
-        ...takesTheBar,
+        ...SONG_FRAGMENTS,
       ];
       // (and a melodic scale that leaves the key reads its tonic too, the blues, #719)
       const modes = [...MODE_FRAGMENTS, ...MELODIC_FRAGMENTS.filter((f) => signatureOf(f.text)?.main === '&tonic')].map((f) => f.id);
