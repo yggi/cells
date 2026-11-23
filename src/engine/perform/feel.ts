@@ -14,8 +14,9 @@
  * contract's order, so the same bits come out as the host's.
  */
 
-/** A section's type, as a host's plan names it. */
-export type SectionType = 'intro' | 'groove' | 'bridge' | 'build' | 'drop' | 'breakdown';
+/** A section's type, as a host's plan names it, as a list in the contract's order: the type is its elements (`SECTION_KINDS`, the library's, name more). */
+export const SECTION_TYPES = ['intro', 'groove', 'bridge', 'build', 'drop', 'breakdown'] as const;
+export type SectionType = (typeof SECTION_TYPES)[number];
 
 /** What the performer reads of a bar: the fields of a host's `bar` message the feel needs. */
 export interface FeelFrame {
@@ -29,17 +30,21 @@ export interface FeelFrame {
   readonly energy: number;
 }
 
+/** The parts the feel keys, in the order its draws number them: the type is its elements. */
+export const FEEL_PARTS = ['drums', 'bass', 'pad', 'stab', 'lead'] as const;
 /** A part as the feel keys it, in the order its draws number them. */
-export type FeelPart = 'drums' | 'bass' | 'pad' | 'stab' | 'lead';
-const PARTS: readonly FeelPart[] = ['drums', 'bass', 'pad', 'stab', 'lead'];
+export type FeelPart = (typeof FEEL_PARTS)[number];
+const PARTS: readonly FeelPart[] = FEEL_PARTS;
 
 /**
  * A drum hit's role in the groove: what its line does, never what it strikes (decision 075). `ostinato`, feel version 3
  * minor 1 (yggi/music-commons#66, the owner's ruling on yggi/jambot#651, #717): a line that repeats a pitched figure on
  * toms or congas.
  */
-export type DrumRole = 'kick' | 'backbeat' | 'ghost' | 'hat' | 'pedal' | 'euclid' | 'ostinato' | 'clave' | 'fill';
-export const ROLES: ReadonlySet<string> = new Set<DrumRole>(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'ostinato', 'clave', 'fill']);
+export type DrumRole = (typeof DRUM_ROLES)[number];
+/** Every drum role, as a list in the contract's order: the type is its elements, so a role added here is a role the feel reads (`ROLES`), and no frontend need keep a copy of the list. */
+export const DRUM_ROLES = ['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'ostinato', 'clave', 'fill'] as const;
+export const ROLES: ReadonlySet<string> = new Set<string>(DRUM_ROLES);
 /** Version 2's roles, read off a name (`readingOf`): the eight before minor 1, so a line named `&ostinato` reads as it did, as nothing. */
 const ROLES_BY_NAME: ReadonlySet<string> = new Set<DrumRole>(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'clave', 'fill']);
 

@@ -110,6 +110,16 @@ export const SYMBOL_ENTRY: Readonly<Record<string, Entry>> = {
     ['BODIES', 'DEFAULT_FREQ', 'LABEL_FIELDS', 'ROOT', 'adsrOf', 'isMidiCard', 'keepsTime', 'pickIndices'].map((n) => [`engine/program:${n}`, '@yggi/cells/inspect' as Entry]),
   ),
   ...Object.fromEntries(
+    [
+      'engine/perform/feel:DRUM_ROLES',
+      'engine/perform/feel:FEEL_PARTS',
+      'engine/perform/feel:SECTION_TYPES',
+      'engine/midi:GM_KIT',
+      'engine/midi:kitVoiceOf',
+      'engine/vary/index:backbeatOf',
+    ].map((k) => [k, '@yggi/cells/library' as Entry]),
+  ),
+  ...Object.fromEntries(
     ['engine/helix:positionHue', 'engine/helix:positionOctave', 'engine/helix:freqHue', 'theory/modes:pitchHue', 'engine/parser/index:SHOWS'].map((k) => [k, 'view' as Entry]),
   ),
 };

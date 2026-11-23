@@ -117,6 +117,11 @@ export const GM_KIT: readonly { readonly note: number; readonly name: string; re
   { note: 81, name: 'opentriangle', aliases: [] },
 ];
 const GM_DRUMS: ReadonlyMap<string, number> = new Map(GM_KIT.flatMap(({ note, name, aliases }) => [name, ...aliases].map((n) => [n, note] as const)));
+const KIT_VOICES: ReadonlyMap<number, string> = new Map(GM_KIT.map(({ note, name }) => [note, name]));
+/** The kit member's name for a General MIDI drum note (`GM_KIT`: 36 is `bd`, 38 `sd`, 75 `claves`), or null for a note that is none: `gmDrumNote`'s inverse, for a name's canonical form. */
+export function kitVoiceOf(note: number): string | null {
+  return KIT_VOICES.get(note) ?? null;
+}
 /** The General MIDI drum note for a kit member's name or alias (`GM_KIT`; lower case, a trailing number ignored: `bd2` is a kick), or null for a name it doesn't know. */
 export function gmDrumNote(name: string): number | null {
   return GM_DRUMS.get(name.toLowerCase().replace(/\d+$/, '')) ?? null;

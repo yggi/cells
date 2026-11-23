@@ -72,6 +72,8 @@ const RENAMED = [...RENAMED_IDS].map(([old, word]) => [old, CURRENT.get(word)]);
 const PIECES = Object.entries(EXAMPLES).map(([key, e]) => [key, e.source]);
 const BY_ID = new Map([...PIECES, ...CURRENT, ...RENAMED, ...RETIRED]);
 export const resolveSeed = (id) => BY_ID.get(id) ?? null;
+export const SECTION_KINDS = LIBRARY.filter((f) => f.association.some((p) => p.facet === 'section')).map((f) => f.id);
+export const FACETS = [...new Set(LIBRARY.flatMap((f) => f.association.flatMap((p) => (p.facet === undefined ? [] : [p.facet]))))];
 export const isLibraryFragment = (id) => LIBRARY_IDS.has(id);
 const LIBRARY_IDS = new Set(LIBRARY.map((f) => f.id));
 export function resolverOf(layer = EMPTY_LAYER) {

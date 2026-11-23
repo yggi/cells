@@ -50,6 +50,10 @@ export declare const RETIRED: ReadonlyMap<string, string>;
  * current one (the compile warns).
  */
 export declare const resolveSeed: Resolve;
+/** The section kinds the library has fragments for (`fragments/sections/`), in its order: a section a text can name (`&verse`, `&chorus`), the feel's six (`SECTION_TYPES`) and the song's verse, chorus and outro. */
+export declare const SECTION_KINDS: readonly string[];
+/** Every facet the library's fragments are associated as, in the order they first appear: a query names one (`QueryOptions.facet`). */
+export declare const FACETS: readonly string[];
 /** Whether `id` is a fragment of the library (`LIBRARY`): the ids a repository of one facet's fragments may be told it knows (`RepositoryOptions.known`). */
 export declare const isLibraryFragment: (id: string) => boolean;
 /**
