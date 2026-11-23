@@ -21,7 +21,7 @@ export const ROOT = fileURLToPath(new URL('..', import.meta.url));
 /** The seven entry points, in the order the page lists them, with the layer each belongs to. */
 export const ENTRIES = [
   { name: '@yggi/cells', layer: 'language', role: 'compile, plan, window; the shared types' },
-  { name: '@yggi/cells/edit', layer: 'language', role: 'edit, patch, capture, vary, shorten, normalise, migrate a text (one rule: `arguments`); a piece file' },
+  { name: '@yggi/cells/edit', layer: 'language', role: 'edit, patch, capture, vary, shorten, normalise, migrate a text (no rule before 1.0.0); a piece file' },
   { name: '@yggi/cells/inspect', layer: 'language', role: 'read a compiled piece: its cells, pitches, clocks, values, written graph' },
   { name: '@yggi/cells/midi', layer: 'language', role: 'text to MIDI notes and hits, MIDI files, keys, the performer' },
   { name: '@yggi/cells/time', layer: 'language', role: 'analysis of what plays: scalograms, structure, motifs' },
@@ -78,17 +78,19 @@ export const ENTRY_POINTS: readonly { readonly match: string; readonly entry: En
     'attributes',
   ].map((m): { match: string; entry: Entry } => ({ match: `engine/${m}`, entry: '@yggi/cells/inspect' })),
   // MIDI, and the folder that writes cells from notes.
-  ...['midi', 'midiclock', 'midifile', 'midiimport', 'midiexport', 'miditext', 'keys', 'perform/', 'fold/'].map((m): { match: string; entry: Entry } => ({
+  ...['midi', 'notesof', 'readback', 'midiclock', 'midifile', 'midiimport', 'midiexport', 'miditext', 'keys', 'perform/', 'fold/'].map((m): { match: string; entry: Entry } => ({
     match: `engine/${m}`,
     entry: '@yggi/cells/midi',
   })),
   // Time.
   { match: 'engine/time/', entry: '@yggi/cells/time' },
   // Repository: fragments, their fit and learning, and a fragment read as cells means it (reading/*, ruled 2026-11-16).
-  ...['fragments', 'learned', 'fit', 'holes', 'files', 'decompose', 'recognise', 'extract', 'audition', 'catalogue', 'corefragment'].map((m): { match: string; entry: Entry } => ({
-    match: `repository/${m}`,
-    entry: '@yggi/cells/repository',
-  })),
+  ...['fragments', 'learned', 'fit', 'holes', 'files', 'decompose', 'recognise', 'extract', 'audition', 'catalogue', 'corefragment', 'hits'].map(
+    (m): { match: string; entry: Entry } => ({
+      match: `repository/${m}`,
+      entry: '@yggi/cells/repository',
+    }),
+  ),
   ...['takein', 'references', 'use', 'renamed', 'reading/'].map((m): { match: string; entry: Entry } => ({ match: `engine/${m}`, entry: '@yggi/cells/repository' })),
   // Library: the seed, styles, the kit and roles, modes, the band.
   ...['library', 'seed', 'styles', 'band'].map((m): { match: string; entry: Entry } => ({ match: `repository/${m}`, entry: '@yggi/cells/library' })),

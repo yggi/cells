@@ -302,7 +302,7 @@ describe('the anchors', () => {
     });
     // (the seeds that keep their backbeat on a clap: before, only the kick was an anchor, and the clap line was varied)
     it.each([
-      ['electro_swing_drums', 14, 9],
+      ['electro_swing_drums', 14, 18],
       ['acid_drums', 7, 4],
       ['happy_hardcore_drums', 4, 2],
     ])('%s keeps its clap as the backbeat: %i variations before, %i now', (id, _before, after) => {

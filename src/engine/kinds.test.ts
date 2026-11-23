@@ -48,7 +48,7 @@ describe('what a cell is: one table of kinds (#782)', () => {
         "fill": 10,
         "gate": 25,
         "grid": 12,
-        "groove": 67,
+        "groove": 68,
         "head": 15,
         "kit": 8,
         "line": 386,

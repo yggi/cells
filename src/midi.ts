@@ -26,6 +26,8 @@ export {
   type Route,
   type Routes,
 } from './engine/midi';
+export { notesOf, type NotesOptions, type PlayedNote } from './engine/notesof';
+export { readBack, type ChordRead, type ReadBack, type ReadBackOptions } from './engine/readback';
 export { mainMeter, ticksBetween, type ClockTicks } from './engine/midiclock';
 export { isMidi, readMidi, writeMidi, type Smf } from './engine/midifile';
 export { cellsFromMidi, type Imported, type StoryStep } from './engine/midiimport';

@@ -165,20 +165,19 @@ describe('every line of every rhythm has a role', () => {
     return new Map(r.outputs.filter((o) => o.id.startsWith('kit:voices:')).map((o) => [o.id.split(':')[2]!, read(o.id)] as const));
   };
 
-  // (the exceptions, each with why, only shrinking: electro_swing_drums is the electroswing example's beat, lifted from it;
-  // a role= on its &ticks moves the draws of its `?`, which are keyed on the line's text, so the example's notes would
-  // move (768 to 763), and on its &clap and &hats the example's lines would read as roles they didn't, so it would play
-  // otherwise through a performer: the owner's call, #717)
-  const UNROLED = ['electro_swing_drums'];
+  // (no exceptions: electro_swing_drums, lifted from the electroswing example, writes its roles since #715: the clap the backbeat, the
+  // hats and the ticks the hat, the ghost of its snare a line of its own, `&ghosts`, a ghost (#508); the example's `?` strokes of the
+  // hat were drawn again by the edit, keyed on the line's text, 768 events to 764 in 40 s, until #779)
+  const UNROLED: string[] = [];
 
-  it('each line a kit plays reads as the drums with one of the feel’s roles: 32 of 33 fragments, the exceptions listed', () => {
+  it('each line a kit plays reads as the drums with one of the feel’s roles: every fragment but the bell and scale', () => {
     const roled = RHYTHM_FRAGMENTS.filter((f) => {
       const roles = [...rolesOf(f.text, f.id).values()];
       expect(roles.length, f.id).toBeGreaterThan(0);
       return roles.every((r) => r?.part === 'drums' && r.role !== undefined);
     }).map((f) => f.id);
     expect(RHYTHM_FRAGMENTS.map((f) => f.id).filter((id) => !roled.includes(id))).toEqual(UNROLED);
-    expect(roled).toHaveLength(32);
+    expect(roled.length).toBe(RHYTHM_FRAGMENTS.length);
   });
 
   it('the salsa’s tumbao is an ostinato, its clave a clave and its cáscara a hat; with no role=, a line reads as none (shown firing)', () => {
