@@ -1,7 +1,7 @@
 /**
- * The repository's library: every fragment built so far, the meters, the rhythms, the bass lines, the harmonies, the
+ * The repository's library: every fragment built so far, the meters, the rhythms, the fills, the counts, the bass lines, the harmonies, the
  * instruments, the modes, the melodic scales, the performers, the stab lines, the motifs, the forms, the band and the styles, their points associated as `meter`,
- * `rhythm`, `bass`, `harmony`, `instrument`, `mode`, `melodic` (#719), `performer`, `stab`, `motif`, `form`, `band` and `style` (the
+ * `rhythm`, `fill`, `count` (#718, #720), `bass`, `harmony`, `instrument`, `mode`, `melodic` (#719), `performer`, `stab`, `motif`, `form`, `band` and `style` (the
  * bell and scale both `mode` and `rhythm`). A query names its facet (`{ facet: 'meter' }`) and measures only the points
  * of that facet, so adding fragments of another never changes what it returns.
  */
@@ -22,6 +22,8 @@ const STYLE_NAMES = styleNamesIn(SEED_FILES);
 const FOLDERS = [
   'meters',
   'rhythms',
+  'fills',
+  'counts',
   'bass',
   'harmony',
   'instruments',

@@ -4,7 +4,9 @@ import { AXIS_NAMES } from "../engine/style.js";
 export const FOLDER_FACETS = {
     bands: 'band',
     bass: 'bass',
+    counts: 'count',
     expression: 'expression',
+    fills: 'fill',
     forms: 'form',
     harmony: 'harmony',
     instruments: 'instrument',
