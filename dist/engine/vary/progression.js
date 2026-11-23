@@ -176,3 +176,22 @@ function dominantOf(target, here, at) {
     const away = (t) => Math.abs(at(t[0].degree, t[0].alter) - from);
     return ways.sort((a, b) => away(a) - away(b))[0] ?? null;
 }
+export function progressionReference(p, slots, written) {
+    const delta = [];
+    let kept = 0;
+    for (const [s, slot] of slots.entries()) {
+        if (slotText(slot) === slotText(p.slots[s])) {
+            kept++;
+            continue;
+        }
+        if (kept)
+            delta.push(kept === 1 ? '=' : `=!${kept}`);
+        delta.push(slotText(slot));
+        kept = 0;
+    }
+    if (!delta.length)
+        return null;
+    const form = `base=${p.name} ${delta.join(' ')}`;
+    const line = (name) => `&${name} ${form}`;
+    return line(p.name.slice(1)).length <= written.join(' ').length ? { form, line } : null;
+}

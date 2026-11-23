@@ -266,3 +266,27 @@ function dominantOf(target: Chord, here: Chord, at: (degree: number, alter?: num
   const away = (t: Tone[]) => Math.abs(at(t[0]!.degree, t[0]!.alter) - from);
   return ways.sort((a, b) => away(a) - away(b))[0] ?? null;
 }
+
+/**
+ * A progression's variation as a form on the progression it varies (decision 052, point 7, for rung 3): a copy of it,
+ * `base=`, changed on the steps the variation changes, `=` keeping one step and `=!k` k (`base=&harm =!2 [1,3,5]`,
+ * `base=&harm [[0,2,4] [2,4#,6]]`), steps past the last change kept; a cell that plays it (`&harm2 base=&harm …`) reads
+ * the progression's table and grid. Null where it would be longer than the varied progression written out.
+ */
+export function progressionReference(p: Progression, slots: readonly Slot[], written: readonly string[]): { form: string; line: (name: string) => string } | null {
+  const delta: string[] = [];
+  let kept = 0;
+  for (const [s, slot] of slots.entries()) {
+    if (slotText(slot) === slotText(p.slots[s]!)) {
+      kept++;
+      continue;
+    }
+    if (kept) delta.push(kept === 1 ? '=' : `=!${kept}`);
+    delta.push(slotText(slot));
+    kept = 0;
+  }
+  if (!delta.length) return null;
+  const form = `base=${p.name} ${delta.join(' ')}`;
+  const line = (name: string) => `&${name} ${form}`;
+  return line(p.name.slice(1)).length <= written.join(' ').length ? { form, line } : null;
+}

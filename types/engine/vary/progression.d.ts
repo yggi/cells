@@ -53,3 +53,13 @@ export declare function progressionKey(p: Progression, slots: readonly Slot[]): 
  * candidate plays other notes than its source and the ones before it is the caller's to judge.
  */
 export declare function progressionCandidates(p: Progression, operators: readonly string[], result: CompileResult): Candidate[];
+/**
+ * A progression's variation as a form on the progression it varies (decision 052, point 7, for rung 3): a copy of it,
+ * `base=`, changed on the steps the variation changes, `=` keeping one step and `=!k` k (`base=&harm =!2 [1,3,5]`,
+ * `base=&harm [[0,2,4] [2,4#,6]]`), steps past the last change kept; a cell that plays it (`&harm2 base=&harm …`) reads
+ * the progression's table and grid. Null where it would be longer than the varied progression written out.
+ */
+export declare function progressionReference(p: Progression, slots: readonly Slot[], written: readonly string[]): {
+    form: string;
+    line: (name: string) => string;
+} | null;

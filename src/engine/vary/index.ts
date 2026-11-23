@@ -52,7 +52,7 @@ import { anchorsAmong, type Anchor } from './anchors';
 import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written, type Line, type LineNote } from './lines';
 import { referenceOf, type Reference } from './reference';
 import { answeredIn } from '../use';
-import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionsOf, type Progression } from './progression';
+import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf, type Progression } from './progression';
 
 export { backbeatOf, type Anchor } from './anchors';
 export type { Reference } from './reference';
@@ -389,6 +389,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
       const braid = progressionBraid(c.slots);
       const w = wordsOf(p.name.slice(1));
       const amount = c.amounts.length ? ` ${c.amounts.join(' ')}` : '';
+      const reference = w && progressionReference(p, c.slots, [...w.head, ...w.attrs, ...braid]);
       const variation: Variation = {
         id: `vary:${c.operator}:${p.name}${c.amounts.map((a) => `:${a}`).join('')}:${out.length}`,
         tool: 'vary',
@@ -399,6 +400,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
         apply: (source) => setBraid(source, p.name.slice(1), braid),
         line: p.name,
         by: `${c.operator} ${p.name}${amount}`,
+        ...(reference ? { reference } : {}),
       };
       out.push({ variation, notes: [...heardKeys.flat(), ...fixedBut(p.name.slice(1), progressionNotes(p, c.slots, k))] });
     }

@@ -117,6 +117,41 @@ describe('Vary on a progression (decision 052, point 8)', () => {
   });
 });
 
+describe("a progression's variation by reference (point 7)", () => {
+  /** A cell's chords as they sound, on the workbench with the source beside it. */
+  const cellChords = (text: string, mode: string, cell: string) => {
+    const result = compiled(text, mode);
+    const shifts = codeShifts(result);
+    return flatten(result, cell, shifts)
+      .map((e) => `${e.step}:${e.duration}:${Math.round(resolveIn(result, e.table, e.tableShift, e.value, e.alter, shifts).position * 1000) / 1000}`)
+      .sort()
+      .join(' ');
+  };
+
+  it('plays what its variation plays, read beside its source: each of the 419', () => {
+    let n = 0;
+    let referred = 0;
+    for (const mode of MODES)
+      for (const { id, text } of HARMONIES)
+        for (const v of variations(text, OPTIONS(mode))) {
+          n++;
+          if (!v.reference) continue;
+          referred++;
+          expect(v.reference.form, `${id} ${v.by}`).toMatch(/^base=&harm /);
+          expect(cellChords(`${text}\n${v.reference.line('varied')}`, mode, 'varied'), `${id} ${v.by}`).toBe(cellChords(v.apply(text), mode, 'harm'));
+        }
+    expect([n, referred]).toEqual([419, 419]);
+  });
+
+  it('writes only the steps it changes', () => {
+    const text = '&harm over=&key step=1m cycle=4 [0,2,4] [5,7,9] [3,5,7] [4,6,8]';
+    const ref = (by: string) => variationBy(text, by, OPTIONS('major'))!.reference?.form;
+    expect(ref('third &harm 2 -2')).toBe('base=&harm =!2 [1,3,5]');
+    expect(ref('dominant &harm 0')).toBe('base=&harm [[0,2,4] [2,4#,6]]');
+    expect(ref('rotate &harm')).toBe('base=&harm [3,5,7] [0,2,4] [5,7,9]');
+  });
+});
+
 describe('a progression varied, by example', () => {
   const text = '&harm over=&key step=1m cycle=4 [0,2,4] [5,7,9] [3,5,7] [4,6,8]';
   const bys = (mode: string) => variations(text, OPTIONS(mode)).map((v) => v.by);

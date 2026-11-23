@@ -7,7 +7,7 @@ import { anchorsAmong } from "./anchors.js";
 import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written } from "./lines.js";
 import { referenceOf } from "./reference.js";
 import { answeredIn } from "../use.js";
-import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionsOf } from "./progression.js";
+import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf } from "./progression.js";
 export { backbeatOf } from "./anchors.js";
 export { THIRDS, PHRASE_BARS } from "./progression.js";
 export const RHYTHM_OPERATORS = ['rotate', 'drop', 'add'];
@@ -234,6 +234,7 @@ function readSome(fragment, options, only) {
             const braid = progressionBraid(c.slots);
             const w = wordsOf(p.name.slice(1));
             const amount = c.amounts.length ? ` ${c.amounts.join(' ')}` : '';
+            const reference = w && progressionReference(p, c.slots, [...w.head, ...w.attrs, ...braid]);
             const variation = {
                 id: `vary:${c.operator}:${p.name}${c.amounts.map((a) => `:${a}`).join('')}:${out.length}`,
                 tool: 'vary',
@@ -244,6 +245,7 @@ function readSome(fragment, options, only) {
                 apply: (source) => setBraid(source, p.name.slice(1), braid),
                 line: p.name,
                 by: `${c.operator} ${p.name}${amount}`,
+                ...(reference ? { reference } : {}),
             };
             out.push({ variation, notes: [...heardKeys.flat(), ...fixedBut(p.name.slice(1), progressionNotes(p, c.slots, k))] });
         }
