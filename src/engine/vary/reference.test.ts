@@ -200,3 +200,22 @@ describe('a line’s note shifted, by reference (#910)', () => {
     },
   );
 });
+
+describe('a line’s note split, by reference (#912)', () => {
+  const SPLIT_ = CASES.filter((c) => c.options.operators).flatMap((c) => variations(c.fragment, { ...c.options, operators: ['split'] }).map((v) => ({ ...c, v })));
+  const REFERRED = SPLIT_.filter(({ v }) => v.reference);
+
+  it('gives the bass seeds 236 splits over both harmonies, each with a reference', () => {
+    expect([SPLIT_.length, REFERRED.length]).toEqual([236, 236]);
+  });
+
+  it.each(REFERRED.filter((_, k) => k % 5 === 0).map((c) => [`${c.id}: ${c.v.by}`, c] as const))(
+    '%s plays the notes of its variation (S2), every 5th (all 236 once, 2026-11-23)',
+    (_, { fragment, bench, v, seconds }) => {
+      const varied = unionOf(v.apply(fragment), bench).text;
+      const reference = referred(unionOf(fragment, bench).text, v);
+      expect(compileSource(reference, undefined, KIT).diagnostics.map((d) => d.message)).toEqual([]);
+      expect(playsSameNotes(varied, reference, seconds, KIT)).toBe(true);
+    },
+  );
+});

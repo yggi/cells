@@ -78,8 +78,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are the seed files (the law five_to_twelve, #772; the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507, then bar and three style meters and the odd ones, #902; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; #540’s five harmonies; #646’s two drum bars, for 7/8 and 12/8; and Kinderlied’s six tunes its own parts since decision 082; the nine section kinds and the seven song forms, #810; the built-in braid fill metric_accent and the breathing pulse that takes it, #799; the four melodic scales, #719; the eight fills and the four counts, #718 and #720: two hundred and fourteen)', () =>
-    expect(files).toHaveLength(214));
+  it('are the seed files (the law five_to_twelve, #772; the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507, then bar and three style meters and the odd ones, #902; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; #540’s five harmonies; #646’s two drum bars, for 7/8 and 12/8; and Kinderlied’s six tunes its own parts since decision 082; the nine section kinds and the seven song forms, #810; the built-in braid fill metric_accent and the breathing pulse that takes it, #799; the four melodic scales, #719; the eight fills and the four counts, #718 and #720; the ending, #720: two hundred and fifteen)', () =>
+    expect(files).toHaveLength(215));
 
   it.each(files)('%s writes back byte for byte', (path, markdown) => {
     expect(writeFragment(read(markdown, optionsAt(path)), optionsAt(path))).toBe(markdown);
@@ -258,7 +258,7 @@ describe('the seed files', () => {
           ...STAB_FRAGMENTS,
           ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic_minor'),
           // (the ending's drums, Jambot's finale, #720)
-          ...SEED.filter((f) => f.fragment.id === 'landing').map((f) => f.fragment),
+          ...SEED.filter((f) => f.fragment.id === 'landing' || f.fragment.id === 'finale').map((f) => f.fragment),
           ...MOTIF_FRAGMENTS.filter((f) =>
             ['gypsy', 'raveHook', 'sequencer', 'melodie', 'ghostPhrase', 'royalTheme', 'bluesRiff', 'drunkenSailor', 'korobeinikiBar'].includes(f.id),
           ),

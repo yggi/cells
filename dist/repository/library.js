@@ -12,6 +12,7 @@ const FOLDERS = [
     'rhythms',
     'fills',
     'counts',
+    'endings',
     'bass',
     'harmony',
     'instruments',
