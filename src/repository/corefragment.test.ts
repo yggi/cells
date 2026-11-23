@@ -17,9 +17,9 @@ describe('a fragment cored up to its signature (#590)', () => {
     expect(why).toBeUndefined();
     expect(source.split('\n')[0]).toBe(text.split('\n')[0]);
     expect(signatureOf(source)).toEqual(signatureOf(text));
-    // (a parameter stays read by name: the copy of &grouping is not written out)
-    expect(source).toMatch(/^&bar base=&grouping /m);
-    expect(source).toMatch(/^&grouping meter\("\*-\+-"\)$/m);
+    // (a parameter stays read by name: the text cell &meter is not written into the call, decision 101)
+    expect(source).toMatch(/^&bar meter\(&meter\) /m);
+    expect(source).toMatch(/^&meter "4\/4"$/m);
   });
   it('what it takes from another fragment stays a from line: a piece may give its own', () => {
     const text = resolveSeed('bass_performer')!;

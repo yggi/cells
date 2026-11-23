@@ -25,7 +25,7 @@ Each wheel is a fragment of the seed library taken by a `from` line ([use.md](us
 | the table | `&key from (&mode) &tonic` | a note, the tonic | the mode (major) |
 
 The main argument is required: a meter with no tempo has no time, and a key with no tonic would play a wrong key silently ([#117](https://github.com/yggi/cells/issues/117)).
-The shape has a default, and a piece passes its own by name: `meter(grouping=meter("7/8"), swing=8n:2/3)`, `diatonic(mode=dorian)`.
+The shape has a default, and a piece passes its own by name: `bar(meter="7/8")`, `diatonic(mode=dorian)`.
 The names `&bar`, `&tempo`, `&key` and `&tonic` are a convention, which Normalise writes; nothing reads them by name ([decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md)).
 
 ## The tempo
@@ -143,9 +143,8 @@ A `from` line is sugar ([decision 069](https://github.com/yggi/cells/blob/main/d
 `&bar swing=8n:2/3 from bar(meter="7/8") &tempo` is:
 
 ```cells
-&bar base=&bar_grouping step=&tempo swing=&bar_swing
-&bar_grouping meter("7/8")
-&bar_swing swing=8n:2/3
+&bar meter(&bar_meter) step=&tempo swing=8n:2/3
+&bar_meter "7/8"
 &tempo step=96bpm
 ```
 

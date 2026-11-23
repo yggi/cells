@@ -5,7 +5,7 @@ description: "A 7/8 of two, two and three in D harmonic minor: the pairs swing, 
 ---
 
 An aksak ("limping", in Turkish) is a bar of unequal beats, twos and threes: 7/8 as 2 + 2 + 3, 9/8 as 2 + 2 + 2 + 3.
-The library's meter takes the grouping as its argument, `meter(grouping=meter("2+2+3"))`; `meter("7/8")` alone is the family's 3 + 2 + 2.
+The library's bar takes the grouping as its argument, `bar(meter="2+2+3")`; `meter("7/8")` alone is the family's 3 + 2 + 2.
 Its bpm counts the beats, three a bar, the last half again as long as the others.
 
 Swing it, and only the twos lean: of each pair of eighths the second comes late, while a group of three plays even (decision 071), as a band swinging a mixed meter does.

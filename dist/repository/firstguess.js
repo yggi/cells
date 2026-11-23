@@ -5,6 +5,7 @@ import { windowAt } from "../engine/schedule.js";
 import { midiOf } from "../theory/modes.js";
 import { audition } from "./audition.js";
 import { fitsAs } from "./fit.js";
+import { signatureOf } from "../engine/use.js";
 export const PART_OF = { rhythm: 'drums', bass: 'bass', harmony: 'pad', stab: 'stab', motif: 'lead' };
 export const READ_BARS = 16;
 export const GUESS_K = 2;
@@ -12,12 +13,13 @@ export const GUESSED = { rhythm: ['sync'], harmony: ['harm'] };
 const BAR_SECONDS = 2;
 const STEP = BAR_SECONDS / 16;
 const FOUR_FOUR = '&bar meter("4/4") step=120bpm';
+const STAND_IN = '&firstGuessArg over=scale(ionian, C) step=1m [0,2,4] [3,5,7]';
 export function readFragment(text, facet, resolve) {
     const part = PART_OF[facet];
     return part ? readAudition(text, part, resolve) : null;
 }
 export function readAudition(text, part, resolve, given = '') {
-    if (fitsAs({ text }, FOUR_FOUR, { resolve }).unmet.length)
+    if (fitsAs({ text }, `${FOUR_FOUR}\n${STAND_IN}`, { resolve, main: signatureOf(text)?.main ? '&firstGuessArg' : undefined }).unmet.length)
         return null;
     const a = audition(given ? `${text}\n${given}` : text, { resolve });
     if (a.why)

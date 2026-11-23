@@ -529,7 +529,7 @@ export interface CompileResult {
   readonly builtinCard?: string;
   /** What each of the piece's `from` lines resolved to and gave it (decision 065), in the order written; absent for none. */
   readonly takes?: readonly Take[];
-  /** Where each cell its `from` lines gave came from, by its name as compiled (`hh`, a copy's `bar_grouping`); absent for none. */
+  /** Where each cell its `from` lines gave came from, by its name as compiled (`hh`, a copy's `bar_meter`); absent for none. */
   readonly origins?: ReadonlyMap<string, readonly Origin[]>;
   /** Each cell's line of code, where the text has fills (decision 085, #792): what realize compiles a stream's laps from. */
   readonly codes?: ReadonlyMap<string, string>;

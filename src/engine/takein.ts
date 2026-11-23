@@ -8,7 +8,7 @@
  *    piece's, and a line that named it stops asking for it (the piece's own line wins over a collection's, 059);
  *  - **a template's head that `*` takes** (`* from band(…)`): its line becomes the piece's, which `*` leaves to the piece,
  *    and what the line reads of the copy stays given (#636);
- *  - **a head among several that one line takes, or a cell a copy keeps to itself** (`&bar_grouping`): no line of the
+ *  - **a head among several that one line takes, or a cell a copy keeps to itself** (`&bar_meter`): no line of the
  *    piece's can stand for it without changing what the copy reads, so it says why instead.
  * It replaces Cell studio's `withUsedLine` (cell-studio#610). Pure.
  */

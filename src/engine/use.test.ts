@@ -229,10 +229,10 @@ describe('a named use of a collection (decision 059)', () => {
       '&key scale(harmonic, D)',
     ].join('\n');
     expect(read(section).said).toEqual([
-      ['warning', 'The piece defines all "meter" gives (&bar): this use adds nothing', 1],
+      ['warning', 'The piece defines all "bar" gives (&bar): this use adds nothing', 1],
       ['warning', 'The piece defines all "harmonic_minor" gives (&key): this use adds nothing', 2],
     ]);
-    expect(read(`&bar from bar\n${BENCH}`).said).toEqual([['warning', 'The piece defines &bar, so taking it from "meter" adds nothing', 1]]);
+    expect(read(`&bar from bar\n${BENCH}`).said).toEqual([['warning', 'The piece defines &bar, so taking it from "bar" adds nothing', 1]]);
     for (const f of LIBRARY)
       expect(
         compileSource(f.text, undefined, seed).diagnostics.filter((d) => /adds nothing|old way/.test(d.message)),
