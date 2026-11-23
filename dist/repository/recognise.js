@@ -1,7 +1,7 @@
-import { HARMONY_OPERATORS, PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS, SHIFT } from "../engine/vary/index.js";
+import { PITCHED_OPERATORS, readVariations, RHYTHM_OPERATORS } from "../engine/vary/index.js";
 import { declWords, splitComment } from "../engine/edit.js";
 import { readFrom } from "../engine/parser/use.js";
-export const ALL_OPERATORS = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, ...HARMONY_OPERATORS, SHIFT])];
+export const ALL_OPERATORS = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, 'third', 'dominant'])];
 const counted = (keys) => {
     const out = new Map();
     for (const k of keys)
