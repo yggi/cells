@@ -2,7 +2,6 @@ import { splitComment } from "./edit.js";
 import { FROM_FORM, HEAD_FLAGS, isAttribute, readFrom, topTokens } from "./parser/use.js";
 import { counts } from "./core/desugar.js";
 import { STYLE } from "./style.js";
-import { BOUND_BY_NAME, byNameMessage } from "./byname.js";
 import { BY_FRAGMENT } from "./fills.js";
 import { WIRE, wireArg } from "./wire.js";
 export const argsHash = (args) => `a1:${hash64(JSON.stringify(Object.keys(args)
@@ -451,7 +450,7 @@ function renamesOf(from, lines, id, say) {
     return { names, lacking };
 }
 const sharedLines = (lines) => lines.map((l) => (l.shared ? l : { ...l, shared: true }));
-function give(entry, path, text, resolve, run, say, taken, old, level) {
+function give(entry, path, text, resolve, run, say, taken, level) {
     const { id, from } = entry;
     const signatures = oneSignatureEach(linesOf(text).flatMap((l) => (l.from?.kind === 'signature' ? [l.from] : [])));
     if (!signatures.length) {
@@ -468,9 +467,9 @@ function give(entry, path, text, resolve, run, say, taken, old, level) {
     }
     if (signatures.length > 1)
         say(`${quoted(id)} has ${signatures.length} signatures: a fragment has one (&head from (&optional) &main)`);
-    return instantiate(from, id, signatures[0], path, text, resolve, run, say, taken, old, level);
+    return instantiate(from, id, signatures[0], path, text, resolve, run, say, taken, level);
 }
-function instantiate(from, id, signature, path, text, resolve, run, say, taken, old, level) {
+function instantiate(from, id, signature, path, text, resolve, run, say, taken, level) {
     const full = fragmentLines(path, text, resolve, run, say);
     const own = full.filter((l) => !l.shared && l.name);
     const shared = full.filter((l) => l.shared && l.name);
@@ -504,11 +503,6 @@ function instantiate(from, id, signature, path, text, resolve, run, say, taken, 
     if (from.head.length && !one)
         say(`The attributes before from are the head's, and this line takes ${names.size} heads from ${quoted(id)}: write them on each head's own line`);
     const args = new Map((from.args ?? []).map((a) => [a.name, a.value]));
-    const readByName = old ? (BOUND_BY_NAME.get(id) ?? []).filter((p) => optional.includes(p) && !args.has(p) && old.defines.has(p)) : [];
-    for (const p of readByName)
-        args.set(p, `&${p}`);
-    if (readByName.length)
-        old.warn(byNameMessage(id, readByName, `${from.id}(${[...args].map(([k, v]) => `${k}=${v}`).join(', ')})`));
     for (const k of args.keys())
         if (!optional.includes(k))
             say(`${quoted(id)} takes no ${k}=: ${optional.length ? `its optional parameters are ${optional.map((o) => `${o}=`).join(', ')}` : 'it has no optional parameters'}`);
@@ -650,7 +644,7 @@ function instantiate(from, id, signature, path, text, resolve, run, say, taken, 
         copy.push(lineOf(`&${names.get(main)} ${asCell(values.get(main), main, own)}`));
     for (const p of sharedValued)
         copy.push({ ...lineOf(inherited(names.get(p), byName.get(p).code, asCell(values.get(p), p, own))), origin: byName.get(p).origin ?? [] });
-    if (level?.warn && !old)
+    if (level?.warn)
         for (const o of optional)
             if (!definesOwn.has(o) && !values.has(o) && level.defines.has(o) && reached.has(o) && level.codes.get(o) !== byName.get(o)?.code)
                 level.warn(`The piece defines &${o}, and ${quoted(id)} takes its &${o} from a collection by default: pass yours, ${from.id}(${o}=&${o}), or rename it`);
@@ -705,7 +699,7 @@ function fragmentLines(path, text, resolve, run, say) {
     });
     return merge([...own, ...copies], used, (_, message) => sayHere(message), quoted(path.at(-1))).lines;
 }
-export function expansion(text, { resolve, locked = [], old = false, plugins: theirs = [], answers: lockedAnswers = [] } = {}) {
+export function expansion(text, { resolve, locked = [], plugins: theirs = [], answers: lockedAnswers = [] } = {}) {
     const plugins = theirs.length ? new Map([...BY_FRAGMENT, ...theirs.map((f) => [f.fragment, f])]) : BY_FRAGMENT;
     const own = linesOf(text);
     const uses = own.flatMap((l) => {
@@ -753,16 +747,13 @@ export function expansion(text, { resolve, locked = [], old = false, plugins: th
         hashes[i] = hash;
         if (recorded && !hashIs(recorded, theirs))
             diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });
-        const binding = old
-            ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message) => diagnostics.push({ severity: 'warning', message, span }) }
-            : undefined;
         const g = give(u, [id], theirs, resolve, {
             plugins,
             warn: (message) => diagnostics.push({ severity: 'warning', message, span }),
             context: [withoutFrom(text), ...copiedSoFar].join('\n'),
             locked: lockedAnswers,
             made: answers[i],
-        }, say, taken, binding, {
+        }, say, taken, {
             ...level,
             warn: (message) => diagnostics.push({ severity: 'warning', message, span }),
         });
