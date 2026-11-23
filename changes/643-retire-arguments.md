@@ -1,3 +1,0 @@
-### Removed
-
-- **Migrate's last rule, `arguments`, and the reading behind it** (#643): the seed band passes its style to its performers itself since #882, so no text in the library or the examples needed the rule. `CompileOptions.old` is gone, and so is `byname.ts`, the table of names the library once read by name. **What a frontend sees at its next pin:** nothing in a piece that passes what it means to pass; a `from` line that leaves out a parameter its fragment reads (`bass_performer(…)` without `bassV=&bassV`) plays that parameter's default, as it did without `old`, and `migrate()` rewrites nothing. A frontend that passed `{ old: true }` to a compile, a migrate or a normalise drops the option (a TypeScript error says so). Migrate holds no rule until 1.0.0.

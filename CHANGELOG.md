@@ -10,6 +10,88 @@ Format: [Keep a Changelog](https://keepachangelog.com/), as Cell studio's (lifte
 
 Entries not yet released are in [`changes/`](changes/), one file each; a release gathers them here (`npm run changelog -- gather`).
 
+## v0.29.0 — 2026-11-23
+
+### Added
+
+- **Vary varies a progression** (#208, decision 052, point 8; for yggi/jambot#425's ladder): a harmony a fragment defines (`&harm over=&key step=1m cycle=8 [0,2,4] …`) is a line one level up, its cadence (every step in the last bar of each four-bar phrase) its anchor, `reason: 'cadence'` in `anchorsOf`. Four operators, `HARMONY_OPERATORS`: `rotate` and `reverse` each phrase between its cadences, `third` (one chord moved a third, `third &harm 2 -2`) and `dominant` (the next chord's secondary dominant on a step's second half, spelled by the workbench's key, `dominant &harm 0`). A progression is varied only where a frontend asks for `third` or `dominant`, after every line: **what a frontend sees at its next pin:** nothing, unless it asks for them; Jambot's drums, bass and lead get the same variations, in the same order. On the 17 seed progressions over C: 209 variations in major, 210 in minor.
+- **`variationBy(text, by, options)`** (decision 052, point 9): the one variation a filed `by:` names, made without the others, so a variation kept as its source, its `by:` and its workbench is rebuilt from them (Jambot's `rebuiltGroove` can call it instead of finding it among every variation). Null where the text has none of that name.
+
+- **`notesOf(plan, { from, to })`, a plan's MIDI notes in one call** (#715), from `@yggi/cells/midi`: the six calls a frontend ran in order (`windowAt`, `router(channelTable)`, `routesOf`, `midiNote`) as one, each note with its channel, key, velocity, start and end in seconds and bends, as MIDI out sends them, and the output and voice it comes from and the part and drum role its text declares (`readerOf`). A note on no MIDI key or no card is none; a note on two cards is two.
+
+- **`readBack(text, { to, chord })`, a text's bar starts and chords, with no line of the frontend's** (#715), from `@yggi/cells/midi`: cells writes the reading itself (a cell stepping `1m`, a voice on C4, sound outputs no MIDI card sends), under names the text doesn't use, compiles the text with it, and returns the plan (its own notes are those of `notesOf`: the reading adds none), where each bar starts in seconds (the main meter's `1m` tap, through its swing, bends and tempo) and the chord cell named at each moment it sounds (its MIDI keys through a voice on C4). The text gains no line a frontend wrote, and no channel is reserved.
+- **`hitsOf(fragment, bench, { resolve })`, a rhythm fragment's hits by line and role** (#715), from `@yggi/cells/repository`: the fragment's body (`bodyOf`) united with the bench (`unionOf`), its mix given the kit's card, compiled once; each line with the role its `role=` declares (null where it writes none: no role is guessed), and each hit's line, key, step (in sixteenths by default, `grid`) and velocity, over the groove's lap. Equal, for every rhythm in the seed, to each line compiled alone.
+
+- **A seed the cell writes: a chancy cell that writes `seed=n` draws from it alone** (#779, decision 098): no edit to what the cell carries, a `role=`, a `part=`, a label or its steps, throws its dice again, and a different number does. Normalise writes `seed=n` on every chancy cell (a chance, a choice or a pick among its steps), `n` its content key as a number, so the draws are the ones thrown before: the rewrite plays the same by construction. The Electro swing `&ticks`, the `sh` module and every chancy line of the examples carry theirs, written by it. A frontend that writes a chancy line of its own writes a seed, or leaves it to the content key as before. A cell that writes the same seed as another draws alike; a fragment taken twice with different arguments keeps its one seed.
+
+- **`metric_accent`**, the first built-in braid fill (#799; decisions 085, 090). It is a fragment with no style that writes a bar's levels from its metric weights:
+  - `steps`, the steps of a bar;
+  - `density`, which steps play;
+  - `sync`, how far each step leans toward the weight of the step after it;
+  - `peak` and `floor`, the strongest and lightest levels.
+
+  Its fuel is 64 steps. A fragment takes it by its name, `&hatLevel from metric_accent(density=.75, sync=.2)`.
+- **`breathing_drums`**, a new rhythm beside Ambient: one soft kick a bar, and hats whose levels `metric_accent` writes. It is second for Ambient (distance .087, where the waltz drums were at .290) and first for no style.
+- **`answered(text)`** (`repository/answered`): a text with each `from` line that takes a built-in plugin-fragment written out as its answer. A template's lines alone, as `sameText` reads a groove, now hold a plugin's answer, no longer drop it with the kit's `from` line.
+
+- **The vocabularies a text writes, as lists** (#828), from `@yggi/cells/library`, so no frontend keeps a copy: `DRUM_ROLES` (the nine, in the contract's order), `FEEL_PARTS` (`drums bass pad stab lead`) and `SECTION_TYPES` (the feel's six), each the list its type is made of (`DrumRole`, `FeelPart` and `SectionType` are now its elements, so a role added is a role the feel reads); `SECTION_KINDS` (the nine sections the library has fragments for, `intro` to `outro`, the song's verse, chorus and outro among them) and `FACETS` (every facet a fragment is associated as), read from the library; the General MIDI kit, `GM_KIT` (47 notes, each its name and aliases) and `kitVoiceOf(note)`, the name of a note, beside `gmDrumNote(name)`; and `backbeatOf(meter)`, where a meter's backbeat falls in whole notes from the bar's start (4/4: a quarter and three quarters). Each is the value the code already used, and nothing a piece plays moves. Meter names are not listed: a meter is any signature (`meter("x/y")`), and the library places only its groupings.
+
+### Changed
+
+- **A style's axis is an offset chain, held to the axis** (#571, #881): a slot of a named style is a term of a sum of values, `&bite [&funk[bite] + &dsong + &dsect]` (`bite=&bite` on the style that reads it), the style's own value on the axis plus the levels above it, each a cell; before, `&funk[bite]` in a sum was read as a sound and refused. And a moving axis is held to its range wherever it is read: a sum past 1 reads 1, one below 0 reads 0, a plain cell above 1 reads 1 (before they read 1.2, or a negative sum as a bipolar share, `[.1 + -.3]` as .4). **What a frontend sees at its next pin:** nothing in a piece whose axes stay within 0 to 1, which is every example and fragment; a piece that wrote a moving axis outside it now reads the end of it. A stepped offset cell with a value below 0 still reads as a bipolar wave (decision 067 §5): write it from 0 up, or as a number cell (#884).
+
+- **Electro swing drums writes each line's role, and its snare ghost is a line of its own** (#715, #717, #508): `&clap` is `role=backbeat`, `&hats` and `&ticks` `role=hat`, and the ghost of the snare that stood in `&ticks`' last stroke is `&ghosts`, `role=ghost`, so every rhythm in the seed says every role and a frontend guesses none. A piece that takes the lines by name takes the fifth: `&kick, &clap, &hats, &ticks, &ghosts from electro_swing_drums` (the Electro swing example does, and adds `&ghosts` to its drum stack). **The Electro swing example plays 764 notes in its first 40 s, not 768:** its chancy hi-hat strokes (`?`) are drawn again, since a draw is keyed on its line's text and `&ticks` changed (28 strokes land elsewhere, 32 no longer fall; every other note, the snare's ghosts included, is the same; #779). Through a performer, its clap and hats now read as the backbeat and the hat.
+
+- **A written `seed=` is the seed alone, no longer mixed with what the cell carries** (#779): `seed=n` before picked a sequence *with* the cell's content; it is now the whole key, so a cell that wrote `seed=3` throws other dice. The `chance` example's `&ghosts` (`chance=.75 seed=3`) plays 442 notes in 40 s, not 451; no other example moves. A text that wrote a seed by hand reads other dice once; one that wrote none plays as before. A fragment of the library written with a seed (`electro_swing_drums`, `sh`) has a new hash.
+
+- **The funk, lo-fi hip hop and bossa nova drums take their euclid's levels from `metric_accent`** (#799; the owner, 2026-11-23, with Jambot's change accepted). Each is `&euclidLevel from metric_accent(floor=…, peak=…)`, bracketing the velocities E31's band wrote. The rest of each bar is E31's word for word.
+  - *Funk*'s rim moves: 88 of its 577 events in 30 s change level, by at most .046. Its notes are the same. No other example takes these three.
+  - Vary reads a plugin's `from` line as the lines it answers (`answeredIn`, `engine/use`), so the three keep their 51 rim variations.
+  - The outline lists a groove's head once where a nested `from` line gives it.
+- **`answered(text)`** is exported from `@yggi/cells/repository`.
+- **For a frontend, the migration:** a frontend that reads a rhythm's lines by dropping its `from` lines (Jambot's `grooveLines`) reads them through `answered` first. Otherwise these three grooves and `breathing_drums` lose their level lines: `answered(text)` writes each plugin's `from` line out as its answer, and leaves the kit's `from` line to drop.
+- **For a frontend, what it hears:** the three grooves' rim strokes play at `metric_accent`'s levels, no longer Jambot's band's velocities.
+
+- A braid fill's argument written as a number without its leading zero (`.3`) is handed as written. Only an error on the argument's own line refuses it (`engine/wire.ts`).
+
+No example sounds different.
+
+- **A frame's section kind is any kind of the library** (#851): `SectionType` in the feel is a `string`, so the song forms' `verse`, `chorus` and `outro` (ids of `SECTION_KINDS`) type a frame beside the six (`SECTION_TYPES`, the contract's first list), and a kind the library gains is one a frame may name. The feel plays any kind as a groove is played but a breakdown: no piece sounds different (0 event snapshots move).
+- **For a host:** a frame's `section` is any string; check a host's name against `SECTION_KINDS` where the contract refuses what the library lacks (session version 2 minor 3 refuses `coda`).
+
+### Removed
+
+- **Migrate's last rule, `arguments`, and the reading behind it** (#643): the seed band passes its style to its performers itself since #882, so no text in the library or the examples needed the rule. `CompileOptions.old` is gone, and so is `byname.ts`, the table of names the library once read by name. **What a frontend sees at its next pin:** nothing in a piece that passes what it means to pass; a `from` line that leaves out a parameter its fragment reads (`bass_performer(…)` without `bassV=&bassV`) plays that parameter's default, as it did without `old`, and `migrate()` rewrites nothing. A frontend that passed `{ old: true }` to a compile, a migrate or a normalise drops the option (a TypeScript error says so). Migrate holds no rule until 1.0.0.
+
+- **The language keeps no retired form before 1.0.0** (#643, the owner on 2026-11-22: "the real job of migrate begins with 1.0.0. before that, we throw out anything old"). Eighteen forms that Migrate rewrote and the parser or compiler still read, each with a warning, are errors now or unknown words, with no special case in the parser for them:
+  - **gates:** `trigger=`, `velocity=`, `gate=` and the gate `gain=` (spell `play=` and `level=`);
+  - **a meter's own steps:** `step=&bar*2` (a tap: `step=8n`; an error that names it);
+  - **bare swing:** `swing=.67` on a meter (`swing=8n:.67`; an error that names the level);
+  - **`over=key`**, the bare word (`over=&key`); `CompileResult.mainKey` stays, for a host that shows one key and Normalise's `&key`;
+  - **moved and forwarded ids:** a seed fragment a piece took as its part (`&twinkle from twinkle &key`, now `from kinderlied &key`), and `"core kit"` and `"gm kit"`;
+  - **grids:** `cycle=19 map=edo` (`map=edo(19)`, `map=ed(7, 3/2)`);
+  - **laps counted in steps:** a warning for `cycle=24` on a 12 that says `cycle=2`;
+  - **renamed ids:** an old seed id (`"harmonic minor"`) finds no fragment, and a lockfile or learned layer naming one is not read (`RENAMED_IDS` stays only for the order a query breaks its ties in);
+  - **`oneshot`**, the bare line word (`oneshot=1`);
+  - **`beat=n`** on a meter (`meter("2/2", 2)`);
+  - **`:pairs`** after a swing share;
+  - **a drum's note and a part or role given by name:** `&bd` as General MIDI's kick, `&bass` as the bass part, `&kick` as the kick role, with a warning that wrote the attribute (write `note=36`, `part=bass`, `role=kick`);
+  - **the old style axes:** `artic=` and `energy=`, `&style[artic]`;
+  - **a second meter with a tempo of its own**, and **a bare tap in a piece with several** (errors that write the tap, as before; no longer read the old way);
+  - **`law=`** written by a piece (`&cycle from five_to_twelve &day`; the attribute is still written by a built-in plugin-fragment's block).
+
+  **Migrate** is one rule now, `arguments`; its `MigrationRule` is `'arguments'`, and `migrate`, `migrations` and `normalise` no longer read a text the old way except for that rule. **Normalise** loses the rules that folded a second meter into the main one (`tapClock`, `shadowMeter`), since a text with two meters is an error. **`migrateLayer`** and its steps (`renamedLayer`, `signedLayer`, `axedLayer`, `roledLayer`, `movedLayer`) are removed with the forms they migrated (ids, signatures, axes, roles, moved parts), as are `OLD_AXES`, `newPoint`, `movedIds`, `MOVED` and `RETIRED`. **`withBeats`** and `MAIN_KEY` are removed.
+
+  **What a frontend sees at its next pin:** a text that still writes one of these forms is an error or a warning-less unknown word, where it was read with a warning. **Jambot's pin (v0.28.0) imports `migrateLayer` from the root** (`tools/api.ledger.json` listed it, and it came off the ledger with this change): its learned-layer migration goes with it, so a layer kept before v0.28.0 is not migrated, and Jambot drops its call or resets such a layer. No example's event snapshot moves; the examples and the seed fragments write none of these forms.
+
+- **`scale(tonic, phase)` and the card's `title=` and `tier=`, the last old readings** (#643): `scale(9, 2)` (a mode by number) is an error that lists the scale names, written `scale(minor, A)` since decision 002's successor; the card's `title=` and `tier=` on a note are errors that say to write `title:` and `tier:` in the file's frontmatter, and a text with no file has no card (`pieceMeta` answers null for it, and Shorten's `card` migration, with `movedCard` and the suggestion kind `card`, goes). A cell's `tags=` stays (its clusters in the graph); `&piece label="…"` in a file's text still gives the description where the frontmatter has none. **What a frontend sees at its next pin:** nothing in a piece that is a file or that writes the new spelling (every example and fragment is); a saved text that wrote the old card or `scale(9, 2)` now fails to compile with a message that says what to write. A frontend that switches on a Shorten suggestion's `kind` drops its `'card'` case (a TypeScript error says so), and one that imported `movedCard` (none at the pins in the API ledger) drops it.
+
+### Repository
+
+- **`style` teaches a sum of values** (#621, #856): the bass's level in the sound card is `&bassLevel [&leadLevel + .1]`, a sum of values beside the lead's number cell, and a note says so; `sort plain: a sum of values` leaves `PENDING` for tier 6. **What a frontend sees at its next pin:** `style`'s bass plays at that level, the same loudness on the sound card (0.5) and, through a MIDI card, another velocity (a sum is a level in a product, decision 088, where a number is a gain): 19 of its 150 events in the snapshot's span change their `levels` and `gains`, no note moves.
+
+- **The default band passes its `&style` to its four pitched performers** (the bass, pad, stab and lead lines of `fragments/bands/01-band.md`: `style=&style`): they declared `&style` but the band never filled it, so each read the centre of style space whatever style the score set. The drummer has no `&style` (its sounds are its kit's). **What a frontend sees at its next pin:** nothing at the band's own default style (the centre, `.5 .5 .5 .5`); a score that sets `&style` now plays its pitched performers at it, as their instruments already did.
+
 ## v0.28.0 — 2026-11-22
 
 ### Added
