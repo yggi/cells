@@ -201,6 +201,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
       loops: !!d.step?.whole,
       chance: d.chance ?? 0.5,
       seed: d.seed ?? 0,
+      seeded: d.seed !== null && d.seed !== undefined,
       size: d.size ?? 1,
       tags: (d.tags ?? '')
         .split(',')

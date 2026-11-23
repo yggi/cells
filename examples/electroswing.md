@@ -41,7 +41,7 @@ The crackle is the piece's own, a record's: a tick of noise on a few sixteenths,
 
 ```cells
 &drumlines [&kick * &kickForm, &clap * &clapForm, &hats, &ticks, &ghosts]
-&crackle step=16n 0?.8!16
+&crackle seed=8623846738299929 step=16n 0?.8!16
 &beatNote label="The beat is a fragment: &kick, &clap, &hats, &ticks and &ghosts come from Electro swing drums, their levels in their hits." about=(&kick &clap &hats &ticks &ghosts)
 ```
 

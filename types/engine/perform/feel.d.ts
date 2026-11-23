@@ -13,9 +13,15 @@
  * The feel moves an event's velocity and length, never its onset. Every number is a double and every operation is in the
  * contract's order, so the same bits come out as the host's.
  */
-/** A section's type, as a host's plan names it, as a list in the contract's order: the type is its elements (`SECTION_KINDS`, the library's, name more). */
+/** The six section types of the contract's first frame, in its order (`SECTION_KINDS` in the library has the song forms' three more). */
 export declare const SECTION_TYPES: readonly ["intro", "groove", "bridge", "build", "drop", "breakdown"];
-export type SectionType = (typeof SECTION_TYPES)[number];
+/**
+ * A section's kind, as a host's plan names it: any id of the fragments of the facet `section` (`SECTION_KINDS`, the
+ * library's), not a list written here, so a kind the library gains is one a frame may name (#851). The feel reads one
+ * name, `breakdown`, quiet in its bass and its pad; any other kind, a verse, a chorus or an outro among them, plays as a
+ * groove does.
+ */
+export type SectionType = string;
 /** What the performer reads of a bar: the fields of a host's `bar` message the feel needs. */
 export interface FeelFrame {
     readonly seed: number;

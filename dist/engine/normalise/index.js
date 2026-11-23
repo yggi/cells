@@ -4,6 +4,7 @@ import { libraryCells, libraryLines, libraryTemplates, takenArguments } from "./
 import { narrowestFroms } from "./narrowest.js";
 import { interfaceNames } from "./names.js";
 import { evenScan, swingClock } from "./meter.js";
+import { seeds } from "./seeds.js";
 import { migrations } from "../migrate/index.js";
 export const normalisations = (options = {}) => (source, result) => {
     const names = interfaceNames(source, result);
@@ -23,6 +24,7 @@ export const normalisations = (options = {}) => (source, result) => {
         ...takenArguments(source),
         ...libraryCells(source, options.library),
         ...narrowestFroms(source, options.resolve),
+        ...seeds(source, result),
     ];
 };
 export const normalise = (source, options) => {

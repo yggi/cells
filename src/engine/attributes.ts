@@ -79,7 +79,7 @@ export const CORE: Readonly<Record<string, Attribute>> = {
   size: core('how large it’s drawn, against the others: 2 twice, .5 half', 'display.md'),
   laps: core('how many laps it plays, then it ends', 'time.md'),
   chance: core('what a bare x? means here: the probability it is dropped, or free() for a slider', 'cell.md'),
-  seed: core('a different sequence of chance', 'cell.md'),
+  seed: core("the seed a cell's chance is thrown from, which no edit to the cell moves", 'cell.md'),
   tags: core('on a cell: its clusters in the graph, comma-separated', 'display.md'),
   about: core('on a note: the cells it explains', 'display.md', ['note']),
   style: core(
