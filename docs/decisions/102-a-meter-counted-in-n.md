@@ -24,14 +24,14 @@ The meter fragment, renamed `bar` with its grouping a text argument (`bar(meter=
 
 - **Counting is the performer's, the tree the music's:** alla breve, a waltz in one and 12/8 in two are the same bars felt in fewer beats. A tier of the tree is the only honest choice of beat, and the error shows the choices.
 - **"in 2" is what musicians say** ("in one", "in two"). `$` already moves pitch (`&x^$1`), and a second argument already means steps a pulse.
-- **Alla breve needs no second argument**: `meter("4/4 in 2")` plays as `meter("2/2", 2)`, event for event.
+- **Alla breve needs no second argument**: `meter("4/4 in 2")` plays as `meter("2/2", 2)` for every line that taps it by a note value or by its beat. Its pulse is 4/4's quarter where 2/2's is a half, so a line that taps the pulse (`step=pulse*4`) steps twice as often: the two are not one meter.
 
 **Why not** a beat argument (`meter("3/4", beats=1)`): a generator has no named arguments, and a fragment's one text argument couldn't carry it.
-**Why not** retiring `meter("2/2", 2)`: it is a different tree (two pulses of a half, each two steps), which plays the same. Which of the two Normalise writes is a row of the canonical table (#27), not this decision.
+**Why not** retiring `meter("2/2", 2)`: it is a different tree (two pulses of a half, each two steps), which plays the same but for a tap of its pulse. Which of the two Normalise writes is a row of the canonical table (#27), not this decision.
 
 ## Consequences
 
-- `meter("4/4 in 2")` is `meter("2/2", 2)` and `meter("3/4 in 1")` is `meter("*..", 4n)`, event for event. Their compiled meters differ in pulses and unit only where the trees do.
+- `meter("3/4 in 1")` plays as `meter("*..", 4n)` for taps by note value and by beat; its quarters keep 3/4's grade (a beat's, `+`) where the levels written grade them as eighths, so a kit read by the meter's grades tells them apart. `meter("4/4 in 2")` plays as `meter("2/2", 2)` for taps by note value and by beat, but not for a tap of its pulse (a quarter against a half): `examples/breve.md`, which taps the pulse, keeps `meter("2/2", 2)`.
 - A `free(…)` choice of meters lists its labels by spaces, so it can't offer "4/4 in 2" yet.
 - No example's or fragment's events move.
 - Tests: `counted.test.ts`.
