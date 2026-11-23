@@ -58,7 +58,7 @@ import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written, type 
 import { referenceOf, type Reference } from './reference';
 import { answeredIn } from '../use';
 import { formsOf, FORM_FIXED, type Form } from './form';
-import { fixedOf, SLOT_OPERATORS, slotMoves } from './slots';
+import { fixedOf, SLOT_OPERATORS, slotMoves, slotReference } from './slots';
 import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf, type Progression } from './progression';
 
 export { backbeatOf, type Anchor } from './anchors';
@@ -489,7 +489,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
           f.partner.name.slice(1),
           m.from.map((i) => f.partner!.slots[i]!),
         );
-      offerSlots(f.name, m.operator, m.amounts, m.what, braids, keyOf(null, null, f, m.from), fixedBut(f.name.slice(1), formNotes(f, m.from, k)), null);
+      offerSlots(f.name, m.operator, m.amounts, m.what, braids, keyOf(null, null, f, m.from), fixedBut(f.name.slice(1), formNotes(f, m.from, k)), formReference(f, m.from));
     }
   }
   return { notes: [...heardKeys.flat(), ...fixed], span, bar, variations: out };
@@ -534,6 +534,42 @@ function slotsPlayed(forms: readonly Form[], fragment: string, workbench = '', r
     const key = `${g.attrs.join(' ')}|${g.slots[slot]}`;
     return keys.get(key) || g.slots[slot]!;
   };
+}
+
+/**
+ * A form's variation by reference: each line it changes as a copy of itself changed on those slots (`base=&chorus = &b`),
+ * its partner's beside it; null where the forms written are no shorter than the lines written out.
+ */
+function formReference(f: Form, from: readonly number[]): Reference | null {
+  const ref = slotReference(
+    f.name,
+    f.slots,
+    from.map((i) => f.slots[i]!),
+  );
+  if (!ref) return null;
+  const written = (g: Pick<Form, 'head' | 'attrs'>, slots: readonly string[]) => [...g.head, ...g.attrs, ...slots].join(' ').length;
+  const p = f.partner;
+  const pref =
+    p &&
+    slotReference(
+      p.name,
+      p.slots,
+      from.map((i) => p.slots[i]!),
+    );
+  const length = ref.line(f.name.slice(1)).length + (pref ? pref.line(p.name.slice(1)).length : 0);
+  const whole =
+    written(
+      f,
+      from.map((i) => f.slots[i]!),
+    ) +
+    (p
+      ? written(
+          p,
+          from.map((i) => p.slots[i]!),
+        )
+      : 0);
+  if (length > whole) return null;
+  return p && pref ? { ...ref, partner: { of: p.name, ...pref } } : ref;
 }
 
 /** The least common multiple of two laps in whole notes, on a grid of 1/3840 of one (every tap's, triplets and fives too). */
