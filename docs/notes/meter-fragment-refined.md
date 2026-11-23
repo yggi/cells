@@ -1,6 +1,6 @@
 # The meter fragment refined: named points, common meters only, the style's meters apart
 
-Date: 2026-11-23 · Status: open, filed; nothing built · Issues: #902 (the meter fragment), #900 (a name on its facet's axes), #901 (an offset as a sum), #899 (the stray `&bar_swing`), yggi/cell-studio#701 (the swing subwheel), yggi/jambot#751 (the twin); follows #507 and decisions 065, 072, 076, 089, 090
+Date: 2026-11-23 · Status: open, filed; nothing built · Issues: #902 (the meter fragment), #900 (a name on its facet's axes), #901 (an offset as a sum), #899 (the stray `&bar_swing`), yggi/cell-studio#701 (the swing ring), yggi/jambot#751 (the twin); follows #507 and decisions 065, 072, 076, 089, 090
 
 The owner's five suggestions, checked against the language, Jambot and Cell studio, with a sketch of the fragments they lead to. The sketches are in ` ```text ` blocks: three of their spellings don't parse yet (marked **new**).
 
@@ -123,7 +123,7 @@ That is the line `&bar meter("7/8") step=&tempo swing=8n:2/3` with its source na
 
 The weights are today's: every point keeps its place, so each preset finds what it finds today. An aksak swung on its pairs stays one line, `&bar meter("7/8") swing=8n:2/3 from meter &tempo` (decision 071 keeps its three straight).
 
-**Open:** whether a style fragment with several groupings (`spooky_meter`) writes its head as the default one, as above, or as `&bar from meter &tempo` with every grouping on a declaration line.
+**Settled:** a style fragment with several groupings (`spooky_meter`) writes its head as its default grouping, as `meter` does: its head line is what a use takes with no point, and each declaration line a grouping at its points.
 
 ## What it does to Jambot
 
