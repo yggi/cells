@@ -76,6 +76,7 @@ export {
   type WeightedPoint,
 } from './repository/fragments';
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
+export { ancestry, BY, familyOf, originOf, rootOf, variationMeta, VARIES } from './repository/lineage';
 export { AXES, AXIS_NAMES, SLOTS, type Axis } from './engine/style';
 export { styleAt } from './engine/styleat';
 export {
