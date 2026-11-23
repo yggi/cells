@@ -92,6 +92,7 @@
     "normalise": "node --experimental-transform-types --import ./tools/node-ts.mjs tools/normalise.ts",
     "coverage": "node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/coverage.ts",
     "structure": "node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/structure.ts",
+    "radio": "node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/radio.ts",
     "render": "node --experimental-transform-types --no-warnings --import ./tools/node-ts.mjs tools/render.ts",
     "types": "tsc -p tsconfig.types.json",
     "dist": "node --experimental-strip-types --no-warnings tools/dist.ts",
