@@ -59,7 +59,7 @@ describe('law L19: the order of a piece’s lines is irrelevant (decision 091)',
     const rest = ['&lead s=saw loop=C4', '&t step=4n 0 2 4 5', '&out map=sample [&t * &lead]'];
     const a = [...meters, ...rest].join('\n');
     const b = [...meters.reverse(), ...rest].join('\n');
-    expect(soundsIdentical(a, b, undefined, { old: true })).toBe(false);
+    expect(soundsIdentical(a, b)).toBe(false);
     // (as the language reads them now, neither compiles: the tap names no meter)
     expect(compileSource(a).ok).toBe(false);
     expect(compileSource(b).ok).toBe(false);
