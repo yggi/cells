@@ -181,3 +181,22 @@ describe('the slot operators on a line, by reference (decision 052, point 11)', 
     },
   );
 });
+
+describe('a line’s note shifted, by reference (#910)', () => {
+  const SHIFTED = CASES.filter((c) => c.options.operators).flatMap((c) => variations(c.fragment, { ...c.options, operators: ['shift'] }).map((v) => ({ ...c, v })));
+  const REFERRED = SHIFTED.filter(({ v }) => v.reference);
+
+  it('gives the bass seeds 504 shifts over both harmonies, each with a reference', () => {
+    expect([SHIFTED.length, REFERRED.length]).toEqual([504, 504]);
+  });
+
+  it.each(REFERRED.filter((_, k) => k % 5 === 0).map((c) => [`${c.id}: ${c.v.by}`, c] as const))(
+    '%s plays the notes of its variation (S2), every 5th (all 504 once, 2026-11-23)',
+    (_, { fragment, bench, v, seconds }) => {
+      const varied = unionOf(v.apply(fragment), bench).text;
+      const reference = referred(unionOf(fragment, bench).text, v);
+      expect(compileSource(reference, undefined, KIT).diagnostics.map((d) => d.message)).toEqual([]);
+      expect(playsSameNotes(varied, reference, seconds, KIT)).toBe(true);
+    },
+  );
+});

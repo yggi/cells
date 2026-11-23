@@ -211,8 +211,11 @@ describe('a pitched voice by its place, a bar of a longer fragment, and the lear
       'fifths_sequence [] bar 2 at 0',
       'axis_progression [] bar 3 at 0',
       'vamp_to_the_seventh [] bar 4 at 0',
+      // (and since shift joined recognition's default, #910, as a bar of two seeds with one chord moved a step onto it)
+      'dark_cadence [shift &harm 1 1] bar 1 at 0',
       'korobeiniki_changes [third &harm 2 2] bar 2 at 0',
       'montuno [third &harm 2 2] bar 2 at 0',
+      'vamp_to_the_sixth [shift &harm 4 1] bar 4 at 0',
       'vamp_to_the_fifth [third &harm 4 2] bar 4 at 0',
       'haunted_progression [third &harm 6 2] bar 6 at 0',
     ]);

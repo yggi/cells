@@ -60,7 +60,7 @@ import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written, type 
 import { referenceOf, type Reference } from './reference';
 import { answeredIn } from '../use';
 import { formsOf, FORM_FIXED, type Form } from './form';
-import { fixedOf, SLOT_OPERATORS, slotMoves, slotReference } from './slots';
+import { fixedOf, shiftMoves, SLOT_OPERATORS, slotMoves, slotReference } from './slots';
 import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf, type Progression } from './progression';
 
 export { backbeatOf, type Anchor } from './anchors';
@@ -68,7 +68,7 @@ export type { Reference } from './reference';
 export { THIRDS, PHRASE_BARS } from './progression';
 
 /** The operators: the rhythm ones (rung 1), the pitched ones (rung 2) and the harmony's own (rung 3). */
-export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim' | 'third' | 'dominant' | 'swap' | 'substitute';
+export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim' | 'third' | 'dominant' | 'swap' | 'substitute' | 'shift';
 
 /** The operators a frontend gets where it names none, in their order: the rhythm ones. */
 export const RHYTHM_OPERATORS: readonly Operator[] = ['rotate', 'drop', 'add'];
@@ -93,8 +93,15 @@ export const FORM_OPERATORS: readonly Operator[] = SLOT_OPERATORS;
 /** The slot operators a line takes beside its own, on its steps: whatever it strikes or plays, where a frontend asks. */
 const LINE_SLOT_OPERATORS: readonly Operator[] = ['swap', 'substitute'];
 
+/**
+ * One slot moved n degrees of the table it reads, n each of `degrees` (#910): a note of a pitched line
+ * (`shift &bass 2 1`), a chord of a progression (`shift &harm 1 -1`; its `third` is its shift by a third), a letter of
+ * a form on a grid (`&a` to `&a^1`, a sequence: `shift &chorus 1 2`). Asked by name: no list of a level's holds it.
+ */
+export const SHIFT: Operator = 'shift';
+
 /** The operators that vary a line of slots (a progression, a form) where a frontend asks for one: none of the lines' own. */
-const SLOT_LEVEL: readonly Operator[] = ['third', 'dominant', 'swap', 'substitute'];
+const SLOT_LEVEL: readonly Operator[] = ['third', 'dominant', 'swap', 'substitute', 'shift'];
 
 /** Transposition's amounts where a frontend names none, in degrees of the table read. */
 export const DEGREES: readonly number[] = [-2, -1, 1, 2];
@@ -292,14 +299,16 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   const span = laps.length && laps.every((l) => l !== null) ? laps.reduce((a, b) => lcm(a!, b!)) : null;
   const bar = meter ? meter.pulses / meter.unit : null;
   // (a form's slots as notes, with no onset: each slot's place and what it plays, so a form varied is other notes)
-  const played = slotsPlayed(forms, fragment, workbench, resolve);
-  const formNotes = (f: Form, from: readonly number[], k: number): HeardNote[] =>
-    [f, ...(f.partner ? [f.partner] : [])].flatMap((g, h) => from.map((src, i) => ({ at: null, key: `form#${k}.${h} ${i} ${played(g, src)}` })));
-  const identity = (f: Form) => f.slots.map((_, i) => i);
-  const fixed = [...chords.flatMap((h) => h.notes), ...forms.flatMap((f, k) => formNotes(f, identity(f), k))];
+  const played = slotsPlayed(forms, fragment, workbench, resolve, degrees);
+  const formNotes = (f: Form, after: FormSlots, k: number): HeardNote[] =>
+    [after.main, ...(after.partner ? [after.partner] : [])].flatMap((tokens, h) =>
+      tokens.map((token, i) => ({ at: null, key: `form#${k}.${h} ${i} ${played(h ? f.partner! : f, token)}` })),
+    );
+  const asWritten = (f: Form): FormSlots => ({ main: f.slots, ...(f.partner ? { partner: f.partner.slots } : {}) });
+  const fixed = [...chords.flatMap((h) => h.notes), ...forms.flatMap((f, k) => formNotes(f, asWritten(f), k))];
   const fixedBut = (name: string, notes: readonly HeardNote[]) => [
     ...chords.flatMap((h) => (h.name === name ? notes : h.notes)),
-    ...forms.flatMap((f, k) => (f.name.slice(1) === name ? notes : formNotes(f, identity(f), k))),
+    ...forms.flatMap((f, k) => (f.name.slice(1) === name ? notes : formNotes(f, asWritten(f), k))),
   ];
   const noteKeys = lines.map((l, i) => keysOf(i, l.notes));
   const strikeKeys = lines.map((l, i) => strikesOf(i, l.notes));
@@ -411,9 +420,9 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
     const levelsFrom = (from: readonly number[]) => levels && levels.map((_, t) => levels[from[t]!]!);
     for (const operator of operators) {
       // (each operator on the lines it is for: the rhythm ones on hits, the pitched ones on pitches, swap and substitute on both)
-      if (!LINE_SLOT_OPERATORS.includes(operator) && PITCHED_OPERATORS.includes(operator) !== !!line.pitched) continue;
+      if (!LINE_SLOT_OPERATORS.includes(operator) && [...PITCHED_OPERATORS, SHIFT].includes(operator) !== !!line.pitched) continue;
       // (a line with a held note is moved in pitch alone: reverse, bend and trim would move where its notes fall and end)
-      if (line.notes.some((n) => n.hold) && !['transpose', 'invert'].includes(operator)) continue;
+      if (line.notes.some((n) => n.hold) && !['transpose', 'invert', 'shift'].includes(operator)) continue;
       if (operator === 'bend') {
         if (ends)
           for (const n of BENDS) {
@@ -431,7 +440,21 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
         if (!ends || line.notes.length - 1 < TRIM_FEWEST) continue;
         const notes = line.notes.filter((x) => x !== last);
         offer(i, operator, notes, last!.step, written(line, notes), `its last note, on step ${last!.step}, left out: the one before it held`);
-      } else if (operator === 'transpose')
+      } else if (operator === 'shift')
+        // (one note moved n degrees of its table, each free note by each of `degrees`: `slots.ts`'s shift on the line's steps)
+        for (const { slot, by } of shiftMoves(line.steps, fixedSteps, degrees, (s) => line.notes.some((x) => x.step === s))) {
+          const notes = line.notes.map((x) => (x.step === slot ? { ...x, pitch: moved(x.pitch!, 1, by) } : x));
+          offer(
+            i,
+            operator,
+            notes,
+            `${slot} ${by}`,
+            written(line, notes),
+            `its note on step ${slot} ${by > 0 ? 'up' : 'down'} ${Math.abs(by)} degree${Math.abs(by) === 1 ? '' : 's'}`,
+            null,
+          );
+        }
+      else if (operator === 'transpose')
         for (const n of degrees) {
           const notes = line.notes.map((x) => (pinned(line, x) ? x : { ...x, pitch: moved(x.pitch!, 1, n) }));
           offer(i, operator, notes, n, written(line, notes), `every note ${n > 0 ? 'up' : 'down'} ${Math.abs(n)} degree${Math.abs(n) === 1 ? '' : 's'}`);
@@ -483,12 +506,11 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   // as they sound, a form's slots as they splice)
   const base = signature(-1, []);
   const slotLevel = !!only || operators.some((o) => SLOT_LEVEL.includes(o));
-  const keyOf = (p: Progression | null, slots: Progression['slots'] | null, f: Form | null, from: readonly number[] | null) =>
-    [
-      base,
-      ...progressions.map((q) => (q === p ? progressionKey(q, slots!) : progressionKey(q, q.slots))),
-      ...forms.map((g) => (g === f ? from! : identity(g)).map((i) => `${played(g, i)}${g.partner ? `/${played(g.partner, i)}` : ''}`).join(' ')),
-    ].join('#');
+  const formKey = (g: Form, after: FormSlots) => after.main.map((t, i) => `${played(g, t)}${g.partner ? `/${played(g.partner, after.partner![i]!)}` : ''}`).join(' ');
+  const keyOf = (p: Progression | null, slots: Progression['slots'] | null, f: Form | null, after: FormSlots | null) =>
+    [base, ...progressions.map((q) => (q === p ? progressionKey(q, slots!) : progressionKey(q, q.slots))), ...forms.map((g) => formKey(g, g === f ? after! : asWritten(g)))].join(
+      '#',
+    );
   if (progressions.length || forms.length) seen.add(keyOf(null, null, null, null));
   const offerSlots = (
     name: string,
@@ -523,8 +545,8 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   for (const p of progressions) {
     if (!slotLevel || (only && only.line !== p.name)) continue;
     const k = chords.findIndex((h) => h.name === p.name.slice(1));
-    const asked = operators.filter((o) => HARMONY_OPERATORS.includes(o));
-    for (const c of progressionCandidates(p, asked, result, fixedFor(p.name, p.slots.length, p.cadence))) {
+    const asked = operators.filter((o) => HARMONY_OPERATORS.includes(o) || o === SHIFT);
+    for (const c of progressionCandidates(p, asked, result, fixedFor(p.name, p.slots.length, p.cadence), degrees)) {
       const braid = progressionBraid(c.slots);
       const w = wordsOf(p.name.slice(1));
       const reference = w && progressionReference(p, c.slots, [...w.head, ...w.attrs, ...braid]);
@@ -542,16 +564,26 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   }
   for (const [k, f] of forms.entries()) {
     if (!slotLevel || (only && only.line !== f.name)) continue;
-    const asked = operators.filter((o) => FORM_OPERATORS.includes(o));
-    const keys = f.slots.map((_, i) => `${played(f, i)}${f.partner ? `/${played(f.partner, i)}` : ''}`);
-    for (const m of slotMoves(keys, fixedFor(f.name, f.slots.length, FORM_FIXED), asked)) {
-      const braids = new Map([[f.name.slice(1), m.from.map((i) => f.slots[i]!)]]);
-      if (f.partner)
-        braids.set(
-          f.partner.name.slice(1),
-          m.from.map((i) => f.partner!.slots[i]!),
-        );
-      offerSlots(f.name, m.operator, m.amounts, m.what, braids, keyOf(null, null, f, m.from), fixedBut(f.name.slice(1), formNotes(f, m.from, k)), formReference(f, m.from));
+    const keys = f.slots.map((t, i) => `${played(f, t)}${f.partner ? `/${played(f.partner, f.partner.slots[i]!)}` : ''}`);
+    const fixedSlots = fixedFor(f.name, f.slots.length, FORM_FIXED);
+    const offerForm = (operator: Operator, amounts: readonly number[], what: string, after: FormSlots) => {
+      const braids = new Map([[f.name.slice(1), after.main]]);
+      if (f.partner && after.partner) braids.set(f.partner.name.slice(1), after.partner);
+      offerSlots(f.name, operator, amounts, what, braids, keyOf(null, null, f, after), fixedBut(f.name.slice(1), formNotes(f, after, k)), formReference(f, after));
+    };
+    for (const operator of operators) {
+      if (operator === 'shift') {
+        // (a letter moved n degrees, a sequence: on a form on a grid, a letter a bare splice or one moved already)
+        if (!f.partner && f.attrs.some((a) => a.startsWith('step=')))
+          for (const { slot, by } of shiftMoves(f.slots.length, fixedSlots, degrees, (s) => shiftedToken(f.slots[s]!, 1) !== null)) {
+            const main = f.slots.map((t, s) => (s === slot ? shiftedToken(t, by)! : t));
+            offerForm(operator, [slot, by], `its letter on slot ${slot} moved ${by} degree${Math.abs(by) === 1 ? '' : 's'}`, { main });
+          }
+      } else if (FORM_OPERATORS.includes(operator))
+        for (const m of slotMoves(keys, fixedSlots, [operator])) {
+          const main = m.from.map((i) => f.slots[i]!);
+          offerForm(m.operator, m.amounts, m.what, { main, ...(f.partner ? { partner: m.from.map((i) => f.partner!.slots[i]!) } : {}) });
+        }
     }
   }
   return { notes: [...heardKeys.flat(), ...fixed], span, bar, variations: out };
@@ -564,12 +596,21 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
  * section's intensity, a sum, `[&song + -.3]`) that `flatten` doesn't read as played, so its slots, and any whose events
  * can't be read, are keyed by their text.
  */
-function slotsPlayed(forms: readonly Form[], fragment: string, workbench = '', resolve?: Resolve): (form: Pick<Form, 'name' | 'attrs' | 'slots'>, slot: number) => string {
+function slotsPlayed(
+  forms: readonly Form[],
+  fragment: string,
+  workbench = '',
+  resolve?: Resolve,
+  degrees: readonly number[] = DEGREES,
+): (form: Pick<Form, 'attrs'>, token: string) => string {
   const cells = new Map<string, string>();
   const lines: string[] = [];
   for (const f of forms)
     for (const g of [f, ...(f.partner ? [f.partner] : [])])
-      for (const token of g.attrs.some((x) => x.startsWith('step=')) ? g.slots : []) {
+      // (its slots, and each moved by each of `degrees`, as a shift writes it)
+      for (const token of g.attrs.some((x) => x.startsWith('step='))
+        ? [...g.slots, ...g.slots.flatMap((t) => degrees.map((n) => shiftedToken(t, n)).filter((x): x is string => x !== null))]
+        : []) {
         const key = `${g.attrs.join(' ')}|${token}`;
         if (cells.has(key)) continue;
         const cell = `vary_slot_${cells.size}`;
@@ -592,46 +633,37 @@ function slotsPlayed(forms: readonly Form[], fragment: string, workbench = '', r
           // (a slot the flattener can't read: keyed by its text below)
         }
   }
-  return (g, slot) => {
-    const key = `${g.attrs.join(' ')}|${g.slots[slot]}`;
-    return keys.get(key) || g.slots[slot]!;
-  };
+  return (g, token) => keys.get(`${g.attrs.join(' ')}|${token}`) || token;
 }
 
 /**
  * A form's variation by reference: each line it changes as a copy of itself changed on those slots (`base=&chorus = &b`),
  * its partner's beside it; null where the forms written are no shorter than the lines written out.
  */
-function formReference(f: Form, from: readonly number[]): Reference | null {
-  const ref = slotReference(
-    f.name,
-    f.slots,
-    from.map((i) => f.slots[i]!),
-  );
+function formReference(f: Form, after: FormSlots): Reference | null {
+  const ref = slotReference(f.name, f.slots, after.main);
   if (!ref) return null;
   const written = (g: Pick<Form, 'head' | 'attrs'>, slots: readonly string[]) => [...g.head, ...g.attrs, ...slots].join(' ').length;
   const p = f.partner;
-  const pref =
-    p &&
-    slotReference(
-      p.name,
-      p.slots,
-      from.map((i) => p.slots[i]!),
-    );
+  const pref = p && after.partner && slotReference(p.name, p.slots, after.partner);
   const length = ref.line(f.name.slice(1)).length + (pref ? pref.line(p.name.slice(1)).length : 0);
-  const whole =
-    written(
-      f,
-      from.map((i) => f.slots[i]!),
-    ) +
-    (p
-      ? written(
-          p,
-          from.map((i) => p.slots[i]!),
-        )
-      : 0);
+  const whole = written(f, after.main) + (p && after.partner ? written(p, after.partner) : 0);
   if (length > whole) return null;
   return p && pref ? { ...ref, partner: { of: p.name, ...pref } } : ref;
+}
+
+/** A form's slots as a variation writes them: its own, and its partner's (a song's plan of who plays) beside them. */
+interface FormSlots {
+  readonly main: readonly string[];
+  readonly partner?: readonly string[];
+}
+
+/** A letter moved n degrees, as a sequence writes it: `&a` to `&a^n`, `&a^k` to `&a^(k+n)`; null for any other splice. */
+function shiftedToken(token: string, n: number): string | null {
+  const m = /^&([A-Za-z_][A-Za-z0-9_]*)(?:\^(-?\d+))?$/.exec(token);
+  if (!m) return null;
+  const k = Number(m[2] ?? 0) + n;
+  return k === 0 ? `&${m[1]}` : `&${m[1]}^${k}`;
 }
 
 /** The least common multiple of two laps in whole notes, on a grid of 1/3840 of one (every tap's, triplets and fives too). */
@@ -700,7 +732,7 @@ export function variationBy(fragment: string, by: string, options: VaryOptions =
 }
 
 /** Every operator, as a `by:` may name it. */
-const OPERATORS: readonly Operator[] = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, ...HARMONY_OPERATORS])];
+const OPERATORS: readonly Operator[] = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, ...HARMONY_OPERATORS, SHIFT])];
 
 /** The variation `drawn` picks of the n `variations` gives; null where there is none. A draw outside [0, 1) is an error. */
 export function varied(fragment: string, draw: number, options?: VaryOptions): Variation | null {

@@ -105,3 +105,14 @@ export function slotReference(name: string, before: readonly string[], after: re
   const form = `base=${name} ${delta.join(' ')}`;
   return { form, line: (cell) => `&${cell} ${form}` };
 }
+
+/**
+ * One slot moved n degrees (#910), the move every level shares: each free slot `movable` allows, by each of `amounts`,
+ * in that order; the level moves it (a note's pitch, a chord's every tone, a letter `&a` to `&a^n`). A progression's
+ * `third` is its shift by a third (±2).
+ */
+export function shiftMoves(n: number, fixed: readonly number[], amounts: readonly number[], movable: (slot: number) => boolean): { slot: number; by: number }[] {
+  const out: { slot: number; by: number }[] = [];
+  for (let slot = 0; slot < n; slot++) if (!fixed.includes(slot) && movable(slot)) for (const by of amounts) if (by !== 0) out.push({ slot, by });
+  return out;
+}
