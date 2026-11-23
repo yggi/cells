@@ -24,7 +24,7 @@ import { resolveIn } from '../helix';
 import type { Meter } from '../meter';
 import { codeShifts, type CompileResult } from '../program';
 import { tapWhole } from './lines';
-import { SLOT_OPERATORS, slotMoves, type SlotOperator } from './slots';
+import { SLOT_OPERATORS, slotMoves, slotReference, type SlotOperator } from './slots';
 
 /** A tone of a stack: a degree of the table read, and its accidental in the table's grid steps (−1, 0, 1). */
 export interface Tone {
@@ -257,19 +257,6 @@ function dominantOf(target: Chord, here: Chord, at: (degree: number, alter?: num
  * the progression's table and grid. Null where it would be longer than the varied progression written out.
  */
 export function progressionReference(p: Progression, slots: readonly Slot[], written: readonly string[]): { form: string; line: (name: string) => string } | null {
-  const delta: string[] = [];
-  let kept = 0;
-  for (const [s, slot] of slots.entries()) {
-    if (slotText(slot) === slotText(p.slots[s]!)) {
-      kept++;
-      continue;
-    }
-    if (kept) delta.push(kept === 1 ? '=' : `=!${kept}`);
-    delta.push(slotText(slot));
-    kept = 0;
-  }
-  if (!delta.length) return null;
-  const form = `base=${p.name} ${delta.join(' ')}`;
-  const line = (name: string) => `&${name} ${form}`;
-  return line(p.name.slice(1)).length <= written.join(' ').length ? { form, line } : null;
+  const ref = slotReference(p.name, p.slots.map(slotText), slots.map(slotText));
+  return ref && ref.line(p.name.slice(1)).length <= written.join(' ').length ? ref : null;
 }

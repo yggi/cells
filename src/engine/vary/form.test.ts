@@ -19,6 +19,12 @@ const FORM_BENCH = '&bar meter("4/4") step=120bpm\n&key scale(major, C)\n&a over
 const SONG_BENCH = '&bar meter("4/4") step=120bpm\n&song .55';
 const FORMS = seedFragments('forms').map((f) => ({ ...f, bench: FORM_BENCH }));
 const SONGS = seedFragments('songs').map((f) => ({ ...f, bench: SONG_BENCH }));
+/**
+ * How many of the 186 have a reference: those whose forms written are no longer than the lines written out. The other
+ * 6 are rotations and retrogrades that change every inner slot (AABA's rotation, A B A A, `base=&chorus = &b &a` beside
+ * `&chorus step=8n &a &b &a &a`).
+ */
+const REFERRED = 180;
 const OPTIONS = (bench: string) => ({ workbench: bench, operators: FORM_OPERATORS, resolve: resolveSeed });
 
 /**
@@ -105,6 +111,38 @@ describe('Vary on a form and a song plan (decision 052, point 10)', () => {
   it('leaves a form be where only the line operators are asked', () => {
     for (const { text, bench } of [...FORMS, ...SONGS])
       for (const operators of [RHYTHM_OPERATORS, PITCHED_OPERATORS]) expect(variations(text, { ...OPTIONS(bench), operators })).toEqual([]);
+  });
+});
+
+describe("a form's variation by reference", () => {
+  it('plays what its variation plays, read beside its source, its partner beside it: each of the 186 that has one', () => {
+    let n = 0;
+    let referred = 0;
+    for (const { id, text, bench } of [...FORMS, ...SONGS])
+      for (const v of variations(text, OPTIONS(bench))) {
+        n++;
+        const ref = v.reference;
+        if (!ref) continue;
+        referred++;
+        const cells = v.after.split('\n').map((l) => l.split(' ')[0]!.slice(1));
+        expect(ref.form, `${id} ${v.by}`).toMatch(new RegExp(`^base=&${cells[0]} `));
+        const kept = [text, ref.line('varied'), ...(ref.partner ? [ref.partner.line('variedPartner')] : [])].join('\n');
+        expect(played(bench, kept, 'varied'), `${id} ${v.by}`).toBe(played(bench, v.apply(text), cells[0]!));
+        if (cells[1]) expect(played(bench, kept, 'variedPartner'), `${id} ${v.by}`).toBe(played(bench, v.apply(text), cells[1]));
+      }
+    expect([n, referred]).toEqual([186, REFERRED]);
+  });
+
+  it('writes only the slots it changes', () => {
+    const AABA = FORMS.find((f) => f.id === 'AABA')!;
+    expect(variationBy(AABA.text, 'substitute &chorus 1 2', OPTIONS(FORM_BENCH))!.reference?.form).toBe('base=&chorus = &b');
+    const song = SONGS.find((f) => f.id === 'verse_chorus')!;
+    const ref = variationBy(song.text, 'swap &verseChorus 1', OPTIONS(SONG_BENCH))!.reference!;
+    expect([ref.form, ref.partner?.of, ref.partner?.form]).toEqual([
+      'base=&verseChorus = &chorus &verse',
+      '&verseChorusPlays',
+      'base=&verseChorusPlays = &chorusPlays &versePlays',
+    ]);
   });
 });
 

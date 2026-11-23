@@ -28,6 +28,11 @@ export interface Reference {
    * &bassline^-1`, `&hat2 base=&hat =!6 ~`. A pick (rotate's) may stand in a mix's entry as it is.
    */
   readonly line: (name: string) => string;
+  /**
+   * A line varied with it, slot for slot (a song plan's plan of who plays, decision 052 point 10): its name, its form on
+   * that line, and a cell that plays it. A text that keeps the variation by reference writes both.
+   */
+  readonly partner?: { readonly of: string; readonly form: string; readonly line: (name: string) => string };
 }
 
 /** One token of the line as written: its first step and its length in steps. */

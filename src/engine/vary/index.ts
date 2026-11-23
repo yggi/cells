@@ -34,6 +34,8 @@
  * Point 10 has a form's (`form.ts`): a form's letters or a song plan's sections (with its plan of who plays, carried slot
  * for slot), varied two levels up around its first and last slot. The operators a progression and a form share are one
  * set, `slots.ts` (rotate, reverse, swap, substitute), and a frontend's mask (`fixed`) fixes other slots at any scale.
+ * Point 11 takes them down to a line: its steps, rests among them, are its slots (its rotate and its reverse are
+ * `slots.ts`'s; swap and substitute act on it where asked), and the mask fixes a line's steps in place of its anchors.
  *
  * Each operator acts on the lines it is for: the rhythm ones on lines of hits, the pitched ones on pitched lines.
  * In Jambot's order (yggi/jambot `variations`, so its draws pick the same one): the lines in the order the lap first plays
@@ -58,7 +60,7 @@ import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written, type 
 import { referenceOf, type Reference } from './reference';
 import { answeredIn } from '../use';
 import { formsOf, FORM_FIXED, type Form } from './form';
-import { fixedOf, SLOT_OPERATORS, slotMoves } from './slots';
+import { fixedOf, SLOT_OPERATORS, slotMoves, slotReference } from './slots';
 import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf, type Progression } from './progression';
 
 export { backbeatOf, type Anchor } from './anchors';
@@ -87,6 +89,9 @@ export const HARMONY_OPERATORS: readonly Operator[] = ['rotate', 'reverse', 'thi
  * A form is varied only where a frontend asks for `swap` or `substitute`, as a progression where it asks for one of its own.
  */
 export const FORM_OPERATORS: readonly Operator[] = SLOT_OPERATORS;
+
+/** The slot operators a line takes beside its own, on its steps: whatever it strikes or plays, where a frontend asks. */
+const LINE_SLOT_OPERATORS: readonly Operator[] = ['swap', 'substitute'];
 
 /** The operators that vary a line of slots (a progression, a form) where a frontend asks for one: none of the lines' own. */
 const SLOT_LEVEL: readonly Operator[] = ['third', 'dominant', 'swap', 'substitute'];
@@ -218,8 +223,17 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   const operators = only ? [only.operator] : (options.operators ?? RHYTHM_OPERATORS);
   const { lines, anchors, result, own, progressions, forms } = read(fragment, workbench, resolve);
   if (!result) return { notes: null, span: null, bar: null, variations: [] };
-  const left = new Set([...anchors.filter((a) => a.step === undefined).map((a) => a.line), ...keep.map(named)]);
-  const pinned = (line: Line, n: LineNote) => anchors.some((a) => a.line === line.name && a.step === n.step);
+  // (a frontend's mask on a line, by its name: its steps fixed in place of the line's own anchors, a kick's or a root's)
+  const maskOf = (name: string) => options.fixed?.[name] ?? options.fixed?.[name.slice(1)];
+  const lineFixed = (line: Line) => {
+    const mask = maskOf(line.name);
+    return mask ? fixedOf(mask, line.steps) : null;
+  };
+  const left = new Set([...anchors.filter((a) => a.step === undefined && !maskOf(a.line)).map((a) => a.line), ...keep.map(named)]);
+  const pinned = (line: Line, n: LineNote) => {
+    const fixed = lineFixed(line);
+    return fixed ? fixed.includes(n.step) : anchors.some((a) => a.line === line.name && a.step === n.step);
+  };
   // (each note's onset in whole notes where its line's grid is the meter's, else its line's own step; its sound, the
   // drum note it strikes or its voice; and what a note is for S2: its onset, length and voice, and a pitched note's pitch)
   const onset = (i: number, step: number) => {
@@ -308,10 +322,10 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
     i: number,
     operator: Operator,
     notes: readonly LineNote[],
-    amount: number | null,
+    amount: number | string | null,
     braids: Map<string, string[]> | null,
     what: string,
-    about: number | null = amount,
+    about: number | null = typeof amount === 'number' ? amount : null,
   ) => {
     if (!braids || total - lines[i]!.notes.length + notes.length < fewest) return;
     if (!struckOnce(i, notes)) return;
@@ -360,8 +374,20 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
     // (the last note in time, and the one before it: what bend and trim act on, unless the last is anchored)
     const [before, last] = line.notes.slice(-2);
     const ends = line.notes.length >= 2 && !pinned(line, last!);
+    // (the line's steps as slots, rests among them, for the slot operators every level shares, `slots.ts`: each step's
+    // notes as written, and the steps fixed, the frontend's mask or else the anchored notes')
+    const stepKeys = Array.from({ length: line.steps }, (_, s) => JSON.stringify(line.notes.filter((n) => n.step === s)));
+    const fixedSteps =
+      lineFixed(line) ??
+      fixedOf(
+        line.notes.filter((n) => pinned(line, n)).map((n) => n.step),
+        line.steps,
+      );
+    const movedFrom = (from: readonly number[]) => inOrder(from.flatMap((src, t) => line.notes.filter((n) => n.step === src).map((n) => ({ ...n, step: t }))));
+    const levelsFrom = (from: readonly number[]) => levels && levels.map((_, t) => levels[from[t]!]!);
     for (const operator of operators) {
-      if (PITCHED_OPERATORS.includes(operator) !== !!line.pitched) continue;
+      // (each operator on the lines it is for: the rhythm ones on hits, the pitched ones on pitches, swap and substitute on both)
+      if (!LINE_SLOT_OPERATORS.includes(operator) && PITCHED_OPERATORS.includes(operator) !== !!line.pitched) continue;
       // (a line with a held note is moved in pitch alone: reverse, bend and trim would move where its notes fall and end)
       if (line.notes.some((n) => n.hold) && !['transpose', 'invert'].includes(operator)) continue;
       if (operator === 'bend') {
@@ -393,14 +419,26 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
         const notes = line.notes.map((x) => (pinned(line, x) ? x : { ...x, pitch: moved(x.pitch!, -1, 2 * f) }));
         offer(i, operator, notes, null, written(line, notes), `every note mirrored about its first`, 2 * f);
       } else if (operator === 'reverse') {
-        const notes = inOrder(reversed(line, (n) => pinned(line, n)));
-        offer(i, operator, notes, null, written(line, notes), 'its notes in reverse order between its anchors');
+        // (the slot operators' reverse on the line's steps: each span between two fixed steps read backwards)
+        for (const m of slotMoves(stepKeys, fixedSteps, [operator])) {
+          const notes = movedFrom(m.from);
+          offer(i, operator, notes, null, written(line, notes), 'its notes in reverse order between its anchors');
+        }
       } else if (operator === 'rotate') {
-        const notes = inOrder(line.notes.map((n) => ({ ...n, step: (n.step + 1) % line.steps })));
-        const turned = levels && [levels.at(-1)!, ...levels.slice(0, -1)];
-        offer(i, operator, notes, null, written(line, notes, turned, true), 'every note a step later, the last to the first');
+        // (the slot operators' rotate on the line's steps: each span between two fixed steps a step later; with none fixed,
+        // every note a step later, the last to the first, and a Euclid stays one, turned)
+        for (const m of slotMoves(stepKeys, fixedSteps, [operator])) {
+          const notes = movedFrom(m.from);
+          offer(i, operator, notes, null, written(line, notes, levelsFrom(m.from) ?? undefined, !fixedSteps.length), 'every note a step later, the last to the first');
+        }
+      } else if (operator === 'swap' || operator === 'substitute') {
+        // (the slot operators on the line's steps, rests among them: two adjacent steps exchanged, a step given another's)
+        for (const m of slotMoves(stepKeys, fixedSteps, [operator])) {
+          const notes = movedFrom(m.from);
+          offer(i, operator, notes, m.amounts.join(' '), written(line, notes, levelsFrom(m.from) ?? undefined), m.what, null);
+        }
       } else if (operator === 'drop')
-        for (const dropped of line.notes) {
+        for (const dropped of line.notes.filter((n) => !pinned(line, n))) {
           const notes = line.notes.filter((n) => n !== dropped);
           offer(i, operator, notes, dropped.step, written(line, notes), `its ${dropped.voice} on step ${dropped.step} left out`);
         }
@@ -408,7 +446,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
         const voice = line.notes[0]!.voice;
         const loudest = line.notes.reduce((a, b) => (b.level > a.level ? b : a));
         for (let step = 0; step < line.steps; step++) {
-          if (line.notes.some((n) => n.step === step && sound(n.voice) === sound(voice))) continue;
+          if (lineFixed(line)?.includes(step) || line.notes.some((n) => n.step === step && sound(n.voice) === sound(voice))) continue;
           const notes = inOrder([...line.notes, { step, voice, own: loudest.own, level: loudest.level }]);
           const louder = levels && levels.map((t, s) => (s === step ? levels[loudest.step]! : t));
           offer(i, operator, notes, step, written(line, notes, louder), `a ${voice} on step ${step}, as loud as its loudest`);
@@ -489,7 +527,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
           f.partner.name.slice(1),
           m.from.map((i) => f.partner!.slots[i]!),
         );
-      offerSlots(f.name, m.operator, m.amounts, m.what, braids, keyOf(null, null, f, m.from), fixedBut(f.name.slice(1), formNotes(f, m.from, k)), null);
+      offerSlots(f.name, m.operator, m.amounts, m.what, braids, keyOf(null, null, f, m.from), fixedBut(f.name.slice(1), formNotes(f, m.from, k)), formReference(f, m.from));
     }
   }
   return { notes: [...heardKeys.flat(), ...fixed], span, bar, variations: out };
@@ -536,6 +574,42 @@ function slotsPlayed(forms: readonly Form[], fragment: string, workbench = '', r
   };
 }
 
+/**
+ * A form's variation by reference: each line it changes as a copy of itself changed on those slots (`base=&chorus = &b`),
+ * its partner's beside it; null where the forms written are no shorter than the lines written out.
+ */
+function formReference(f: Form, from: readonly number[]): Reference | null {
+  const ref = slotReference(
+    f.name,
+    f.slots,
+    from.map((i) => f.slots[i]!),
+  );
+  if (!ref) return null;
+  const written = (g: Pick<Form, 'head' | 'attrs'>, slots: readonly string[]) => [...g.head, ...g.attrs, ...slots].join(' ').length;
+  const p = f.partner;
+  const pref =
+    p &&
+    slotReference(
+      p.name,
+      p.slots,
+      from.map((i) => p.slots[i]!),
+    );
+  const length = ref.line(f.name.slice(1)).length + (pref ? pref.line(p.name.slice(1)).length : 0);
+  const whole =
+    written(
+      f,
+      from.map((i) => f.slots[i]!),
+    ) +
+    (p
+      ? written(
+          p,
+          from.map((i) => p.slots[i]!),
+        )
+      : 0);
+  if (length > whole) return null;
+  return p && pref ? { ...ref, partner: { of: p.name, ...pref } } : ref;
+}
+
 /** The least common multiple of two laps in whole notes, on a grid of 1/3840 of one (every tap's, triplets and fives too). */
 function lcm(a: number, b: number): number {
   const gcd = (x: number, y: number): number => (y ? gcd(y, x % y) : x);
@@ -574,29 +648,6 @@ function harmoniesOf(
       : events.map((e) => ({ at: e.step * whole, key: `${whole * e.duration} chords#${k} ${e.table}:${e.tableShift}:${e.value}:${e.alter}:${e.transpose ?? 0}` }));
     out.push({ name, notes, lap: cell.steps * whole, meter });
   }
-  return out;
-}
-
-/**
- * A line's notes reversed within each span between two anchored notes, cyclically (the whole lap where none is
- * anchored): the step of each free place takes what the span's mirror place held, a rest or a note.
- */
-function reversed(line: Line, anchored: (n: LineNote) => boolean): LineNote[] {
-  const at = new Map(line.notes.map((n) => [n.step, n]));
-  const fixed = line.notes.filter(anchored).map((n) => n.step);
-  const spans: number[][] = [];
-  if (!fixed.length) spans.push(Array.from({ length: line.steps }, (_, s) => s));
-  else
-    for (const [k, start] of fixed.entries()) {
-      const end = fixed[(k + 1) % fixed.length]! + (k + 1 === fixed.length ? line.steps : 0);
-      spans.push(Array.from({ length: end - start - 1 }, (_, j) => (start + 1 + j) % line.steps));
-    }
-  const out = line.notes.filter(anchored);
-  for (const span of spans)
-    for (const [j, step] of span.entries()) {
-      const n = at.get(span[span.length - 1 - j]!);
-      if (n) out.push({ ...n, step });
-    }
   return out;
 }
 
