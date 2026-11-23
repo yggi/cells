@@ -404,9 +404,11 @@ function mainOn(
     ).length;
   const offers = parse(bench).offers;
   const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
-  // (two that meet are already none: the rest isn't compiled)
+  // (two that meet are already none: the rest isn't compiled; a text cell is a generator's argument alone, decision 101, so
+  // no parameter's: a bar's `&meter "4/4"` is no phrase, no key)
   const meeting: string[] = [];
-  for (const n of named) if (!heads.includes(n) && meets(n) && meeting.push(n) > 1) return null;
+  const isText = (n: string) => alone.cells.get(n.slice(1))?.text !== undefined;
+  for (const n of named) if (!heads.includes(n) && !isText(n) && meets(n) && meeting.push(n) > 1) return null;
   return meeting[0] ?? null;
 }
 

@@ -42,7 +42,7 @@ describe('what a cell is: one table of kinds (#782)', () => {
     expect(count).toMatchInlineSnapshot(`
       {
         "band": 3,
-        "blank": 70,
+        "blank": 11,
         "card": 94,
         "envelope": 440,
         "fill": 10,
@@ -64,12 +64,13 @@ describe('what a cell is: one table of kinds (#782)', () => {
         "scope": 10,
         "sections": 13,
         "selector": 16,
-        "steps": 233,
+        "steps": 167,
         "style": 4,
         "sum": 20,
         "table": 52,
         "tape": 6,
         "tempo": 80,
+        "text": 66,
         "voice": 392,
         "volume": 53,
         "wave": 16,
@@ -81,7 +82,7 @@ describe('what a cell is: one table of kinds (#782)', () => {
   it('a cell’s sort is its kind’s: what it is in a mix follows from what it is, for every cell of every example', () => {
     const said = KINDS.filter((k) => SORT_OF_KIND[k] !== null);
     // (four kinds don't say: a read head is its tape's, a fill what its fragment's code writes, and a card and a meter are never a mix's factor)
-    expect(KINDS.filter((k) => SORT_OF_KIND[k] === null)).toEqual(['card', 'midi card', 'fill', 'head', 'meter']);
+    expect(KINDS.filter((k) => SORT_OF_KIND[k] === null)).toEqual(['card', 'midi card', 'fill', 'head', 'meter', 'text']);
     let checked = 0;
     for (const [key, p] of Object.entries(EXAMPLES)) {
       const result = compileSource(p.source, undefined, { resolve: resolveSeed });

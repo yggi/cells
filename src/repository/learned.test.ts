@@ -209,7 +209,7 @@ describe('filing', () => {
     const first = fileFragment(library, EMPTY_LAYER, filing(FUNK));
     const second = fileFragment(library, first.layer, filing(FUNK, { text: '&bar meter("11/8")' }));
     expect(second.id).toBe('composer 2026-10-18T21:04:00Z 2');
-    expect(() => fileFragment(library, EMPTY_LAYER, filing(FUNK, { id: 'meter' }))).toThrow(/the id meter is taken/);
+    expect(() => fileFragment(library, EMPTY_LAYER, filing(FUNK, { id: 'bar' }))).toThrow(/the id bar is taken/);
     expect(fileFragment(library, EMPTY_LAYER, filing(FUNK, { id: 'nine eighths' })).id).toBe('nine eighths');
   });
 
@@ -361,7 +361,7 @@ describe('cells stateless', () => {
     const repository = createRepository(LIBRARY);
     const before = ask(repository, learned());
     ask(repository, EMPTY_LAYER);
-    ask(repository, useFragments(repository, learned(), [{ id: 'meter', point: AMBIENT, facet: 'meter' }]));
+    ask(repository, useFragments(repository, learned(), [{ id: 'bar', point: AMBIENT, facet: 'meter' }]));
     expect(ask(repository, learned())).toEqual(before);
     expect(ask(repository, EMPTY_LAYER)).toEqual(ask(createRepository(LIBRARY), EMPTY_LAYER));
   });
@@ -391,7 +391,7 @@ describe('a malformed layer', () => {
     ['a filed fragment with no text', { ...EMPTY_LAYER, filed: [{ ...file, fragment: { ...file.fragment, text: '' } }] }, /filed 1: .*no text/],
     ['an id filed twice', { ...EMPTY_LAYER, filed: [file, file] }, /filed twice/],
     ['a point with no id', { ...EMPTY_LAYER, points: [{ point: { x: 0 }, weight: 1 }] }, /learned point 1: no id/],
-    ['a point of weight 0', { ...EMPTY_LAYER, points: [{ id: 'meter', point: { x: 0 }, weight: 0 }] }, /learned point 1: weight 0/],
+    ['a point of weight 0', { ...EMPTY_LAYER, points: [{ id: 'bar', point: { x: 0 }, weight: 0 }] }, /learned point 1: weight 0/],
     ['a pair out of order', { ...EMPTY_LAYER, together: [{ ids: ['b', 'a'], count: 1 }] }, /not two, in order/],
     ['a pair of one', { ...EMPTY_LAYER, together: [{ ids: ['a', 'a'], count: 1 }] }, /not two, in order/],
     ['a count that is no whole number', { ...EMPTY_LAYER, together: [{ ids: ['a', 'b'], count: 1.5 }] }, /count 1.5/],
@@ -413,14 +413,14 @@ describe('a malformed layer', () => {
   });
 
   it('one that files a seed fragment’s id', () => {
-    const layer = { ...EMPTY_LAYER, filed: [{ ...file, fragment: { ...file.fragment, id: 'meter' } }] };
+    const layer = { ...EMPTY_LAYER, filed: [{ ...file, fragment: { ...file.fragment, id: 'bar' } }] };
     expect(layerProblems(layer)).toEqual([]);
-    expect(() => library.merge(layer)).toThrow(/files meter, a seed fragment's id/);
+    expect(() => library.merge(layer)).toThrow(/files bar, a seed fragment's id/);
   });
 
   it('a point or a pair naming a fragment nobody holds is left out, and named', () => {
-    const layer: LearnedLayer = { ...EMPTY_LAYER, points: [{ id: 'gone', point: FUNK, weight: 1 }], together: [{ ids: ['meter', 'gone'], count: 3 }] };
+    const layer: LearnedLayer = { ...EMPTY_LAYER, points: [{ id: 'gone', point: FUNK, weight: 1 }], together: [{ ids: ['bar', 'gone'], count: 3 }] };
     expect(library.merge(layer).unheld).toEqual(['gone']);
-    expect(ranked(library.query(FUNK, 26, {}, { chosen: ['meter'], layer }))).toEqual(ranked(library.query(FUNK, 26, {}, { chosen: ['meter'] })));
+    expect(ranked(library.query(FUNK, 26, {}, { chosen: ['bar'], layer }))).toEqual(ranked(library.query(FUNK, 26, {}, { chosen: ['bar'] })));
   });
 });

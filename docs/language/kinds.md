@@ -34,6 +34,7 @@ What a cell is. Every cell has exactly one **kind**, read from its own line and 
 | `number` | One number and nothing else: named in a mix it is that number (decision 088). | plain | `&vol .5` |
 | `line` | A braid with a clock (step=, loop= below hearing): it plays its steps in time. | pitch | `&tune step=2 0 2 4` |
 | `table` | A generator with no clock (scan, scale, even, fifths, a wave): a table to read through. | pitch | `&major scan(2 2 1 2 2 2 1)` |
+| `text` | One text in quotes: a generator’s argument reads it as the piece is built, meter(&meter) (decision 101); it plays nothing. | — | `&meter "3/4"` |
 | `blank` | No braid and no clock: the table below it as it is, turned or set by its attributes (a key, a swing). | pitch | `&key shift=2` |
 | `steps` | Anything else: a list of steps with no clock of its own, a phrase to splice or a table to read through. | pitch | `&motif 0 2 4` |
 

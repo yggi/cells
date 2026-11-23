@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&bar from (&meter) &tempo style=(&spooky | &(map=style sync=.4 harm=.9 bite=.5) * .75)
+&bar from (&meter) &tempo style=(&(map=style sync=.4 harm=.9 bite=.5) * .75 | &spooky)
 &bar from (&meter) &tempo style=&(map=style sync=.8 harm=.6 bite=1) * .75 meter="7/8"
 &bar from (&meter) &tempo style=&(map=style sync=.6 harm=.9 bite=.8) * .75 meter="10/8"
 &bar meter(&meter) step=&tempo

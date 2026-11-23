@@ -46,6 +46,7 @@ export const KINDS = [
   'number',
   'line',
   'table',
+  'text',
   'blank',
   'steps',
 ] as const;
@@ -270,6 +271,12 @@ export const KIND_RULES: readonly KindRule[] = [
     holds: (c) => c.braid !== 'list' && c.braid !== 'blank',
   },
   {
+    kind: 'text',
+    is: 'One text in quotes: a generator’s argument reads it as the piece is built, meter(&meter) (decision 101); it plays nothing.',
+    example: ['&meter "3/4"'],
+    holds: (c) => c.text !== undefined,
+  },
+  {
     kind: 'blank',
     is: 'No braid and no clock: the table below it as it is, turned or set by its attributes (a key, a swing).',
     example: ['&key shift=2'],
@@ -319,6 +326,7 @@ export const SORT_OF_KIND: Readonly<Record<Kind, Sort | null>> = {
   number: 'plain',
   line: 'pitch',
   table: 'pitch',
+  text: null,
   blank: 'pitch',
   steps: 'pitch',
 };
