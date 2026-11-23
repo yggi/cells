@@ -54,7 +54,7 @@ export interface Progression {
 
 /** A progression's candidate variation: the operator, its amounts (for `by`), its slots, and what it does, in words. */
 export interface Candidate {
-  readonly operator: SlotOperator | 'drop' | 'add' | 'third' | 'dominant' | 'shift';
+  readonly operator: SlotOperator | 'drop' | 'add' | 'third' | 'dominant' | 'shift' | 'split';
   readonly amounts: readonly number[];
   readonly slots: readonly Slot[];
   readonly what: string;
@@ -207,7 +207,8 @@ export function progressionCandidates(
         const what = operator === 'third' ? `a third ${n > 0 ? 'up' : 'down'}` : `${Math.abs(n)} degree${Math.abs(n) === 1 ? '' : 's'} ${n > 0 ? 'up' : 'down'}`;
         out.push({ operator, amounts: [s, n], slots, what: `its chord on step ${s} ${what}` });
       }
-    else if (operator === 'dominant')
+    // (a split, #912, is a dominant at this level: the step's chord and the next chord's secondary dominant, its halves)
+    else if (operator === 'dominant' || operator === 'split')
       p.slots.forEach((slot, s) => {
         if (!free(s) || slot.length !== 1) return;
         const here = slot[0]!;

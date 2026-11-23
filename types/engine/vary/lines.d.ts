@@ -13,6 +13,11 @@ export interface LineNote {
     readonly pitch?: Pitch;
     /** A held note's length in steps (`7@2`: 2), written back as it was; absent for a note one step long. */
     readonly hold?: number;
+    /**
+     * A half of a step split in two (`[0 1]`, #912): the note is half a step long, its step `s` (the first half) or
+     * `s + .5` (the second); absent for a whole step's note. Its slot is its step's whole part.
+     */
+    readonly half?: true;
 }
 /**
  * A pitched note: its step as written (a degree, or a splice), then mirrored and moved by the operators, so it plays
