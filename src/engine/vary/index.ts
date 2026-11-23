@@ -58,7 +58,7 @@ import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written, type 
 import { referenceOf, type Reference } from './reference';
 import { answeredIn } from '../use';
 import { formsOf, FORM_FIXED, type Form } from './form';
-import { fixedOf, SLOT_OPERATORS, slotMoves, slotReference } from './slots';
+import { fixedOf, SLOT_OPERATORS, slotMoves, slotReference, spansOf } from './slots';
 import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf, type Progression } from './progression';
 
 export { backbeatOf, type Anchor } from './anchors';
@@ -218,8 +218,17 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   const operators = only ? [only.operator] : (options.operators ?? RHYTHM_OPERATORS);
   const { lines, anchors, result, own, progressions, forms } = read(fragment, workbench, resolve);
   if (!result) return { notes: null, span: null, bar: null, variations: [] };
-  const left = new Set([...anchors.filter((a) => a.step === undefined).map((a) => a.line), ...keep.map(named)]);
-  const pinned = (line: Line, n: LineNote) => anchors.some((a) => a.line === line.name && a.step === n.step);
+  // (a frontend's mask on a line, by its name: its steps fixed in place of the line's own anchors, a kick's or a root's)
+  const maskOf = (name: string) => options.fixed?.[name] ?? options.fixed?.[name.slice(1)];
+  const lineFixed = (line: Line) => {
+    const mask = maskOf(line.name);
+    return mask ? fixedOf(mask, line.steps) : null;
+  };
+  const left = new Set([...anchors.filter((a) => a.step === undefined && !maskOf(a.line)).map((a) => a.line), ...keep.map(named)]);
+  const pinned = (line: Line, n: LineNote) => {
+    const fixed = lineFixed(line);
+    return fixed ? fixed.includes(n.step) : anchors.some((a) => a.line === line.name && a.step === n.step);
+  };
   // (each note's onset in whole notes where its line's grid is the meter's, else its line's own step; its sound, the
   // drum note it strikes or its voice; and what a note is for S2: its onset, length and voice, and a pitched note's pitch)
   const onset = (i: number, step: number) => {
@@ -396,11 +405,16 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
         const notes = inOrder(reversed(line, (n) => pinned(line, n)));
         offer(i, operator, notes, null, written(line, notes), 'its notes in reverse order between its anchors');
       } else if (operator === 'rotate') {
-        const notes = inOrder(line.notes.map((n) => ({ ...n, step: (n.step + 1) % line.steps })));
-        const turned = levels && [levels.at(-1)!, ...levels.slice(0, -1)];
-        offer(i, operator, notes, null, written(line, notes, turned, true), 'every note a step later, the last to the first');
+        // (each span between two fixed steps a step later, `slots.ts`'s rotate on the line's steps: with none fixed, every
+        // note a step later, the last to the first, and a Euclid stays one, turned)
+        const fixed = lineFixed(line) ?? [];
+        const to = Array.from({ length: line.steps }, (_, s) => s);
+        for (const span of spansOf(line.steps, fixed)) for (const [j, s] of span.entries()) to[s] = span[(j + 1) % span.length]!;
+        const notes = inOrder(line.notes.map((n) => ({ ...n, step: to[n.step]! })));
+        const turned = levels && levels.map((_, s) => levels[to.indexOf(s)]!);
+        offer(i, operator, notes, null, written(line, notes, turned, !fixed.length), 'every note a step later, the last to the first');
       } else if (operator === 'drop')
-        for (const dropped of line.notes) {
+        for (const dropped of line.notes.filter((n) => !pinned(line, n))) {
           const notes = line.notes.filter((n) => n !== dropped);
           offer(i, operator, notes, dropped.step, written(line, notes), `its ${dropped.voice} on step ${dropped.step} left out`);
         }
@@ -408,7 +422,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
         const voice = line.notes[0]!.voice;
         const loudest = line.notes.reduce((a, b) => (b.level > a.level ? b : a));
         for (let step = 0; step < line.steps; step++) {
-          if (line.notes.some((n) => n.step === step && sound(n.voice) === sound(voice))) continue;
+          if (lineFixed(line)?.includes(step) || line.notes.some((n) => n.step === step && sound(n.voice) === sound(voice))) continue;
           const notes = inOrder([...line.notes, { step, voice, own: loudest.own, level: loudest.level }]);
           const louder = levels && levels.map((t, s) => (s === step ? levels[loudest.step]! : t));
           offer(i, operator, notes, step, written(line, notes, louder), `a ${voice} on step ${step}, as loud as its loudest`);
