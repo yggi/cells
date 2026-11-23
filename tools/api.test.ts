@@ -114,9 +114,9 @@ describe('the ledger', () => {
     for (const f of Object.values(ledger)) expect(f.pin).toMatch(/^v\d+\.\d+\.\d+$/);
   });
 
-  it('leaves only the migrate internals, which #716 replaces, on no entry point and not on purpose', () => {
+  it('leaves nothing on no entry point and not on purpose: the migrate internals went with #716 (yggi/jambot#727)', () => {
     expect(Object.fromEntries(Object.entries(standing(ledger)).map(([f, s]) => [f, s.left]))).toEqual({
-      jambot: ['engine/migrate/axes:OLD_AXES', 'engine/migrate/axes:newPoint', 'engine/migrate/moved:movedIds', 'engine/renamed:MOVED'],
+      jambot: [],
       'cell-studio': [],
     });
   });

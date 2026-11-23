@@ -96,11 +96,11 @@ On the root index today (24): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example
 
 | frontend | pin | app: modules / symbols deep | an entry point exports | on purpose | work left | app: symbols from the root | tests and tools: modules / symbols deep |
 |---|---|---|---|---|---|---|---|
-| jambot (`bbb1cb6`) | v0.26.1 | 31 / 93 | 89 | 0 | 4 | 16 | 20 / 37 |
+| jambot (`c33b94b`) | v0.28.0 | 5 / 87 | 0 | 0 | 0 | 21 | 4 / 38 |
 | cell-studio (`9216e32`) | v0.26.1 | 82 / 313 | 292 | 16 | 0 | 0 | 64 / 162 |
 
 Reached by a module path on purpose: engine/fiveto12 (a piece's own data, a plugin ultimately; the owner, 2026-11-21): `dayLaw`; engine/helix (leaves for Cell studio, decision 086): `positionHue`, `positionOctave`; engine/live (leaves for Cell studio, decision 086): `LiveState`, `liveAt`; engine/order (the same type as `ExampleKey` of `engine/examples`, which `library` exports): `ExampleKey`; engine/parser/index (leaves for Cell studio, decision 086): `SHOWS`; engine/plugins (leaves for Cell studio, decision 086): `ShowPlugin`, `pluginKey`; engine/routing (leaves for Cell studio, decision 086): `Routing`, `State`, `drawn`, `edgeStateOf`, `nodeStateOf`, `routing`; theory/modes (leaves for Cell studio, decision 086): `pitchHue`.
 
-Reached by an app and on no entry point (the work left): `engine/migrate/axes:OLD_AXES` (jambot), `engine/migrate/axes:newPoint` (jambot), `engine/migrate/moved:movedIds` (jambot), `engine/renamed:MOVED` (jambot).
+Every symbol an app reaches is on an entry point or reached on purpose.
 
 <!-- api:end -->
