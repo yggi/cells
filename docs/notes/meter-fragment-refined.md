@@ -49,19 +49,19 @@ Decision 090 already provides for it: "a generic … generator with no style, us
 - **One fragment per style's feel**, each taking `meter` and naming its styles: `funk_meter`, `swing_meter`, `lofi_meter`, `spooky_meter`, and the odd groupings in `odd_meter`.
 - **Ambient's `16n:31/60` is a lean of 1.7 %**, about 7 ms at 72 bpm, and audible to no one: Ambient joins the straight list (the owner, 2026-11-23: "drop ambient_meter"). Its events move by that lean: the one event snapshot this proposal moves on purpose.
 
-### 3. `&grouping` and `&swing` as placeholders: grouping dissolves, swing stays a cell where it is set
+### 3. `&grouping` and `&swing` as placeholders: they dissolve, and need no default syntax
 
 They exist only because 065 §2 binds a keyword to a cell (`swing=` binds `&swing`), so an optional parameter must be a cell whose line is its default. Both are already the head's own values:
 
-- **Swing stays a parameter, a cell when given, with no default** (the owner, 2026-11-23: "swing should not be a special case. IMHO, it should be a subwheel of &bar when it is set"). Given, `meter(swing=16n:.6)` makes `&bar_swing swing=16n:.6`, which the bar reads, and in Cell studio it is a bulb on `&bar` by decision 021's one rule. Not given, there is no cell: the attribute that reads it is left out, and the bar is straight. This needs an optional parameter with no default line, which 065 §2 doesn't allow today; no default means "unset". The head override `&bar swing=16n:.6 from meter &tempo` (065 §4) stays valid and sets the attribute inline, with no bulb. Its stray `&bar_swing` was #899 (#905).
-- **So no syntax for default values is needed:** grouping's default is what the head writes, `&bar meter("4/4") step=&tempo swing=&swing`, and swing has none. The `8n:1/2` that `&swing` spells out today is a no-op.
+- **Swing is the head's attribute, inline** (the owner, 2026-11-23, after weighing a swing cell as a subwheel: inline), as `step=` and `legato=` are. 065 §4 already lets a use set it: `&bar swing=16n:.6 from meter &tempo` plays the same 16n:.6 as `meter(swing=16n:.6)` (measured at 7da5fc0). Its stray `&bar_swing` was #899 (#905). A cell enters only where the share moves (decision 081): `&bar swing=16n:&groove from meter &tempo`, and `&groove` is then a real cell, a bulb on `&bar` in Cell studio (decision 021). Nothing is special for swing.
+- **With no placeholder, the default is the head line itself:** `&bar meter("4/4") step=&tempo`, straight because it writes no `swing=` (`8n:1/2` is the no-op that `&swing` spells out). So **no syntax for default values is needed**: a parameter's default is what the head writes, and a use changes the head where it says (065 §6, applied to the head).
 
 ### 4. `grouping=` dissolves into the bar's braid: yes, with one form (**new**)
 
 `base=&grouping` is a copy of a meter (#507), there so that the grouping can be a cell. Written as the braid, the head is `&bar meter("4/4") step=&tempo`, and a use gives the head a braid before `from` as it gives attributes (065 §4 extended from attributes to the braid; a token before `from` that isn't `key=value` is unambiguous):
 
 ```text
-&bar meter("7/8") from meter(swing=8n:2/3) &tempo
+&bar meter("7/8") swing=8n:2/3 from meter &tempo
 ```
 
 That is the line `&bar meter("7/8") step=&tempo swing=8n:2/3` with its source named. A declaration line then reads as a use at a point, the id left out:
@@ -89,19 +89,19 @@ That is the line `&bar meter("7/8") step=&tempo swing=8n:2/3` with its source na
 ```text
 # funk_meter: the sixteenths leaning, Funk's and Deep house's
 &bar from &tempo style=(&funk | &deepHouse | [&acid + &(map=style bite=.1)] * .5)
-&bar from meter(swing=16n:.6) &tempo
+&bar swing=16n:.6 from meter &tempo
 ```
 
 ```text
 # swing_meter: the eighths in triplet swing, jazz's
 &bar from &tempo style=(&swingJazz | &electroSwing | &bluesShuffle)
-&bar from meter(swing=8n:2/3) &tempo
+&bar swing=8n:2/3 from meter &tempo
 ```
 
 ```text
 # lofi_meter: Lo-fi's lean
 &bar from &tempo style=&lofi
-&bar from meter(swing=16n:.65) &tempo
+&bar swing=16n:.65 from meter &tempo
 ```
 
 ```text
@@ -121,7 +121,7 @@ That is the line `&bar meter("7/8") step=&tempo swing=8n:2/3` with its source na
 &bar meter("7/8") from meter &tempo
 ```
 
-The weights are today's: every point keeps its place, so each preset finds what it finds today. An aksak swung on its pairs stays one line, `&bar meter("7/8") from meter(swing=8n:2/3) &tempo` (decision 071 keeps its three straight).
+The weights are today's: every point keeps its place, so each preset finds what it finds today. An aksak swung on its pairs stays one line, `&bar meter("7/8") swing=8n:2/3 from meter &tempo` (decision 071 keeps its three straight).
 
 **Open:** whether a style fragment with several groupings (`spooky_meter`) writes its head as the default one, as above, or as `&bar from meter &tempo` with every grouping on a declaration line.
 
@@ -142,13 +142,13 @@ What would break at its next pin:
 ## What it does to Cell studio
 
 - **Today a taken meter is three nodes:** `&bar` (the meter wheel: `isMeter`, cells `graph.ts:238`, `keepsTime`), `&bar_grouping` (an ordinary braid wheel, with a `base` edge into the bar) and `&bar_swing` (a `swing` wire that carries nothing, `flowedges.ts:87-92`). See `modules.test.ts:20-23` and `piece.test.ts:67-69`.
-- **With 3 and 4, a straight meter is one cell, `&bar meter("…") step=&tempo`, so one meter wheel**, the special one the app already draws (`cellview.ts:245-277`: beats, the downbeat, bpm over N/bar, the bar's count while playing, the net). A swung one is that wheel and its swing cell. Cell studio needs no change for the straight meter, only the tests above updated.
-- **The swing cell as a bulb on `&bar`, with no special case** (yggi/cell-studio#701). Decision 021's one rule ("a cell that is only part of another is drawn on it, as a bulb") takes it, since only the bar's `swing=` reads it. `layout/subwheels.ts` has no rule yet for a cell read only through one host's attribute. That general rule is what is needed; a bend's `&rubato` is its next case. Today swing only bends the wheel's steps (`Clock.swung`, `cellview.ts:345-350`).
+- **With 3 and 4, it is one cell, `&bar meter("…") step=&tempo swing=…`, so one meter wheel**, the special one the app already draws (`cellview.ts:245-277`: beats, the downbeat, bpm over N/bar, the bar's count while playing, the net). Cell studio needs no change for that, only the tests above updated.
+- **The swing as a ring on the meter wheel** (yggi/cell-studio#701). Today swing only bends the wheel's steps (`Clock.swung`, `cellview.ts:345-350`) and says `swung 8n` in the hub. The ring draws the swung level's pairs long and short inside the beats, part of the meter's glyph as the bpm is, with its share a handle that rewrites the bar's `swing=`. A share that is a cell's (`swing=16n:&groove`) has that cell as a bulb on `&bar` by decision 021's one rule, with no rule that names swing.
 - **The fragment preview's control** is the `grouping` text at its default (`preview.ts`, `preview.test.ts:61`). It would become the head's braid.
 
 ## Steps, if the owner agrees
 
 1. cells: a name is read on its facet's axes; an offset as a sum. Each is a decision, then the fragments rewritten with names, where no point moves.
-2. cells: a use's braid before `from`; `meter` with swing its one parameter, a cell when given and none by default (065 §2 amended); the style fragments. A decision (amends 065 §4 and §6, and #507's head), a `changes/` entry naming the id map for Jambot, and Migrate for any `from meter(grouping=…, swing=…)`.
+2. cells: a use's braid before `from`; `meter` without parameters; the style fragments. A decision (amends 065 §4 and §6, and #507's head), a `changes/` entry naming the id map for Jambot, and Migrate for any `from meter(grouping=…, swing=…)`.
 3. cells: the stray `&bar_swing` (#899, #905): done, independent of 2.
-4. Cell studio: a cell read only through one host's attribute is a bulb on it (#701). Jambot: the pin, its id map and its tests (yggi/jambot#751).
+4. Cell studio: the swing ring and its handle, a moving share's cell a bulb (#701). Jambot: the pin, its id map and its tests (yggi/jambot#751).
