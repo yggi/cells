@@ -1,13 +1,13 @@
 {
   "examples": {
-    "cases": 68,
-    "beat": 55,
-    "bar": 54,
-    "start": 51,
-    "level": 57,
-    "beats": 56,
-    "groups": 49,
-    "swing": 62
+    "cases": 69,
+    "beat": 56,
+    "bar": 55,
+    "start": 52,
+    "level": 58,
+    "beats": 57,
+    "groups": 50,
+    "swing": 63
   },
   "synthetic": {
     "cases": 1035,

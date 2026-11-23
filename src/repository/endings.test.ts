@@ -14,11 +14,11 @@ const lines = (...xs: string[]) => xs.join('\n');
 const SIXTEENTH = 0.125;
 
 /** One part's notes, as [onset in sixteenths, length in sixteenths, semitones from the key's tonic], over a key on D. */
-function part(head: string, key: string, meter = '4/4'): [number, number, number][] {
+function part(head: string, key: string, meter = '4/4', ending = 'finale'): [number, number, number][] {
   const text = lines(
     `&bar meter("${meter}") step=120bpm`,
     `&key ${key}`,
-    `&${head} from finale &key`,
+    `&${head} from ${ending} &key`,
     '&v s=sine loop=C4',
     head === 'finaleDrums' ? `&out map=sample [&${head}]` : `&out [&${head} * &v]`,
   );
@@ -61,11 +61,39 @@ const classes = (notes: readonly (readonly number[])[]) => notes.map(([at, lengt
 
 describe('found by style', () => {
   const repository = createRepository(LIBRARY);
-  it('every style of styles finds the ending, finale, at distance 0: Jambot ends the same way at every style, its ten presets too', () => {
-    expect(STYLES).toHaveLength(23);
+  // (Jambot's ten presets, the prototype's eight and Electro swing and Spooky, find Jambot's ending, finale, as #720 bounds
+  // it; the other styles an ending of their idiom's)
+  const FOUND: Record<string, string> = {
+    synthPop: 'finale',
+    techno: 'finale',
+    deepHouse: 'finale',
+    ambient: 'finale',
+    lofi: 'finale',
+    funk: 'finale',
+    bossaNova: 'finale',
+    swingJazz: 'finale',
+    electroSwing: 'finale',
+    spooky: 'finale',
+    kinderlied: 'plagal',
+    acid: 'stop',
+    happyHardcore: 'stop',
+    elektro: 'stop',
+    darkAmbient: 'drone_out',
+    baroque: 'picardy',
+    bluesShuffle: 'blues_ending',
+    seaShanty: 'plagal',
+    chiptune: 'stop',
+    salsa: 'stop',
+    waltz: 'finale',
+    march: 'finale',
+    tripHop: 'drone_out',
+  };
+  it('every style of styles finds an ending at distance 0, the second never tied with it: Jambot’s ten presets finale', () => {
+    expect(STYLES.map((s) => s.id).sort()).toEqual(Object.keys(FOUND).sort());
     for (const s of STYLES) {
-      const [first] = repository.query(stylePoint(s.id), 1, {}, { facet: 'ending' });
-      expect([first!.fragment.id, first!.distance], s.id).toEqual(['finale', 0]);
+      const [first, second] = repository.query(stylePoint(s.id), 2, {}, { facet: 'ending' });
+      expect([first!.fragment.id, first!.distance], s.id).toEqual([FOUND[s.id], 0]);
+      expect(second!.distance, s.id).toBeGreaterThan(0.05);
     }
   });
 });
@@ -161,5 +189,58 @@ describe('in any meter, and placed by its section', () => {
       [4, 1],
       [5, 2],
     ]);
+  });
+});
+
+describe('the endings by style', () => {
+  const ENDINGS = ['finale', 'stop', 'picardy', 'plagal', 'blues_ending', 'drone_out'];
+  /** The pitch classes sounding at an onset, from the tonic. */
+  const at = (notes: readonly [number, number, number][], onset: number) => [...new Set(notes.filter(([o]) => o === onset).map(([, , p]) => mod(p, 12)))].sort((a, b) => a - b);
+
+  it('each takes the key and gives the same heads, so a score changes its ending by its name alone', () => {
+    for (const id of ENDINGS) {
+      const text = LIBRARY.find((f) => f.id === id)!.text;
+      const signature = /^(&[^\n]*?) from \(([^)]*)\) &key/m.exec(text);
+      expect(signature?.[1], id).toBe('&cadence, &finaleBass, &finalePad, &finaleLead, &finaleDrums');
+      expect(signature?.[2].split(', ')[0], id).toBe('&half');
+    }
+  });
+
+  it('stop: the tonic chord on the one, an eighth long, a kick and a crash, then nothing', () => {
+    const chords = part('cadence', 'scale(aeolian, D)', '4/4', 'stop');
+    expect(at(chords, 0)).toEqual([0, 3, 7]);
+    expect(part('finalePad', 'scale(aeolian, D)', '4/4', 'stop').map(([o, length]) => [o, length])).toEqual([
+      [0, 2],
+      [0, 2],
+      [0, 2],
+    ]);
+    expect(part('finaleDrums', 'scale(aeolian, D)', '4/4', 'stop').map(([o]) => o)).toEqual([0, 0]);
+  });
+
+  it('picardy: the dominant seventh, then the tonic major over a minor key', () => {
+    const chords = part('cadence', 'scale(aeolian, D)', '4/4', 'picardy');
+    expect(at(chords, 0)).toEqual([2, 5, 7, 11]);
+    expect(at(chords, LANDING)).toEqual([0, 4, 7]);
+  });
+
+  it('plagal: the fourth’s chord, then the tonic’s, the tune falling from the sixth to the fifth', () => {
+    const chords = part('cadence', 'scale(ionian, D)', '4/4', 'plagal');
+    expect(at(chords, 0)).toEqual([0, 5, 9]);
+    expect(at(chords, LANDING)).toEqual([0, 4, 7]);
+    expect(classes(part('finaleLead', 'scale(ionian, D)', '4/4', 'plagal')).map(([, , p]) => p)).toEqual([9, 7]);
+  });
+
+  it('blues_ending: the dominant seventh, then the tonic’s seventh chord, its flat seventh left hanging', () => {
+    const chords = part('cadence', 'scale(mixolydian, D)', '4/4', 'blues_ending');
+    expect(at(chords, 0)).toEqual([2, 5, 7, 11]);
+    expect(at(chords, LANDING)).toEqual([0, 4, 7, 10]);
+    const [dominant, tonic] = part('finaleBass', 'scale(mixolydian, D)', '4/4', 'blues_ending');
+    expect(tonic![2] - dominant![2]).toBe(5);
+  });
+
+  it('drone_out: the tonic held a bar and a half, no dominant, the lead on its fifth', () => {
+    expect(at(part('cadence', 'scale(aeolian, D)', '4/4', 'drone_out'), 0)).toEqual([0, 3, 7]);
+    expect(part('finaleBass', 'scale(aeolian, D)', '4/4', 'drone_out').map(([o, length]) => [o, length])).toEqual([[0, 24]]);
+    expect(classes(part('finaleLead', 'scale(aeolian, D)', '4/4', 'drone_out'))).toEqual([[0, 24, 7]]);
   });
 });
