@@ -585,11 +585,6 @@ export interface CompileOptions {
   /** The braid fills' answers its lockfile recorded (`answers:`, decision 085 §8.2): each plays without its plugin's code. */
   readonly answers?: readonly LockedAnswer[];
   /**
-   * Read a fragment's `from` line the old way: one that passes no cell by name where its fragment reads one (decision 075,
-   * `byname.ts`), with a warning. Migrate's one rule, `arguments`, and Normalise compile so, to rewrite it.
-   */
-  readonly old?: boolean;
-  /**
    * The host's plugin-fragments (decision 085 §6, #792): code a `from` line's copy runs for its fills, by its fragment's id,
    * beside the built-ins (a host's of the same id stands in for one). Cells runs no foreign code: a host hands it here,
    * behind the same interface as the built-ins (`PluginFragment`). Since 6b, a braid fill's.

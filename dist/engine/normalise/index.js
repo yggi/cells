@@ -26,6 +26,5 @@ export const normalisations = (options = {}) => (source, result) => {
     ];
 };
 export const normalise = (source, options) => {
-    const old = { ...options, old: true };
-    return rewriteAll(source, normalisations(old), ROUNDS, old);
+    return rewriteAll(source, normalisations(options), ROUNDS, options);
 };
