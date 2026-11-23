@@ -1,6 +1,6 @@
 // A fragment's association read from its text (decision 089): its declaration lines.
 import { describe, expect, it } from 'vitest';
-import { associationOf, isDeclaration, readDeclaration, withoutDeclarations } from './declarations';
+import { FACET_AXES, associationOf, isDeclaration, readDeclaration, withoutDeclarations } from './declarations';
 
 const FUNK = { sync: 1, harm: 0.12, bite: 0.85, mood: 0.65 };
 const TECHNO = { sync: 0.12, harm: 0, bite: 1, mood: 0.4 };
@@ -30,6 +30,20 @@ describe('a declaration line (decision 089)', () => {
     ]);
   });
 
+  it('reads a named style on the axes its facet speaks to: a meter’s &funk is Funk’s sync, harm and bite (decision 099)', () => {
+    const FUNK3 = { sync: 1, harm: 0.12, bite: 0.85 };
+    for (const facet of ['meter', 'rhythm', 'performer', 'module', 'form']) {
+      expect(FACET_AXES[facet]).toEqual(['sync', 'harm', 'bite']);
+      expect(read('&bar from &tempo style=(&funk | &techno * .5)', true, facet)!.points.map((p) => p.point)).toEqual([FUNK3, { sync: 0.12, harm: 0, bite: 1 }]);
+    }
+    // (every other facet, and none, reads all four; facet= on the line is the facet it is read on)
+    for (const facet of ['bass', 'motif', 'harmony', 'instrument', undefined]) expect(read('&x from &key style=&funk', true, facet)!.points[0]!.point).toEqual(FUNK);
+    expect(read('* from style=&funk facet=rhythm', false, 'instrument')!.points[0]!.point).toEqual(FUNK3);
+    expect(read('* from style=&funk facet=bass', false, 'meter')!.points[0]!.point).toEqual(FUNK);
+    // (an inline point is as written: it already names its axes, decision 041)
+    expect(read('&bar from &tempo style=&(map=style .3 .45 .55 .5)', true, 'meter')!.points[0]!.point).toEqual({ sync: 0.3, harm: 0.45, bite: 0.55, mood: 0.5 });
+  });
+
   it('reads a sum, a style moved by an offset: each axis the terms’ sum, held to 0…1 (decision 100)', () => {
     expect(read('* from style=[&funk + &(map=style bite=.1)]', false)!.points).toEqual([{ point: { ...FUNK, bite: 0.95 }, weight: 1 }]);
     expect(read('* from style=[&funk + &(map=style bite=.1)] * .5', false)!.points).toEqual([{ point: { ...FUNK, bite: 0.95 }, weight: 0.5 }]);
@@ -44,6 +58,13 @@ describe('a declaration line (decision 089)', () => {
     for (const bad of ['[&funk]', '[&funk + ]', '[&funk + &nope]', '[&funk + &(map=style bite=.1 ± .1)]']) expect(read(`* from style=${bad}`, false)!.problems).toHaveLength(1);
   });
 
+  it('reads a sum’s named terms on the axes its facet speaks to: a meter’s [&funk + …] leaves Funk’s mood out (decisions 099 and 100)', () => {
+    expect(read('&bar from &tempo style=[&funk + &(map=style bite=.1)]', true, 'meter')!.points[0]!.point).toEqual({ sync: 1, harm: 0.12, bite: 0.95 });
+    // (an inline term is as written, its mood kept; and a facet that speaks to all four reads the name whole)
+    expect(read('&bar from &tempo style=[&funk + &(map=style mood=.1)]', true, 'meter')!.points[0]!.point).toEqual({ sync: 1, harm: 0.12, bite: 0.85, mood: 0.1 });
+    expect(read('&x from &key style=[&funk + &(map=style bite=.1)]', true, 'bass')!.points[0]!.point).toEqual({ ...FUNK, bite: 0.95 });
+  });
+
   it('reads an inline point by name, partial (decision 041) or in order, and keeps a reach, centre ± reach (§6)', () => {
     expect(read('* from style=&(map=style sync=.3 harm=.45)', false)!.points).toEqual([{ point: { sync: 0.3, harm: 0.45 }, weight: 1 }]);
     expect(read('* from style=&(map=style .3 .45 .55 .5)', false)!.points).toEqual([{ point: { sync: 0.3, harm: 0.45, bite: 0.55, mood: 0.5 }, weight: 1 }]);
@@ -53,7 +74,7 @@ describe('a declaration line (decision 089)', () => {
 
   it('takes the folder’s facet, or facet= where it differs, and a template’s arguments', () => {
     expect(read('&key from (&mode) &tonic style=&funk mode=dorian', true, 'mode')!.points).toEqual([{ point: FUNK, weight: 1, facet: 'mode', args: { mode: 'dorian' } }]);
-    expect(read('&key from &tonic style=&funk facet=rhythm', true, 'mode')!.points).toEqual([{ point: FUNK, weight: 1, facet: 'rhythm' }]);
+    expect(read('&key from &tonic style=&funk facet=rhythm', true, 'mode')!.points).toEqual([{ point: { sync: 1, harm: 0.12, bite: 0.85 }, weight: 1, facet: 'rhythm' }]);
   });
 
   it('with no style= is no style: a collection’s bare `* from`, a template’s bare signature (§5)', () => {

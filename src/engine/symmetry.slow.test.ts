@@ -139,7 +139,23 @@ const SECONDS_HELD: Record<string, string> = {
  * voice or clock (not one it takes) is out of its reach until written in, by name.
  */
 const OUT_OF_REACH: Record<Exclude<Action, 'renaming'>, readonly string[]> = {
-  transposition: ['drums', 'swing', 'advanced-meter', 'strudel', 'midi-out', 'funk', 'twelve', 'aksak', 'patchbay', 'electroswing', 'spooky', 'kinderlied', 'radio', 'song'],
+  transposition: [
+    'drums',
+    'swing',
+    'advanced-meter',
+    'strudel',
+    'midi-out',
+    'funk',
+    'drumtrack',
+    'twelve',
+    'aksak',
+    'patchbay',
+    'electroswing',
+    'spooky',
+    'kinderlied',
+    'radio',
+    'song',
+  ],
   'time scaling': ['aksak', 'royal', 'pertonos', 'ricercar', 'bossa', 'pachelbel', 'pop', 'alpha', 'bwv847', 'onemore', 'electroswing', 'spooky'],
 };
 

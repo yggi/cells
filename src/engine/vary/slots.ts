@@ -82,3 +82,26 @@ export function slotMoves(keys: readonly string[], fixed: readonly number[], ope
   }
   return out;
 }
+
+/**
+ * A line of slots varied, as a form on the line it varies (decision 052, point 7, at every scale): a copy of it, `base=`,
+ * changed on the slots the variation changes, `=` keeping one slot and `=!k` k, slots past the last change kept
+ * (`base=&harm =!2 [1,3,5]`, `base=&chorus = &b`); a cell that plays it reads the line's own clock and table. Null where
+ * no slot changes. `before` and `after` are the slots as written.
+ */
+export function slotReference(name: string, before: readonly string[], after: readonly string[]): { form: string; line: (cell: string) => string } | null {
+  const delta: string[] = [];
+  let kept = 0;
+  for (const [s, slot] of after.entries()) {
+    if (slot === before[s]) {
+      kept++;
+      continue;
+    }
+    if (kept) delta.push(kept === 1 ? '=' : `=!${kept}`);
+    delta.push(slot);
+    kept = 0;
+  }
+  if (!delta.length) return null;
+  const form = `base=${name} ${delta.join(' ')}`;
+  return { form, line: (cell) => `&${cell} ${form}` };
+}

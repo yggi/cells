@@ -10,6 +10,8 @@ const STYLE_NAMES = styleNamesIn(SEED_FILES);
 const FOLDERS = [
     'meters',
     'rhythms',
+    'fills',
+    'counts',
     'bass',
     'harmony',
     'instruments',

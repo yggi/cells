@@ -75,10 +75,14 @@ describe('a variation is recognised as its source’s, by its operator, at dista
       }
     }
     expect(n).toBe(284);
-    // (Lo-fi hip hop's bar and Bossa nova's differ by one hat, and their levels: each one's variation plays the other's notes)
+    // (Lo-fi hip hop's bar and Bossa nova's differ by one hat, and their levels: each one's variation plays the other's notes;
+    // and since swap reaches a line's steps (decision 052, point 11), Bossa nova's hat added beside step 4 is Lo-fi hip
+    // hop's moved there, `swap &hat 3` and `swap &hat 4`, found first by the library's order, at the same distance)
     expect(second).toEqual([
       'lo_fi_hip_hop_drums, drop &hat 4: bossa_nova_drums 0 0; lo_fi_hip_hop_drums 1 0',
+      'bossa_nova_drums, add &hat 3: lo_fi_hip_hop_drums 1 0; bossa_nova_drums 1 0',
       'bossa_nova_drums, add &hat 4: lo_fi_hip_hop_drums 0 0; bossa_nova_drums 1 0',
+      'bossa_nova_drums, add &hat 5: lo_fi_hip_hop_drums 1 0; bossa_nova_drums 1 0',
     ]);
   });
 

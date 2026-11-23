@@ -1,6 +1,6 @@
 # 052 · The ladder's variations are operators in cells, from a fragment's text to texts: rotate, drop and add first, then transpose, invert and reverse; anchors derived from the text; which and when stays the frontend's
 
-**Date:** 2026-10-20 · **Status:** accepted (owner, 2026-10-20: "all as suggested", the eight questions in point 6 as recommended) · Issues: #208, #49, #81, #29, #46, yggi/jambot#423, yggi/jambot#424, yggi/jambot#425 · Point 7 added by #293 (accepted, owner, 2026-10-27: `base=` rather than `mask`, "it is more powerful") · Points 8 and 9 added by #208 (owner, 2026-11-23: the two harmony operators with rotate and reverse a level up, the cadence the last bar of each four, a variation replayed by its `by:`) · Point 10 added by #51 (owner, 2026-11-23: forms and song plans, one set of slot operators at every scale, a mask for the anchors)
+**Date:** 2026-10-20 · **Status:** accepted (owner, 2026-10-20: "all as suggested", the eight questions in point 6 as recommended) · Issues: #208, #49, #81, #29, #46, yggi/jambot#423, yggi/jambot#424, yggi/jambot#425 · Point 7 added by #293 (accepted, owner, 2026-10-27: `base=` rather than `mask`, "it is more powerful") · Points 8 and 9 added by #208 (owner, 2026-11-23: the two harmony operators with rotate and reverse a level up, the cadence the last bar of each four, a variation replayed by its `by:`) · Point 10 added by #51 (owner, 2026-11-23: forms and song plans, one set of slot operators at every scale, a mask for the anchors) · Point 11 added by #51 (owner, 2026-11-23: references for forms, the mask on melodic lines, the mechanism generalized across scales)
 
 ## Context
 
@@ -373,7 +373,7 @@ A form's letters (`&chorus step=8n &a &a &b &a`, `fragments/forms/`) and a song 
 - **Asked by name:** a form is varied only where a frontend asks for `swap` or `substitute`, as a progression where it asks for one of the slot levels' own, after every line and progression; a frontend that asks for the line operators alone gets what it got before.
 - **Other notes:** two slots are one where they play alike: a form on a grid has each distinct slot spliced alone in one compile beside the fragment (the rounded binary's `&bridge^1` and `&close` are both `&call^-2`); a song plan's slots splice values `flatten` doesn't read as played (a section's intensity, `[&song + -.3]`), so they are one where they are written alike.
 - **Only the fragment's own lines are varied**, at every level: a workbench's lines (a motif a form takes, the host's bass) are what it is read on. Before this, a pitched line of the workbench was offered too; no seed's variations change.
-- **No reference** yet for a form: a song plan's would be two lines.
+- **Its reference** (point 7, since point 11): a copy of the form changed on the slots it changes, `base=&chorus = &b`, and a song plan's partner beside it, `Reference.partner` (`base=&verseChorusPlays = &chorusPlays &versePlays`); one function with a progression's, `slotReference`.
 - **Measured** (`src/engine/vary/form.test.ts`): on the 6 seed forms (over two motifs that differ in every note) and the 7 seed song plans, **186 variations**: 42 of the forms (a form of two letters has none: both are anchors) and 144 of the songs. Each compiles, splices other slots than its source and the others (a form's plays other notes), keeps its first and last slot, carries its partner, does what its operator says, and is given back by its `by:`; each fragment in under 15 ms.
 
 A form and two of its three variations, on a workbench that gives its motif:
@@ -413,6 +413,27 @@ A form and two of its three variations, on a workbench that gives its motif:
 &chorus step=8n &a &b &b &a
 &b step=8n &a^3
 ```
+
+
+### 11. A line's steps are slots: one mechanism from the step to the song (#51)
+
+Point 10 gave a progression, a form and a song plan one set of slot operators. Point 11 takes the same functions down to a line: its steps, rests among them, are its slots.
+
+- **The mask reaches lines** (`VaryOptions.fixed`, by line, steps of its grid): on a pitched line it fixes its steps in place of the roots point 3 derives (`{ '&bass': [] }` frees them, `{ bass: [0, -1] }` fixes a form's anchors on a line); on a line of hits it frees a whole-line anchor (the kick, the backbeat) but for the steps it fixes, around which drop, add and rotate act. With no mask nothing changes: Jambot's 284 are reproduced as before.
+- **One rotate, one reverse:** a line of hits' `rotate` and a pitched line's `reverse` are `slots.ts`'s, on the line's steps, within the spans between its fixed steps (with none fixed, every hit a step later, a Euclid still turned). `reversed`, the pitched reverse's own copy of the spans, is gone.
+- **`swap` and `substitute` on every line,** where a frontend asks for them: two adjacent steps exchanged, a note or a rest moved with its step (`swap &bass 2`: `0 ~ 1 2` → `0 ~ 2 1`); a step given another step's note or rest (`substitute &bass 7 0`), never a fixed step, never a held note's line. On the seeds' lines (the rhythms, and the bass lines over both harmonies): 1,230, 1,067 with a reference (`base=&bass =!2 2 1`), each of which plays its variation (all 1,067 checked once; the test plays every fifth).
+- **References at every scale:** a line's (point 7), a progression's and a form's are each a copy changed where it changes.
+- **Heard at every scale:** recognition's default holds `swap` and `substitute`, so a heard bar is also known by them; on E31's bars Bossa nova's hat added beside step 4 is now also Lo-fi hip hop's moved there (`swap &hat 3`), found first by the library's order at the same distance.
+
+**What a frontend sees:** nothing it doesn't ask for. Jambot names its operators and gets what it got.
+
+**Further generalization, measured here and not built** (each a follow-up, named so the next rung can start from it):
+
+1. **Anchors as fixed steps everywhere.** A whole-line anchor (the kick) is every step fixed, a root a step, a cadence a bar's steps, a form's first and last slot: `anchorsOf` could give every level's anchors as fixed steps, the mask's own shape, and `keep` become a mask of every step.
+2. **A per-slot transpose.** A progression's `third` is one chord moved 2 degrees, a lead's `bend` the last note moved from the one before, a form's sequence (`&a` → `&a^n`) one letter moved: one operator, a slot moved n degrees of its table, at every scale.
+3. **drop and add as substitutions.** On a line with a rest, `drop` is a step given a rest and `add` a rest given a hit; they differ only in their order (Jambot's), `fewest`, and add's level (the line's loudest). They could be `substitute`'s with those as options, at the cost of Jambot's order, so not before a pin that can take it.
+4. **A split.** A progression's `dominant` writes a new chord on a step's second half: a slot split in two. On a line it is an ornament (a note into two of half its length), on a form a letter's half; one operator, `split`, would carry the dominant as its harmonic case.
+5. **One S2 key per slot.** A line's notes, a progression's chords and a form's played slots are keyed three ways; each is a slot's content as it sounds, and could be one function of the level.
 
 ## Why
 

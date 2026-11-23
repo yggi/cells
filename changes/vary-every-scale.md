@@ -1,0 +1,3 @@
+### Added
+
+- **A line's steps are slots, from the step to the song** (decision 052, point 11; #51): `swap` and `substitute`, asked by name, act on every line too, lines of hits and pitched lines, around their anchors (`swap &bass 2`, `0 ~ 1 2` → `0 ~ 2 1`); the mask `VaryOptions.fixed` reaches lines, fixing a melodic line's steps in place of its roots (`{ '&bass': [] }` frees them) and freeing a kick's whole-line anchor but for the steps it fixes; a form's variation has a reference, `base=&chorus = &b`, a song plan's plan of who plays beside it (`Reference.partner`). **What a frontend sees at its next pin:** nothing it doesn't ask for; a recognition that names no operators can now also find a heard bar by a swap or a substitution.

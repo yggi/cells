@@ -134,7 +134,7 @@ const heard = (w: (typeof drumBars)[number]) => {
 };
 
 describe('the rhythm fragments', () => {
-  it('are E31’s eight drum bars, one per preset, six claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, the ones read from the examples (#572, #542) the four written for the styles placed by hand (#542) and the two for 7/8 and 12/8 (#646), and one whose levels a plugin writes (#799), every point associated as the facet rhythm', () => {
+  it('are E31’s eight drum bars, one per preset, six claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, the ones read from the examples (#572, #542) the four written for the styles placed by hand (#542) and the two for 7/8 and 12/8 (#646), and one whose levels a plugin writes (#799), every point associated as the facet rhythm, the eight E31 bars’ as the facet fill too (#718)', () => {
     expect(RHYTHM_FRAGMENTS.map((f) => f.id)).toEqual([
       ...Object.keys(PRESETS).map((p) => wordOf(`${p} drums`)),
       ...Object.keys(CLAVES),
@@ -145,7 +145,12 @@ describe('the rhythm fragments', () => {
       ...Object.keys(METERED),
       ...Object.keys(ANSWERED),
     ]);
-    expect(RHYTHM_FRAGMENTS.flatMap((f) => f.association.map((wp) => wp.facet))).toEqual(RHYTHM_FRAGMENTS.map(() => 'rhythm'));
+    expect(RHYTHM_FRAGMENTS.map((f) => f.association.filter((wp) => wp.facet === 'rhythm').length)).toEqual(RHYTHM_FRAGMENTS.map(() => 1));
+    // (a groove whose fill is found on its own, #718: E31's eight, each a point as the facet fill at its own point first)
+    const withFill = RHYTHM_FRAGMENTS.filter((f) => f.association.some((wp) => wp.facet === 'fill'));
+    expect(withFill.map((f) => f.id)).toEqual(Object.keys(PRESETS).map((p) => wordOf(`${p} drums`)));
+    for (const f of withFill) expect(f.association.find((wp) => wp.facet === 'fill')!.point, f.id).toEqual(f.association[0]!.point);
+    expect(RHYTHM_FRAGMENTS.flatMap((f) => f.association.map((wp) => wp.facet)).filter((facet) => facet !== 'rhythm' && facet !== 'fill')).toEqual([]);
   });
 
   it.each(drumBars.map((w) => [w.preset, w] as const))('%s: its drum bar is E31’s text word for word, without its &bar line and its stand-in voices', (_, w) => {
@@ -392,7 +397,8 @@ describe('the rhythms’ holes (decision 054, rung 2)', () => {
 });
 
 describe('where the rhythms are found', () => {
-  const first = (point: StylePoint, ids = RHYTHM_FRAGMENTS.map((f) => f.id)) => rhythms.query(point, RHYTHM_FRAGMENTS.length).find((f) => ids.includes(f.fragment.id))!.fragment.id;
+  const first = (point: StylePoint, ids = RHYTHM_FRAGMENTS.map((f) => f.id)) =>
+    rhythms.query(point, RHYTHM_FRAGMENTS.length, {}, { facet: 'rhythm' }).find((f) => ids.includes(f.fragment.id))!.fragment.id;
 
   it.each(Object.entries(PRESETS))('at %s, its drum bar first', (preset, { point }) => {
     expect(first(point)).toBe(wordOf(`${preset} drums`));
