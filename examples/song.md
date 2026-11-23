@@ -12,7 +12,7 @@ Its parts are one bar each, looping; what changes from section to section is how
 Four chords, I – V – vi – IV in C, a bar each; a four-on-the-floor kick with a backbeat and eighth hats; a bass on the roots with a push into the next bar; a pad holding each chord and stabs on the off-beats.
 
 ```cells
-&bar from meter &tempo
+&bar from bar &tempo
 &tempo step=112bpm
 &key from "diatonic(mode=ionian)" C
 &harm over=&key step=1m [0,2,4] [4,6,8] [5,7,9] [3,5,7]

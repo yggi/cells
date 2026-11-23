@@ -55,7 +55,7 @@ const linesAlone = (text: string) =>
 
 describe('an empty layer', () => {
   const POINTS = drawn(1_000, 'empty');
-  const options: QueryOptions[] = [{}, { facet: 'meter' }, { facet: 'rhythm', chosen: ['meter'] }, { chosen: ['funk_drums', 'meter(swing=16n:.65)'] }];
+  const options: QueryOptions[] = [{}, { facet: 'meter' }, { facet: 'rhythm', chosen: ['meter'] }, { chosen: ['funk_drums', 'lofi_meter'] }];
 
   it('changes no query: over 1,000 points, each query handed it ranks as the seed’s alone', () => {
     expect(POINTS).toHaveLength(1_000);
@@ -118,7 +118,7 @@ describe('the pull', () => {
   const together = ids.flatMap((a, i) => ids.slice(i + 1).map((b) => ({ ids: [a, b].sort(byId) as [string, string], count: 1 + Math.floor(chanceOf(`count|${a}|${b}`) * 500) })));
   let layer: LearnedLayer = fileFragment(library, EMPTY_LAYER, filing(AMBIENT)).layer;
   layer = useFragments(library, layer, [
-    { id: 'meter(swing=8n:2/3)', point: LO_FI, facet: 'meter' },
+    { id: 'swing_meter', point: LO_FI, facet: 'meter' },
     { id: 'lo_fi_hip_hop_drums', point: LO_FI, facet: 'rhythm' },
   ]);
   layer = { ...layer, together: [...together, ...layer.together.filter((p) => p.ids.includes('composer 2026-10-18T21:04:00Z'))] };
@@ -342,16 +342,16 @@ describe('cells stateless', () => {
     let layer = fileFragment(library, EMPTY_LAYER, filing(AMBIENT)).layer;
     layer = fileFragment(library, layer, { text: '&perc step=16n euclid(5,16)', point: FUNK, facet: 'rhythm', source: 'muse', created: 't1' }).layer;
     layer = useFragments(library, layer, [
-      { id: 'meter(swing=8n:2/3)', point: LO_FI, facet: 'meter' },
+      { id: 'swing_meter', point: LO_FI, facet: 'meter' },
       { id: 'lo_fi_hip_hop_drums', point: LO_FI, facet: 'rhythm' },
     ]);
     return useFragments(library, layer, [
-      { id: 'meter(grouping=meter("3/4"))', point: SWING_JAZZ, facet: 'meter' },
+      { id: 'bar(meter="3/4")', point: SWING_JAZZ, facet: 'meter' },
       { id: 'muse t1', point: { ...FUNK, sync: 0.9 }, facet: 'rhythm' },
     ]);
   };
   const ask = (repository: typeof library, layer: LearnedLayer) =>
-    POINTS.map((point, i) => ranked(repository.query(point, 5, {}, { facet: i % 2 ? 'rhythm' : 'meter', chosen: ['meter(swing=8n:2/3)'], layer })));
+    POINTS.map((point, i) => ranked(repository.query(point, 5, {}, { facet: i % 2 ? 'rhythm' : 'meter', chosen: ['swing_meter'], layer })));
 
   it('two repositories built from the same seed and handed the same layer answer alike', () => {
     expect(ask(createRepository(LIBRARY), learned())).toEqual(ask(createRepository(LIBRARY), learned()));

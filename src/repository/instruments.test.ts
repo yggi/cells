@@ -122,7 +122,7 @@ const linesAlone = (text: string) =>
     .filter((l) => readFrom(l.trim()) === undefined)
     .join('\n');
 
-const hosted = (...fragments: string[]) => [setTiming(meterText('meter'), 'bar', 'step', `${BPM}bpm`), ...fragments.map(linesAlone)].join('\n');
+const hosted = (...fragments: string[]) => [setTiming(meterText('bar'), 'bar', 'step', `${BPM}bpm`), ...fragments.map(linesAlone)].join('\n');
 
 /** A text without a collection's declaration, `* from style=…` (decision 089): the lines it gives a piece. */
 const undeclared = (text: string) =>

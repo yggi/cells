@@ -143,7 +143,7 @@ describe('alpha substitution: every name a text defines renamed, it plays, says 
 
   it('the meter, the key, the tempo, the tonic and the harmony have no names of their own', () => {
     const text = [
-      '&bar from meter &tempo',
+      '&bar from bar &tempo',
       '&tempo step=96bpm',
       '&key from diatonic(mode=dorian) &tonic',
       '&tonic D',
@@ -159,7 +159,7 @@ describe('alpha substitution: every name a text defines renamed, it plays, says 
 
   it('a from line renames what it takes: a collection’s cells, a `*`, a template’s several heads (decision 075 §3a–b)', () => {
     const text = [
-      '&bar from meter &tempo',
+      '&bar from bar &tempo',
       '&tempo step=120bpm',
       '&bd, &sd from gm_kit',
       '* from envelopes',

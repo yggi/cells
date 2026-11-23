@@ -326,7 +326,7 @@ const ID_ARGS = /^([^(]*)\((.*)\)$/;
 /** A document's part's id: its key and its head (`kinderlied/twinkle`); a template's arguments may hold a slash of their own. */
 const PART = /^([^(/]+)\/([^(]+)$/;
 
-/** A `from` line: names, the id with its arguments (the id's own, `meter(swing=8n:2/3)`, then the line's), the main argument. */
+/** A `from` line: names, the id with its arguments (the id's own, `bar(meter="3/4")`, then the line's), the main argument. */
 function takeLine(given: readonly string[], whole: string, args: Readonly<Record<string, string>> | undefined, main: string | null): string {
   // (a document's part, `kinderlied/twinkle`, is taken from its document by its head, renamed where it is named
   // otherwise, `&twinkle2=twinkle from kinderlied`: in a document the head picks the part, decision 082)

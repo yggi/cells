@@ -15,7 +15,7 @@ const drawn = (nodes: readonly OutlineNode[], depth = 0): string[] =>
   nodes.flatMap((n) => [`${'  '.repeat(depth)}${n.part.key} ${n.part.id ?? n.part.heads.join(',')}`, ...drawn(n.children, depth + 1)]);
 
 const SCORE = [
-  '&bar from meter(swing=16n:.6) 104bpm',
+  '&bar swing=16n:.6 from bar 104bpm',
   '&key from diatonic(mode=dorian) D',
   '&harm from vamp_to_the_seventh &key',
   '&bassline from funk_bass &harm',

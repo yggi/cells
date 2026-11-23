@@ -9,7 +9,7 @@ description: One theme, read through a mode and a key.
 &turnNote label="Turn either, and the theme follows." about=(&key &mode)
 # The mechanism on its own: a theme read through two wheels.
 # Change shift= on &key or &mode — the theme follows.
-&bar from meter &tempo
+&bar from bar &tempo
 &tempo step=96bpm
 &swell from envelopes
 

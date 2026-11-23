@@ -336,7 +336,7 @@ describe('the anchors', () => {
     // (each of Jambot's meters by its name in cells: the five 4/4s are 4/4; 2/4 and the alla breve, which Jambot doesn't
     // name, are two beats a bar, the second its backbeat)
     const jambot = (id: string) => {
-      const unnamed = ({ 'meter(grouping=meter("2/4"))': [2], 'meter(grouping=meter("2/2", 2))': [4] } as Record<string, number[]>)[id];
+      const unnamed = ({ 'bar(meter="2/4")': [2], 'bar(meter="4/4 in 2")': [4] } as Record<string, number[]>)[id];
       // (the meter's signature: its grouping's, or 4/4, the template's default)
       const heights = JAMBOT_METERS[/grouping=meter\("([^"]+)"/.exec(id)?.[1] ?? '4/4']!;
       return unnamed ?? jambotBackbeatOf(heights).map((pulse) => heights[pulse]!);

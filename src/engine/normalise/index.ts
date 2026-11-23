@@ -10,10 +10,10 @@
  *  - meter.ts:    a meter built by hand as the meter it is (#645): even beats, scan(1 1 1), as meter("3/4"); a clock of two
  *                 tapped by its pulse, &swing scan(2 1) step=8n, as the main meter's swing, &swing swing=8n:2/3
  *  - library.ts:  a line that is a library fragment's word for word as a use of it (#196): &bar meter("4/4") step=&tempo
- *                 → use &bar from meter, and a fragment's cell written inline as it by name: pitch=&(map=lin …)
+ *                 → use &bar from bar, and a fragment's cell written inline as it by name: pitch=&(map=lin …)
  *                 → pitch=&vibrato, use &vibrato; with the library the call gives (`NormaliseOptions.library`)
  *  - library.ts, again: a template's head line with its parameters filled in as a from line of it with those arguments
- *                 (#524): &bar meter("7/8") step=&tempo → &bar from meter(grouping=meter("7/8")) &tempo
+ *                 (#524): &bar meter("7/8") step=&tempo → &bar from bar(meter="7/8") &tempo
  *  - narrowest.ts: a collection's `* from gm_kit` as the cells of it the piece uses, `&bd, &hh from gm_kit` (#27's row,
  *                 the owner on #157: `*` is a shorthand for all of it the piece uses)
  *
@@ -45,7 +45,7 @@ export const normalisations =
   (options: NormaliseOptions = {}) =>
   (source: string, result: CompileResult): Rewrite[] => {
     // (a template takes a line once its tempo and its tonic are named, where they will be, #729: named first or last, the
-    // `from` line names the cell, `&bar from meter(…) &tempo`, never its value)
+    // `from` line names the cell, `&bar from bar(…) &tempo`, never its value)
     const names = interfaceNames(source, result);
     const naming = new Set(
       names.flatMap((r) => (r.rule === 'bar' ? [result.mainMeter] : r.rule === 'tempo' ? ['bar'] : r.rule === 'key' ? [result.mainKey] : r.rule === 'tonic' ? ['key'] : [])),

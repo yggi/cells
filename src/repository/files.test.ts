@@ -110,12 +110,12 @@ describe('the seed files', () => {
     const AT_PRESETS: Record<string, readonly object[]> = {
       // (and Kinderlied's 4/4 and the three read from the examples', #572)
       meter: [SYNTH_POP, TECHNO, BOSSA_NOVA, KINDERLIED, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT, BAROQUE, SEA_SHANTY, CHIPTUNE, SALSA, TRIP_HOP],
-      'meter(swing=8n:2/3)': [BLUES_SHUFFLE, SWING_JAZZ, ELECTRO_SWING],
+      'swing_meter': [BLUES_SHUFFLE, SWING_JAZZ, ELECTRO_SWING],
       // (its own point, placed on the old axes at sync .4 harm .9 artic .5 energy .3, moved by decision 076's rule, #572)
-      'meter(grouping=meter("5/4"))': [newPoint({ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }), SPOOKY],
-      'meter(swing=16n:.65)': [LO_FI],
+      'odd_meter': [newPoint({ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }), SPOOKY],
+      'lofi_meter': [LO_FI],
       // (and near Acid, a second meter behind its plain 4/4, #540)
-      'meter(swing=16n:.6)': [DEEP_HOUSE, FUNK, { ...ACID, bite: 0.95 }],
+      'funk_meter': [DEEP_HOUSE, FUNK, { ...ACID, bite: 0.95 }],
       'meter(swing=16n:31/60)': [AMBIENT],
       synth_pop_drums: [SYNTH_POP],
       techno_drums: [TECHNO],

@@ -91,7 +91,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Time and voice',
     concept:
-      "a clock: a bar (&bar from meter 120bpm, the library's), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters (low-pass, high-pass, band-pass and their model) and effects, a vibrato",
+      "a clock: a bar (&bar from bar 120bpm, the library's), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters (low-pass, high-pass, band-pass and their model) and effects, a vibrato",
     forms: [
       // (the part a line plays as, for the default performer: Clock's bass, decision 075)
       'parameter part',

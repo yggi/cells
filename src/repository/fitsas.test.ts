@@ -110,7 +110,7 @@ const benches: Readonly<Record<string, readonly string[]>> = {
 };
 const meters = [
   'meter("16/8") step=120bpm',
-  ...['meter', 'meter(grouping=meter("3/4"))', 'meter(grouping=meter("6/8"))', 'meter(grouping=meter("5/4"))', 'meter(grouping=meter("7/8"))', 'meter(grouping=meter("12/8"))'].map(
+  ...['meter', 'bar(meter="3/4")', 'bar(meter="6/8")', 'odd_meter', 'odd_meter(meter="7/8")', 'bar(meter="12/8")'].map(
     (m) => `from ${m} 120bpm`,
   ),
 ];

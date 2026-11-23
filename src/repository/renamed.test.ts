@@ -10,18 +10,18 @@ const ids = new Set(LIBRARY.map((f) => f.id));
 /** The thirteen meters' words before #507, and the meter fragment taken with what each was. */
 const METERS: Record<string, string> = {
   meter_4_4: 'meter',
-  meter_4_4_swung_on_8n: 'meter(swing=8n:2/3)',
-  meter_4_4_leaning_on_16n: 'meter(swing=16n:.65)',
-  meter_4_4_leaning_lightly_on_16n: 'meter(swing=16n:.6)',
+  meter_4_4_swung_on_8n: 'swing_meter',
+  meter_4_4_leaning_on_16n: 'lofi_meter',
+  meter_4_4_leaning_lightly_on_16n: 'funk_meter',
   meter_4_4_leaning_faintly_on_16n: 'meter(swing=16n:31/60)',
-  meter_4_4_alla_breve: 'meter(grouping=meter("2/2", 2))',
-  meter_2_4: 'meter(grouping=meter("2/4"))',
-  meter_3_4: 'meter(grouping=meter("3/4"))',
-  meter_6_8: 'meter(grouping=meter("6/8"))',
-  meter_12_8: 'meter(grouping=meter("12/8"))',
-  meter_5_4: 'meter(grouping=meter("5/4"))',
-  meter_7_8: 'meter(grouping=meter("7/8"))',
-  meter_10_8: 'meter(grouping=meter("10/8"))',
+  meter_4_4_alla_breve: 'bar(meter="4/4 in 2")',
+  meter_2_4: 'bar(meter="2/4")',
+  meter_3_4: 'bar(meter="3/4")',
+  meter_6_8: 'bar(meter="6/8")',
+  meter_12_8: 'bar(meter="12/8")',
+  meter_5_4: 'odd_meter',
+  meter_7_8: 'odd_meter(meter="7/8")',
+  meter_10_8: 'odd_meter(meter="10/8")',
 };
 const piece = (id: string) => `&bar from ${id} 120bpm\n&t step=8n 0 2 4 7\n&v s=tri loop=C4\n&out map=sample [&t * &v]`;
 
@@ -43,7 +43,7 @@ describe('the seed ids as words (#387)', () => {
     for (const old of RENAMED_IDS.keys()) expect([old, resolveSeed(old)]).toEqual([old, null]);
     const said = compileSource(piece('"4/4 swung on 8n"'), undefined, SEED).diagnostics.filter((d) => d.severity === 'error');
     expect(said.map((d) => d.message)).toEqual(expect.arrayContaining(['No fragment "4/4 swung on 8n" to use']));
-    expect(compileSource(piece('meter(swing=8n:2/3)'), undefined, SEED).diagnostics.filter((d) => d.severity !== 'info')).toEqual([]);
+    expect(compileSource(piece('swing_meter'), undefined, SEED).diagnostics.filter((d) => d.severity !== 'info')).toEqual([]);
   });
 
   it('a tie between two fragments breaks as it did before the rename: by the old id', () => {

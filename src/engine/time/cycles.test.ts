@@ -47,7 +47,7 @@ describe('the meter finder’s steps', () => {
     expect(f.bpm).toBeCloseTo(120, 6);
     expect(f.start).toBeCloseTo(0, 6);
     expect(f.swing).toEqual([{ level: '8n', share: expect.closeTo(0.6, 3) }]);
-    expect(meterText(f)).toBe('&bar from meter(swing=8n:.6) &tempo\n&tempo step=120bpm');
+    expect(meterText(f)).toBe('&bar swing=8n:.6 from bar &tempo\n&tempo step=120bpm');
   });
 
   it('its metrical variants: the same grid as half the bar and as two of it, their lines on its own', () => {

@@ -10,7 +10,7 @@ import { SEED } from './seed';
 import { argsOf } from './variants';
 
 const seed = catalogue();
-const meter = seed.find((e) => e.id === 'meter')!;
+const meter = seed.find((e) => e.id === 'bar')!;
 const layer: LearnedLayer = {
   filed: [
     {
@@ -61,7 +61,7 @@ describe('catalogue', () => {
     const withLayer = catalogue(layer);
     expect(withLayer).toHaveLength(seed.length + 1);
     expect(withLayer.at(-1)).toMatchObject({ id: 'my riff', path: null, source: 'a person', facets: ['motif'], signature: { names: ['&riff'], main: '&key' } });
-    const m = withLayer.find((e) => e.id === 'meter')!;
+    const m = withLayer.find((e) => e.id === 'bar')!;
     expect(m.association).toHaveLength(meter.association.length + 1);
     expect(m.association.at(-1)).toEqual({
       point: { sync: 0.9 },
@@ -97,7 +97,7 @@ describe('resolverOf', () => {
   it('reads the seed first, then the filed fragments, and is the seed alone for an empty layer', () => {
     const resolve = resolverOf(layer);
     expect(resolve('my riff')).toContain('&riff over=&key');
-    expect(resolve('meter')).toBe(resolveSeed('meter'));
+    expect(resolve('meter')).toBe(resolveSeed('bar'));
     expect(resolve('no such id')).toBeNull();
     expect(resolverOf(EMPTY_LAYER)).toBe(resolveSeed);
   });

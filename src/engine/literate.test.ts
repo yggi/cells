@@ -23,7 +23,7 @@ const LITERATE =
     '# The tune', //  6
     '', //  7
     '```cells', //  8
-    '&bar from meter &tempo', //  9
+    '&bar from bar &tempo', //  9
     '&tune over=scale(major) step=4n 0 2 4 2', // 10
     '```', // 11
     '', // 12
@@ -59,7 +59,7 @@ describe('literate cells: the code is the join of the blocks', () => {
   it('a file of three blocks with prose between them compiles as their join, and a diagnostic points at the right line', () => {
     const file = read(LITERATE);
     expect(file.text.split('\n')).toEqual([
-      '&bar from meter &tempo',
+      '&bar from bar &tempo',
       '&tune over=scale(major) step=4n 0 2 4 2',
       '&lead s=saw loop=C4 cutoff=800',
       '&oops @@',

@@ -118,7 +118,7 @@ describe('a stepped tonic, and one left free (#301, decision 060)', () => {
 
   it('a tonic read from a meter is said to be no note, and plays as before: its first level as a pitch class (#613)', () => {
     const said = "&bar is a meter: a key's tonic is a note (&tonic D); a meter's first level is read as its pitch class";
-    for (const bar of ['&bar meter("4/4") step=104bpm', lines('&tempo step=104bpm', '&bar from meter &tempo')]) {
+    for (const bar of ['&bar meter("4/4") step=104bpm', lines('&tempo step=104bpm', '&bar from bar &tempo')]) {
       const text = lines(bar, '&key scale(dorian, &bar)', BODY);
       expect(compiled(text).diagnostics.map((d) => [d.severity, d.message])).toEqual([['warning', said]]);
       expect(events(text, 4)).toEqual(events(lines(bar, '&key scale(dorian, C)', BODY), 4));
@@ -156,7 +156,7 @@ describe('a stepped tonic, and one left free (#301, decision 060)', () => {
 describe('the seeds', () => {
   // (each template's main argument the text's cell, decision 065: the tempo, the tonic, the key and the harmony)
   const uses = [
-    '&bar from meter(swing=16n:.65) &tempo',
+    '&bar swing=16n:.65 from bar &tempo',
     '&key from harmonic_minor &tonic',
     '&harm from vamp_to_the_seventh &key',
     '* from funk_drums',
@@ -215,10 +215,10 @@ describe('a meter’s swing read from a cell', () => {
   });
 
   it('the seed meter swings by a parameter, a swing alone, and each swung variant compiles to the swing it binds (as Jambot reads them, #507)', () => {
-    const template = METER_FRAGMENTS.find((f) => f.id === 'meter')!;
+    const template = METER_FRAGMENTS.find((f) => f.id === 'bar')!;
     expect(bodyOf(template.text)).toBe('&bar base=&grouping step=&tempo swing=&swing\n&grouping meter("4/4")\n&swing swing=8n:1/2');
     const swung = METER_FRAGMENTS.filter((f) => f.id.includes('swing='));
-    expect(swung.map((f) => f.id)).toEqual(['meter(swing=8n:2/3)', 'meter(swing=16n:.65)', 'meter(swing=16n:.6)', 'meter(swing=16n:31/60)']);
+    expect(swung.map((f) => f.id)).toEqual(['swing_meter', 'lofi_meter', 'funk_meter', 'meter(swing=16n:31/60)']);
     const shares = [2 / 3, 0.65, 0.6, 31 / 60];
     swung.forEach((f, k) => {
       expect(bodyOf(f.text), f.id).toMatch(/^&bar base=&grouping step=&tempo swing=\d+n:[\d./]+\n&grouping meter\("4\/4"\)$/);
@@ -228,11 +228,11 @@ describe('a meter’s swing read from a cell', () => {
 
   it('a from line takes the seed’s swing with its meter, or swings its own by naming it', () => {
     const tempo = '&tempo step=104bpm\n&key scale(dorian, D)';
-    const own = lines('&bar from meter(swing=8n:.64) &tempo', tempo, BODY);
+    const own = lines('&bar swing=8n:.64 from bar &tempo', tempo, BODY);
     expect(messages(own)).toEqual([]);
     expect(events(own, 8)).toEqual(events(at('8n:.64'), 8));
-    expect(events(lines('&bar from meter(swing=8n:2/3) &tempo', tempo, BODY), 8)).toEqual(events(at('8n:2/3'), 8));
+    expect(events(lines('&bar swing=8n:2/3 from bar &tempo', tempo, BODY), 8)).toEqual(events(at('8n:2/3'), 8));
     // (the template's own swing a parameter: the piece's &swing, passed, swings it)
-    expect(events(lines('&bar from meter(swing=&swing) &tempo', '&swing swing=8n:.64', tempo, BODY), 8)).toEqual(events(own, 8));
+    expect(events(lines('&bar swing=&swing from bar &tempo', '&swing swing=8n:.64', tempo, BODY), 8)).toEqual(events(own, 8));
   });
 });

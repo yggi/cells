@@ -80,7 +80,7 @@ describe('what a query costs', () => {
     const layer = useFragments(
       r,
       useFragments(r, EMPTY_LAYER, uses(['meter', 'bossa_nova_drums', 'bossa_nova_clave'])),
-      uses(['meter(swing=16n:.6)', 'funk_drums', 'rumba_clave_3_2']),
+      uses(['funk_meter', 'funk_drums', 'rumba_clave_3_2']),
     );
     const n = 20_000;
     const t0 = performance.now();
@@ -95,7 +95,7 @@ describe('what a query costs', () => {
   it('three fitting queries on a workbench of five take under 10 s', () => {
     const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
     // (the meter's lines, its signature aside: a workbench's own signature is what it offers, #587)
-    const bench = (bpm: number) => setTiming(bodyOf(METER_FRAGMENTS.find((f) => f.id === 'meter')!.text), 'bar', 'step', `${bpm}bpm`);
+    const bench = (bpm: number) => setTiming(bodyOf(METER_FRAGMENTS.find((f) => f.id === 'bar')!.text), 'bar', 'step', `${bpm}bpm`);
     const workbench = ['funk_drums', 'techno_drums', 'rumba_clave_3_2', 'bossa_nova_clave_one_bar'].reduce((text, id) => unionOf(rhythm(id), text).text, bench(104));
     const named = { arguments: { bass: '&harm', motif: '&key', harmony: '&key', mode: '&tonic', meter: '&tempo', form: '&call', stab: '&harm', module: '&in' } };
     const r = createRepository(LIBRARY);

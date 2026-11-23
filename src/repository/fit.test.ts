@@ -135,8 +135,8 @@ describe('the fit', () => {
 
   it('a waltz’s line of six eighths fits 3/4, 6/8 and 12/8, not 4/4; five quarters over two bars fit 5/4 and 10/8', () => {
     const fits = (text: string) => METER_FRAGMENTS.filter((m) => fitOf(text, bench(m.id)).fits).map((m) => m.id);
-    expect(fits('&x step=8n 0!6\n&v s=sine\n&o [&x * &v]')).toEqual(['meter(grouping=meter("3/4"))', 'meter(grouping=meter("6/8"))', 'meter(grouping=meter("12/8"))']);
-    expect(fits('&x step=4n cycle=2 0!5\n&v s=sine\n&o [&x * &v]')).toEqual(['meter(grouping=meter("5/4"))', 'meter(grouping=meter("10/8"))']);
+    expect(fits('&x step=8n 0!6\n&v s=sine\n&o [&x * &v]')).toEqual(['bar(meter="3/4")', 'bar(meter="6/8")', 'bar(meter="12/8")']);
+    expect(fits('&x step=4n cycle=2 0!5\n&v s=sine\n&o [&x * &v]')).toEqual(['odd_meter', 'odd_meter(meter="10/8")']);
   });
 });
 
@@ -144,7 +144,7 @@ describe('the fit', () => {
 // swung, leaning and alla breve, and nothing else; no drum bar or two-bar clave fits 7/8, 5/4 or 12/8, the one-bar clave
 // 4/4 only. The Spooky beat (#349) cycles on a beat or spans the bar, so it fits every meter but 7/8, whose bar is no
 // whole number of quarters. No meter of the library has a bar of 32 sixteenths, so "a multiple of 16" is "16" here.
-const FOUR_FOURS = ['meter', 'meter(swing=8n:2/3)', 'meter(swing=16n:.65)', 'meter(swing=16n:.6)', 'meter(swing=16n:31/60)', 'meter(grouping=meter("2/2", 2))'];
+const FOUR_FOURS = ['meter', 'swing_meter', 'lofi_meter', 'funk_meter', 'meter(swing=16n:31/60)', 'bar(meter="4/4 in 2")'];
 const FITS: Record<string, readonly string[]> = {
   synth_pop_drums: FOUR_FOURS,
   techno_drums: FOUR_FOURS,
@@ -163,32 +163,32 @@ const FITS: Record<string, readonly string[]> = {
   electro_swing_drums: FOUR_FOURS,
   spooky_drums: [
     'meter',
-    'meter(swing=8n:2/3)',
-    'meter(swing=16n:.65)',
-    'meter(swing=16n:.6)',
+    'swing_meter',
+    'lofi_meter',
+    'funk_meter',
     'meter(swing=16n:31/60)',
-    'meter(grouping=meter("2/2", 2))',
-    'meter(grouping=meter("2/4"))',
-    'meter(grouping=meter("3/4"))',
-    'meter(grouping=meter("6/8"))',
-    'meter(grouping=meter("12/8"))',
-    'meter(grouping=meter("5/4"))',
-    'meter(grouping=meter("10/8"))',
+    'bar(meter="4/4 in 2")',
+    'bar(meter="2/4")',
+    'bar(meter="3/4")',
+    'bar(meter="6/8")',
+    'bar(meter="12/8")',
+    'odd_meter',
+    'odd_meter(meter="10/8")',
   ],
   ghost_drums: [
     'meter',
-    'meter(swing=8n:2/3)',
-    'meter(swing=16n:.65)',
-    'meter(swing=16n:.6)',
+    'swing_meter',
+    'lofi_meter',
+    'funk_meter',
     'meter(swing=16n:31/60)',
-    'meter(grouping=meter("2/2", 2))',
-    'meter(grouping=meter("2/4"))',
-    'meter(grouping=meter("3/4"))',
-    'meter(grouping=meter("6/8"))',
-    'meter(grouping=meter("12/8"))',
-    'meter(grouping=meter("5/4"))',
-    'meter(grouping=meter("7/8"))',
-    'meter(grouping=meter("10/8"))',
+    'bar(meter="4/4 in 2")',
+    'bar(meter="2/4")',
+    'bar(meter="3/4")',
+    'bar(meter="6/8")',
+    'bar(meter="12/8")',
+    'odd_meter',
+    'odd_meter(meter="7/8")',
+    'odd_meter(meter="10/8")',
   ],
   // (its lines lap a half note and a beat, so it fits every meter of the library's)
   kinderlied_drums: METER_FRAGMENTS.map((m) => m.id),
@@ -205,13 +205,13 @@ const FITS: Record<string, readonly string[]> = {
   // (#542's second four: the salsa's clave laps two bars and the trip-hop beat one bar of sixteenths, so they fit the 4/4s;
   // the waltz's lines lap three beats, so it fits 3/4, 6/8 and 12/8, and no 4/4; the march's lap the half note)
   salsa_drums: FOUR_FOURS,
-  waltz_drums: ['meter(grouping=meter("3/4"))', 'meter(grouping=meter("6/8"))', 'meter(grouping=meter("12/8"))'],
-  march_drums: [...FOUR_FOURS, 'meter(grouping=meter("2/4"))', 'meter(grouping=meter("12/8"))'],
+  waltz_drums: ['bar(meter="3/4")', 'bar(meter="6/8")', 'bar(meter="12/8")'],
+  march_drums: [...FOUR_FOURS, 'bar(meter="2/4")', 'bar(meter="12/8")'],
   trip_hop_drums: FOUR_FOURS,
   // (#646: the aksak's lines lap three beats and an eighth, so it fits the meters of three beats; the 12/8's lap four
   // beats and three eighths, so it fits 12/8 alone: in 6/8 its four beats are two bars)
-  aksak_drums: ['meter(grouping=meter("3/4"))', 'meter(grouping=meter("7/8"))'],
-  twelve_eight_drums: ['meter(grouping=meter("12/8"))'],
+  aksak_drums: ['bar(meter="3/4")', 'odd_meter(meter="7/8")'],
+  twelve_eight_drums: ['bar(meter="12/8")'],
   // (#799: the breathing pulse's lines lap a bar of sixteenths, as the trip-hop beat's, so it fits the 4/4s)
   breathing_drums: FOUR_FOURS,
 };
@@ -233,8 +233,8 @@ describe('every rhythm against every meter of the library', () => {
   it('a two-bar clave compiles under 7/8, and doesn’t fit it: 28 sixteenths in its two bars, 32 in its braid', () => {
     const clave = rhythm('son_clave_3_2');
     // (its `&claves` is a hole the General MIDI kit fills: #244)
-    expect(compileSource(bench('meter(grouping=meter("7/8"))', 90, linesAlone(clave), KIT)).diagnostics).toEqual([]);
-    const f = fitOf(clave, bench('meter(grouping=meter("7/8"))', 90));
+    expect(compileSource(bench('odd_meter(meter="7/8")', 90, linesAlone(clave), KIT)).diagnostics).toEqual([]);
+    const f = fitOf(clave, bench('odd_meter(meter="7/8")', 90));
     expect(f.fits).toBe(false);
     expect(f.unmet).toEqual([{ cell: '&clave', meter: null, tap: '16n', bars: 2, steps: 32, rate: 1, bar: 16 }]);
   });
@@ -381,11 +381,11 @@ describe('a query given the workbench', () => {
     expect(toned).toEqual(all.filter((id) => isRhythm(id) || open.includes(id) || modes.includes(id)));
     // (of the rhythms, only Ghost drums, Kinderlied drums and the three beats read from the examples (#572) fit 7/8: their lines
     // lap the bar, its half, the beat or the eighth, and nothing a sixteenth off the beat; and the aksak's, written for it, #646)
-    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('meter(grouping=meter("7/8"))'), ...named }).map((f) => f.fragment.id)).toEqual(
+    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('odd_meter(meter="7/8")'), ...named }).map((f) => f.fragment.id)).toEqual(
       all.filter(
         (id) =>
           open.includes(id) ||
-          layerFits(id, 'meter(grouping=meter("7/8"))') ||
+          layerFits(id, 'odd_meter(meter="7/8")') ||
           ['ghost_drums', 'kinderlied_drums', 'acid_drums', 'happy_hardcore_drums', 'elektro_drums', 'shanty_drums', 'quiet_pulse', 'aksak_drums'].includes(id),
       ),
     );

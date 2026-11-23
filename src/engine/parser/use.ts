@@ -118,7 +118,7 @@ function declarationOnly(tokens: readonly string[]): boolean {
   return true;
 }
 
-/** The flags a head may carry before `from`, as a cell's line does: `off` (#686: `&bar off from meter &tempo`). */
+/** The flags a head may carry before `from`, as a cell's line does: `off` (#686: `&bar off from bar &tempo`). */
 export const HEAD_FLAGS: ReadonlySet<string> = new Set(['off']);
 
 /**

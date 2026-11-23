@@ -13,7 +13,7 @@ The beats never move, so the bar keeps its length and its limp.
 
 ```cells
 &swingNote label="swing=8n leans the pairs: in 2 + 2 + 3 the first two beats swing, the three stays even. The beats, the long one too, never move." about=&swing
-&bar from meter(grouping=meter("2+2+3"), swing=&swing) &tempo
+&bar swing=&swing from bar(meter="2+2+3") &tempo
 &tempo step=free(150bpm, 100..200)
 &swing swing=8n:free(.6, 1/2..2/3)
 ```

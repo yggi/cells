@@ -7,7 +7,7 @@
  *    its beats at 40 to 300 bpm (`BAR_BPM`, the owner's bounds), where a band plays; a clock that laps a day
  *    (fiveto12's `&day`) or a scan of slow durations (studie's `&time`, 24 bpm) is a meter and no bar;
  *  - `&tempo`: a bar's rate written as a value (`step=120bpm`) becomes a cell of its own, `step=&tempo` reading it;
- *    and so where the bar is a template's copy, `&bar from meter 120bpm` → `&bar from meter &tempo`, `&tempo step=120bpm`;
+ *    and so where the bar is a template's copy, `&bar from bar 120bpm` → `&bar from bar &tempo`, `&tempo step=120bpm`;
  *  - `&key`: the piece's one key, the one cell of its own lines whose braid is `scale(…)` (`CompileResult.mainKey`);
  *  - `&tonic`: `&key`'s tonic written as a note (`scale(minor, A)`) becomes a cell of its own, `scale(minor, &tonic)`.
  *
@@ -108,8 +108,8 @@ export function interfaceNames(source: string, result: CompileResult): Rewrite<R
         ),
       );
   }
-  // (and where the piece's meter is a template's copy, `&bar from meter 120bpm`: its tempo is a cell too, the canonical
-  // spelling `&bar from meter &tempo` with `&tempo step=120bpm`, the owner's ruling of 2026-11-15 on #27)
+  // (and where the piece's meter is a template's copy, `&bar from bar 120bpm`: its tempo is a cell too, the canonical
+  // spelling `&bar from bar &tempo` with `&tempo step=120bpm`, the owner's ruling of 2026-11-15 on #27)
   const taken = takenTempo(source);
   if (taken && meter === 'bar' && free(source, result, 'tempo'))
     out.push(

@@ -12,7 +12,7 @@ const RHYTHM_FRAGMENTS = seedFragments('rhythms');
 // (the layers of a drum track a form places by the bar, #718: taken as a rhythm is; a count takes the meter, &bar, #720)
 const LAYER_FRAGMENTS = seedFragments('fills');
 const lines = (...xs: string[]) => xs.join('\n');
-// (a word as it is, and a template taken with its arguments as a from line takes it, `meter(grouping=meter("7/8"))`; anything else quoted)
+// (a word as it is, and a template taken with its arguments as a from line takes it, `odd_meter(meter="7/8")`; anything else quoted)
 const quoted = (id: string) => (/^[A-Za-z_][A-Za-z0-9_]*(\(.*\))?$/.test(id) ? id : JSON.stringify(id));
 const METER = '&bar meter("4/4") step=120bpm';
 const KEY = '&key scale(dorian, D)';

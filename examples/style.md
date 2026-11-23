@@ -11,7 +11,7 @@ A `map=style` cell writes one, its axes by name (in order, `.3 .3 .9 .2`, reads 
 The tune turns the minor scale's i, VI, III and VII, a bar each, and the bass plays their roots.
 
 ```cells
-&bar from meter &tempo
+&bar from bar &tempo
 &strike from envelopes
 &tempo step=free(112bpm, 90..140)
 &calm map=style sync=.1 harm=.3 bite=.1 mood=.9 label="Calm: on the beat, paddy, bright"

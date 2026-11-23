@@ -212,8 +212,8 @@ describe('the arguments', () => {
 
   it('a parameter’s default that only an attribute the head overrides read is not taken, and plays as the argument does (#899)', () => {
     expect(added('&bar swing=8n:.6 from swung &t')).toEqual(['&bar meter("4/4") step=&t swing=8n:.6']);
-    const head = lines('&t step=104bpm', '&bar swing=16n:.6 from meter &t', '&x step=16n 0 0 0 0');
-    const arg = lines('&t step=104bpm', '&bar from meter(swing=16n:.6) &t', '&x step=16n 0 0 0 0');
+    const head = lines('&t step=104bpm', '&bar swing=16n:.6 from bar &t', '&x step=16n 0 0 0 0');
+    const arg = lines('&t step=104bpm', '&bar swing=16n:.6 from bar &t', '&x step=16n 0 0 0 0');
     const r = compiled(head);
     expect([...r.cells.keys()].filter((n) => n.startsWith('bar'))).toEqual(['bar', 'bar_grouping']);
     expect(r.diagnostics.map((d) => d.message).filter((m) => m.includes('does nothing'))).toEqual([]);
