@@ -68,3 +68,35 @@ describe('a mask on a line of hits', () => {
     expect(braidOf(variationBy(DRUMS, 'rotate &hat', drums())!.apply(DRUMS), 'hat')).toBe('&hat step=16n ~ ~ ~ &hh:0:.25 ~ ~ ~ &hh:0:.5 ~ ~ ~ &hh:0:.25 ~ ~ ~ &hh:0:.25');
   });
 });
+
+describe('the slot operators on a line’s steps (point 11)', () => {
+  const asked = (fixed?: VaryOptions['fixed']) => ({ ...bass(fixed), operators: ['swap', 'substitute'] as const });
+  const bys = (fixed?: VaryOptions['fixed']) => variations(BASS, { ...asked(fixed), operators: [...asked(fixed).operators] }).map((v) => v.by);
+
+  it('swap two adjacent steps, rests among them; substitute a step by another the line holds; never a root', () => {
+    expect(braidOf(variationBy(BASS, 'swap &bass 2', { ...bass(), operators: ['swap'] })!.apply(BASS), 'bass')).toBe('&bass over=&harm step=8n 0 ~ 2 1 0 ~ 2 1');
+    expect(braidOf(variationBy(BASS, 'substitute &bass 7 0', { ...bass(), operators: ['substitute'] })!.apply(BASS), 'bass')).toBe('&bass over=&harm step=8n 0 ~ 1 2 0 ~ 2 0');
+    // (the roots on steps 0 and 4 neither move nor take another step's: no swap reaches them, no substitution is on them)
+    const all = bys();
+    expect(all.filter((b) => /^swap /.test(b))).toEqual(['swap &bass 1', 'swap &bass 2', 'swap &bass 5', 'swap &bass 6']);
+    expect(all.filter((b) => /^substitute &bass [04] /.test(b))).toEqual([]);
+    expect(all.length).toBe(22);
+  });
+
+  it('with an empty mask the roots are slots too', () => {
+    expect(bys({ '&bass': [] }).filter((b) => /^swap /.test(b))).toEqual([
+      'swap &bass 0',
+      'swap &bass 1',
+      'swap &bass 2',
+      'swap &bass 3',
+      'swap &bass 4',
+      'swap &bass 5',
+      'swap &bass 6',
+    ]);
+  });
+
+  it('are asked by name: the line operators alone give what they gave', () => {
+    expect(variations(BASS, bass()).some((v) => v.rule === 'swap' || v.rule === 'substitute')).toBe(false);
+    expect(variations(DRUMS, drums()).some((v) => v.rule === 'swap' || v.rule === 'substitute')).toBe(false);
+  });
+});

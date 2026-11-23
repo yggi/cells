@@ -161,3 +161,23 @@ describe('recognition reads a reference as its path (#293, decision 055)', () =>
     expect(r.recognise(plain, library, DRUM_OPTIONS).filter((x) => x.path.length)).toEqual([]);
   });
 });
+
+describe('the slot operators on a line, by reference (decision 052, point 11)', () => {
+  // (the same seeds, each line's steps as slots: swap and substitute where a frontend asks for them)
+  const SLOTS = CASES.flatMap((c) => variations(c.fragment, { ...c.options, operators: ['swap', 'substitute'] }).map((v) => ({ ...c, v })));
+  const REFERRED = SLOTS.filter(({ v }) => v.reference);
+
+  it('gives the seeds’ lines 1,230 swaps and substitutions, 1,067 with a reference', () => {
+    expect([SLOTS.length, REFERRED.length]).toEqual([1230, 1067]);
+  });
+
+  it.each(REFERRED.filter((_, k) => k % 5 === 0).map((c) => [`${c.id}: ${c.v.by}`, c] as const))(
+    '%s plays the notes of its variation (S2), every 5th (all 1,067 once, 2026-11-23: 33 s)',
+    (_, { fragment, bench, v, seconds }) => {
+      const varied = unionOf(v.apply(fragment), bench).text;
+      const reference = referred(unionOf(fragment, bench).text, v);
+      expect(compileSource(reference, undefined, KIT).diagnostics.map((d) => d.message)).toEqual([]);
+      expect(playsSameNotes(varied, reference, seconds, KIT)).toBe(true);
+    },
+  );
+});
