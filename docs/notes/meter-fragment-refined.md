@@ -1,6 +1,6 @@
 # The meter fragment refined: named points, common meters only, the style's meters apart
 
-Date: 2026-11-23 · Status: open, a proposal for the owner; nothing built · Issues: none yet (follows #507 and decisions 065, 072, 076, 089, 090)
+Date: 2026-11-23 · Status: open, filed; nothing built · Issues: #902 (the meter fragment), #900 (a name on its facet's axes), #901 (an offset as a sum), #899 (the stray `&bar_swing`), yggi/cell-studio#701 (the swing subwheel); follows #507 and decisions 065, 072, 076, 089, 090
 
 The owner's five suggestions, checked against the language, Jambot and Cell studio, with a sketch of the fragments they lead to. The sketches are in ` ```text ` blocks: three of their spellings don't parse yet (marked **new**).
 
@@ -47,13 +47,13 @@ Decision 090 already provides for it: "a generic … generator with no style, us
 
 - **`meter`**: 4/4, 3/4, 2/4, 6/8, 12/8 and 2/2, straight, no swing.
 - **One fragment per style's feel**, each taking `meter` and naming its styles: `funk_meter`, `swing_meter`, `lofi_meter`, `spooky_meter`, and the odd groupings in `odd_meter`.
-- **Ambient's `16n:31/60` is a lean of 1.7 %**, about 7 ms at 72 bpm, and audible to no one. Folding Ambient into the straight list is simpler, but it moves Ambient's events: **the owner's call** (an event snapshot moves). The sketch below keeps `ambient_meter` so nothing moves.
+- **Ambient's `16n:31/60` is a lean of 1.7 %**, about 7 ms at 72 bpm, and audible to no one: Ambient joins the straight list (the owner, 2026-11-23: "drop ambient_meter"). Its events move by that lean: the one event snapshot this proposal moves on purpose.
 
 ### 3. `&grouping` and `&swing` as placeholders: they dissolve, and need no default syntax
 
 They exist only because 065 §2 binds a keyword to a cell (`swing=` binds `&swing`), so an optional parameter must be a cell whose line is its default. Both are already the head's own values:
 
-- **Swing is the head's attribute,** and 065 §4 already lets a use set it: `&bar swing=16n:.6 from meter &tempo` plays the same 16n:.6 as `meter(swing=16n:.6)` (measured at 7da5fc0). Today it also leaves the placeholder behind: `&bar_swing` stays in the program, and the compiler warns "swing= acts on a meter … on &bar_swing it does nothing". That false warning is a bug, worth an issue of its own.
+- **Swing is the head's attribute,** and 065 §4 already lets a use set it: `&bar swing=16n:.6 from meter &tempo` plays the same 16n:.6 as `meter(swing=16n:.6)` (measured at 7da5fc0). Today it also leaves the placeholder behind: `&bar_swing` stays in the program, and the compiler warns "swing= acts on a meter … on &bar_swing it does nothing". That false warning is a bug, #899.
 - **With no placeholder, the default is the head line itself:** `&bar meter("4/4") step=&tempo`, straight because it writes no `swing=` (`8n:1/2` is the no-op that `&swing` spells out). So **no syntax for default values is needed**: a parameter's default is what the head writes, and a use changes the head where it says (065 §6, applied to the head).
 
 ### 4. `grouping=` dissolves into the bar's braid: yes, with one form (**new**)
@@ -77,7 +77,7 @@ That is the line `&bar meter("7/8") step=&tempo swing=8n:2/3` with its source na
 
 ```text
 # meter: the common meters, straight
-&bar from &tempo style=(&synthPop | &techno | &bossaNova | &kinderlied | &acid | &happyHardcore | &elektro | &darkAmbient | &baroque | &seaShanty | &chiptune | &salsa | &tripHop)
+&bar from &tempo style=(&synthPop | &techno | &ambient | &bossaNova | &kinderlied | &acid | &happyHardcore | &elektro | &darkAmbient | &baroque | &seaShanty | &chiptune | &salsa | &tripHop)
 &bar meter("3/4") from &tempo style=&waltz * .75
 &bar meter("2/4") from &tempo style=(&march | &(map=style sync=0 harm=.1 bite=.6)) * .75
 &bar meter("6/8") from &tempo style=&(map=style sync=.3 harm=.2 bite=.2) * .75
@@ -99,12 +99,9 @@ That is the line `&bar meter("7/8") step=&tempo swing=8n:2/3` with its source na
 ```
 
 ```text
-# lofi_meter, ambient_meter: one style's lean each
+# lofi_meter: Lo-fi's lean
 &bar from &tempo style=&lofi
 &bar swing=16n:.65 from meter &tempo
-
-&bar from &tempo style=&ambient
-&bar swing=16n:31/60 from meter &tempo
 ```
 
 ```text
@@ -146,7 +143,7 @@ What would break at its next pin:
 
 - **Today a taken meter is three nodes:** `&bar` (the meter wheel: `isMeter`, cells `graph.ts:238`, `keepsTime`), `&bar_grouping` (an ordinary braid wheel, with a `base` edge into the bar) and `&bar_swing` (a `swing` wire that carries nothing, `flowedges.ts:87-92`). See `modules.test.ts:20-23` and `piece.test.ts:67-69`.
 - **With 3 and 4, it is one cell, `&bar meter("…") step=&tempo swing=…`, so one meter wheel**, the special one the app already draws (`cellview.ts:245-277`: beats, the downbeat, bpm over N/bar, the bar's count while playing, the net). This needs no change in Cell studio, only the tests above updated.
-- **Swing as a subwheel is new in Cell studio.** `layout/subwheels.ts` has rules for sections, read heads, kit voices and splices, none for a meter. Today swing only bends the wheel's steps (`Clock.swung`, `cellview.ts:345-350`) and says `swung 8n` in the hub. A rule would draw the swung level as an inner ring of long and short pairs, its share the subwheel's control. It reads the head's `swing=` (level, share), not a cell. That is a workbench issue, filed in yggi/cell-studio.
+- **Swing as a subwheel is new in Cell studio.** `layout/subwheels.ts` has rules for sections, read heads, kit voices and splices, none for a meter. Today swing only bends the wheel's steps (`Clock.swung`, `cellview.ts:345-350`) and says `swung 8n` in the hub. A rule would draw the swung level as an inner ring of long and short pairs, its share the subwheel's control. It reads the head's `swing=` (level, share), not a cell. That is yggi/cell-studio#701.
 - **The fragment preview's control** is the `grouping` text at its default (`preview.ts`, `preview.test.ts:61`). It would become the head's braid.
 
 ## Steps, if the owner agrees
