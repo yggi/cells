@@ -12,7 +12,7 @@
  * And every `style=` is read: a style cell (`map=style`), an unnamed one, or a mix of them by weight, which is exact by
  * definition (the point it computes); each end within the axes' ranges.
  */
-import type { CellDecl, Diagnostic, ParamCells, ParseResult, Ref, StylePoint, Token } from './ast';
+import type { CellDecl, Diagnostic, Expr, ParamCells, ParseResult, Ref, StylePoint, Token } from './ast';
 import { parse } from './parser';
 import { AXES, CENTRE, STYLE } from './style';
 import { valueSumOf } from './valuesum';
@@ -39,9 +39,12 @@ function mapNumbers(t: Token, f: (v: number) => number): Token {
   return t;
 }
 
+/** A share of an axis held to 0…1: an axis has no value below its low end or above its high one, whatever a sum of offsets adds up to. */
+const share = (v: number) => Math.min(1, Math.max(0, v));
+
 /** A cell's braid with each number v read as a + (b − a)·v: a curve from 0 to 1 laid between two values. */
 function between(d: CellDecl, a: number, b: number, name: string, span: CellDecl['span']): CellDecl {
-  const braid = d.braid.kind === 'list' ? { ...d.braid, tokens: d.braid.tokens.map((t) => mapNumbers(t, (v) => a + (b - a) * v)) } : d.braid;
+  const braid = d.braid.kind === 'list' ? { ...d.braid, tokens: d.braid.tokens.map((t) => mapNumbers(t, (v) => a + (b - a) * share(v))) } : d.braid;
   return { ...d, name, span, braid, label: null, about: undefined, ...(d.style ? { style: undefined } : {}) };
 }
 
@@ -190,7 +193,7 @@ export function readStyles(parsed: ParseResult, scope: Scope | null): { parsed: 
           label: null,
           about: undefined,
           style: undefined,
-          braid: { kind: 'list', tokens: [{ atom: { kind: 'note', value: a + (b - a) * sum.constant, alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span: at }] },
+          braid: { kind: 'list', tokens: [{ atom: { kind: 'note', value: a + (b - a) * share(sum.constant), alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span: at }] },
         } as CellDecl);
         return name;
       }
@@ -298,7 +301,49 @@ export function readStyles(parsed: ParseResult, scope: Scope | null): { parsed: 
   // (each cell made for a slot read, and the slot it reads: the graph draws the style into it)
   const slotReads = new Map<string, NonNullable<CellDecl['readsSlot']>>();
   let changed = false;
-  const cells = parsed.cells.map((d) => {
+  /** A term of a sum that reads a slot of a style (`&funk[bite] + &dsect`) as the cell made for that read (an offset on one axis). */
+  const reslotted = (e: Expr, d: CellDecl): Expr => {
+    if (e.k === 'sum') {
+      const items = e.items.map((it) => {
+        const x = reslotted(it.e, d);
+        return x === it.e ? it : { ...it, e: x };
+      });
+      return items.every((it, k) => it === e.items[k]) ? e : { ...e, items };
+    }
+    if (e.k === 'prod') {
+      const factors = e.factors.map((f) => reslotted(f, d));
+      return factors.every((f, k) => f === e.factors[k]) ? e : { ...e, factors };
+    }
+    if (e.k !== 'ref' || e.ref.pick?.kind !== 'at' || !e.ref.pick.abs) return e;
+    const target = decls.get(e.ref.name);
+    if (!target || (target.map?.kind !== 'style' && !target.style)) return e;
+    const name = cellOf(e.ref);
+    if (!name) return e;
+    slotReads.set(name, { cell: e.ref.name, slot: e.ref.pick.i, ...(e.ref.slot ? { named: e.ref.slot } : {}) });
+    return { ...e, ref: { ...e.ref, name, pick: null, slot: undefined } };
+  };
+  // (a sum of values that reads an axis: a mix's term, `&bite [&funk[bite] + &dsong + &dsect]`; read first, so every cell
+  // that lays a sum sees the cell made for each slot it reads)
+  const reslottedCells = new Map<string, CellDecl>();
+  for (const d of parsed.cells) {
+    if (d.braid.kind !== 'list' || !d.braid.tokens.some((t) => t.atom.kind === 'mix')) continue;
+    let touched = false;
+    const tokens = d.braid.tokens.map((t) => {
+      const atom = t.atom;
+      if (atom.kind !== 'mix') return t;
+      const exprs = atom.exprs.map((e) => reslotted(e, d));
+      if (exprs.every((e, k) => e === atom.exprs[k])) return t;
+      touched = true;
+      return { ...t, atom: { ...atom, exprs } };
+    });
+    if (!touched) continue;
+    const next = { ...d, braid: { ...d.braid, tokens } };
+    reslottedCells.set(d.name, next);
+    decls.set(d.name, next);
+  }
+  const cells = parsed.cells.map((d0) => {
+    const d = reslottedCells.get(d0.name) ?? d0;
+    if (d !== d0) changed = true;
     if (!d.paramCells) return d;
     let paramCells: Record<string, NonNullable<CellDecl['paramCells']>[string]> | null = null;
     for (const [key, pc] of Object.entries(d.paramCells)) {

@@ -202,6 +202,26 @@ describe('style= and the note &style, read by a voice (#390, step 2)', () => {
     for (const v of held) expect([0, 250, 500, 750, 1000]).toContain(v);
   });
 
+  it('an axis as an offset chain: a sum of the style’s own value on it and the levels above it, held to the axis (#571, #881)', () => {
+    const chain = (b: string, more: string[]) => cutoffs([...[...direct0], `&mine map=style sync=.3 harm=.45 bite=&b mood=.55`, `&b ${b}`, ...more].join('\n'), 16);
+    const direct0 = [
+      '&bar meter("4/4") step=120bpm',
+      '&line step=1m 0!8',
+      '&v s=saw loop=C4 lpf=0..1000 * &mine[bite]',
+      '&out map=sample [&line * &v]',
+      '&funk map=style .3 .45 .2 .55',
+    ];
+    // (a named style's slot is a term: the style's bite .2, the song's .1, the section's .3 over its bars)
+    expect(chain('[&funk[bite] + &dsong + &dsect]', ['&dsong .1', '&dsect step=1m 0 .2 .4 .6']).slice(0, 4)).toEqual([300, 500, 700, 900].map((x) => expect.closeTo(x, 6)));
+    expect(chain('[&funk[bite] + &d]', ['&d .3']).slice(0, 2)).toEqual([expect.closeTo(500, 6), expect.closeTo(500, 6)]);
+    // (the sum is held to the axis: past its top or its bottom it is the end, never past it or read as a wave)
+    expect(chain('[.9 + &d]', ['&d .3']).slice(0, 2)).toEqual([1000, 1000]);
+    expect(chain('[.1 + &d]', ['&d -.3']).slice(0, 2)).toEqual([0, 0]);
+    expect(chain('[&funk[bite] + &d]', ['&d step=1m .9 .9']).slice(0, 2)).toEqual([1000, 1000]);
+    // (a plain cell above the axis is held too)
+    expect(chain('2', []).slice(0, 2)).toEqual([1000, 1000]);
+  });
+
   it('refuses a slider outside its axis, a fifth value in order, a moving axis outside it, moved by two cells or read through a mix: shown firing', () => {
     const mine = (bite: string, more: string[] = ['&walk step=1m 0 1'], style = 'style=&mine') =>
       errors(piece(style, '4/4', undefined, [`&mine map=style sync=.3 harm=.45 bite=${bite} mood=.55`, ...more]));
