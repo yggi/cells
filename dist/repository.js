@@ -4,6 +4,7 @@ export { axedLayer, migrateLayer, MOVED_IDS, movedLayer, movedText, roledLayer, 
 export { cachedFit, declarations, fitsAs, unionOf, useOn } from "./repository/fit.js";
 export { holesOf } from "./repository/holes.js";
 export { readFragment, readFragments, writeFragment } from "./repository/files.js";
+export { hitsOf } from "./repository/hits.js";
 export { decompose, writtenOut } from "./repository/decompose.js";
 export { ALL_OPERATORS, createRecogniser } from "./repository/recognise.js";
 export { extract } from "./repository/extract.js";
