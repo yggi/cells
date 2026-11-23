@@ -19,12 +19,13 @@ The tune turns the minor scale's i, VI, III and VII, a bar each, and the bass pl
 &style style=&calm..&tense * &turn
 &turn map=lin step=1m 0 .25 .5 .75 1 .75 .5 .25
 &styleNote label="&style turns between the two styles as &turn says, and &style[bite] and &style[mood] read one axis each: the bass's cutoff opens as the style grows stabby, the lead's closes as its mood darkens." about=(&bassV &leadV)
+&levelNote label="A cell that is one number plays as the number: &leadLevel is the lead's level in the mix. &bassLevel is a sum of values, [&leadLevel + .1]: the bass sits a little above the lead, whatever the lead's level is." about=(&leadLevel &bassLevel)
 &key scan(2 1 2 2 1 2 2)
 &tune over=&key step=8n 4 ~ 2 4 7 4 2 0
 &root over=&key step=1m 0 5 2 6
 &bassV s=saw loop=A1 lpf=250..1600 * &style[bite] lpq=6 env=&strike
 &leadV s=tri loop=A3 lpf=500..4000 * &style[mood] env=&(map=adsr .01 .2 .6 .2)
 &leadLevel .4
-&bassLevel .5
+&bassLevel [&leadLevel + .1]
 &out map=sample postgain=2 [&tune * &leadV * &leadLevel, &root * &bassV * &bassLevel]
 ```
