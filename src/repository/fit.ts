@@ -29,6 +29,7 @@ import { expansion, fragmentHash, signatureOf } from '../engine/use';
 import { parse, readFrom } from '../engine/parser';
 import { braidReadsOf } from '../engine/compiler/builtin';
 import { readsOf } from '../engine/reads';
+import { kindsOf, type Kind } from '../engine/kinds';
 import { clockNeeds, holesOf, linesRead, meterMeets, readOnlyAsSound, standIn, type ClockNeed, type TappedNeed } from './holes';
 
 /** A collection's lines added to a workbench: the text, and what became of the fragment's names there. */
@@ -404,38 +405,62 @@ function mainOn(
     !newDiagnostics(compiled([bench, takeLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).filter(
       (d) => !standNames.has(STAND_IN_SAID.exec(d.message)?.[1] ?? ''),
     ).length;
-  // (a meter meets a parameter only where the copy reads it as a meter, decision 104: as a clock, or its levels as values in an
-  // expression, a count's accents; not as a table, `over=` (a key, a chord), a phrase spliced, or nothing at all)
-  // (a meter: the piece's root meter, the one with a tempo (decision 095), or a cell whose braid is written meter(…),
-  // `&grouping meter("4/4")`; not a scale, whose scan reads as a meter too, nor a clock of the wall, a law's day)
+  // (a cell meets a parameter only where the copy reads it as what it is, decision 104: its kind against each read)
   const written = new Map(parse(bench).cells.map((d) => [d.name, d] as const));
-  const isMeter = (name: string) => {
+  const kindOf = kindsOf(alone);
+  const kind = (name: string): Kind | null => {
     const d = written.get(name);
-    return name === alone.mainMeter || (d?.braid.kind === 'list' && d.braid.perBeat !== undefined);
+    // (a meter: the root meter, the one with a tempo, decision 095, or a braid written meter(…); not a scale, whose scan reads
+    // as a meter too, nor a clock of the wall, a law's day)
+    if ((name === alone.mainMeter && d?.step && !d.step.whole) || (d?.braid.kind === 'list' && d.braid.perBeat !== undefined)) return 'meter';
+    const k = kindOf(name);
+    return k === 'meter' ? 'table' : k;
   };
-  const meets = (cell: string) => compiles(cell) && (!isMeter(cell.slice(1)) || readAsMeter(cell.slice(1), [bench, takeLine(heads, id, args, cell)].join('\n'), resolve));
+  const meets = (cell: string) =>
+    compiles(cell) && readAsItIs(cell.slice(1), kind(cell.slice(1)), alone.cells.get(cell.slice(1))?.steps ?? 0, [bench, takeLine(heads, id, args, cell)].join('\n'), resolve);
   const offers = parse(bench).offers;
   const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
-  // (two that meet are already none: the rest isn't compiled; a text cell is a generator's argument alone, decision 101, so
-  // no parameter's: a bar's `&meter "4/4"` is no phrase, no key)
+  // (two that meet are already none: the rest isn't compiled)
   const meeting: string[] = [];
-  const isText = (n: string) => alone.cells.get(n.slice(1))?.text !== undefined;
-  for (const n of named) if (!heads.includes(n) && !isText(n) && meets(n) && meeting.push(n) > 1) return null;
+  for (const n of named) if (!heads.includes(n) && meets(n) && meeting.push(n) > 1) return null;
   return meeting[0] ?? null;
 }
 
+/** How a template's copy reads a cell, by the path of each read (`reads.ts`): as a clock, as a table. */
+const CLOCK = /^(step|paramClocks)(\.|$)/;
+const TABLE = /^over$/;
+
 /**
- * Whether a text reads a meter, `name`, as a meter wherever its copy of a template reads it (decision 104): as a clock
- * (`step=&bar`, `&bar:beat`) or its levels as values in an expression (`[.9 + &bar * -.3]`), and somewhere. Read as a
- * table (`over=&bar`), spliced as a step of a braid, or read nowhere, it is no meter argument. The copy's lines are those
- * the expansion adds; the workbench's own aren't counted.
+ * Whether a template's copy, in `text`, reads the cell `name` as what it is wherever it reads it (decision 104), its kind
+ * against each read:
+ * - **a meter** only as a clock (`step=&bar`, `&bar:beat`) or its levels as values in an expression (a count's
+ *   `[.9 + &bar * -.3]`), and somewhere: not as a key, a phrase or a part, nor read nowhere;
+ * - **a text** never: a generator's argument alone (decision 101);
+ * - **a lone note** (`&tonic D`, steps of one) only as a tonic: no key, phrase, part or value;
+ * - as **a table** (`over=`): a table, a line (a harmony), a blank (a key turned), or steps;
+ * - as **a part** (a gate's `play=`): a line or steps.
+ * The copy's lines are those the expansion adds; the workbench's own aren't counted.
  */
-function readAsMeter(name: string, text: string, resolve: Resolve): boolean {
+function readAsItIs(name: string, kind: Kind | null, steps: number, text: string, resolve: Resolve): boolean {
+  if (kind === 'text') return false;
   const own = new Set(parse(text).cells.map((d) => d.name));
   const copy = parse(expansion(text, { resolve }).text).cells.filter((d) => !own.has(d.name));
-  const reads = copy.flatMap((d) => readsOf(d).filter((r) => r.name === name));
-  const asMeter = (path: string) => path.includes('.exprs.') || /^(step|paramClocks)(\.|$)/.test(path) || path.startsWith('clockOf');
-  return reads.length > 0 && reads.every((r) => asMeter(r.path));
+  // (a gate's part, `play=&part^$-12`, is a parameter `reads.ts` doesn't list yet, #825: read here, as `play`)
+  const played = (d: (typeof copy)[number]) => (typeof d.params.play === 'string' && /^&?([A-Za-z_]\w*)/.exec(d.params.play)?.[1] === name ? ['play'] : []);
+  const paths = copy.flatMap((d) => [
+    ...readsOf(d)
+      .filter((r) => r.name === name)
+      .map((r) => r.path),
+    ...played(d),
+  ]);
+  if (kind === 'meter') return paths.length > 0 && paths.every((p) => CLOCK.test(p) || p.includes('.exprs.'));
+  // (a lone note is a tonic: `&tonic D` is no key, no phrase, no part, no value)
+  if (kind === 'steps' && steps === 1) return paths.every((p) => p === 'tonic');
+  return paths.every((p) => {
+    if (TABLE.test(p)) return kind === 'table' || kind === 'line' || kind === 'blank' || kind === 'steps';
+    if (p === 'play') return kind === 'line' || kind === 'steps';
+    return true;
+  });
 }
 
 /** A name clear of the workbench's: the name, else the first `name<n>`, n from 2, that the workbench doesn't write. */

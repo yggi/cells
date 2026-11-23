@@ -59,7 +59,7 @@ export const TIERS = [
     },
     {
         name: 'Time and voice',
-        concept: "a clock: a bar (&bar from meter 120bpm, the library's), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters (low-pass, high-pass, band-pass and their model) and effects, a vibrato",
+        concept: "a clock: a bar (&bar from bar 120bpm, the library's), its taps (step=4n, step=pulse, step=1m), step=&x, /2 and *2, a tempo marking; a voice: a source and an envelope; filters (low-pass, high-pass, band-pass and their model) and effects, a vibrato",
         forms: [
             'parameter part',
             'line &x from id(name=…) …',

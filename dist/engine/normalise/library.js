@@ -251,6 +251,12 @@ export function libraryTemplates(source, library, resolve) {
         const before = codeOf(lines[i]);
         if (out.some((r) => r.after === use))
             continue;
+        const rival = out.findIndex((r) => r.id.startsWith('template:') && r.id.endsWith(`:${t.head}`) && r.before === before);
+        if (rival >= 0) {
+            if (out[rival].after.length <= use.length)
+                continue;
+            out.splice(rival, 1);
+        }
         out.push({
             id: `template:${t.id}:${t.head}`,
             tool: 'normalise',

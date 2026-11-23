@@ -265,6 +265,8 @@ export interface ResolvedCell {
     }>>;
     /** A fill a plugin-fragment's code writes (decision 085, #792): its fragment, its name there, the clock its call site gave. */
     readonly fill?: CellDecl['fill'];
+    /** A text cell's text (decision 101): `&meter "3/4"`, read by a generator's argument; it plays nothing. */
+    readonly text?: string;
     /** Used as the voice of an out(…), or has sound parameters. */
     readonly voice: boolean;
     /** Voice: turns of its braid per second at pitch 0 (loop=f, or step=r over its k steps). */
