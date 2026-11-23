@@ -1,4 +1,4 @@
-// Recognition (decision 055, #224): each of Jambot's 284 variations on E31's bars, each of the bass seeds' 48, and each of
+// Recognition (decision 055, #224): each of the 277 variations on E31's bars (Jambot's 284 until #911), each of the bass seeds' 48, and each of
 // the seed progressions' 789 but one (decision 052, points 8 and 10), is
 // recognised as its source's, by its operator, at distance 0, against the whole library; random bars of hits are
 // recognised as nothing; a recognition on a warmed recogniser compiles only the heard text (its milliseconds:
@@ -54,7 +54,7 @@ const linesAlone = (text: string) =>
 const recogniser = createRecogniser();
 
 describe('a variation is recognised as its source’s, by its operator, at distance 0', () => {
-  it('each of the 284 on E31’s eight bars; first for 282, and the other 2 also as the bar they play', () => {
+  it('each of the 277 on E31’s eight bars (284 until #911); first for all but 4, and those also as the bar they play', () => {
     let n = 0;
     const second: string[] = [];
     for (const b of BARS) {
@@ -74,7 +74,7 @@ describe('a variation is recognised as its source’s, by its operator, at dista
         n++;
       }
     }
-    expect(n).toBe(284);
+    expect(n).toBe(277);
     // (Lo-fi hip hop's bar and Bossa nova's differ by one hat, and their levels: each one's variation plays the other's notes;
     // and since swap reaches a line's steps (decision 052, point 11), Bossa nova's hat added beside step 4 is Lo-fi hip
     // hop's moved there, `swap &hat 3` and `swap &hat 4`, found first by the library's order, at the same distance)

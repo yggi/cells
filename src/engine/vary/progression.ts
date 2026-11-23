@@ -54,7 +54,7 @@ export interface Progression {
 
 /** A progression's candidate variation: the operator, its amounts (for `by`), its slots, and what it does, in words. */
 export interface Candidate {
-  readonly operator: SlotOperator | 'third' | 'dominant' | 'shift';
+  readonly operator: SlotOperator | 'drop' | 'add' | 'third' | 'dominant' | 'shift';
   readonly amounts: readonly number[];
   readonly slots: readonly Slot[];
   readonly what: string;
