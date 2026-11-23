@@ -74,7 +74,19 @@ describe('meter("sig in n")', () => {
     expect(eighths('meter("4/4 in 2")', 60)).toEqual(eighths('meter("4/4")', 120));
   });
 
-  it('a waltz in one plays as its levels written in one, meter("*..", 4n)', () => {
+  it('but its pulse is 4/4’s quarter, not 2/2’s half: a line tapping the pulse tells them apart', () => {
+    expect(meterOf('meter("4/4 in 2")')).toMatchObject({ pulses: 4, unit: 4 });
+    expect(meterOf('meter("2/2", 2)')).toMatchObject({ pulses: 2, unit: 2 });
+    const pulses = (m: string) => {
+      const r = compiled(lines(`&bar ${m} step=60bpm`, '&p step=pulse 0', '&v s=sine loop=C4', '&out map=sample [&p * &v]'));
+      return eventsBetween(plan(r, codeShifts(r), r.off), 0, 4).length;
+    };
+    expect([pulses('meter("4/4 in 2")'), pulses('meter("2/2", 2)')]).toEqual([8, 4]);
+  });
+
+  it('a waltz in one plays as its levels written in one, meter("*..", 4n); its quarters keep 3/4’s grade, a beat’s', () => {
+    expect(meterOf('meter("3/4 in 1")').levels).toEqual([0, 1, 1]);
+    expect(meterOf('meter("*..", 4n)').levels).toEqual([0, 3, 3]);
     expect(played('meter("3/4 in 1")', 40)).toEqual(played('meter("*..", 4n)', 40));
   });
 
