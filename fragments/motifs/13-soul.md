@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&soul from &key style=&(map=style sync=.35 harm=.55 bite=.75 mood=.65)
+&soul from &key style=[&deepHouse + &(map=style bite=.1)]
 &soul over=&key step=8n 4 ~ 4 3 4@2 2@2
 ```
 

@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&pulse from &key style=&(map=style sync=.12 harm=0 bite=.9 mood=.4)
+&pulse from &key style=[&techno + &(map=style bite=-.1)]
 &pulse over=&key step=8n 0 ~ 0 ~ 2 ~ 0 ~
 ```
 

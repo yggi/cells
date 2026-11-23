@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&drift from &key style=&(map=style sync=.05 harm=.3 bite=.1 mood=.9)
+&drift from &key style=[&ambient + &(map=style bite=.1)]
 &drift over=&key step=8n 4@4 3@4
 ```
 

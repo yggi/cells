@@ -9,7 +9,8 @@
  *
  * - `style=` is a point, `&funk` (a style of `styles`, followed wherever it is placed) or inline,
  *   `&(map=style sync=.3 bite=.55 ± .1)`: its axes by name, any of them (a point may leave an axis out, decision 041),
- *   or all four in order; `± r` is the point's reach on that axis, kept and read by no query yet (§6). `* w` is its
+ *   or all four in order; `± r` is the point's reach on that axis, kept and read by no query yet (§6); or a sum of them,
+ *   `[&acid + &(map=style bite=.1)]`, a style moved by an offset (decision 100). `* w` is its
  *   weight, 1 where left out; `( a | b )` is a set, found at each.
  * - `facet=` where it differs from the folder's (§3); a fragment with no folder writes it, and a declaration with
  *   neither counts for every facet.
@@ -84,14 +85,34 @@ export interface Declared {
   readonly problems: readonly string[];
 }
 
-/** One point of a `style=`: a name, or an inline style, its axes by name or in order. */
+/**
+ * A sum of points (decision 100): `[&acid + &(map=style bite=.1)]`, a style moved by an offset. Each axis is the sum of
+ * the terms that name it, held to 0…1 and rounded to 1e-9 (so .85 + .1 is .95); an axis no term names is left out. A term
+ * is a name or an inline point, with no reach: a sum has none.
+ */
+function readSum(text: string, styles: StyleNames): { point: StylePoint } | string {
+  const terms = splitTop(text.slice(1, -1), '+').map((t) => t.trim());
+  if (terms.length < 2 || terms.some((t) => !t)) return `style=${text}: a sum of points, [&acid + &(map=style bite=.1)]`;
+  const point: Record<string, number> = {};
+  for (const term of terms) {
+    const read = readPoint(term, styles);
+    if (typeof read === 'string') return read;
+    if (read.reach) return `style=${text}: a term of a sum has no reach (± r)`;
+    for (const [axis, v] of Object.entries(read.point)) point[axis] = (point[axis] ?? 0) + v;
+  }
+  for (const axis of Object.keys(point)) point[axis] = Math.round(Math.min(1, Math.max(0, point[axis]!)) * 1e9) / 1e9;
+  return { point };
+}
+
+/** One point of a `style=`: a name, an inline style (its axes by name or in order), or a sum of them. */
 function readPoint(text: string, styles: StyleNames): { point: StylePoint; reach?: StylePoint } | string {
+  if (/^\[[\s\S]*\]$/.test(text)) return readSum(text, styles);
   if (/^&[A-Za-z_][A-Za-z0-9_]*$/.test(text)) {
     const point = styles.get(text.slice(1));
     return point ? { point } : `style=${text}: no style of that name in styles`;
   }
   const inline = /^&\(\s*map=style\s+([\s\S]*)\)$/.exec(text);
-  if (!inline) return `style=${text}: a style, &funk, or an inline one, &(map=style sync=.3 bite=.55)`;
+  if (!inline) return `style=${text}: a style, &funk, an inline one, &(map=style sync=.3 bite=.55), or a sum, [&acid + &(map=style bite=.1)]`;
   const body = inline[1]!.trim();
   const ordered = body.split(/\s+/);
   if (ordered.length === AXIS_NAMES.length && ordered.every((v) => NUMBER.test(v))) return { point: Object.fromEntries(AXIS_NAMES.map((a, i) => [a, parseFloat(ordered[i]!)])) };
@@ -139,8 +160,8 @@ function splitTop(text: string, sep: string): string[] {
   let start = 0;
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
-    if (c === '(') depth++;
-    else if (c === ')') depth--;
+    if (c === '(' || c === '[') depth++;
+    else if (c === ')' || c === ']') depth--;
     else if (c === sep && depth === 0) {
       out.push(text.slice(start, i));
       start = i + 1;

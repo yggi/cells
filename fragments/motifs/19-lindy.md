@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&lindy from &key style=&(map=style sync=.55 harm=.75 bite=.7 mood=.5)
+&lindy from &key style=[&electroSwing + &(map=style bite=.1)]
 &lindy over=&key step=8n 0@3 4@3 2@2
 ```
 
