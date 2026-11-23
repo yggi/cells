@@ -1,6 +1,6 @@
 # The meter fragment refined: named points, common meters only, the style's meters apart
 
-Date: 2026-11-23 · Status: open, filed; nothing built · Issues: #902 (the meter fragment), #900 (a name on its facet's axes), #901 (an offset as a sum), #899 (the stray `&bar_swing`), yggi/cell-studio#701 (the swing subwheel); follows #507 and decisions 065, 072, 076, 089, 090
+Date: 2026-11-23 · Status: open, filed; nothing built · Issues: #902 (the meter fragment), #900 (a name on its facet's axes), #901 (an offset as a sum), #899 (the stray `&bar_swing`), yggi/cell-studio#701 (the swing subwheel), yggi/jambot#751 (the twin); follows #507 and decisions 065, 072, 076, 089, 090
 
 The owner's five suggestions, checked against the language, Jambot and Cell studio, with a sketch of the fragments they lead to. The sketches are in ` ```text ` blocks: three of their spellings don't parse yet (marked **new**).
 
@@ -135,7 +135,7 @@ Jambot (pinned at v0.29.0) takes every fragment of the facet `meter` (`packages/
 What would break at its next pin:
 
 - **Ids.** `repository.test.ts:70-90` expects thirteen meters with ids such as `meter(swing=8n:2/3)`. Also `layer.test.ts:178-265`, `bass-loop.test.ts:162` and `kept-twinkle.fixture.json:55-85`.
-- **Learned layers and co-use** store a meter's id (`meterFragment`, `plan.ts:353-371`; `rhythms.ts:141`'s bench). A release needs a map from each old id to its new one (`meter(swing=16n:.6)` → `funk_meter`).
+- **Learned layers and co-use** store a meter's id (`meterFragment`, `plan.ts:353-371`; `rhythms.ts:141`'s bench). A release needs a map from each old id to its new one (yggi/jambot#751) (`meter(swing=16n:.6)` → `funk_meter`).
 - **Rankings move only between presets, if at all.** With the facet's axes rule they don't; without it, mood enters every meter distance.
 - **Its own plan agrees:** `docs/ROADMAP.md:59` (the Meter-Cell, #306) wants a style to carry its meters, with swing and aksak as one operator. That is what `funk_meter` and `odd_meter` are.
 
