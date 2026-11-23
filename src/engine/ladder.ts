@@ -517,10 +517,8 @@ export function formsUsed(source: string, options: CompileOptions = {}): Set<str
       ['laps', d.laps],
       ['chance', d.chance],
       ['seed', d.seed],
-      ['title', d.title],
       ['tags', d.tags],
       ['about', d.about],
-      ['tier', d.tier],
       ['style', d.style],
     ] as const)
       if (v !== null && v !== undefined) use(`attribute ${k}`);

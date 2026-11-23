@@ -2,7 +2,6 @@
 import type { Binding, CellDecl, Ref, Span, StylePoint, StyleSpec } from '../ast';
 import { DOUGH_SOURCES } from '../dough-params';
 import { ATTRIBUTES, memberParams, VOICE_MAKERS, VOICE_PARAMS } from '../attributes';
-import { canonicalTag, TUTORIAL } from '../tags';
 import { isMidiCard, type MidiDest, type Output, type ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
 import { notesCells, type Typed } from './sorts';
@@ -230,8 +229,6 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     const v = cells.get(b.voice.name);
     if (v && !v.root && !v.kit && !soundHead(v.name) && !b.pitches.some((t) => t.ref.name === v.name)) cells.set(v.name, { ...v, voice: true });
   }
-  // the piece's card in the text: the first cell with a title=, a note (the old form; a file's frontmatter holds it now)
-  const card = [...decls].find(([, d]) => d.title)?.[0];
   for (const [name, d] of decls) {
     const c = cells.get(name);
     if (!c) continue;
@@ -241,21 +238,8 @@ export function bindVoices(ctx: Ctx, decls: ReadonlyMap<string, CellDecl>, given
     // (a style= that names no cell: styles.ts skips it, and it is said here, once, as any unknown)
     if (d.style) for (const r of styleRefs(d.style)) if (!decls.has(r.name)) unknownCell(r.name, r.span);
     if (d.about) {
-      if (!c.note) error('about= belongs on a note: a cell with a label= (or title=) and nothing else', d.about[0].span);
+      if (!c.note) error('about= belongs on a note: a cell with a label= and nothing else', d.about[0].span);
       for (const r of d.about) if (!decls.has(r.name)) unknownCell(r.name, r.span);
-    }
-    if (d.tier != null && d.title && !(d.tags ?? '').split(',').some((t) => canonicalTag(t.trim()) === TUTORIAL))
-      warn('tier= puts a piece in a tier of the tutorial; without tags="tutorial" it is ignored', d.paramSpans.tier ?? d.span);
-    if (d.tier != null && !d.title) error('tier= belongs on a piece’s card: the note with its title=', d.paramSpans.tier ?? d.span);
-    // the card written the old way (decision 047, #146): what it says of the piece now goes in the file's frontmatter
-    if (name === card && c.note) {
-      const moved = (['title', 'tags', 'tier'] as const).filter((k) => d[k] != null);
-      const list = (forms: string[]) => (forms.length > 1 ? `${forms.slice(0, -1).join(', ')} and ${forms.at(-1)}` : forms[0]);
-      const many = moved.length > 1;
-      warn(
-        `${list(moved.map((k) => `${k}=`))} on the piece’s card ${many ? 'go' : 'goes'} in its file’s frontmatter now (${moved.map((k) => `${k}:`).join(' ')}): Shorten moves ${many ? 'them' : 'it'} there (decision 047)`,
-        d.paramSpans.title ?? d.span,
-      );
     }
     if (!c.voice) continue;
     const src = d.params.s;

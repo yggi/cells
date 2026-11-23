@@ -18,14 +18,9 @@ export const CORE = {
     laps: core('how many laps it plays, then it ends', 'time.md'),
     chance: core('what a bare x? means here: the probability it is dropped, or free() for a slider', 'cell.md'),
     seed: core("the seed a cell's chance is thrown from, which no edit to the cell moves", 'cell.md'),
-    title: { ...core('on a note: the piece’s title (its card), the old spelling: its file’s frontmatter holds it', 'display.md', ['note']), old: 'title: in the frontmatter' },
-    tags: core('on a cell: its clusters in the graph, comma-separated (on the piece’s card, the old spelling of its tags: its file’s frontmatter holds them)', 'display.md'),
+    tags: core('on a cell: its clusters in the graph, comma-separated', 'display.md'),
     about: core('on a note: the cells it explains', 'display.md', ['note']),
     style: core('its style: a map=style cell, &(map=style …), or a mix of them by weight; or a range from one to another over its scope (style=&funk..&bossa). On the note &style, the section’s, read by axis (&style[bite])', 'style.md'),
-    tier: {
-        ...core('on a piece’s card: its tier of the tutorial (1 the first), the old spelling: its file’s frontmatter holds it', 'display.md', ['note']),
-        old: 'tier: in the frontmatter',
-    },
 };
 export const PARAMS = {
     s: sound('sound source: sine tri saw square pulse white pink brown; or a blend of two waves, the share of the second moved by cells: s=tri..square * &style[bite]', {

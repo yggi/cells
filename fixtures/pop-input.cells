@@ -1,5 +1,5 @@
 # Lifted from yggi/cell-studio tools/probe/pieces/pop-input.cells @ e168c8d: the example arranged at the input (decision 016), for src/engine/sections.test.ts.
-&piece title="Pop song, arranged at the input (a probe)" tags="genre:electronic, diatonic, harmony, arrangement" label="Pop rewired at the input (decision 016): the song switches which section each part is stepped by; the parts' sound goes straight out." about=&out
+&piece tags="genre:electronic, diatonic, harmony, arrangement" label="Pop rewired at the input (decision 016): the song switches which section each part is stepped by; the parts' sound goes straight out." about=&out
 &bar scan(1 1 1 1) step=free(100bpm, 70..140)
 &major scan(2 2 1 2 2 2 1)
 

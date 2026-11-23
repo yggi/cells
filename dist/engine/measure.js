@@ -1,7 +1,7 @@
 import { isNote } from "./ast.js";
 import { normalise } from "./normalise/index.js";
 import { parse } from "./parser/index.js";
-const FREE = new Set(['label', 'show', 'tags', 'title', 'tier', 'about', 'size']);
+const FREE = new Set(['label', 'show', 'tags', 'about', 'size']);
 const exprLeaves = (e) => e.k === 'ref' || e.k === 'num' ? 1 : e.k === 'sum' ? e.items.reduce((n, i) => n + exprLeaves(i.e), 0) : e.factors.reduce((n, f) => n + exprLeaves(f), 0);
 function atomLeaves(a) {
     switch (a.kind) {

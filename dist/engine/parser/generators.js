@@ -2,7 +2,7 @@ import { noteName, noteValue } from "../meter.js";
 import { syntax } from "./syntax.js";
 import { parseFree } from "./free.js";
 import { NUMBER_PLACES } from "./numbers.js";
-import { agogic as agogicPositions, diatonicSteps, even as evenPositions, intervals, MODE_WORDS, SCALES, scaleOfPhase } from "../../theory/modes.js";
+import { agogic as agogicPositions, diatonicSteps, even as evenPositions, intervals, MODE_WORDS, SCALES } from "../../theory/modes.js";
 import { TONAL_SCALES } from "../../theory/tonal.js";
 function parseScan(s, start) {
     const braid = scanTable(s, start);
@@ -387,7 +387,6 @@ export function waveValues(shape, n) {
     return Array.from({ length: n }, (_, i) => +at(i / n).toFixed(6) + 0);
 }
 const TONICS = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-const tonicName = (pc) => ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'][((pc % 12) + 12) % 12];
 export const SCALE_KEY = 'key:λ';
 export function parseScale(s, start) {
     s.i++;
@@ -398,8 +397,7 @@ export function parseScale(s, start) {
     let tonicRef = null;
     let modeRef = null;
     let evenArgs = null;
-    const legacy = s.match(/-?[0-9]+/y);
-    const quoted = legacy === null ? s.match(/"[^"]*"/y) : null;
+    const quoted = s.match(/"[^"]*"/y);
     if (quoted !== null) {
         const m = /^"([A-G](?:#|b)?)([0-9]*)((?::[a-z0-9#'-]+)+)"$/.exec(quoted);
         if (!m)
@@ -417,21 +415,6 @@ export function parseScale(s, start) {
         tonicText = String(tonic);
         s.skipSpace();
         s.expect(')', "')' to close scale(…)");
-    }
-    else if (legacy !== null) {
-        s.skipSpace();
-        s.expect(',', "',' then the mode — better by name: scale(minor, A)");
-        s.skipSpace();
-        const at = s.i;
-        const phase = s.int('the mode, 0 (the darkest) to 6', NUMBER_PLACES.phase);
-        if (phase > 6)
-            s.fail(`scale(tonic, phase): the phase is a mode, 0 (the darkest, Locrian) to 6 (the brightest, Lydian) — not ${phase}`, at, String(phase).length);
-        tonic = parseInt(legacy, 10);
-        tonicText = legacy;
-        steps = intervals(evenPositions(7, 12, phase), 12);
-        s.skipSpace();
-        s.expect(')', "')' to close scale(…)");
-        s.warn(`scale(${tonic}, ${phase}) is written scale(${scaleOfPhase(phase)}, ${tonicName(tonic)}): the mode by name, then the tonic`, start, s.i - start);
     }
     else {
         const at = s.i;

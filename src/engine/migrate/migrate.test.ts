@@ -12,7 +12,7 @@ describe('Migrate: no rule before 1.0.0 (decision 049, #643)', () => {
   it('changes no example and no fragment of the seed library, and leaves a card that says what the piece is (a file’s, not a text’s)', () => {
     for (const [key, p] of Object.entries(EXAMPLES)) expect([key, migrate(p.source, SEED).steps]).toEqual([key, []]);
     for (const f of LIBRARY) expect([f.id, migrate(f.text, SEED).steps]).toEqual([f.id, []]);
-    const src = '&piece title="A"\n&x 0';
+    const src = '&piece label="A"\n&x 0';
     expect(migrate(src).source).toBe(src);
   });
 });

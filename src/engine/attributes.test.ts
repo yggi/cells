@@ -84,7 +84,6 @@ describe('an attribute where it does nothing is a warning', () => {
     ['postgain= off the sound card', '&t step=4 postgain=.5 0 1' + tail, 'postgain= acts on the sound card (map=sample): on &t it does nothing'],
     ['wow= without a motor', '&m step=90bpm wow=.01\n&t step=&m 0 1' + tail, 'wow= acts on a meter with a motor=: on &m it does nothing'],
     ['ratio= on a voice no fm= names', '&t step=4 0 1' + tail.replace('s=saw', 's=saw ratio=2'), 'ratio= acts on a voice another’s fm= names: on &v it does nothing'],
-    ['title= on a cell that plays', '&t step=4 title="x" 0 1' + tail, 'title= acts on a note (a label= and nothing else): on &t it does nothing'],
     ['a word for a number, not on a voice', '&m step=90bpm motor=strong\n&t step=&m 0 1' + tail, "motor= takes a number: 'strong' does nothing"],
     [
       'swing= by level on a clock that is not a meter',

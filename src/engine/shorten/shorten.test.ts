@@ -224,7 +224,7 @@ describe('shorten: a cell base= copies keeps its steps (#177)', () => {
 
 describe('shorten: whole lines (#10)', () => {
   it('a cell that only reads a motif through a shifted table: &motif^k where it is used', () => {
-    const src = '&scale over=scale(0,5)\n&down 3 3 2 2 1 1 0@2\n&mid over=&scale[>>] &down\n&t over=&scale step=4 &down &mid &mid' + tail;
+    const src = '&scale over=scale(major, C)\n&down 3 3 2 2 1 1 0@2\n&mid over=&scale[>>] &down\n&t over=&scale step=4 &down &mid &mid' + tail;
     const s = shorten(src).find((x) => x.kind === 'degree')!;
     const next = s.apply(src);
     expect(next).not.toMatch(/^&mid/m);
@@ -238,9 +238,9 @@ describe('shorten: whole lines (#10)', () => {
     expect(sounds(s.apply(src))).toEqual(sounds(src));
   });
   it('… but not one with a label (it says something), nor one read by a cell on another table', () => {
-    const labelled = '&scale over=scale(0,5)\n&down 3 2 1 0\n&mid label="up a step" over=&scale[>>] &down\n&t over=&scale step=4 &down &mid' + tail;
+    const labelled = '&scale over=scale(major, C)\n&down 3 2 1 0\n&mid label="up a step" over=&scale[>>] &down\n&t over=&scale step=4 &down &mid' + tail;
     expect(shorten(labelled).some((x) => x.kind === 'degree')).toBe(false);
-    const elsewhere = '&scale over=scale(0,5)\n&down 3 2 1 0\n&mid over=&scale[>>] &down\n&t step=4 &down &mid' + tail;
+    const elsewhere = '&scale over=scale(major, C)\n&down 3 2 1 0\n&mid over=&scale[>>] &down\n&t step=4 &down &mid' + tail;
     expect(shorten(elsewhere).some((x) => x.kind === 'degree')).toBe(false);
   });
   it('a transposing progression written loop=&bar/N is step=&bar/(N/k), then its runs count', () => {

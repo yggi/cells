@@ -509,36 +509,25 @@ describe('scale(name, tonic)', () => {
     expect(r.cells.get('s')!.frees.map((f) => [f.key, f.value])).toEqual([['tonic', 2]]);
     expect(spell(r, 't')).toBe('D');
   });
-  it('the old scale(tonic, phase) still reads, and says how it is written now', () => {
+  it('the old scale(tonic, phase) is retired: a number where a scale’s name stands is an error that lists the names', () => {
     const r = compileSource('&t over=scale(9,2) 0 2 4');
-    expect(spell(r, 't')).toBe('A C E');
-    expect(r.diagnostics.map((d) => [d.severity, d.message])).toContainEqual(['warning', 'scale(9, 2) is written scale(minor, A): the mode by name, then the tonic']);
+    expect(r.diagnostics[0]).toMatchObject({ severity: 'error', message: expect.stringMatching(/^scale\(name, tonic\): a scale by name — major minor/) });
   });
   it('explains itself when malformed, or given a key of its own', () => {
-    expect(compileSource('&a over=scale(0) 0').diagnostics[0].message).toMatch(/scale\(minor, A\)/);
+    expect(compileSource('&a over=scale(0) 0').diagnostics[0].message).toMatch(/^scale\(name, tonic\): a scale by name/);
     expect(compileSource('&a scale(nope)').diagnostics[0].message).toMatch(/a scale by name — major minor/);
     expect(compileSource('&k shift=2\n&a scale(minor) over=&k').diagnostics[0].message).toMatch(/reads through a key of its own/);
   });
 });
 
-describe('tier=: a tier of the tutorial', () => {
-  it('belongs on the card', () => {
+describe('title= and tier=: retired from the card (#643)', () => {
+  it('say where they go now', () => {
     const errors = (src: string) =>
       compileSource(src)
         .diagnostics.filter((d) => d.severity === 'error')
         .map((d) => d.message);
-    expect(errors('&p label="x" tier=2')).toEqual(['tier= belongs on a piece’s card: the note with its title=']);
-    expect(errors('&p title="x" tier=2')).toEqual([]);
-  });
-  it('warns on a card that is not in the tutorial', () => {
-    const warnings = (src: string) =>
-      compileSource(src)
-        .diagnostics.filter((d) => d.severity === 'warning')
-        .map((d) => d.message)
-        .filter((m) => m.startsWith('tier='));
-    expect(warnings('&p title="x" tier=2')).toHaveLength(1);
-    expect(warnings('&p title="x" tags="tutorial" tier=2')).toEqual([]);
-    expect(warnings('&p title="x" tags="basics, rhythm" tier=2')).toEqual([]);
+    expect(errors('&p title="x"')).toEqual(['title= is retired: a piece’s title is `title:` in its file’s frontmatter']);
+    expect(errors('&p label="x" tier=2')).toEqual(['tier= is retired: a piece’s tier is `tier:` in its file’s frontmatter']);
   });
 });
 
@@ -979,14 +968,7 @@ describe('diagnostics: nothing plays, or the wrong thing, without a word (#143)'
     for (const f of LABEL_FIELDS) expect(said(`&a step=2 0 1 label="{${f}}"`)).toEqual([]);
   });
 
-  it('scale(…): a phase beyond the seven modes is an error, a tonic beyond the octave a warning', () => {
-    expect(said('&a over=scale(0,99) 0 1 2')[0]).toEqual([
-      'error',
-      1,
-      17,
-      'scale(tonic, phase): the phase is a mode, 0 (the darkest, Locrian) to 6 (the brightest, Lydian) — not 99',
-    ]);
-    expect(said('&a over=scale(0,7) 0')[0][0]).toBe('error');
+  it('scale(…): a tonic beyond the octave is a warning', () => {
     expect(said('&a over=scale(minor, 99) 0 1 2')).toEqual([['warning', 1, 22, 'scale(…, 99): the tonic is a pitch class, 0 (C) to 11 (B)']]);
     for (const s of ['scale(major)', 'scale(lydian, B)', 'scale(minor, -11)']) expect(said(`&a over=${s} 0 1 2`)).toEqual([]);
   });

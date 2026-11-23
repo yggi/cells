@@ -330,27 +330,15 @@ describe('scan(x!n)', () => {
   });
 });
 
-describe('a piece’s card: title= and tags= on a note', () => {
-  it('the first note with a title is the card: title, description (plain), tags', () => {
-    const src = `# a comment
-&other label="not the card"
-&piece title="Swing blues" tags="Jazz, blues, swing, jazz" label="A **12-bar** blues in C, *swung* — key {&key:tonic}.\\nTwo scales."
-&bar step=120bpm 0`;
-    expect(pieceMeta(src)).toEqual({
-      title: 'Swing blues',
-      description: 'A 12-bar blues in C, swung — key . Two scales.',
-      tags: ['Jazz', 'blues', 'swing'], // (as written, once each whatever the case)
-      tier: null,
-      cell: 'piece',
-    });
-    expect(pieceMeta('&piece title="Steps" tags="tutorial" tier=3')?.tier).toBe(3);
+describe('a text has no card: title= and tier= are retired (#643)', () => {
+  it('a text names no piece: only a file does', () => {
+    const src = '&piece tags="Jazz" label="A blues."\n&bar step=120bpm 0';
+    expect(pieceMeta(src)).toBeNull();
     expect(pieceMeta('&bar step=1 0')).toBeNull();
-    expect(parse('&p title=hello').diagnostics[0].message).toMatch(/title= takes a text in quotes/);
   });
-  it('tier= is a tier of the tutorial: 1 or more', () => {
-    expect(parse('&p title="x" tier=0').diagnostics[0].message).toMatch(/tier= is a tier of the tutorial/);
-    expect(parse('&p title="x" tier=2').diagnostics).toEqual([]);
-    expect(parse('&p title="x" tier=99999999999999999999').diagnostics[0].message).toMatch(/tier= is a tier of the tutorial/);
+  it('title= and tier= say where they go now', () => {
+    expect(parse('&p title="x"').diagnostics[0].message).toMatch(/title= is retired: a piece’s title is `title:` in its file’s frontmatter/);
+    expect(parse('&p label="x" tier=2').diagnostics[0].message).toMatch(/tier= is retired/);
   });
 });
 

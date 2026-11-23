@@ -49,7 +49,6 @@ export {
   type PieceFrontmatter,
 } from './engine/piecefile';
 export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
-export { movedCard } from './engine/shorten/card';
 export { jacksOf, patch, unpatch, PatchError, type Jack } from './engine/patch';
 export { codeShifts } from './engine/program';
 export { resetPhysics } from './engine/physics';

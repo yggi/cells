@@ -10,7 +10,6 @@ import { progressions } from "./progressions.js";
 import { wrappers } from "./wrappers.js";
 import { stereo } from "./stereo.js";
 import { aliases } from "./aliases.js";
-import { card } from "./card.js";
 export function shorten(source, options = {}) {
     const { result, cells } = candidates(source, options);
     if (!result.ok)
@@ -26,16 +25,15 @@ export function shorten(source, options = {}) {
         ...wrappers(source, result, options),
         ...stereo(source, result, options),
         ...aliases(source, result),
-        ...card(source, options),
     ];
-    const kept = result.takes?.length ? found.filter((r) => r.rule === 'card' || keepsUsed(r, source, options, overridden(result))) : found;
+    const kept = result.takes?.length ? found.filter((r) => keepsUsed(r, source, options, overridden(result))) : found;
     const chars = new Map(kept.map((r) => [r.id, savesChars(source, r) ?? 0]));
     return kept
         .map((r) => suggestion(source, r))
         .filter((s) => RESPELLINGS.has(s.kind) || s.saving > 0)
         .sort((a, b) => b.saving - a.saving || chars.get(b.id) - chars.get(a.id));
 }
-const RESPELLINGS = new Set(['card', 'alias', 'fraction', 'progression']);
+const RESPELLINGS = new Set(['alias', 'fraction', 'progression']);
 const overridden = (r) => (r.takes ?? [])
     .flatMap((u) => u.overrode)
     .sort()
@@ -54,7 +52,6 @@ export function shortenAll(source, rounds = 60, options = {}) {
     const steps = [];
     for (let i = 0; i < rounds; i++) {
         const taken = shorten(now, options)
-            .filter((s) => s.kind !== 'card')
             .map((s) => ({ best: s, next: s.apply(now) }))
             .find(({ next }) => soundsIdentical(now, next, undefined, options));
         if (!taken)

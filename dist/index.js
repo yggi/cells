@@ -21,7 +21,6 @@ export { writeWav } from "./engine/wavfile.js";
 export { EXAMPLES } from "./engine/examples.js";
 export { isPieceFile, lockChanges, lockfileOf, readPiece, textLockfile, withLockfile, writePiece, } from "./engine/piecefile.js";
 export { fileLine, readLiterate, rewrite } from "./engine/literate.js";
-export { movedCard } from "./engine/shorten/card.js";
 export { jacksOf, patch, unpatch, PatchError } from "./engine/patch.js";
 export { codeShifts } from "./engine/program.js";
 export { resetPhysics } from "./engine/physics.js";
