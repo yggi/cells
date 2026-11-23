@@ -116,7 +116,7 @@ export function progressionCandidates(p, operators, result, fixed = p.cadence, d
                 const what = operator === 'third' ? `a third ${n > 0 ? 'up' : 'down'}` : `${Math.abs(n)} degree${Math.abs(n) === 1 ? '' : 's'} ${n > 0 ? 'up' : 'down'}`;
                 out.push({ operator, amounts: [s, n], slots, what: `its chord on step ${s} ${what}` });
             }
-        else if (operator === 'dominant')
+        else if (operator === 'dominant' || operator === 'split')
             p.slots.forEach((slot, s) => {
                 if (!free(s) || slot.length !== 1)
                     return;

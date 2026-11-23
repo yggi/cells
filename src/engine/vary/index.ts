@@ -68,7 +68,7 @@ export type { Reference } from './reference';
 export { THIRDS, PHRASE_BARS } from './progression';
 
 /** The operators: the rhythm ones (rung 1), the pitched ones (rung 2) and the harmony's own (rung 3). */
-export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim' | 'third' | 'dominant' | 'swap' | 'substitute' | 'shift';
+export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim' | 'third' | 'dominant' | 'swap' | 'substitute' | 'shift' | 'split';
 
 /** The operators a frontend gets where it names none, in their order: the rhythm ones. */
 export const RHYTHM_OPERATORS: readonly Operator[] = ['rotate', 'drop', 'add'];
@@ -103,8 +103,19 @@ const LINE_SLOT_OPERATORS: readonly Operator[] = ['swap', 'substitute'];
  */
 export const SHIFT: Operator = 'shift';
 
+/**
+ * One slot split in two halves (#912), the second filled by the level's rule: a pitched line's note and its neighbour n
+ * degrees away, n each of `NEIGHBOURS` (`split &bass 2 1`: `0 ~ 1 2` to `0 ~ [1 2] 2`, an ornament); a progression's
+ * chord and the next chord's secondary dominant (its `dominant` is this split); a form's letter on a grid and each other
+ * letter of the form (`split &chorus 1 2`: `&a &a &b &a` to `&a [&a &b] &b &a`). Asked by name: no level's list holds it.
+ */
+export const SPLIT: Operator = 'split';
+
+/** A split's neighbours on a pitched line, in degrees of its table: the one below and the one above. */
+export const NEIGHBOURS: readonly number[] = [-1, 1];
+
 /** The operators that vary a line of slots (a progression, a form) where a frontend asks for one: none of the lines' own. */
-const SLOT_LEVEL: readonly Operator[] = ['third', 'dominant', 'swap', 'substitute', 'shift'];
+const SLOT_LEVEL: readonly Operator[] = ['third', 'dominant', 'swap', 'substitute', 'shift', 'split'];
 
 /** Transposition's amounts where a frontend names none, in degrees of the table read. */
 export const DEGREES: readonly number[] = [-2, -1, 1, 2];
@@ -276,7 +287,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   const fixedFor = fixedLookup(anchors, keep, options.fixed);
   const lineFixed = new Map(lines.map((l) => [l.name, fixedFor(l.name, l.steps)]));
   const fixedOfLine = (line: Line) => lineFixed.get(line.name)!;
-  const pinned = (line: Line, n: LineNote) => fixedOfLine(line).includes(n.step);
+  const pinned = (line: Line, n: LineNote) => fixedOfLine(line).includes(Math.floor(n.step));
   // (each note's onset in whole notes where its line's grid is the meter's, else its line's own step; its sound, the
   // drum note it strikes or its voice; and what a note is for S2: its onset, length and voice, and a pitched note's pitch)
   const onset = (i: number, step: number) => {
@@ -285,13 +296,15 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   };
   const sound = (voice: string) => String(drumNoteOf(result, voice) ?? voice);
   const pitch = (n: LineNote) => (n.pitch ? ` ${pitchKey(n.pitch)}` : '');
-  const keysOf = (i: number, notes: readonly LineNote[]) => notes.map((n) => `${onset(i, n.step)} ${lines[i]!.stepWhole ?? i} ${n.voice}${pitch(n)}`);
+  // (a half of a step in two, #912, is half its step long)
+  const length = (i: number, n: LineNote) => `${lines[i]!.stepWhole ?? i}${n.half ? '/2' : ''}`;
+  const keysOf = (i: number, notes: readonly LineNote[]) => notes.map((n) => `${onset(i, n.step)} ${length(i, n)} ${n.voice}${pitch(n)}`);
   const strikesOf = (i: number, notes: readonly LineNote[]) => notes.map((n) => `${onset(i, n.step)} ${sound(n.voice)}${pitch(n)}`);
   const places = new Map([...new Set(lines.flatMap((l) => (l.pitched ? [l.pitched.voice] : [])))].map((v, k) => [v, `voice#${k}`]));
   const heardOf = (i: number, notes: readonly LineNote[]): HeardNote[] => {
     const { stepWhole, name } = lines[i]!;
     return notes.map((n) => {
-      const what = `${stepWhole ?? name} ${n.pitch ? `${places.get(n.voice)} ${pitchKey(n.pitch)}` : sound(n.voice)}`;
+      const what = `${stepWhole ?? name}${n.half ? '/2' : ''} ${n.pitch ? `${places.get(n.voice)} ${pitchKey(n.pitch)}` : sound(n.voice)}`;
       return stepWhole === null ? { at: null, key: `${name}@${n.step} ${what}` } : { at: n.step * stepWhole, key: what };
     });
   };
@@ -417,15 +430,19 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
     const ends = line.notes.length >= 2 && !pinned(line, last!);
     // (the line's steps as slots, rests among them, for the slot operators every level shares, `slots.ts`: each step's
     // notes as written, and the steps fixed, the frontend's mask or else the anchored notes')
-    const stepKeys = Array.from({ length: line.steps }, (_, s) => JSON.stringify(line.notes.filter((n) => n.step === s)));
+    const onStep = (s: number) => line.notes.filter((n) => Math.floor(n.step) === s);
+    const stepKeys = Array.from({ length: line.steps }, (_, s) => JSON.stringify(onStep(s).map((n) => ({ ...n, step: n.step - s }))));
     const fixedSteps = fixedOfLine(line);
-    const movedFrom = (from: readonly number[]) => inOrder(from.flatMap((src, t) => line.notes.filter((n) => n.step === src).map((n) => ({ ...n, step: t }))));
+    const movedFrom = (from: readonly number[]) => inOrder(from.flatMap((src, t) => onStep(src).map((n) => ({ ...n, step: t + (n.step - src) }))));
     const levelsFrom = (from: readonly number[]) => levels && levels.map((own, t) => (from[t] === EMPTY ? own : levels[from[t]!]!));
     for (const operator of operators) {
       // (each operator on the lines it is for: the rhythm ones on hits, the pitched ones on pitches, swap and substitute on both)
-      if (!LINE_SLOT_OPERATORS.includes(operator) && [...PITCHED_OPERATORS, SHIFT].includes(operator) !== !!line.pitched) continue;
+      if (!LINE_SLOT_OPERATORS.includes(operator) && [...PITCHED_OPERATORS, SHIFT, SPLIT].includes(operator) !== !!line.pitched) continue;
       // (a line with a held note is moved in pitch alone: reverse, bend and trim would move where its notes fall and end)
       if (line.notes.some((n) => n.hold) && !['transpose', 'invert', 'shift'].includes(operator)) continue;
+      // (a line with a step in halves is moved in pitch and by whole steps alone: a bend, a trim or another split would
+      // read its last note or its step's length as a whole step's)
+      if (line.notes.some((n) => n.half) && ['bend', 'trim', 'split'].includes(operator)) continue;
       if (operator === 'bend') {
         if (ends)
           for (const n of BENDS) {
@@ -445,8 +462,8 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
         offer(i, operator, notes, last!.step, written(line, notes), `its last note, on step ${last!.step}, left out: the one before it held`);
       } else if (operator === 'shift')
         // (one note moved n degrees of its table, each free note by each of `degrees`: `slots.ts`'s shift on the line's steps)
-        for (const { slot, by } of shiftMoves(line.steps, fixedSteps, degrees, (s) => line.notes.some((x) => x.step === s))) {
-          const notes = line.notes.map((x) => (x.step === slot ? { ...x, pitch: moved(x.pitch!, 1, by) } : x));
+        for (const { slot, by } of shiftMoves(line.steps, fixedSteps, degrees, (s) => onStep(s).length > 0)) {
+          const notes = line.notes.map((x) => (Math.floor(x.step) === slot ? { ...x, pitch: moved(x.pitch!, 1, by) } : x));
           offer(
             i,
             operator,
@@ -456,6 +473,17 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
             `its note on step ${slot} ${by > 0 ? 'up' : 'down'} ${Math.abs(by)} degree${Math.abs(by) === 1 ? '' : 's'}`,
             null,
           );
+        }
+      else if (operator === 'split')
+        // (a note split in two halves, the second its neighbour n degrees away: an ornament, #912)
+        for (const { slot, by } of shiftMoves(line.steps, fixedSteps, NEIGHBOURS, (s) => onStep(s).length === 1 && !onStep(s)[0]!.hold)) {
+          const [x] = onStep(slot) as [LineNote];
+          const halves: LineNote[] = [
+            { ...x, half: true },
+            { ...x, step: slot + 0.5, half: true, pitch: moved(x.pitch!, 1, by) },
+          ];
+          const notes = inOrder([...line.notes.filter((n) => n !== x), ...halves]);
+          offer(i, operator, notes, `${slot} ${by}`, written(line, notes), `its note on step ${slot} split, its second half ${by > 0 ? 'above' : 'below'}`, null);
         }
       else if (operator === 'transpose')
         for (const n of degrees) {
@@ -544,7 +572,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   for (const p of progressions) {
     if (!slotLevel || (only && only.line !== p.name)) continue;
     const k = chords.findIndex((h) => h.name === p.name.slice(1));
-    const asked = operators.filter((o) => HARMONY_OPERATORS.includes(o) || o === SHIFT);
+    const asked = operators.filter((o) => HARMONY_OPERATORS.includes(o) || o === SHIFT || o === SPLIT);
     for (const c of progressionCandidates(p, asked, result, fixedFor(p.name, p.slots.length, p.cadence), degrees)) {
       const braid = progressionBraid(c.slots);
       const w = wordsOf(p.name.slice(1));
@@ -578,6 +606,17 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
             const main = f.slots.map((t, s) => (s === slot ? shiftedToken(t, by)! : t));
             offerForm(operator, [slot, by], `its letter on slot ${slot} moved ${by} degree${Math.abs(by) === 1 ? '' : 's'}`, { main });
           }
+      } else if (operator === 'split') {
+        // (a letter split in two halves, its own and then each other letter the form holds: on a form on a grid)
+        if (!f.partner && f.attrs.some((a) => a.startsWith('step=')))
+          for (const s of f.slots.keys()) {
+            if (fixedSlots.includes(s) || !SPLICE_ONE.test(f.slots[s]!)) continue;
+            for (const j of f.slots.keys()) {
+              if (f.slots.indexOf(f.slots[j]!) !== j || f.slots[j] === f.slots[s] || !SPLICE_ONE.test(f.slots[j]!)) continue;
+              const main = f.slots.map((t, k) => (k === s ? `[${t} ${f.slots[j]}]` : t));
+              offerForm(operator, [s, j], `its letter on slot ${s} split, its second half slot ${j}'s`, { main });
+            }
+          }
       } else if (FORM_OPERATORS.includes(operator))
         for (const m of slotMoves(keys, fixedSlots, [operator])) {
           const main = m.from.map((i) => f.slots[i]!);
@@ -608,7 +647,12 @@ function slotsPlayed(
     for (const g of [f, ...(f.partner ? [f.partner] : [])])
       // (its slots, and each moved by each of `degrees`, as a shift writes it)
       for (const token of g.attrs.some((x) => x.startsWith('step='))
-        ? [...g.slots, ...g.slots.flatMap((t) => degrees.map((n) => shiftedToken(t, n)).filter((x): x is string => x !== null))]
+        ? [
+            ...g.slots,
+            ...g.slots.flatMap((t) => degrees.map((n) => shiftedToken(t, n)).filter((x): x is string => x !== null)),
+            // (and each split a form may write: a letter and then another, `[&a &b]`)
+            ...g.slots.flatMap((t) => g.slots.filter((u) => u !== t && SPLICE_ONE.test(t) && SPLICE_ONE.test(u)).map((u) => `[${t} ${u}]`)),
+          ]
         : []) {
         const key = `${g.attrs.join(' ')}|${token}`;
         if (cells.has(key)) continue;
@@ -656,6 +700,9 @@ interface FormSlots {
   readonly main: readonly string[];
   readonly partner?: readonly string[];
 }
+
+/** A letter a form's split may take a half of: a splice of one cell, moved or not (`&a`, `&a^2`). */
+const SPLICE_ONE = /^&[A-Za-z_][A-Za-z0-9_]*(?:\^-?\d+)?$/;
 
 /** A letter moved n degrees, as a sequence writes it: `&a` to `&a^n`, `&a^k` to `&a^(k+n)`; null for any other splice. */
 function shiftedToken(token: string, n: number): string | null {
@@ -731,7 +778,7 @@ export function variationBy(fragment: string, by: string, options: VaryOptions =
 }
 
 /** Every operator, as a `by:` may name it. */
-const OPERATORS: readonly Operator[] = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, ...HARMONY_OPERATORS, SHIFT])];
+const OPERATORS: readonly Operator[] = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, ...HARMONY_OPERATORS, SHIFT, SPLIT])];
 
 /** The variation `drawn` picks of the n `variations` gives; null where there is none. A draw outside [0, 1) is an error. */
 export function varied(fragment: string, draw: number, options?: VaryOptions): Variation | null {
