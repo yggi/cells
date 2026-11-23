@@ -15,6 +15,14 @@ function hashOf(text) {
 }
 const nine = (x) => +x.toPrecision(9);
 const keyed = new WeakMap();
+export function drawSeedOf(result) {
+    const key = drawKeyOf(result);
+    return (cell) => {
+        const c = result.cells.get(cell);
+        return `${c && !c.seeded ? c.seed : 0}|${key(cell)}`;
+    };
+}
+export const keyAsSeed = (key) => parseInt(key, 36);
 export function drawKeyOf(result) {
     const known = keyed.get(result);
     if (known)
@@ -28,6 +36,8 @@ export function drawKeyOf(result) {
         const c = result.cells.get(name);
         if (!c)
             return name;
+        if (c.seeded)
+            return c.seed.toString(36);
         if (seen.has(name))
             return '↺';
         const inner = new Set([...seen, name]);

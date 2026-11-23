@@ -10,7 +10,7 @@ lifted: yggi/cells examples/electroswing.md @ 2c120d4
 &kick role=kick step=4n &bd!4
 &clap role=backbeat step=4n ~ &cp:0:.6 ~ &cp:0:.6
 &hats role=hat step=8n ~ &oh:0:.4 ~ &oh:0:.4 ~ &oh:0:.4 ~ &oh:0:.4
-&ticks role=hat step=16n &hh:0:.2 &hh:0:.2? &hh:0:.2 &hh:0:.2?.7 &hh:0:.2 &hh:0:.2? &hh:0:.2 &hh:0:.2
+&ticks seed=4350651875936865 role=hat step=16n &hh:0:.2 &hh:0:.2? &hh:0:.2 &hh:0:.2?.7 &hh:0:.2 &hh:0:.2? &hh:0:.2 &hh:0:.2
 &ghosts role=ghost step=16n ~ ~ ~ ~ ~ ~ ~ &sd:0:.03
 &groove [&kick, &clap, &hats, &ticks, &ghosts]
 ```

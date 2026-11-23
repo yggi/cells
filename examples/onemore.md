@@ -24,7 +24,7 @@ description: "French filter house, an original: maj7 chords chopped in a funky r
 &robot tags="robot" step=&robBar*2 label="the robot" ~ 12 14 16 ~ 16 14 12 ~ 14 16 17 ~ 16 14 ~ ~ 12 14 16 ~ 19 17 16 14@2 12@2 9@4
 &filt tags="chords" map=lin loop=&bar/32 .06 .3 1 .7 .06
 &beat tags="groove" step=&grooveBar*2 &bd &oh [&bd,&cp] &oh &bd &oh [&bd,&cp] &oh   # four on the floor, the clap on two and four, the open hat between
-&shake tags="groove" step=&grooveBar*4 0? 0?.7 0? 0?.7
+&shake seed=6514111529935391 tags="groove" step=&grooveBar*4 0? 0?.7 0? 0?.7
 
 &keys tags="chords" s=square loop=F3 lpf=200..6500 * &filt lpq=5 env=&strike
 &bass tags="bass" s=square loop=F1 lpf=700 env=&strike

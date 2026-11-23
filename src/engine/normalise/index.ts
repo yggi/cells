@@ -32,6 +32,7 @@ import { libraryCells, libraryLines, libraryTemplates, takenArguments, type Libr
 import { narrowestFroms } from './narrowest';
 import { interfaceNames } from './names';
 import { evenScan, swingClock } from './meter';
+import { seeds } from './seeds';
 import { migrations } from '../migrate';
 
 /** What Normalise reads besides the text: the compile's options, and the library whose lines a piece takes by `use`. */
@@ -65,6 +66,7 @@ export const normalisations =
       ...takenArguments(source),
       ...libraryCells(source, options.library),
       ...narrowestFroms(source, options.resolve),
+      ...seeds(source, result),
     ];
   };
 
