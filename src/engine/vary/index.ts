@@ -181,6 +181,45 @@ const playedBy = (lines: readonly Line[]): ReadonlySet<string> => new Set(lines.
  */
 export const anchorsOf = (fragment: string, workbench?: string, resolve?: Resolve): readonly Anchor[] => read(fragment, workbench, resolve).anchors;
 
+/**
+ * What no operator moves, one shape at every level (decision 052, point 3 and #909): a line's fixed steps, a progression's
+ * or a form's fixed slots. A line the frontend keeps is every step fixed; else the frontend's mask, where it gives one
+ * (`VaryOptions.fixed`); else the level's own anchors: a whole-line anchor (a kick, a backbeat) every step, a pitched
+ * line's roots their steps, and `own` for a line of slots (a progression's cadence, a form's first and last slot).
+ */
+function fixedLookup(anchors: readonly Anchor[], keep: readonly string[], mask: VaryOptions['fixed']): (name: string, n: number, own?: readonly number[]) => number[] {
+  const kept = new Set(keep.map(named));
+  return (name, n, own) => {
+    const every = Array.from({ length: n }, (_, s) => s);
+    if (kept.has(name)) return every;
+    const given = mask?.[name] ?? mask?.[name.slice(1)];
+    if (given) return fixedOf(given, n);
+    if (own) return fixedOf(own, n);
+    const mine = anchors.filter((a) => a.line === name);
+    return mine.some((a) => a.step === undefined)
+      ? every
+      : fixedOf(
+          mine.map((a) => a.step!),
+          n,
+        );
+  };
+}
+
+/**
+ * Every line's fixed steps on its workbench, in the mask's own shape (`VaryOptions.fixed`, #909): its lines', its
+ * progressions' and its forms', as the options give them (the frontend's `keep` and mask, else each level's anchors).
+ * Handed back as the mask, it varies the fragment as it is varied with none: `variations(text, { ...o, fixed: fixedStepsOf(text, o) })`.
+ */
+export function fixedStepsOf(fragment: string, options: VaryOptions = {}): { readonly [line: string]: readonly number[] } {
+  const { lines, anchors, own, progressions, forms } = read(fragment, options.workbench, options.resolve);
+  const fixedFor = fixedLookup(anchors, options.keep ?? [], options.fixed);
+  return Object.fromEntries([
+    ...lines.filter((l) => own.has(l.trigger)).map((l) => [l.name, fixedFor(l.name, l.steps)] as const),
+    ...progressions.map((p) => [p.name, fixedFor(p.name, p.slots.length, p.cadence)] as const),
+    ...forms.map((f) => [f.name, fixedFor(f.name, f.slots.length, FORM_FIXED)] as const),
+  ]);
+}
+
 /** A line's name as an option may write it: `&fill` or `fill`. */
 const named = (name: string) => (name.startsWith('&') ? name : `&${name}`);
 
@@ -223,17 +262,11 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   const operators = only ? [only.operator] : (options.operators ?? RHYTHM_OPERATORS);
   const { lines, anchors, result, own, progressions, forms } = read(fragment, workbench, resolve);
   if (!result) return { notes: null, span: null, bar: null, variations: [] };
-  // (a frontend's mask on a line, by its name: its steps fixed in place of the line's own anchors, a kick's or a root's)
-  const maskOf = (name: string) => options.fixed?.[name] ?? options.fixed?.[name.slice(1)];
-  const lineFixed = (line: Line) => {
-    const mask = maskOf(line.name);
-    return mask ? fixedOf(mask, line.steps) : null;
-  };
-  const left = new Set([...anchors.filter((a) => a.step === undefined && !maskOf(a.line)).map((a) => a.line), ...keep.map(named)]);
-  const pinned = (line: Line, n: LineNote) => {
-    const fixed = lineFixed(line);
-    return fixed ? fixed.includes(n.step) : anchors.some((a) => a.line === line.name && a.step === n.step);
-  };
+  // (what no operator moves, at every level one shape: each line's fixed steps, `fixedLookup`)
+  const fixedFor = fixedLookup(anchors, keep, options.fixed);
+  const lineFixed = new Map(lines.map((l) => [l.name, fixedFor(l.name, l.steps)]));
+  const fixedOfLine = (line: Line) => lineFixed.get(line.name)!;
+  const pinned = (line: Line, n: LineNote) => fixedOfLine(line).includes(n.step);
   // (each note's onset in whole notes where its line's grid is the meter's, else its line's own step; its sound, the
   // drum note it strikes or its voice; and what a note is for S2: its onset, length and voice, and a pitched note's pitch)
   const onset = (i: number, step: number) => {
@@ -268,11 +301,6 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
     ...chords.flatMap((h) => (h.name === name ? notes : h.notes)),
     ...forms.flatMap((f, k) => (f.name.slice(1) === name ? notes : formNotes(f, identity(f), k))),
   ];
-  /** A line of slots' fixed slots: the frontend's mask where it gives one, else the level's own. */
-  const fixedOn = (name: string, n: number, own: readonly number[]) => {
-    const mask = options.fixed?.[name] ?? options.fixed?.[name.slice(1)];
-    return mask ? fixedOf(mask, n) : fixedOf(own, n);
-  };
   const noteKeys = lines.map((l, i) => keysOf(i, l.notes));
   const strikeKeys = lines.map((l, i) => strikesOf(i, l.notes));
   const total = lines.reduce((sum, l) => sum + l.notes.length, 0);
@@ -366,7 +394,8 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   const order = lines
     .map((_, i) => i)
     // (a line of the fragment's own: the workbench's are what it is read on, never varied)
-    .filter((i) => lines[i]!.notes.length > 0 && own.has(lines[i]!.trigger) && !left.has(lines[i]!.name) && (!only || only.line === lines[i]!.name))
+    // (a line every step of which is fixed, a kick's, one the frontend keeps, is left as it is)
+    .filter((i) => lines[i]!.notes.length > 0 && own.has(lines[i]!.trigger) && fixedOfLine(lines[i]!).length < lines[i]!.steps && (!only || only.line === lines[i]!.name))
     .sort((a, b) => first(a)[0] - first(b)[0] || first(a)[1] - first(b)[1]);
   for (const i of order) {
     const line = lines[i]!;
@@ -377,12 +406,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
     // (the line's steps as slots, rests among them, for the slot operators every level shares, `slots.ts`: each step's
     // notes as written, and the steps fixed, the frontend's mask or else the anchored notes')
     const stepKeys = Array.from({ length: line.steps }, (_, s) => JSON.stringify(line.notes.filter((n) => n.step === s)));
-    const fixedSteps =
-      lineFixed(line) ??
-      fixedOf(
-        line.notes.filter((n) => pinned(line, n)).map((n) => n.step),
-        line.steps,
-      );
+    const fixedSteps = fixedOfLine(line);
     const movedFrom = (from: readonly number[]) => inOrder(from.flatMap((src, t) => line.notes.filter((n) => n.step === src).map((n) => ({ ...n, step: t }))));
     const levelsFrom = (from: readonly number[]) => levels && levels.map((_, t) => levels[from[t]!]!);
     for (const operator of operators) {
@@ -446,7 +470,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
         const voice = line.notes[0]!.voice;
         const loudest = line.notes.reduce((a, b) => (b.level > a.level ? b : a));
         for (let step = 0; step < line.steps; step++) {
-          if (lineFixed(line)?.includes(step) || line.notes.some((n) => n.step === step && sound(n.voice) === sound(voice))) continue;
+          if (fixedSteps.includes(step) || line.notes.some((n) => n.step === step && sound(n.voice) === sound(voice))) continue;
           const notes = inOrder([...line.notes, { step, voice, own: loudest.own, level: loudest.level }]);
           const louder = levels && levels.map((t, s) => (s === step ? levels[loudest.step]! : t));
           offer(i, operator, notes, step, written(line, notes, louder), `a ${voice} on step ${step}, as loud as its loudest`);
@@ -497,10 +521,10 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
     out.push({ variation, notes: [...heardKeys.flat(), ...notes] });
   };
   for (const p of progressions) {
-    if (!slotLevel || left.has(p.name) || (only && only.line !== p.name)) continue;
+    if (!slotLevel || (only && only.line !== p.name)) continue;
     const k = chords.findIndex((h) => h.name === p.name.slice(1));
     const asked = operators.filter((o) => HARMONY_OPERATORS.includes(o));
-    for (const c of progressionCandidates(p, asked, result, fixedOn(p.name, p.slots.length, p.cadence))) {
+    for (const c of progressionCandidates(p, asked, result, fixedFor(p.name, p.slots.length, p.cadence))) {
       const braid = progressionBraid(c.slots);
       const w = wordsOf(p.name.slice(1));
       const reference = w && progressionReference(p, c.slots, [...w.head, ...w.attrs, ...braid]);
@@ -517,10 +541,10 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
     }
   }
   for (const [k, f] of forms.entries()) {
-    if (!slotLevel || left.has(f.name) || (only && only.line !== f.name)) continue;
+    if (!slotLevel || (only && only.line !== f.name)) continue;
     const asked = operators.filter((o) => FORM_OPERATORS.includes(o));
     const keys = f.slots.map((_, i) => `${played(f, i)}${f.partner ? `/${played(f.partner, i)}` : ''}`);
-    for (const m of slotMoves(keys, fixedOn(f.name, f.slots.length, FORM_FIXED), asked)) {
+    for (const m of slotMoves(keys, fixedFor(f.name, f.slots.length, FORM_FIXED), asked)) {
       const braids = new Map([[f.name.slice(1), m.from.map((i) => f.slots[i]!)]]);
       if (f.partner)
         braids.set(
