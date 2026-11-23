@@ -59,6 +59,19 @@ Read through a mix of styles, a moving axis is the mix's weighted sum, a still s
 &drift step=1m/8 [0|.25|.5|.75|1]
 ```
 
+An axis may be an offset chain: a sum of the style's own value on it and the levels above it, each a cell (decision 079; #571). A slot of a named style is a term, `&funk[bite]`, and the sum is held to the axis, so past its top or its bottom it is the end:
+
+```cells
+&bar meter("4/4") step=120bpm
+&funk map=style .3 .45 .2 .55
+&mine map=style sync=.3 harm=.45 bite=&bite mood=.55
+&bite [&funk[bite] + &dsong + &dsect]
+&dsong .1
+&dsect step=1m 0 .2 .4 .6
+```
+
+A level that is a number cell (`&dsong -.1`) is a signed offset; a stepped cell with a value below 0 is a bipolar wave, read as a share, its −1…1 as 0…1 (decision 067 §5), so a stepped offset is written from 0 up, or as a number cell.
+
 
 ## A value by name: &x[slot]
 
