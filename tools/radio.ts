@@ -44,7 +44,7 @@ export type Point = Readonly<Record<Axis, number>>;
 
 /** Jambot's eight prototype presets, by their ids in `styles`. */
 export const PRESET_IDS = ['synthPop', 'techno', 'deepHouse', 'ambient', 'lofi', 'funk', 'bossaNova', 'swingJazz'] as const;
-const PRESETS: readonly Style[] = PRESET_IDS.map((id) => STYLES.find((s) => s.id === id)!);
+const PROTOTYPES: readonly Style[] = PRESET_IDS.map((id) => STYLES.find((s) => s.id === id)!);
 
 /** The most an axis moves a section at an entropy of 1 (Jambot's `RADIO.step`; its articulation is cells' bite). */
 export const STEP: Readonly<Record<Axis, number>> = { sync: 0.08, harm: 0.1, bite: 0.1, mood: 0.06 };
@@ -135,7 +135,7 @@ const median = (xs: readonly number[]) => {
 };
 
 /** The preset nearest a point, of the eight. */
-export const nearest = (p: Point): string => nearestStyle(p, { k: 1, styles: PRESETS })[0]!.style.id;
+export const nearest = (p: Point): string => nearestStyle(p, { k: 1, styles: PROTOTYPES })[0]!.style.id;
 
 /** The minutes after which the distance from where it was tuned in is read. */
 export const WALKED_AT = [10, 60, 180] as const;
