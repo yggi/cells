@@ -6,9 +6,12 @@ import { declWords, setBraid } from "../edit.js";
 import { anchorsAmong } from "./anchors.js";
 import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written } from "./lines.js";
 import { referenceOf } from "./reference.js";
+import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionsOf } from "./progression.js";
 export { backbeatOf } from "./anchors.js";
+export { THIRDS, PHRASE_BARS } from "./progression.js";
 export const RHYTHM_OPERATORS = ['rotate', 'drop', 'add'];
 export const PITCHED_OPERATORS = ['transpose', 'invert', 'reverse', 'bend', 'trim'];
+export const HARMONY_OPERATORS = ['rotate', 'reverse', 'third', 'dominant'];
 export const DEGREES = [-2, -1, 1, 2];
 export const BENDS = [-2, -1, 1, 2];
 export const TRIM_FEWEST = 2;
@@ -20,16 +23,23 @@ function read(fragment, workbench = '', resolve) {
     const text = [...bench, fragment].join('\n');
     const result = compileSource(text, undefined, resolve ? { resolve } : {});
     if (!result.ok)
-        return { lines: [], anchors: [], result: null, own };
+        return { lines: [], anchors: [], result: null, own, progressions: [] };
     const lines = linesOf(text, result);
-    return { lines, anchors: anchorsAmong(lines, result), result, own };
+    const progressions = progressionsOf(fragment, result, own, playedBy(lines));
+    const cadences = progressions.flatMap((p) => p.cadence.map((step) => ({ line: p.name, step, reason: 'cadence' })));
+    return { lines, anchors: [...anchorsAmong(lines, result), ...cadences], result, own, progressions };
 }
+const playedBy = (lines) => new Set(lines.flatMap((l) => [l.trigger, l.card.name, ...(l.levels ? [l.levels.cell] : [])]));
 export const anchorsOf = (fragment, workbench, resolve) => read(fragment, workbench, resolve).anchors;
 const named = (name) => (name.startsWith('&') ? name : `&${name}`);
 export const variations = (fragment, options) => readVariations(fragment, options).variations.map((v) => v.variation);
 export function readVariations(fragment, options = {}) {
-    const { workbench, operators = RHYTHM_OPERATORS, keep = [], fewest = 1, degrees = DEGREES, resolve } = options;
-    const { lines, anchors, result, own } = read(fragment, workbench, resolve);
+    return readSome(fragment, options);
+}
+function readSome(fragment, options, only) {
+    const { workbench, keep = [], fewest = 1, degrees = DEGREES, resolve } = options;
+    const operators = only ? [only.operator] : (options.operators ?? RHYTHM_OPERATORS);
+    const { lines, anchors, result, own, progressions } = read(fragment, workbench, resolve);
     if (!result)
         return { notes: null, span: null, bar: null, variations: [] };
     const left = new Set([...anchors.filter((a) => a.step === undefined).map((a) => a.line), ...keep.map(named)]);
@@ -51,12 +61,13 @@ export function readVariations(fragment, options = {}) {
         });
     };
     const heardKeys = lines.map((l, i) => heardOf(i, l.notes));
-    const chords = harmoniesOf(result, own, lines);
+    const chords = harmoniesOf(result, own, lines, progressions);
     const laps = [...lines.map((l) => (l.stepWhole === null ? null : l.steps * l.stepWhole)), ...chords.map((h) => h.lap)];
     const meter = lines.find((l) => l.meter)?.meter ?? chords.find((h) => h.meter)?.meter ?? null;
     const span = laps.length && laps.every((l) => l !== null) ? laps.reduce((a, b) => lcm(a, b)) : null;
     const bar = meter ? meter.pulses / meter.unit : null;
     const fixed = chords.flatMap((h) => h.notes);
+    const fixedBut = (name, notes) => chords.flatMap((h) => (h.name === name ? notes : h.notes));
     const noteKeys = lines.map((l, i) => keysOf(i, l.notes));
     const strikeKeys = lines.map((l, i) => strikesOf(i, l.notes));
     const total = lines.reduce((sum, l) => sum + l.notes.length, 0);
@@ -139,7 +150,7 @@ export function readVariations(fragment, options = {}) {
     };
     const order = lines
         .map((_, i) => i)
-        .filter((i) => lines[i].notes.length > 0 && !left.has(lines[i].name))
+        .filter((i) => lines[i].notes.length > 0 && !left.has(lines[i].name) && (!only || only.line === lines[i].name))
         .sort((a, b) => first(a)[0] - first(b)[0] || first(a)[1] - first(b)[1]);
     for (const i of order) {
         const line = lines[i];
@@ -203,6 +214,38 @@ export function readVariations(fragment, options = {}) {
             }
         }
     }
+    const base = signature(-1, []);
+    const harmonic = !!only || operators.some((o) => o === 'third' || o === 'dominant');
+    const keyOf = (p, slots) => `${base}#${progressions.map((q) => (q === p ? progressionKey(q, slots) : progressionKey(q, q.slots))).join('#')}`;
+    if (progressions.length)
+        seen.add(keyOf(progressions[0], progressions[0].slots));
+    for (const p of progressions) {
+        if (!harmonic || left.has(p.name) || (only && only.line !== p.name))
+            continue;
+        const k = chords.findIndex((h) => h.name === p.name.slice(1));
+        const asked = operators.filter((o) => HARMONY_OPERATORS.includes(o));
+        for (const c of progressionCandidates(p, asked, result)) {
+            const sig = keyOf(p, c.slots);
+            if (seen.has(sig))
+                continue;
+            seen.add(sig);
+            const braid = progressionBraid(c.slots);
+            const w = wordsOf(p.name.slice(1));
+            const amount = c.amounts.length ? ` ${c.amounts.join(' ')}` : '';
+            const variation = {
+                id: `vary:${c.operator}:${p.name}${c.amounts.map((a) => `:${a}`).join('')}:${out.length}`,
+                tool: 'vary',
+                rule: c.operator,
+                title: `${p.name}: ${c.what}`,
+                before: w ? [...w.head, ...w.attrs, ...w.braid].join(' ') : '',
+                after: w ? [...w.head, ...w.attrs, ...braid].join(' ') : '',
+                apply: (source) => setBraid(source, p.name.slice(1), braid),
+                line: p.name,
+                by: `${c.operator} ${p.name}${amount}`,
+            };
+            out.push({ variation, notes: [...heardKeys.flat(), ...fixedBut(p.name.slice(1), progressionNotes(p, c.slots, k))] });
+        }
+    }
     return { notes: [...heardKeys.flat(), ...fixed], span, bar, variations: out };
 }
 function lcm(a, b) {
@@ -210,8 +253,8 @@ function lcm(a, b) {
     const [x, y] = [Math.round(a * 3840), Math.round(b * 3840)];
     return x && y ? ((x / gcd(x, y)) * y) / 3840 : Math.max(a, b);
 }
-function harmoniesOf(result, own, lines) {
-    const played = new Set(lines.flatMap((l) => [l.trigger, l.card.name, ...(l.levels ? [l.levels.cell] : [])]));
+function harmoniesOf(result, own, lines, progressions) {
+    const played = playedBy(lines);
     const out = [];
     for (const name of own) {
         const cell = result.cells.get(name);
@@ -228,8 +271,11 @@ function harmoniesOf(result, own, lines) {
         if (![...at.values()].some((n) => n > 1))
             continue;
         const k = out.length;
-        const notes = events.map((e) => ({ at: e.step * whole, key: `${whole * e.duration} chords#${k} ${e.table}:${e.tableShift}:${e.value}:${e.alter}:${e.transpose ?? 0}` }));
-        out.push({ notes, lap: cell.steps * whole, meter });
+        const p = progressions.find((q) => q.name === `&${name}`);
+        const notes = p
+            ? progressionNotes(p, p.slots, k)
+            : events.map((e) => ({ at: e.step * whole, key: `${whole * e.duration} chords#${k} ${e.table}:${e.tableShift}:${e.value}:${e.alter}:${e.transpose ?? 0}` }));
+        out.push({ name, notes, lap: cell.steps * whole, meter });
     }
     return out;
 }
@@ -258,6 +304,15 @@ export function drawn(draw, n) {
         throw new Error(`varied: draw ${draw} is outside [0, 1)`);
     return Math.floor(draw * n);
 }
+const BY = /^([a-z]+) (&[A-Za-z_][A-Za-z0-9_]*)((?: -?\d+)*)$/;
+export function variationBy(fragment, by, options = {}) {
+    const m = BY.exec(by.trim());
+    if (!m || !OPERATORS.includes(m[1]))
+        return null;
+    const variations = readSome(fragment, options, { line: m[2], operator: m[1] }).variations;
+    return variations.find((v) => v.variation.by === by.trim())?.variation ?? null;
+}
+const OPERATORS = [...new Set([...RHYTHM_OPERATORS, ...PITCHED_OPERATORS, ...HARMONY_OPERATORS])];
 export function varied(fragment, draw, options) {
     drawn(draw, 1);
     const all = variations(fragment, options);
