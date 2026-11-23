@@ -142,10 +142,10 @@ describe('the motifs', () => {
 describe('the points proposed for two more presets (#349)', () => {
   // (the library as it was before them: their new fragments out, and the associations they added to old ones)
   const ADDED: Record<string, StylePoint> = {
-    'swing_meter': ELECTRO_SWING,
+    swing_meter: ELECTRO_SWING,
     walking_bass: ELECTRO_SWING,
     harmonic_minor: SPOOKY,
-    'odd_meter': SPOOKY,
+    odd_meter: SPOOKY,
     'bar(meter="6/8")': { sync: SPOOKY.sync!, harm: SPOOKY.harm!, bite: 0.22 },
     'bar(meter="3/4")': { sync: SPOOKY.sync!, harm: SPOOKY.harm!, bite: 0.38 },
   };

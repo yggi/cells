@@ -112,12 +112,12 @@ describe('the seed files', () => {
       // (and Kinderlied's 4/4 and the three read from the examples', #572)
       // (and Ambient's, its lean on 16n dropped: decision 103)
       bar: [SYNTH_POP, TECHNO, AMBIENT, BOSSA_NOVA, KINDERLIED, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT, BAROQUE, SEA_SHANTY, CHIPTUNE, SALSA, TRIP_HOP],
-      'swing_meter': [BLUES_SHUFFLE, SWING_JAZZ, ELECTRO_SWING],
+      swing_meter: [BLUES_SHUFFLE, SWING_JAZZ, ELECTRO_SWING],
       // (its own point, placed on the old axes at sync .4 harm .9 artic .5 energy .3, moved by decision 076's rule, #572)
-      'odd_meter': [newPoint({ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }), SPOOKY],
-      'lofi_meter': [LO_FI],
+      odd_meter: [newPoint({ sync: 0.4, harm: 0.9, artic: 0.5, energy: 0.3 }), SPOOKY],
+      lofi_meter: [LO_FI],
       // (and near Acid, a second meter behind its plain 4/4, #540)
-      'funk_meter': [DEEP_HOUSE, FUNK, { ...ACID, bite: 0.95 }],
+      funk_meter: [DEEP_HOUSE, FUNK, { ...ACID, bite: 0.95 }],
       synth_pop_drums: [SYNTH_POP],
       techno_drums: [TECHNO],
       deep_house_drums: [DEEP_HOUSE],

@@ -77,11 +77,7 @@ describe('what a query costs', () => {
     ];
     const r = createRepository(LIBRARY);
     const uses = (ids: string[]) => ids.map((id) => ({ id }));
-    const layer = useFragments(
-      r,
-      useFragments(r, EMPTY_LAYER, uses(['meter', 'bossa_nova_drums', 'bossa_nova_clave'])),
-      uses(['funk_meter', 'funk_drums', 'rumba_clave_3_2']),
-    );
+    const layer = useFragments(r, useFragments(r, EMPTY_LAYER, uses(['meter', 'bossa_nova_drums', 'bossa_nova_clave'])), uses(['funk_meter', 'funk_drums', 'rumba_clave_3_2']));
     const n = 20_000;
     const t0 = performance.now();
     for (let i = 0; i < n; i++) {
