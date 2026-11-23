@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&blue from &key style=&(map=style sync=.35 harm=1 bite=.4 mood=.85)
+&blue from &key style=[&swingJazz + &(map=style bite=.1)]
 &blue over=&key step=8n 4 3 2 1 0@2 -2@2
 ```
 

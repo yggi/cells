@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-* from style=&(map=style sync=.2 harm=.9 bite=.25 mood=.3) * .125
+* from style=[&spooky + &(map=style bite=-.05)] * .125
 &padV s=tri loop=C3 env=&(map=adsr 1.5 .5 .8 2) pitch=&(map=lin loop=3 0 .1 0 -.1 0)
 ```
 

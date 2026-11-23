@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&harm from &key style=(&(map=style sync=.2 harm=.9 bite=.25 mood=.3) * .4 | &(map=style sync=.35 harm=.15 bite=.5 mood=.1) * .5)
+&harm from &key style=([&spooky + &(map=style bite=-.05)] * .4 | [&darkAmbient + &(map=style bite=.1)] * .5)
 &harm over=&key step=1m cycle=8 [0,2,4] [2,4,6] [3,5,7] [4,6,8] [5,7,9] [1,3,5] [4,6,8] [0,2,4]
 ```
 
