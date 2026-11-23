@@ -798,12 +798,19 @@ function instantiate(
   // default reads)
   const reached = new Set<string>();
   const byName = new Map(full.flatMap((l) => (l.name ? [[l.name, l] as const] : [])));
+  // (a head's reads are its line's as the copy writes it: an attribute the line sets before `from` replaces the template's,
+  // and a parameter's default only that attribute read is no longer taken, #899)
+  const readsOf = (n: string): readonly string[] => {
+    const l = byName.get(n);
+    if (!l) return [];
+    return heads.includes(n) && from.head.length && one ? lineOf(withAttributes(l.code, from.head)).reads : l.reads;
+  };
   for (const queue = [...heads.filter((h) => names.has(h))]; queue.length;) {
     const n = queue.shift()!;
     if (reached.has(n)) continue;
     reached.add(n);
     if (byReference.has(n)) continue;
-    for (const r of byName.get(n)?.reads ?? []) if (byName.has(r)) queue.push(r);
+    for (const r of readsOf(n)) if (byName.has(r)) queue.push(r);
   }
   // (every other name the copy defines is its own, clear of the level's and of the template's shared ones)
   const prefix = names.get(heads[0]!) ?? [...names.values()][0] ?? heads[0]!;
@@ -840,7 +847,7 @@ function instantiate(
       if (reached.has(n) || overridden.includes(n)) continue;
       reached.add(n);
       if (byReference.has(n)) continue;
-      for (const r of byName.get(n)?.reads ?? []) if (byName.has(r)) queue.push(r);
+      for (const r of readsOf(n)) if (byName.has(r)) queue.push(r);
     }
   }
   // (a braid fill's arguments, as written: each parameter's value, or its default line's braid; 6d writes their core, #749)
