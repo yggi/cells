@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&refrain from &key style=&(map=style sync=.3 harm=.45 bite=.65 mood=.5)
+&refrain from &key style=[&synthPop + &(map=style bite=.1)]
 &refrain over=&key step=8n 2 2 2 4@2 3 2 0
 ```
 

@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&toll from &key style=&(map=style sync=.2 harm=.9 bite=.4 mood=.3)
+&toll from &key style=[&spooky + &(map=style bite=.1)]
 &toll over=&key step=8n 0@4 -3@4
 ```
 

@@ -44,6 +44,27 @@ describe('a declaration line (decision 089)', () => {
     expect(read('&bar from &tempo style=&(map=style .3 .45 .55 .5)', true, 'meter')!.points[0]!.point).toEqual({ sync: 0.3, harm: 0.45, bite: 0.55, mood: 0.5 });
   });
 
+  it('reads a sum, a style moved by an offset: each axis the terms’ sum, held to 0…1 (decision 100)', () => {
+    expect(read('* from style=[&funk + &(map=style bite=.1)]', false)!.points).toEqual([{ point: { ...FUNK, bite: 0.95 }, weight: 1 }]);
+    expect(read('* from style=[&funk + &(map=style bite=.1)] * .5', false)!.points).toEqual([{ point: { ...FUNK, bite: 0.95 }, weight: 0.5 }]);
+    expect(read('* from style=([&techno + &(map=style bite=-.1 sync=.08)] | &funk * .25)', false)!.points).toEqual([
+      { point: { ...TECHNO, sync: 0.2, bite: 0.9 }, weight: 1 },
+      { point: FUNK, weight: 0.25 },
+    ]);
+    // (held to the axis' range: Techno's bite is 1)
+    expect(read('* from style=[&techno + &(map=style bite=.1)]', false)!.points[0]!.point).toEqual(TECHNO);
+    // (two names, and an axis only an offset names: the union)
+    expect(read('* from style=[&(map=style sync=.2) + &(map=style harm=.3)]', false)!.points[0]!.point).toEqual({ sync: 0.2, harm: 0.3 });
+    for (const bad of ['[&funk]', '[&funk + ]', '[&funk + &nope]', '[&funk + &(map=style bite=.1 ± .1)]']) expect(read(`* from style=${bad}`, false)!.problems).toHaveLength(1);
+  });
+
+  it('reads a sum’s named terms on the axes its facet speaks to: a meter’s [&funk + …] leaves Funk’s mood out (decisions 099 and 100)', () => {
+    expect(read('&bar from &tempo style=[&funk + &(map=style bite=.1)]', true, 'meter')!.points[0]!.point).toEqual({ sync: 1, harm: 0.12, bite: 0.95 });
+    // (an inline term is as written, its mood kept; and a facet that speaks to all four reads the name whole)
+    expect(read('&bar from &tempo style=[&funk + &(map=style mood=.1)]', true, 'meter')!.points[0]!.point).toEqual({ sync: 1, harm: 0.12, bite: 0.85, mood: 0.1 });
+    expect(read('&x from &key style=[&funk + &(map=style bite=.1)]', true, 'bass')!.points[0]!.point).toEqual({ ...FUNK, bite: 0.95 });
+  });
+
   it('reads an inline point by name, partial (decision 041) or in order, and keeps a reach, centre ± reach (§6)', () => {
     expect(read('* from style=&(map=style sync=.3 harm=.45)', false)!.points).toEqual([{ point: { sync: 0.3, harm: 0.45 }, weight: 1 }]);
     expect(read('* from style=&(map=style .3 .45 .55 .5)', false)!.points).toEqual([{ point: { sync: 0.3, harm: 0.45, bite: 0.55, mood: 0.5 }, weight: 1 }]);

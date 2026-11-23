@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&dusty from &key style=&(map=style sync=.5 harm=.75 bite=.45 mood=.5)
+&dusty from &key style=[&lofi + &(map=style bite=.1)]
 &dusty over=&key step=8n ~ 0 2 ~ 4 2@3
 ```
 

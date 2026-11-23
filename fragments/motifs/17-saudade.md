@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&saudade from &key style=&(map=style sync=.75 harm=.85 bite=.55 mood=.9)
+&saudade from &key style=[&bossaNova + &(map=style bite=.1)]
 &saudade over=&key step=8n 2 ~ 3 2 ~ 1 0@2
 ```
 
