@@ -105,3 +105,10 @@ describe('every generator’s value arguments read cells alike (decision 101)', 
     same(lines('&k free(3, 1..7)', '&t step=8n euclid(&k, 8)'), '&t step=8n euclid(3, 8)');
   });
 });
+
+describe('a meter filled from a text cell is its meter to every reader (decision 101)', () => {
+  it('a key that reads it as its tonic reads it as it reads meter("…"): no note, its first level a pitch class (#613)', () => {
+    const said = (bar: string) => compiled(lines(bar, '&key scale(dorian, &bar)')).diagnostics.map((d) => [d.severity, d.message]);
+    expect(said(lines('&m "4/4"', '&bar meter(&m) step=104bpm'))).toEqual(said('&bar meter("4/4") step=104bpm'));
+  });
+});

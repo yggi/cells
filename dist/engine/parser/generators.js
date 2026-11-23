@@ -262,8 +262,23 @@ function parseMeter(s, start) {
         s.fail(built, step.at, step.text.length);
     return s.fail(built, start, span.len);
 }
-function meterBraid(sig, stepText, span) {
+export function meterCounts(g) {
+    const { tiers } = meterTiers(g, 1);
+    const out = new Map();
+    for (const t of [...new Set(tiers)].sort((a, b) => a - b)) {
+        const starts = tiers.flatMap((x, k) => (x <= t ? [k] : []));
+        if (!out.has(starts.length))
+            out.set(starts.length, starts.map((at, i) => (starts[i + 1] ?? g.pulses) - at));
+    }
+    return out;
+}
+const COUNTED = /^(.*\S)\s+in\s+([0-9]+)$/;
+function meterBraid(written_, stepText, span) {
+    const counted = COUNTED.exec(written_);
+    const sig = counted ? counted[1] : written_;
     const written = WRITTEN.test(sig);
+    if (counted && written)
+        return `meter("${written_}"): levels say their beats by their marks (+ - : ;), so they are counted as written; "in ${counted[2]}" goes on a signature or sizes ("3/4 in 1")`;
     const grouping = written ? null : groupingOf(sig);
     let sub = 1;
     let stepWhole = null;
@@ -290,7 +305,15 @@ function meterBraid(sig, stepText, span) {
         const starts = [...sig].flatMap((ch, i) => (i === 0 || (ch !== '.' && ch !== ',') ? [i] : []));
         return starts.map((at, i) => (starts[i + 1] ?? sig.length) - at);
     };
-    const signature = grouping ? signatureOf(sig) : stepWhole !== null ? { pulses: sig.length, unit: 1 / stepWhole, beats: beatsOf() } : undefined;
+    let signature = grouping ? signatureOf(sig) : stepWhole !== null ? { pulses: sig.length, unit: 1 / stepWhole, beats: beatsOf() } : undefined;
+    if (counted && grouping && signature) {
+        const n = Number(counted[2]);
+        const counts = meterCounts(grouping);
+        const beats = counts.get(n);
+        if (!beats)
+            return `meter("${written_}"): ${sig} is counted in ${[...counts.keys()].join(', ')} (a tier of its tree: the bar, its beats, the levels between), not ${n}`;
+        signature = { ...signature, beats };
+    }
     const beats = signature ? signature.beats.length : beatsOf().length;
     return { kind: 'list', tokens, span, perBeat: numbers.length / Math.max(1, beats), ...(signature ? { signature } : {}) };
 }
@@ -576,7 +599,7 @@ export const GENERATORS = {
     },
     meter: {
         parse: parseMeter,
-        syntax: syntax('generator', 'meter("sig") · meter("sig", step) · meter("2+2+3") · meter("2+2+3/4") · meter("levels")', `A bar as levels, one per step, its numbers its tiers from the ends: 0 the downbeat, 1 a beat, 2 a half's beat (and any tier between), 3 the eighth, 4 finer. A time signature by rule (contracts/meter v2, decision 072): x/8 and x/16 grouped as the canonical even set of ⌈x/3⌉ groups (7/8 is 3+2+2, 8/8 3+3+2), x/4 and x/2 in beats of the denominator, or in threes where x is a multiple of 3 from 6 (6/4). Its step is a number a pulse or a note value (meter("6/8", 16n)). Groups written as sizes, of eighths or of the denominator after a slash (2+2+3, 2+2+3/4), each 2, 3, 4 or 6. Or levels written out (* the bar, + - : ; beats, . the eighth, , finer), with their step's note value. Of four groups or more, each half's start is the stronger: 4/4 is *.-.+.-. (#17). Its bpm counts beats, its groups. Each argument can be free(…).`, ['&bar meter("4/4", 2) step=100bpm', '&bar meter("6/8") step=60bpm', '&bar meter("2+2+3") step=90bpm', '&bar meter("2/2", 2) step=60bpm', '&bar meter("*.+.+..") step=90bpm'], 'time.md'),
+        syntax: syntax('generator', 'meter("sig") · meter("sig in n") · meter("sig", step) · meter("2+2+3") · meter("2+2+3/4") · meter("levels")', `A bar as levels, one per step, its numbers its tiers from the ends: 0 the downbeat, 1 a beat, 2 a half's beat (and any tier between), 3 the eighth, 4 finer. A time signature by rule (contracts/meter v2, decision 072): x/8 and x/16 grouped as the canonical even set of ⌈x/3⌉ groups (7/8 is 3+2+2, 8/8 3+3+2), x/4 and x/2 in beats of the denominator, or in threes where x is a multiple of 3 from 6 (6/4). Its step is a number a pulse or a note value (meter("6/8", 16n)). Groups written as sizes, of eighths or of the denominator after a slash (2+2+3, 2+2+3/4), each 2, 3, 4 or 6. Or levels written out (* the bar, + - : ; beats, . the eighth, , finer), with their step's note value. Of four groups or more, each half's start is the stronger: 4/4 is *.-.+.-. (#17). Its bpm counts beats, its groups. Each argument can be free(…).`, ['&bar meter("4/4", 2) step=100bpm', '&bar meter("6/8") step=60bpm', '&bar meter("2+2+3") step=90bpm', '&bar meter("2/2", 2) step=60bpm', '&bar meter("*.+.+..") step=90bpm'], 'time.md'),
     },
     spell: {
         parse: parseSpell,

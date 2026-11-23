@@ -32,6 +32,11 @@ export declare function signatureOf(sig: string): Signature;
 /** A meter's grades, one a step (contracts/meter v2): as written, or from its signature or sizes; '' where it is neither. */
 export declare function meterLevels(sig: string, sub: number): string;
 /**
+ * The counts a meter may be counted in (decision 102): for each tier of its tree at or above its pulse, how many nodes
+ * it has, with those nodes' sizes in pulses; the bar's 1 first. 4/4: 1, 2, 4; 3/4: 1, 3; 12/8: 1, 2, 4, 12; 7/8: 1, 2, 3, 7.
+ */
+export declare function meterCounts(g: Grouping): Map<number, number[]>;
+/**
  * What is wrong with even(k, n, phase), or null: k places in n (1 ≤ k ≤ n), its phase a mode, 0 to k − 1. The parser
  * asks it of numbers written, the compiler of numbers read from cells (decision 093).
  */

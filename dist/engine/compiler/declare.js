@@ -19,10 +19,10 @@ export function declare(ctx) {
             decls.set(c.name, c);
     }
     const mainKey = mainKeyOf(decls);
+    meters(ctx, decls);
     tonics(ctx, decls);
     modes(ctx, decls);
     evens(ctx, decls);
-    meters(ctx, decls);
     swings(ctx, decls);
     movingSwings(ctx, decls);
     movingDepths(ctx, decls);
