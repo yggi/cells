@@ -103,17 +103,13 @@ describe('the union of lines', () => {
 describe('the fit', () => {
   const four = bench('meter');
 
-  it('a fragment that uses a name the workbench doesn’t define doesn’t fit, nor one that reads a main key it hasn’t', () => {
+  it('a fragment that uses a name the workbench doesn’t define doesn’t fit, nor one that reads a key it hasn’t', () => {
     const line = '&line step=8n 0 2 4 7 over=&harm\n&out [&line * &lead]\n&lead s=saw loop=C3';
     expect(fitOf(line, four).missing).toEqual(['&harm']);
     expect(fitOf(line, `${four}\n&harm step=1m scale(major, C)`).fits).toBe(true);
     const keyed = '&line step=8n 0 2 4 7 over=&key\n&out [&line * &lead]\n&lead s=saw loop=C3';
     expect(fitOf(keyed, four).missing).toEqual(['&key']);
     expect(fitOf(keyed, `${four}\n&key scale(major, C)`).fits).toBe(true);
-    // (the old way, over=key: the main key, whatever its name)
-    const old = keyed.replace('over=&key', 'over=key');
-    expect(fitOf(old, four).missing).toEqual(['key']);
-    expect(fitOf(old, `${four}\n&chords scale(major, C)`).missing).toEqual([]);
   });
 
   it('a fragment that taps the main meter doesn’t fit a workbench with none', () => {

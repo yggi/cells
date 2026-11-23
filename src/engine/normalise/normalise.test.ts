@@ -79,7 +79,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     // (but an example whose point is the form a rule would rewrite, kept as written: the examples teach, and a rewrite that
     // sounds the same can still teach less — the owner on #668, 2026-11-09)
     for (const [key, p] of Object.entries(EXAMPLES)) {
-      const steps = normalise(p.source, { resolve: resolveSeed, old: true, library: LIBRARY }).steps;
+      const steps = normalise(p.source, { resolve: resolveSeed, library: LIBRARY }).steps;
       expect([key, steps.filter((s) => !KEPT[key]?.test(s))]).toEqual([key, []]);
     }
     // (a meter is open on its tempo, a mode on its tonic (#290); a rhythm on its meter, a bass line on its meter and its
@@ -89,7 +89,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const keyed = `${meter}\n&key scale(major, &tonic)\n&tonic C`;
     const bar = `${keyed}\n&harm over=&key step=1m [0,2,4] [3,5,7]`;
     // (a performer's part and its levels, the score's holes (decision 058), and a form's, filled by a line each; its `use` lines resolved)
-    const compiled = (t: string) => compileSource(t, undefined, { resolve: resolveSeed, old: true });
+    const compiled = (t: string) => compileSource(t, undefined, { resolve: resolveSeed });
     const parts = Object.fromEntries([
       ...['bass', 'pad', 'stab', 'lead'].flatMap((n) => [
         [`&${n}line`, `&${n}line over=&harm step=4n 0 2`],
@@ -121,30 +121,6 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       const text = `${compiled(f.text).ok ? f.text : unionOf(f.text, bench).text}${kit.join('')}${part.join('')}${form}`;
       expect([f.id, compiled(text).ok, normalise(text).steps]).toEqual([f.id, true, []]);
     }
-  });
-
-  it('a use of a retired id as the use it forwards to (#196): the core kit as 13 of gm_kit, the old gm kit as gm_kit', () => {
-    const groove = '&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&out map=sample [&beat]';
-    const thirteen = '&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit';
-    for (const [old, now] of [
-      ['* from "core kit"', thirteen],
-      ['* from "core kit"  # the kit', `${thirteen}  # the kit`],
-      ['&bd, &hh, &sd from "core kit"', '&bd, &hh, &sd from gm_kit'],
-      ['* from "gm kit"', '* from gm_kit'],
-      ['&bd, &hh, &sd from "gm kit"', '&bd, &hh, &sd from gm_kit'],
-    ]) {
-      const { source, steps } = normalise(`${old}\n${groove}`, { resolve: resolveSeed, old: true });
-      // (and then, a collection's use, as its from line, decision 065: the cells of it the groove reads, the narrowest
-      // from, #27, in the order written, or the kit's for a *; a comment stays where it was)
-      const narrowest = now.includes('&hh, &sd') ? '&bd, &hh, &sd' : '&bd, &sd, &hh';
-      expect([old, source]).toEqual([old, `${narrowest} from gm_kit${now.includes('#') ? '  # the kit' : ''}\n${groove}`]);
-      expect(steps.length, old).toBeGreaterThan(0);
-      expect(compileSource(source, undefined, { resolve: resolveSeed, old: true }).diagnostics, old).toEqual([]);
-    }
-    // (a name the forward doesn't give is left as written: the compile says so)
-    expect(normalise(`&agogo from "core kit"\n${groove}`, { resolve: resolveSeed, old: true }).steps).toEqual([]);
-    // (with no resolver, nothing is forwarded)
-    expect(normalise(`* from "core kit"\n${groove}`).steps).toEqual([]);
   });
 
   it('names the interface where the piece names it unambiguously (#196): its meter &bar, its rate &tempo, its key &key, its tonic &tonic', () => {
@@ -226,75 +202,11 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     });
   });
 
-  describe('a second clock folded into the main meter (#668)', () => {
-    // (the texts as written have two meters and a bare tap, read the old way: the first in the text, decision 091)
-    const OLD = { old: true };
-    const voices = '&v s=sine loop=C4\n&mix [&run * &v, &low * &v]';
-    it('tapClock: a clock whose ticks are a tap of the main meter, its readers on that tap, the clock gone', () => {
-      const written = `&bar meter("2/2", 2) step=&tempo\n&tempo step=60bpm\n&sixteenths scan(1 1 1 1) pulse=16n step=&tempo\n&low step=beat 0 4\n&run step=&sixteenths:16n 0 2 4 2\n${voices}`;
-      const { source, steps } = normalise(written);
-      expect(source).toBe(written.replace('&sixteenths scan(1 1 1 1) pulse=16n step=&tempo\n', '').replace('step=&sixteenths:16n', 'step=8n'));
-      expect(steps).toEqual(["&sixteenths's ticks are &bar's: &sixteenths:16n is 8n"]);
-      expect(soundsIdentical(written, source, undefined, OLD)).toBe(true);
-      // (a note about the clock keeps its line)
-      const noted = written.replace('&low step', '&clockNote label="sixteenths" about=&sixteenths\n&low step');
-      expect(normalise(noted).source).toContain('&sixteenths scan(1 1 1 1)');
-    });
-
-    it('tapClock leaves a clock as written where its ticks are no tap, or it has a slider of its own', () => {
-      const clave = `&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&clave scan(3 3 4 3 3) step=pulse*5/4\n&low step=4n 0\n&run step=&clave:pulse 0 2 4 2 0\n${voices}`;
-      expect(normalise(clave).steps.filter((s) => /ticks are/.test(s))).toEqual([]);
-      const slider = `&bar meter("2/2", 2) step=&tempo\n&tempo step=60bpm\n&sixteenths scan(1 1 1 1) pulse=16n step=free(60bpm, 40..80)\n&low step=beat 0 4\n&run step=&sixteenths:16n 0 2 4 2\n${voices}`;
-      expect(normalise(slider).steps.filter((s) => /ticks are/.test(s))).toEqual([]);
-    });
-
-    it('tapClock folds a clock slower than every tap as a chained tap, every k-th tick of the coarsest (#722)', () => {
-      // (a meter at 30 bpm under one at 120: its bar is every 4th bar of the main meter's, 1m/4)
-      const written = `&bar meter("4/4") step=&tempo\n&tempo step=120bpm\n&slow meter("4/4") step=30bpm\n&low step=4n 0 4\n&run step=&slow:1m 0 2\n${voices}`;
-      const { source, steps } = normalise(written);
-      expect(steps).toEqual(["&slow's ticks are &bar's: &slow:1m is 1m/4"]);
-      expect(source).toBe(written.replace('&slow meter("4/4") step=30bpm\n', '').replace('step=&slow:1m', 'step=1m/4'));
-      expect(soundsIdentical(written, source, undefined, OLD)).toBe(true);
-      // (and not where its ticks are no whole count of any tap's: 70 bpm's bar, 24/7 s)
-      expect(normalise(written.replace('step=30bpm', 'step=70bpm')).steps.filter((s) => /ticks are/.test(s))).toEqual([]);
-    });
-
-    it('a slow clock is compared past its first tick, where S1 listens 1200 s alone (#669)', () => {
-      // (a second meter at .0101 bpm under one at .01: their first beats both at 0, where S1 listens; their second at
-      // 5940 s and 6000 s, past it. S1 hears the two as one, its notes of one length; tapClock compares 64 ticks)
-      const v = '&v oneshot=1 s=sine loop=C4 env=&(map=adsr 0 .1 0 .1)\n&mix [&run * &v, &low * &v]';
-      const slow = `&bar meter("4/4") step=.01bpm\n&x meter("4/4") step=.0101bpm\n&low step=4n 0\n&run step=&x:4n 0 1\n${v}`;
-      // (read the old way: a bare tap in a piece of two meters is the first's, decision 091)
-      expect(soundsIdentical(slow, slow.replace('step=&x:4n', 'step=4n'), undefined, { old: true })).toBe(true);
-      expect(normalise(slow).steps.filter((s) => /ticks are/.test(s))).toEqual([]);
-    });
-
-    it('shadowMeter: a second meter on the main one’s own rate, but for its swing, the main meter taking it', () => {
-      const written = `&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&bar2 meter("4/4", 2) step=&tempo swing=8n:2/3\n&low step=4n 0 4 7 4\n&run step=&bar2:8n 0 2 4 2\n${voices}`;
-      const { source, steps } = normalise(written);
-      expect(source).toBe(
-        written
-          .replace('&bar meter("4/4") step=&tempo', '&bar meter("4/4") step=&tempo swing=8n:2/3')
-          .replace('&bar2 meter("4/4", 2) step=&tempo swing=8n:2/3\n', '')
-          .replace('step=&bar2:8n', 'step=8n'),
-      );
-      expect(steps).toHaveLength(1);
-      expect(soundsIdentical(written, source, undefined, OLD)).toBe(true);
-      // (two sliders never become one: a second meter with its own free() rate stays)
-      const own = written
-        .replace('&tempo step=100bpm', '&tempo step=free(100bpm, 60..140)')
-        .replace('&bar2 meter("4/4", 2) step=&tempo', '&bar2 meter("4/4", 2) step=free(100bpm, 60..140)');
-      expect(normalise(own).steps.filter((s) => /&bar2 is/.test(s))).toEqual([]);
-    });
-  });
-
   it('names nothing it could name two ways, or that is taken, or that has no value of its own', () => {
     const tune = (over: string) => `&tune over=${over} step=8n 0 2 4 2\n&lead s=saw loop=C4\n&mix [&tune * &lead]`;
-    // (two meters, each a clock: which is the bar? Two keys: which is the key? A key's scan is no meter. The second meter's
-    // rate is no tap of the first's: at 72 bpm its beat would be 96's half-note triplet, a tap, and folded in, #668)
-    const two = `&a scan(1 1 1 1) step=96bpm\n&b scan(1 1 1) step=70bpm\n&x scale(major, C)\n&y scale(minor, A)\n${tune('&x')}\n&t2 over=&y step=&b 0 2`;
-    // (the second is derived from the first, decision 095, and that is all: neither is named the piece's)
-    expect(normalise(two).steps.filter((t) => /is the piece's|tempo|tonic/.test(t))).toEqual([expect.stringContaining('&b is a second meter with a tempo of its own')]);
+    // (two keys: which is the key? A key's scan is no meter)
+    const two = `&a scan(1 1 1 1) step=96bpm\n&x scale(major, C)\n&y scale(minor, A)\n${tune('&x')}\n&t2 over=&y step=8n 0 2`;
+    expect(normalise(two).steps.filter((t) => /is the piece's key|tonic/.test(t))).toEqual([]);
     // (a name taken by a cell of another job)
     const taken = `&m scan(1 1 1 1) step=96bpm\n&bar s=sine loop=C2\n&tempo s=sine loop=C3\n${tune('scale(major)')}`;
     expect(normalise(taken).steps.filter((t) => /&m is|tempo/.test(t))).toEqual([]);
@@ -390,7 +302,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
 });
 
 describe('Normalise’s rules reach one text in any order (#729, law L15)', () => {
-  const OLD = { resolve: resolveSeed, library: LIBRARY, old: true };
+  const OLD = { resolve: resolveSeed, library: LIBRARY };
   /** Normalise with each round's rewrites tried last first. */
   const backwards = (text: string) => rewriteAll(text, (s, r) => [...normalisations(OLD)(s, r)].reverse(), ROUNDS, OLD);
   const forwards = (text: string) => normalise(text, OLD);

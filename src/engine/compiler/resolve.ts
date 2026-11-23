@@ -4,9 +4,8 @@ import { isNote, type Atom, type CellDecl, type Expr, type Span, type Token } fr
 import { footOf, innerSteps, leaves } from '../subseq';
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps, type ResolvedCell, type Unit } from '../program';
 import { VOICE_MAKERS } from '../attributes';
-import { gmDrumNote } from '../midi';
 import { scan as scanOf } from '../../theory/modes';
-import { beatCount, bentSteps, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel, type Meter } from '../meter';
+import { beatCount, bentSteps, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withPulse, withSwing, bareSwingLevel, type Meter } from '../meter';
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from './tables';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';
@@ -17,13 +16,12 @@ import { styleRefs } from './bindings';
 class Abort extends Error {}
 
 /**
- * The Meter a braid is written as: meter(…) (a list of levels, with perBeat) or scan(…); none otherwise. beat=n on it
- * states n equal beats (decision 040, retired by #502 and read for Migrate: `meter("4/4") beat=2`, now `meter("2/2", 2)`); swing= leans its levels (#18), a bare one the
- * level of its own steps.
+ * The Meter a braid is written as: meter(…) (a list of levels, with perBeat) or scan(…); none otherwise. swing= leans its
+ * levels (#18), a bare one the level of its own steps.
  */
 function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing' | 'legato' | 'swingMoves'>): Meter | null {
   const { braid: b, params } = d;
-  const { beat, pulse } = params;
+  const { pulse } = params;
   const written =
     b.kind === 'scan'
       ? meterOfScan(b.steps)
@@ -36,9 +34,8 @@ function meterOf(d: Pick<CellDecl, 'braid' | 'params' | 'swing' | 'legato' | 'sw
   // (pulse= on a scan: the note value of its entries, decision 040)
   const whole = b.kind === 'scan' && typeof pulse === 'string' ? noteValue(pulse) : null;
   const m = written && whole ? withPulse(written, whole) : written;
-  const beaten = m && typeof beat === 'number' && beat > 0 ? withBeats(m, beat) : m;
   // (legato= by level, #94: its lines' default share)
-  const felt = beaten && d.legato ? { ...beaten, legato: d.legato.flatMap((l) => (noteValue(l.level) === null ? [] : [{ ...l, whole: noteValue(l.level)! }])) } : beaten;
+  const felt = m && d.legato ? { ...m, legato: d.legato.flatMap((l) => (noteValue(l.level) === null ? [] : [{ ...l, whole: noteValue(l.level)! }])) } : m;
   if (!felt || typeof params.swing !== 'number') return felt;
   const levels = (d.swing ?? [{ level: bareSwingLevel(felt) ?? '', share: params.swing }]).flatMap((l) => {
     const whole = noteValue(l.level);
@@ -234,8 +231,7 @@ export function resolveCells(ctx: Ctx, { decls, implicit, implicitRoot, overOk, 
       ...(b.kind === 'scan' && b.phaseCell && d.over ? { phase: { cell: b.phaseCell.name, k: b.phaseCell.k, n: b.phaseCell.n, key: d.over.name } } : {}),
       off: d.off,
       oneshot: !!d.oneshot,
-      // (read the old way, a drum's General MIDI name gives its note where it writes none: Migrate writes it, decision 075)
-      ...(d.drumNote !== undefined ? { drumNote: d.drumNote } : ctx.parsed.old && gmDrumNote(d.name) !== null ? { drumNote: gmDrumNote(d.name)! } : {}),
+      ...(d.drumNote !== undefined ? { drumNote: d.drumNote } : {}),
       glide: typeof d.params.glide === 'number' && d.params.glide > 0 ? d.params.glide : 0,
       children,
       steps,

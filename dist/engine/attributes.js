@@ -90,13 +90,6 @@ export const PARAMS = {
         value: 'number',
         on: ['card'],
     },
-    beat: {
-        help: 'on a meter, retired (#502): how many beats it counted, equal; a meter counts its beats by its signature or its levels (meter("2/2", 2): alla breve)',
-        doc: 'time.md',
-        value: 'number',
-        on: ['clock'],
-        old: 'the signature: meter("2/2", 2)',
-    },
     pulse: {
         help: 'on a scan: the note value of its entries (pulse=16n: sixteenths) — its beats then count quarters, and its taps read note values by it',
         doc: 'time.md',
@@ -169,9 +162,6 @@ export const PARAMS = {
         value: 'word',
         form: 'role=kick (kick, backbeat, ghost, hat, pedal, euclid, ostinato, clave or fill)',
     },
-    trigger: { help: 'a gate, the old spelling of play=: the notes it plays (trigger=&tune)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'play=' },
-    gate: { help: 'a gate, the old spelling: a level over time, one factor of level= (gate=&duck)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
-    velocity: { help: 'a gate, the old spelling: a level, one factor of level= (velocity=&accent)', doc: 'mix.md', value: 'cell', on: ['gate'], old: 'level=' },
     gain: {
         help: 'on a voice: its own gain, dough’s, times every gain it is played at (1 by default, a negative one inverts the phase; a kit member’s balance); on a gate written the old way (trigger=): the number in level=',
         doc: 'sound.md',
@@ -200,7 +190,7 @@ export const PARAMS = {
         stub: true,
     },
     law: {
-        help: 'a law that computes the notes, the old spelling: &cycle from five_to_twelve &day takes it now (decision 085)',
+        help: 'a law that computes the notes: written by a built-in plugin-fragment’s block (decision 085); a piece takes it with &cycle from five_to_twelve &day',
         doc: 'time.md',
         value: 'word',
         on: ['law'],

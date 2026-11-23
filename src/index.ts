@@ -76,7 +76,7 @@ export {
   type UsedPair,
   type WeightedPoint,
 } from './repository/fragments';
-export { canonicalText, fileFragment, sameText, usedTogether, useFragments, renamedLayer, type Filed, type Filing, type Use } from './repository/learned';
+export { canonicalText, fileFragment, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
 export { AXES, AXIS_NAMES, SLOTS, type Axis } from './engine/style';
 export { styleAt } from './engine/styleat';
 export {

@@ -25,7 +25,7 @@ const BAND = '&lead map=role part=lead &violin\n&comp map=role &violin2 &viola\n
 // (a bar is two seconds)
 const BAR = 2;
 
-const compiled = (src: string) => compileSource(PIECE + src, undefined, { resolve: resolveSeed, old: true });
+const compiled = (src: string) => compileSource(PIECE + src, undefined, { resolve: resolveSeed });
 const played = (src: string, bars = 4) => {
   const r = compiled(src);
   // (each note as its voice, one a player, its onset and its pitch)
@@ -113,7 +113,7 @@ describe('a band: a selector over the performers (decision 061)', () => {
         '&hear map=sample [&bassOut]',
       ].join('\n');
     const at = (src: string) => {
-      const r = compileSource(src, undefined, { resolve: resolveSeed, old: true });
+      const r = compileSource(src, undefined, { resolve: resolveSeed });
       expect(r.diagnostics.map((d) => d.message)).toEqual([]);
       return eventsBetween(plan(r, codeShifts(r)), 0, 4 * BAR - 1e-9).map((e) => `${Math.round(e.at * 1e4) / 1e4} ${Math.round(e.freq * 100) / 100}`);
     };

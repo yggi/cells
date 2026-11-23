@@ -31,10 +31,8 @@ import { aliases, filterModels } from './aliases';
 import { libraryCells, libraryLines, libraryTemplates, takenArguments, type LibraryFragment } from './library';
 import { narrowestFroms } from './narrowest';
 import { interfaceNames } from './names';
-import { evenScan, shadowMeter, swingClock, tapClock } from './meter';
+import { evenScan, swingClock } from './meter';
 import { migrations } from '../migrate';
-import { mainMeters } from '../migrate/mainmeter';
-import { oneRoot } from '../migrate/oneroot';
 
 /** What Normalise reads besides the text: the compile's options, and the library whose lines a piece takes by `use`. */
 export interface NormaliseOptions extends CompileOptions {
@@ -51,15 +49,12 @@ export const normalisations =
     const naming = new Set(
       names.flatMap((r) => (r.rule === 'bar' ? [result.mainMeter] : r.rule === 'tempo' ? ['bar'] : r.rule === 'key' ? [result.mainKey] : r.rule === 'tonic' ? ['key'] : [])),
     );
-    // (and once a second clock is folded into the root, where one will be: the fold is what leaves the piece one meter,
-    // whose tempo is then named; until then the root's line waits)
-    const folds = [...swingClock(source, result), ...shadowMeter(source, result), ...tapClock(source, result, options)];
+    // (and once a clock of two is folded into the main meter as its swing, where one will be: the fold is what leaves the
+    // piece one meter, whose tempo is then named; until then the root's line waits)
+    const folds = swingClock(source, result);
     if (folds.length && result.mainMeter) naming.add(result.mainMeter);
     return [
-      // (but a migration exact only against an older meaning: in a valid text it would change what the text says, #75)
-      // (and but naming a bare tap's meter, decision 091: last, after a second clock is folded into the main meter, so a
-      // piece left with one meter keeps its taps bare)
-      ...migrations(options)(source, result).filter((r) => !r.exact && r.rule !== 'main meter' && r.rule !== 'one root'),
+      ...migrations(options)(source, result),
       ...names,
       ...evenScan(source, result),
       ...folds,
@@ -70,14 +65,12 @@ export const normalisations =
       ...takenArguments(source),
       ...libraryCells(source, options.library),
       ...narrowestFroms(source, options.resolve),
-      ...oneRoot(source, result),
-      ...mainMeters(source, result),
     ];
   };
 
 /** A text in the canonical spelling, one rewrite at a time, each playing the same notes; the steps are what each did. */
 export const normalise = (source: string, options?: NormaliseOptions): { source: string; steps: string[] } => {
-  // (it writes every migration before its own rules, for a minor version: a retired form is read the old way)
+  // (it writes Migrate's rule before its own: a `from` line is read the old way)
   const old = { ...options, old: true };
   return rewriteAll(source, normalisations(old), ROUNDS, old);
 };

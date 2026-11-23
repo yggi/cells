@@ -31,7 +31,7 @@ export { formOf, readsOf } from "./engine/reads.js";
 export { outlineOf } from "./engine/outline.js";
 export { takeIn } from "./engine/takein.js";
 export { createRepository, EMPTY_LAYER, layerProblems, pointDistance, } from "./repository/fragments.js";
-export { canonicalText, fileFragment, sameText, usedTogether, useFragments, renamedLayer } from "./repository/learned.js";
+export { canonicalText, fileFragment, sameText, usedTogether, useFragments } from "./repository/learned.js";
 export { AXES, AXIS_NAMES, SLOTS } from "./engine/style.js";
 export { styleAt } from "./engine/styleat.js";
 export { CONTRACT_WIDTHS, feelOf, played, readerOf, readingOf, } from "./engine/perform/feel.js";

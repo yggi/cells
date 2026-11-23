@@ -3,9 +3,8 @@ import { isNote } from "../ast.js";
 import { footOf, innerSteps, leaves } from "../subseq.js";
 import { DEFAULT_FREQ, MAX_SPLICE_DEPTH, ROOT, pickProblem, pickSteps } from "../program.js";
 import { VOICE_MAKERS } from "../attributes.js";
-import { gmDrumNote } from "../midi.js";
 import { scan as scanOf } from "../../theory/modes.js";
-import { beatCount, bentSteps, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withBeats, withPulse, withSwing, bareSwingLevel } from "../meter.js";
+import { beatCount, bentSteps, meterOfLevels, meterOfScan, noteValue, stepsPerPulse, withPulse, withSwing, bareSwingLevel } from "../meter.js";
 import { gridSteps, lengthOf as lengthIn, tableOf, unitsOf as unitsIn } from "./tables.js";
 import { notesCells } from "./sorts.js";
 import { styleRefs } from "./bindings.js";
@@ -13,7 +12,7 @@ class Abort extends Error {
 }
 function meterOf(d) {
     const { braid: b, params } = d;
-    const { beat, pulse } = params;
+    const { pulse } = params;
     const written = b.kind === 'scan'
         ? meterOfScan(b.steps)
         : b.kind === 'list' && b.perBeat !== undefined
@@ -21,8 +20,7 @@ function meterOf(d) {
             : null;
     const whole = b.kind === 'scan' && typeof pulse === 'string' ? noteValue(pulse) : null;
     const m = written && whole ? withPulse(written, whole) : written;
-    const beaten = m && typeof beat === 'number' && beat > 0 ? withBeats(m, beat) : m;
-    const felt = beaten && d.legato ? { ...beaten, legato: d.legato.flatMap((l) => (noteValue(l.level) === null ? [] : [{ ...l, whole: noteValue(l.level) }])) } : beaten;
+    const felt = m && d.legato ? { ...m, legato: d.legato.flatMap((l) => (noteValue(l.level) === null ? [] : [{ ...l, whole: noteValue(l.level) }])) } : m;
     if (!felt || typeof params.swing !== 'number')
         return felt;
     const levels = (d.swing ?? [{ level: bareSwingLevel(felt) ?? '', share: params.swing }]).flatMap((l) => {
@@ -207,7 +205,7 @@ export function resolveCells(ctx, { decls, implicit, implicitRoot, overOk, stack
             ...(b.kind === 'scan' && b.phaseCell && d.over ? { phase: { cell: b.phaseCell.name, k: b.phaseCell.k, n: b.phaseCell.n, key: d.over.name } } : {}),
             off: d.off,
             oneshot: !!d.oneshot,
-            ...(d.drumNote !== undefined ? { drumNote: d.drumNote } : ctx.parsed.old && gmDrumNote(d.name) !== null ? { drumNote: gmDrumNote(d.name) } : {}),
+            ...(d.drumNote !== undefined ? { drumNote: d.drumNote } : {}),
             glide: typeof d.params.glide === 'number' && d.params.glide > 0 ? d.params.glide : 0,
             children,
             steps,

@@ -75,13 +75,6 @@ export function withPulse(m: Meter, whole: number): Meter {
 /** How many beats a meter's bpm counts in a bar: one each (7/8: three, unequal), or a scan's beats of `pulse=` (276¼). */
 export const beatCount = (m: Meter): number => m.counted ?? Math.max(1, m.beats.length);
 
-/** beat=n on a meter, retired (#502) and still read for Migrate: n equal beats over its pulses, in place of the beats it was written with (`meter("4/4") beat=2`, now `meter("2/2", 2)`). */
-export function withBeats(m: Meter, n: number): Meter {
-  const k = Math.max(1, Math.round(n));
-  const { counted: _, ...rest } = m;
-  return { ...rest, beats: Array.from({ length: k }, () => m.pulses / k) };
-}
-
 /**
  * A bent meter's steps (decision 080) at a depth (decision 081): over the bars its table spans, each of the level's nodes
  * the table's next length raised to the depth (1 as written, 0 even, -1 inverted), its `per` steps even within it; and

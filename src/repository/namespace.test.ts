@@ -3,12 +3,12 @@
 import { describe, expect, it } from 'vitest';
 import { EXAMPLES } from '../engine/examples';
 import { RENAMED_IDS } from '../engine/renamed';
-import { RETIRED, resolveSeed } from './library';
+import { resolveSeed } from './library';
 import { SEED } from './seed';
 
 describe('one namespace for pieces and fragments', () => {
-  it('no example key is a fragment id, a renamed id or a retired one', () => {
-    const ids = new Set([...SEED.map((f) => f.fragment.id), ...RENAMED_IDS.keys(), ...RETIRED.keys()]);
+  it('no example key is a fragment id or a renamed id', () => {
+    const ids = new Set([...SEED.map((f) => f.fragment.id), ...RENAMED_IDS.keys()]);
     expect(Object.keys(EXAMPLES).filter((k) => ids.has(k))).toEqual([]);
   });
   it('resolves every example by its key, as the piece it is', () => {

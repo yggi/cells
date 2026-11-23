@@ -12,7 +12,6 @@
  *   values.ts      step= / loop= (rates, units, clocks) and map= (kinds, grids, tables)
  *   mix.ts         a mix chord, kept as an expression (compile types it: algebra.ts)
  */
-import { restyled } from '../migrate/axes';
 import { applyBases } from './base';
 import { isNote } from '../ast';
 import { isPieceFile, readPiece } from '../piecefile';
@@ -27,8 +26,8 @@ export { groupingOf, meterLevels } from './generators';
 export { SHOWS } from './cell';
 export { readFrom, USE_RETIRED, type FromForm } from './use';
 
-/** A text, parsed; `old` reads a retired form (`beat=`, a meter's own `step=&bar`) with a warning, where it is otherwise an error (`CompileOptions.old`). */
-export function parse(whole: string, { old = false }: { readonly old?: boolean } = {}): ParseResult {
+/** A text, parsed. */
+export function parse(whole: string): ParseResult {
   const cells: CellDecl[] = [];
   const takes: TakeLine[] = [];
   const offers: string[] = [];
@@ -53,17 +52,7 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
   });
   if (carry) lines.push(carry);
   lines.forEach(({ text: written, line: lineNo, parts }) => {
-    // (a style on the axes before decision 076, read the old way only for Migrate, as Migrate writes it: migrate/axes.ts)
-    const restyle = old ? restyled(written) : null;
-    if (restyle !== null) {
-      const col = written.search(/\S/);
-      diagnostics.push({
-        severity: 'warning',
-        message: `a style on the axes before v0.23.0 (sync harm artic energy): its axes are sync harm bite mood, bite its articulation and energy off the point (decision 076); Migrate rewrites it`,
-        span: { line: lineNo, col: col + 1, len: written.trimEnd().length - col },
-      });
-    }
-    const text = restyle ?? written;
+    const text = written;
     const s: LineScanner = new LineScanner(text, lineNo, 0, [], parts, diagnostics, 0, parseBody);
     if (s.done()) return;
     // a use line (decisions 054, 059): retired, an error, read the old way or not (#588)
@@ -108,14 +97,6 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
         s.i = start;
         const decl = parseCell(s);
         cells.push(decl, ...s.lambdas);
-        // (beat= is retired, #502: a meter counts its beats by its signature, 2/2, 3/8, or its written levels; read the old
-        //  way only for Migrate, which writes the meter that counts them)
-        if (decl.params.beat !== undefined)
-          diagnostics.push({
-            severity: old ? 'warning' : 'error',
-            message: `beat= is retired: a meter counts its beats by its signature or its levels (meter("4/4") beat=2 is meter("2/2", 2); a waltz in one, meter("*..", 4n)); Migrate rewrites it`,
-            span: decl.paramSpans?.beat ?? decl.span,
-          });
       } else s.fail(`A line declares a cell: &name …`, start, word.length);
     } catch (e) {
       if (!(e instanceof LineError)) throw e;
@@ -125,7 +106,7 @@ export function parse(whole: string, { old = false }: { readonly old?: boolean }
     }
   });
   // (base=: each copy resolved into a plain cell, decision 026)
-  return applyBases({ cells, diagnostics, broken, plugins, ...(takes.length ? { takes } : {}), ...(offers.length ? { offers } : {}), ...(old ? { old } : {}) });
+  return applyBases({ cells, diagnostics, broken, plugins, ...(takes.length ? { takes } : {}), ...(offers.length ? { offers } : {}) });
 }
 
 /**

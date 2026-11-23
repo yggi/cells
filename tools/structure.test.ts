@@ -19,6 +19,6 @@ describe('tools/structure.ts: npm run structure, its inputs', () => {
     expect(textOf(path)).toBe('&a step=4 0 2\n&b step=4 4 5');
   });
   it('a .cells file is its text', () => {
-    expect(structureOf(textOf('fixtures/bwv847-generated.cells')).total).toBe(1397);
+    expect(structureOf(textOf('fixtures/bwv847-generated.cells')).total).toBe(1396);
   });
 });

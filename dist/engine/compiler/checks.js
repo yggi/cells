@@ -4,7 +4,6 @@ import { notesCells, sortOfCells } from "./sorts.js";
 import { FILTER_MODELS, filterModel, MOVING_PARAMS } from "../attributes.js";
 import { DOUGH_SOURCES } from "../dough-params.js";
 import { refsOf } from "../readers.js";
-import { gmDrumNote } from "../midi.js";
 import { leaves } from "../subseq.js";
 export function checkCells(ctx, decls, cells, sections = new Map(), bands = new Map()) {
     const { error, warn, unknownCell } = ctx;
@@ -13,32 +12,6 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
         if (t?.meter)
             warn(`&${t.name} is a meter: a key's tonic is a note (&tonic D); a meter's first level is read as its pitch class`, d.tonic.span);
     }
-    const told = new Set();
-    for (const c of cells.values()) {
-        if (!c.kit)
-            continue;
-        for (const u of c.units) {
-            const name = u.atom.kind === 'ref' ? u.atom.name : null;
-            const d = name === null ? undefined : decls.get(name);
-            const gm = name === null ? null : gmDrumNote(name);
-            if (!d || gm === null || d.drumNote !== undefined || told.has(name) || !cells.get(name)?.voice)
-                continue;
-            told.add(name);
-            warn(`&${name} is named as General MIDI's drum ${gm}, and a name gives no note: write &${name} note=${gm} (Migrate writes it, decision 075)`, d.span);
-        }
-    }
-    if (ctx.parsed.old)
-        for (const d of decls.values()) {
-            const c = cells.get(d.name);
-            if (!c || c.voice)
-                continue;
-            const part = ['bass', 'pad', 'stab', 'lead'].includes(d.name) && c.params.part === undefined;
-            const role = ['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'clave', 'fill'].includes(d.name) && c.params.role === undefined && !c.map;
-            if (part)
-                warn(`&${d.name} is named as the feel's part ${d.name}, and a name gives none now: write &${d.name} part=${d.name} (Migrate writes it, decision 075)`, d.span);
-            else if (role)
-                warn(`&${d.name} is named as the feel's drum role ${d.name}, and a name gives none now: write &${d.name} role=${d.name} (Migrate writes it, decision 075)`, d.span);
-        }
     for (const c of cells.values()) {
         const span = (k) => decls.get(c.name)?.paramSpans?.[k] ?? decls.get(c.name).span;
         if (typeof c.params.body === 'string' && !(c.params.body in BODIES))
@@ -197,12 +170,6 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
         if (d.oneshot && cells.get(d.name) && !cells.get(d.name).voice)
             warn(`oneshot=1 is a voice's: &${d.name} is no voice, so it does nothing (put it on the voice that plays its notes)`, d.span);
     for (const d of decls.values()) {
-        const own = cells.get(d.name)?.cycle ?? 0;
-        if (d.step?.kind !== 'driven' || d.cycle === null || d.map || own < 2 || d.cycle < own || d.cycle % own !== 0)
-            continue;
-        warn(`cycle=${d.cycle} on &${d.name} counts laps: ${d.cycle} of its ${own} steps. Written before v0.16, when it counted steps, it says cycle=${d.cycle / own} (Migrate rewrites it, decision 040)`, d.paramSpans.cycle ?? d.span);
-    }
-    for (const d of decls.values()) {
         for (const [key, r] of [
             ['env', d.env],
             ['pitch', d.pitch],
@@ -254,7 +221,7 @@ export function checkCells(ctx, decls, cells, sections = new Map(), bands = new 
             else if (d.map.steps !== null)
                 warn(`cycle=${d.cycle} does nothing on a grid whose map says its size (map=${d.map.period === 2 ? 'edo' : 'ed'}(${d.map.steps}…)): leave it out`, span);
             else
-                warn(`cycle= on a grid is the old way: its size is its map's, map=${map} (Migrate rewrites it)`, span);
+                error(`a grid's size is its map's, map=${map}: cycle= does not say it`, span);
         }
     }
     for (const d of decls.values()) {

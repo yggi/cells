@@ -17,11 +17,6 @@ export function withPulse(m, whole) {
     return { ...m, unit, beats, counted: m.pulses / per };
 }
 export const beatCount = (m) => m.counted ?? Math.max(1, m.beats.length);
-export function withBeats(m, n) {
-    const k = Math.max(1, Math.round(n));
-    const { counted: _, ...rest } = m;
-    return { ...rest, beats: Array.from({ length: k }, () => m.pulses / k) };
-}
 export function bentSteps(table, per, nodes, bars, depth = 1) {
     const positions = [];
     let at = 0;

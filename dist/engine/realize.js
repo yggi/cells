@@ -477,7 +477,7 @@ function lawLap(st, lap) {
     });
     const product = [st.head, ...st.levels, 'lapVoice'].map((n) => `&${n}`).join(' * ');
     const text = `${lines.join('\n')}\n&lapVoice s=sine loop=C4\n&lapOut map=sample [${product}]`;
-    const result = compile(parse(text, { old: false }), DEFAULT_ENV);
+    const result = compile(parse(text), DEFAULT_ENV);
     if (!result.ok)
         throw new Error(`${st.law.fragment}, lap ${k}: ${result.diagnostics.map((d) => d.message).join('; ')}`);
     const shifts = codeShifts(result);

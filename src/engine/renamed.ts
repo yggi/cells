@@ -4,10 +4,9 @@
  * `diatonic(mode=aeolian)`, how a `from` line takes it and a query answers). The rule: lower case; spaces, `-` and `/` as `_`; parentheses dropped; an id that would start with a digit (each
  * is a meter) after `meter_`. So a `from` line names every seed bare (`&bar from meter_4_4_swung_on_8n &tempo`).
  *
- * An old id still reads for one minor version: the seed library resolves it to the same text as its word, so a piece's
- * notes and its lockfile's hashes don't move. A `use` or `from` line that names one warns, and Migrate rewrites it
- * (`migrate/renamed.ts`), each only where the host's resolver gives the old id and the new the same text, so a host's
- * own library that happens to hold such an id is left alone. Pure data.
+ * An old id no longer reads: a `from` line that names one finds no fragment. The map stays for the order a query breaks its
+ * ties in (`byId`, `repository/fragments.ts`): a renamed fragment is ordered by its oldest id, so a query answers as it did
+ * before the rename, and what a band learned keeps its pairs in the order they had. Pure data.
  */
 export const RENAMED_IDS: ReadonlyMap<string, string> = new Map([
   ['creeping bass', 'creeping_bass'],
@@ -103,12 +102,3 @@ export function wordOf(id: string): string {
     .replace(/^_+|_+$/g, '');
   return /^\d/.test(word) ? `meter_${word}` : word;
 }
-
-/**
- * The seed fragments a piece took in as its parts (decision 082), each old id with its document and the part's head.
- * A compile refuses the old id (it resolves to nothing, or to a piece of that key); read the old way (`old`, Migrate's)
- * it is the part, with a warning, so Migrate's `moved` rule can rewrite the line and check that it plays the same.
- */
-export const MOVED: ReadonlyMap<string, { readonly document: string; readonly head: string }> = new Map(
-  ['twinkle', 'wonder', 'haenschen', 'hinein', 'heim', 'weinet'].map((id) => [id, { document: 'kinderlied', head: id }]),
-);

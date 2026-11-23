@@ -543,8 +543,6 @@ export interface ParseResult {
    * offering its band the harmony and the key). A reader may leave one unread, and it is not said to be silent. Absent for none.
    */
   readonly offers?: readonly string[];
-  /** Read the old way (`CompileOptions.old`): a retired form the compiler meets warns, where it is otherwise an error. */
-  readonly old?: boolean;
 }
 
 /** A `from` line (decisions 054, 059): the fragment's id, the names it asks for, and where the line is. */

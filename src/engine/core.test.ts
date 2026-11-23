@@ -48,7 +48,7 @@ const SUGAR: Check[] = [
   // (a line switched off is the line deleted, with every entry that plays it: S1 plans with the text's off set, #434)
   [
     'Lines · off',
-    piece(BAR, '&kit &v', '&a step=2 0 4', '&drums off over=&kit step=&bar 0 1', V, '&out map=sample [&a * &v, &drums]'),
+    piece(BAR, '&kit &v', '&a step=2 0 4', '&drums off over=&kit step=pulse 0 1', V, '&out map=sample [&a * &v, &drums]'),
     piece(BAR, '&a step=2 0 4', V, '&out map=sample [&a * &v]'),
   ],
   line('Lines · # …', '&tune step=2 0 2 4  # the opening', '&tune step=2 0 2 4', 'tune'),
@@ -107,7 +107,7 @@ const SUGAR: Check[] = [
   ],
   // Generators
   table('Generators · scan(i …)', MAJOR, '&major 0 2 4 5 7 9 11', '&tune over=&major step=2 0 2 4 7 -1 9', 'tune'),
-  table('Generators · scan(i …)', '&tempo scan(1!4 .5!2) step=120bpm', '&tempo scan(1 1 1 1 .5 .5) step=120bpm', '&t step=&tempo 0 2 4', 't'),
+  table('Generators · scan(i …)', '&tempo scan(1!4 .5!2) step=120bpm', '&tempo scan(1 1 1 1 .5 .5) step=120bpm', '&t step=&tempo:pulse 0 2 4', 't'),
   table('Generators · scan(i …)', '&series scan(geo(5, 25, 0 10 5))', `&series scan(1 ${5 ** (10 / 25)} ${5 ** (5 / 25)})`, '&t over=&series step=2 0 1 2 3 4', 't'),
   line('Generators · euclid(k, n)', '&tresillo step=4 euclid(3, 8)', '&tresillo step=4 0 ~ ~ 0 ~ ~ 0 ~', 'tresillo'),
   // (decision 072: even is its scan written; euclid strikes even's places, onsets only, in even.test.ts)
@@ -123,7 +123,7 @@ const SUGAR: Check[] = [
   table('Generators · scale(name)', '&blues scale(blues)', '&blues scan(3 2 1 1 3 2)', '&t over=&blues step=2 0 2 4 7 -1 9', 't'),
   table('Generators · fifths()', '&circle fifths()', '&circle 0 7 2 9 4 11 6 1 8 3 10 5', '&t over=&circle step=2 0 1 2 3 11 12', 't'),
   table('Generators · fifths()', '&circleG fifths(G)', '&circleG fifths(1)', '&t over=&circleG step=2 0 1 2 3 11 12', 't'),
-  table('Generators · meter("sig")', '&bar meter("4/4", 2) step=100bpm', '&bar meter("*.+.+.+.") step=100bpm', '&t step=&bar 0 2 4', 't'),
+  table('Generators · meter("sig")', '&bar meter("4/4", 2) step=100bpm', '&bar meter("*.+.+.+.") step=100bpm', '&t step=8n 0 2 4', 't'),
   line(
     'Generators · spell(…)',
     `&dial step=8 spell("867 5309", &keys, ${DIAL})`,
@@ -138,30 +138,24 @@ const SUGAR: Check[] = [
     piece('&lead s=saw loop=261.6255653005986', '&t step=2 0 2', '&out map=sample [&t * &lead]'),
   ],
   line('step= and loop= · step=cycle(&x)', '&key step=cycle(&theme) 0 2', '&key step=&theme/4 0 2', 'key', '&theme step=2 0 2 4 5'),
-  line('step= and loop= · step=pulse', '&tune step=pulse 0 2 4', '&tune step=&bar 0 2 4', 'tune', BAR),
-  line('step= and loop= · step=pulse', '&hats step=pulse*2 0!8', '&hats step=&bar*2 0!8', 'hats', BAR),
-  line('step= and loop= · step=pulse', '&chords step=beat [0,2,4]', '&chords step=&bar [0,2,4]', 'chords', BAR),
-  line('step= and loop= · step=16n', '&drums step=16n 0 ~ 1 ~', '&drums step=&bar*4 0 ~ 1 ~', 'drums', BAR),
-  line('step= and loop= · step=16n', '&tresillo step=4n. 0 0 0', '&tresillo step=&bar*2 0@3 0@3 0@2', 'tresillo', BAR),
   line('step= and loop= · step=16n', '&roots step=1m 0 5 7', '&roots step=cycle(&bar) 0 5 7', 'roots', BAR),
-  line('step= and loop= · step=&m:16n', '&comp step=&bar2:8n 0 2', '&comp step=&bar2*2 0 2', 'comp', BAR, '&bar2 meter("3/4") step=90bpm'),
-  table('step= and loop= · nbpm', '&bar scan(4 4 4 4) step=84bpm', '&bar scan(4 4 4 4) step=1.4', '&t step=&bar 0 2', 't'),
+  table('step= and loop= · nbpm', '&bar scan(4 4 4 4) step=84bpm', '&bar scan(4 4 4 4) step=1.4', '&t step=&bar:pulse 0 2', 't'),
   ['step= and loop= · nhz', piece('&a s=sine loop=440hz', '&t step=2 0 2', '&out map=sample [&t * &a]'), piece('&a s=sine loop=440', '&t step=2 0 2', '&out map=sample [&t * &a]')],
-  table('step= and loop= · nmin', '&tick scan(1!60) loop=1min', `&tick scan(1!60) loop=${1 / 60}`, '&t step=&tick 0 2', 't'),
-  table('step= and loop= · nh', '&hour scan(1!60) loop=1h', `&hour scan(1!60) loop=${1 / 3600}`, '&t step=&hour 0 2', 't'),
-  table('step= and loop= · nd', '&day scan(1!24) loop=1d anchor=11.55', `&day scan(1!24) loop=${1 / 86400} anchor=11.55`, '&t step=&day 0 2', 't'),
-  table('step= and loop= · nwk', '&week scan(1!7) loop=1wk', `&week scan(1!7) loop=${1 / 604800}`, '&t step=&week 0 2', 't'),
+  table('step= and loop= · nmin', '&tick scan(1!60) loop=1min', `&tick scan(1!60) loop=${1 / 60}`, '&t step=&tick:pulse 0 2', 't'),
+  table('step= and loop= · nh', '&hour scan(1!60) loop=1h', `&hour scan(1!60) loop=${1 / 3600}`, '&t step=&hour:pulse 0 2', 't'),
+  table('step= and loop= · nd', '&day scan(1!24) loop=1d anchor=11.55', `&day scan(1!24) loop=${1 / 86400} anchor=11.55`, '&t step=&day:pulse 0 2', 't'),
+  table('step= and loop= · nwk', '&week scan(1!7) loop=1wk', `&week scan(1!7) loop=${1 / 604800}`, '&t step=&week:pulse 0 2', 't'),
   ['step= and loop= · nk', piece('&t step=2 0 2', V, '&out loop=44.1k map=sample [&t * &v]'), piece('&t step=2 0 2', V, '&out loop=44100 map=sample [&t * &v]')],
   // map=
   [
     'map= · map=db',
-    piece(BAR, '&fade map=db step=&bar 0 -6 -12', '&t step=&bar 0 2 4', V, '&out map=sample [&t * &v * &fade]'),
-    piece(BAR, `&fade map=amp step=&bar 1 ${10 ** (-6 / 20)} ${10 ** (-12 / 20)}`, '&t step=&bar 0 2 4', V, '&out map=sample [&t * &v * &fade]'),
+    piece(BAR, '&fade map=db step=pulse 0 -6 -12', '&t step=pulse 0 2 4', V, '&out map=sample [&t * &v * &fade]'),
+    piece(BAR, `&fade map=amp step=pulse 1 ${10 ** (-6 / 20)} ${10 ** (-12 / 20)}`, '&t step=pulse 0 2 4', V, '&out map=sample [&t * &v * &fade]'),
   ],
-  table('map= · map=edo', '&edo19 cycle=19 map=edo', '&edo19 cycle=19 map=ed(2)', '&t over=&edo19 step=2 0 3 19 -2', 't'),
+  table('map= · map=edo', '&edo19 map=edo(19)', '&edo19 map=ed(19, 2)', '&t over=&edo19 step=2 0 3 19 -2', 't'),
   table(
     'map= · map=ed(r)',
-    '&fifths cycle=7 map=ed(3/2)',
+    '&fifths map=ed(7, 3/2)',
     `&fifths map=ratios ${Array.from({ length: 8 }, (_, k) => 1.5 ** (k / 7)).join(' ')}`,
     '&t over=&fifths step=2 0 3 7 -2',
     't',
@@ -235,9 +229,8 @@ const SPELLINGS: Check[] = [
     MAJOR,
     MOTIF,
   ),
-  line('step= and loop= · step=&x*n/d', '&trip step=&bar*3/2 0 2 4', '&trip step=&bar*1.5 0 2 4', 'trip', BAR),
-  table('free() · free(v, lo..hi)', '&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&bar scan(4 4 4 4) step=90bpm', '&t step=&bar 0 2', 't'),
-  table('free() · free(marking)', '&bar scan(4 4 4 4) step=free(andante)', '&bar scan(4 4 4 4) step=92bpm', '&t step=&bar 0 2', 't'),
+  table('free() · free(v, lo..hi)', '&bar scan(4 4 4 4) step=free(90bpm, 60..240)', '&bar scan(4 4 4 4) step=90bpm', '&t step=&bar:pulse 0 2', 't'),
+  table('free() · free(marking)', '&bar scan(4 4 4 4) step=free(andante)', '&bar scan(4 4 4 4) step=92bpm', '&t step=&bar:pulse 0 2', 't'),
   line('free() · free(0 2 4 ~ …)', '&riff step=4 free(0 2 4 ~ 4 2 0 ~)', '&riff step=4 0 2 4 ~ 4 2 0 ~', 'riff'),
   line('free() · free("text")', `&dial step=8 spell(free("867 5309"), &keys, ${DIAL})`, `&dial step=8 spell("867 5309", &keys, ${DIAL})`, 'dial', KEYS),
   ['Mixes · free(v, lo..hi)', GTM('&out map=sample [&tune * &lead * free(.8, 0..1)]'), GTM('&out map=sample [&tune * &lead * .8]')],
@@ -245,9 +238,9 @@ const SPELLINGS: Check[] = [
   line('Attributes · show= label= size= tags= (inert)', '&tune show=notes label="the theme" size=2 tags="melody" step=2 0 2 4', '&tune step=2 0 2 4', 'tune'),
 ];
 
-// (read the old way: 068's rows 54–55 state a tap as the meter cell's own steps, `step=pulse` = `step=&bar`, a spelling
-// decision 040 retired and #15's rung 5 made an error; decision 069 keeps their S1 checks, so they read it as Migrate does)
-const OPTIONS = { resolve: resolveSeed, old: true };
+// (068's rows 54–55 stated a tap as the meter cell's own steps, `step=pulse` = `step=&bar`: a spelling decision 040 retired,
+// and #643 took out of the language; the tap is the form now, so those rows have no rewrite to check)
+const OPTIONS = { resolve: resolveSeed };
 /** How many events the text plays in its first 8 s, as the host plans it; it compiles with no error. */
 const heard = (text: string) => {
   const r = compileSource(text, undefined, OPTIONS);

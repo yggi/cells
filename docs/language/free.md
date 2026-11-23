@@ -46,7 +46,7 @@ The places, from the parser's own table:
 | scale(t, phase) (retired) | ✓ whole | ✗ read as the piece is built | `&key scale(2, free(3, 0..6))` |
 | meter(n, n) | ✓ | ✗ read as the piece is built | `&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm` |
 | map=edo(n) · map=ed(n, r) · map=midi(c, p) | ✓ whole | ✗ read as the piece is built | `&edo map=edo(free(19, 5..31))` |
-| map=ed(r) | ✓ | ✗ read as the piece is built | `&bp cycle=13 map=ed(free(3, 1.5..4))` |
+| map=ed(r) | ✓ | ✗ read as the piece is built | `&bp map=ed(13, free(3, 1.5..4))` |
 | 0 2 4 (a step of a braid) | ✓ | a cell plays there (`&k`, spliced) | `&tune step=2 0 free(2, 0..7) 4` |
 | x!n · x@n · x*n · x/n | ✓ whole | ✗ read as the piece is built | `&beat step=4 0!free(4, 1..8) 2` |
 | x?p | ✓ | ✗ read as the piece is built | `&hats step=4 0 0?free(.3, 0..1)` |

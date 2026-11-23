@@ -164,7 +164,7 @@ that read the kit already play it as well. Several bare voices (`&lead &bell`) a
 ```
 
 **A gate's performer plays with a feel** ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §2): the default performer (`perform`, `src/engine/perform/`) loosens each note's velocity and gates its length by keyed draws, and adds accents of its own, as far as the bar's feel goes (its swing, its entropy, its articulation: the family's feel contract).
-**The part it plays as is declared, never a name** (the feel's version 3, [decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md), #560): `part=` on a performer's role cell (`&low map=role part=bass &lowOut`) or on a line (`&low part=bass …`), one of `bass`, `pad`, `stab`, `lead` or `drums`; `role=` on a drum line a kit plays (`&k role=kick step=16n &bd!4`), one of `kick`, `backbeat`, `ghost`, `hat`, `pedal`, `euclid`, `ostinato` (a pitched figure repeated on toms or congas), `clave` or `fill`. A line that declares none plays as written, whatever its name (`&bass` alone is no bass); Migrate's `parts` rule writes what a name gave a text written before.
+**The part it plays as is declared, never a name** (the feel's version 3, [decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md), #560): `part=` on a performer's role cell (`&low map=role part=bass &lowOut`) or on a line (`&low part=bass …`), one of `bass`, `pad`, `stab`, `lead` or `drums`; `role=` on a drum line a kit plays (`&k role=kick step=16n &bd!4`), one of `kick`, `backbeat`, `ghost`, `hat`, `pedal`, `euclid`, `ostinato` (a pitched figure repeated on toms or congas), `clave` or `fill`. A line that declares none plays as written, whatever its name (`&bass` alone is no bass).
 Two attributes on the gate set how far: `licence=` (velocity and length) and `accents=` (its own accents), each a share of the feel's, 1 where unwritten (as the contract plays) and 0 exactly as written; either may be `free(…)`.
 
 ```cells
@@ -242,9 +242,8 @@ A role is no sound: it is not mixed, sent or played (`[&lead]` says so; mix or s
 as written, and a gate plays one role.
 A band, a table of performers a selector reads, switches who plays when, each part keeping its time ([time.md](time.md)).
 
-`play=` on a cell with no braid is a tape's read head ([physics.md](physics.md)); with a braid, a gate. The old spelling
-(`trigger=` for `play=`; `velocity=`, `gate=` and `gain=`, three factors of `level=`; several bare voices all
-played) still reads, with a warning, and Migrate rewrites it.
+`play=` on a cell with no braid is a tape's read head ([physics.md](physics.md)); with a braid, a gate. Several bare voices
+after it are a kit its notes pick from; a chord of voices, `[&lead, &bell]`, plays them all.
 A gate times nothing itself: `over=`, `step=` and the like on it do nothing, and warn
 (they go on its notes). Its `level=` is 0 or more (a negative one warns), and its notes and level cells aren't sounds:
 `level=&otherGate` says so.

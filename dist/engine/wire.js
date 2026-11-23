@@ -30,7 +30,7 @@ export function wireArg(value, context) {
     let result;
     let decls;
     try {
-        const parsed = parse(`${context}\n&${ARG} ${value}`, { old: false });
+        const parsed = parse(`${context}\n&${ARG} ${value}`);
         decls = new Map(parsed.cells.map((d) => [d.name, d]));
         result = compile(parsed, DEFAULT_ENV);
     }

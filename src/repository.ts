@@ -1,12 +1,11 @@
 /**
  * `@yggi/cells/repository`: fragments found by their place in style space, and how a fragment is read. Hold and query
  * them (`createRepository`, `fragmentDistance`, `pointDistance`), learn from a player's filing (`fileFragment`,
- * `useFragments`, `renamedLayer`), fit a template onto a text (`fitsAs`, `useOn`, `cachedFit`), read what a fragment
+ * `useFragments`), fit a template onto a text (`fitsAs`, `useOn`, `cachedFit`), read what a fragment
  * uses and defines (`holesOf`, `partsOf`, `signatureOf`), read it as cells means it (the chords, the voice, the style
  * and the point of a text: `readHarm`, `readVoice`, `readStyle`, `readPoint`), take it apart and recognise it
  * (`decompose`, `createRecogniser`), and write a score's `from` lines (`fromLine`, `takeIn`). Nothing here is new: each
- * name is what a frontend reached by a module path (`docs/api.md` lists them), now from one place. A learned layer's
- * migration (`engine/migrate/axes`, `engine/migrate/moved`) is not here: it becomes one call, #716's.
+ * name is what a frontend reached by a module path (`docs/api.md` lists them), now from one place.
  */
 export {
   byId,
@@ -28,8 +27,7 @@ export {
   type UsedPair,
   type WeightedPoint,
 } from './repository/fragments';
-export { canonicalText, fileFragment, renamedLayer, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
-export { axedLayer, migrateLayer, MOVED_IDS, movedLayer, movedText, roledLayer, signedLayer } from './repository/migratelayer';
+export { canonicalText, fileFragment, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
 export { cachedFit, declarations, fitsAs, unionOf, useOn, type FitAs, type FragmentRef, type Union, type UseOn, type UseOnOptions } from './repository/fit';
 export { holesOf, type ClockNeed, type Holes } from './repository/holes';
 export { readFragment, readFragments, writeFragment, type FragmentFile, type FragmentFileProblems, type LibraryFile, type Meta } from './repository/files';

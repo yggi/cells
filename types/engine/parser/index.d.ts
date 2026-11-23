@@ -2,10 +2,8 @@ import type { ParseResult } from '../ast';
 export { groupingOf, meterLevels } from './generators';
 export { SHOWS } from './cell';
 export { readFrom, USE_RETIRED, type FromForm } from './use';
-/** A text, parsed; `old` reads a retired form (`beat=`, a meter's own `step=&bar`) with a warning, where it is otherwise an error (`CompileOptions.old`). */
-export declare function parse(whole: string, { old }?: {
-    readonly old?: boolean;
-}): ParseResult;
+/** A text, parsed. */
+export declare function parse(whole: string): ParseResult;
 /**
  * A piece's card: its title, its description, its tags and its tier. From a file (`piecefile.ts`, decision 047): the
  * frontmatter's title, tags, tier and description (else the label of a card its text still has: a note named `&piece`,

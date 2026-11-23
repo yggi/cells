@@ -143,14 +143,6 @@ describe('a rate left free(…)', () => {
   });
 });
 
-describe('a gate given a number', () => {
-  it('says what trigger=, velocity= and gate= want', () => {
-    expect(messages('&g trigger=3 &v')[0]).toMatch(/Expected the melody .* trigger=&tune/);
-    expect(messages('&g velocity=.5 &v')[0]).toMatch(/Expected a level cell, like velocity=&accent/);
-    expect(messages('&g gate=3 &v')[0]).toMatch(/Expected a level cell, like gate=&duck/);
-  });
-});
-
 // ---- the rest of #195 and the language nits of #250: each the diagnostic, its severity and its span
 const spans = (src: string) => compileSource(src).diagnostics.map((d) => ({ severity: d.severity, message: d.message, ...d.span }));
 const PLAY = '&v s=sine\n&out map=sample [&mel * &v]';
@@ -193,14 +185,10 @@ describe('a gate', () => {
       expect.objectContaining({ severity: 'warning', message: expect.stringMatching(/^step= on a gate does nothing/), line: 5, col: 28, len: 4 }),
     ]);
   });
-  it('a negative level warns at it; the old gain= too', () => {
+  it('a negative level warns at it', () => {
     expect(spans(G + '&g play=&tune level=-.5 [&v]')).toEqual([
       { severity: 'warning', message: "level=-0.5: a level is 0 or more, and a negative one doesn't play softer — write 0.5", line: 5, col: 21, len: 3 },
     ]);
-    expect(spans(G + '&g trigger=&tune gain=-.5 &v').find((d) => d.message.startsWith('gain='))).toMatchObject({
-      severity: 'warning',
-      message: expect.stringMatching(/^gain=-0.5: a level is 0 or more/),
-    });
   });
   it('a negative gain is phase inversion (#193): a voice’s gain=, the card’s postgain=, a factor in a product say nothing; a gate’s level= still does', () => {
     expect(spans('&v s=saw gain=-1')).toEqual([]);
@@ -222,7 +210,6 @@ describe('a gate', () => {
         len: 2,
       }),
     ]);
-    expect(spans(G + '&g play=&tune [&v]\n&h trigger=&tune velocity=&g &v').find((d) => d.severity === 'error')?.message).toMatch(/^velocity=&g: a gate's velocity= takes a level/);
     expect(spans(G + '&h play=&v [&v]').filter((d) => d.severity !== 'info')[0].message).toMatch(
       /^play=&v: a gate's play= takes the notes it plays .* and &v is a sound \(a voice\)/,
     );
@@ -316,17 +303,7 @@ describe('a MIDI card', () => {
 });
 
 describe('a grid too big to build', () => {
-  it('cycle= past the cap is an error at its value, before it runs out of memory', () => {
-    expect(spans('&e cycle=1000000000 map=edo')).toEqual([
-      {
-        severity: 'error',
-        message: "cycle=1000000000: at most 50,000, the most steps a cell can hold (a grid's to its period, a table's turns before it comes round)",
-        line: 1,
-        col: 10,
-        len: 10,
-      },
-    ]);
-    // (and a grid's size in its map, #75)
+  it('a grid past the cap is an error at its size, before it runs out of memory', () => {
     for (const map of ['edo(1000000000)', 'ed(1000000000, 3/2)'])
       expect(spans(`&e map=${map}`)).toEqual([
         { severity: 'error', message: '1000000000 steps: at most 50,000, the most a grid can hold to its period', line: 1, col: map.startsWith('edo') ? 12 : 11, len: 10 },
@@ -424,9 +401,6 @@ describe('oneshot=1, a voice’s parameter (decision 068, #440)', () => {
     for (const v of ['2', '.5']) expect(said(`&v oneshot=${v} s=sine loop=C4`)).toEqual([['error', 'oneshot= is 1 (each note played through) or 0 (as its step, the default)']]);
     expect(said('&v oneshot=1 s=sine loop=C4')).toEqual([]);
     expect(said('&v oneshot=0 s=sine loop=C4')).toEqual([]);
-  });
-  it('written both ways, the word and the parameter, is given twice', () => {
-    expect(said('&v oneshot oneshot=1 s=sine loop=C4').filter(([s]) => s === 'error')).toEqual([['error', 'oneshot is given twice: write oneshot=1 alone']]);
   });
   it('on a cell that is no voice it warns and does nothing', () => {
     const src = '&bar step=4 0\n&t oneshot=1 step=&bar 0 2 4 2\n&v s=sine loop=C4\n&out map=sample [&t * &v]';

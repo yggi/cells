@@ -4,9 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from './compile';
 import { EXAMPLES } from './examples';
 import { planOf } from './host';
-import { migrate } from './migrate';
 import { readPiece, withLockfile } from './piecefile';
-import { soundsIdentical } from './sameness';
 import { windowAt } from './schedule';
 import { partOf, partsOf, usesIn } from './use';
 import { LIBRARY, PARTS, resolveSeed, usesOf } from '../repository/library';
@@ -79,7 +77,7 @@ describe('Kinderlieder gives its six tunes (decision 082)', () => {
       expect(errors(taking(`&${head} from kinderlied &key`, head), { resolve: resolveSeed }), head).toEqual([]);
   });
 
-  it('and Migrate rewrites a take of an old id as a take of the part, playing the same', () => {
+  it('and an old id of a part, taken as a seed fragment, is refused: one namespace, and the part is taken from its document', () => {
     const old = [
       '&bar meter("4/4") step=100bpm',
       '&key scale(major, C)',
@@ -91,10 +89,8 @@ describe('Kinderlieder gives its six tunes (decision 082)', () => {
     ].join('\n');
     // (a compile refuses the old id: it is a piece's key now, one namespace, and wonder resolves to nothing)
     expect(errors(old, { resolve: resolveSeed }).length).toBeGreaterThan(0);
-    const m = migrate(old, { resolve: resolveSeed });
-    expect(m.source.split('\n').slice(2, 4)).toEqual(['&twinkle from kinderlied &key', '&tw=wonder from kinderlied &key # the answer']);
-    expect(errors(m.source, { resolve: resolveSeed })).toEqual([]);
-    expect(soundsIdentical(m.source, old, 8, { resolve: resolveSeed, old: true })).toBe(true);
+    const now = old.replace('from twinkle &key', 'from kinderlied &key').replace('&tw from wonder &key', '&tw=wonder from kinderlied &key');
+    expect(errors(now, { resolve: resolveSeed })).toEqual([]);
   });
 });
 

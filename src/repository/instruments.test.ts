@@ -17,7 +17,7 @@ import type { Resolve } from '../engine/program';
 import { createRepository, type StylePoint } from './fragments';
 import { holesOf } from './holes';
 import { isDeclaration } from './declarations';
-import { LIBRARY, resolveSeed, RETIRED } from './library';
+import { LIBRARY, resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { seedFragments } from './seed';
 import { answered } from './answered';
@@ -201,10 +201,8 @@ describe('General MIDI’s drum names (GM_KIT)', () => {
     expect(Object.entries(before).filter(([n, note]) => gmDrumNote(n) !== note)).toEqual([]);
   });
 
-  it('each name and alias, written with its note=, sounds on it over MIDI out, 75 of 75; alone, a name gives none (decision 075)', () => {
+  it('each name and alias, written with its note=, sounds on it over MIDI out, 75 of 75 (decision 075: a name gives none)', () => {
     const gm = (n: string) => GM_KIT.find((d) => d.name === n || d.aliases.includes(n))!.note;
-    // (named so and writing no note=, each is told what to write, and takes the next free note)
-    expect(played(hosted(strikes(names), names.map((n) => `&${n} s=white`).join('\n')), 80).diagnostics).toHaveLength(names.length);
     const voices = names.map((n) => `&${n} note=${gm(n)} s=white`).join('\n');
     const { hits, diagnostics } = played(hosted(strikes(names), voices), 80);
     expect(diagnostics).toEqual([]);
@@ -249,7 +247,6 @@ describe('the instrument fragments', () => {
   it('the General MIDI kit defines a voice under each kit name, in General MIDI’s order; 13 of them taken by name are its lines word for word, as the retired core kit forwards them (#196)', () => {
     const gm = linesOf(gmKit.text);
     expect([...gm.keys()]).toEqual(GM_KIT.map((d) => d.name));
-    expect(RETIRED.get('core kit')).toBe(CORE_USE);
     const core = linesOf(coreKit.text);
     expect([...core.keys()]).toEqual(['bd', 'rim', 'sd', 'cp', 'lt', 'hh', 'ph', 'mt', 'oh', 'ht', 'cr', 'rd', 'claves']);
     for (const [name, line] of core) expect(line, name).toBe(gm.get(name));

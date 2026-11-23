@@ -282,9 +282,9 @@ describe('the meter contract (music-commons contracts/meter, version 2)', () => 
 
 describe('the swing contract (music-commons contracts/swing, version 1)', () => {
   const swing = contract<SwingVector>('swing');
-  /** Where a named meter's 16ths play in its first bar, in steps from the downbeat: swung as written, or with decision 053's `:pairs` on 8n, as Jambot's section text writes it. */
-  const played = (v: SwingVector, pairs = false) => {
-    const levels = v.swing.map(({ level, share }) => `${level}:${share}${level === '8n' && pairs ? ':pairs' : ''}`).join(',');
+  /** Where a named meter's 16ths play in its first bar, in steps from the downbeat: swung as written. */
+  const played = (v: SwingVector) => {
+    const levels = v.swing.map(({ level, share }) => `${level}:${share}`).join(',');
     const r = compileSource(`&bar meter("${v.name}") step=60bpm${levels && ` swing=${levels}`}\n&x step=16n 0\n&v s=sine loop=C4\n&out map=sample [&x * &v]`);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     const seconds = r.cells.get('bar')!.steps / r.clocks.get('bar')!.perSecond;
@@ -300,9 +300,5 @@ describe('the swing contract (music-commons contracts/swing, version 1)', () => 
 
   it('swing=<level>:<share> on meter(…) places every step within 1e-9 of the contract, for every vector: a group of three straight (decision 071)', () => {
     for (const v of swing.vectors) expect(meets(v, played(v)), `${v.name} ${JSON.stringify(v.swing)}`).toBe(true);
-  });
-
-  it('…and with decision 053’s :pairs on 8n, as Jambot writes it, the same', () => {
-    for (const v of swing.vectors) expect(played(v, true), `${v.name} ${JSON.stringify(v.swing)}`).toEqual(played(v));
   });
 });

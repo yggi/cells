@@ -19,15 +19,15 @@ const sounds = (src: string, seconds = SAMENESS_SECONDS) => {
 };
 const examples = Object.entries(EXAMPLES);
 
-describe('map=edo is map=ed(2)', () => {
+describe('map=edo(n) is map=ed(n, 2)', () => {
   it.each([12, 19, 31])('%i to the octave', (n) => {
-    const piece = (map: string) => `&g cycle=${n} map=${map}\n&t over=&g step=8 0 1 2 5 ${n - 1} ${n} ${n + 3} -2\n&v s=saw loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]`;
-    expect(sounds(piece('ed(2)'))).toEqual(sounds(piece('edo')));
+    const piece = (map: string) => `&g map=${map}\n&t over=&g step=8 0 1 2 5 ${n - 1} ${n} ${n + 3} -2\n&v s=saw loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]`;
+    expect(sounds(piece(`ed(${n}, 2)`))).toEqual(sounds(piece(`edo(${n})`)));
   });
   // every example on the default grid, the grid written out as ed(2) (appended, so no line moves)
   const onRoot = examples.filter(([, p]) => !/^&fifths12TET\b/m.test(p.source));
   it.each(onRoot)('%s, its grid written out', (_, { source }) => {
-    expect(sounds(`${source}\n&fifths12TET cycle=12 map=ed(2)`)).toEqual(sounds(source));
+    expect(sounds(`${source}\n&fifths12TET map=ed(12, 2)`)).toEqual(sounds(source));
   });
 });
 

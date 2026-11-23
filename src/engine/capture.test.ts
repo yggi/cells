@@ -75,7 +75,7 @@ const sounds = (r: CompileResult) => [...new Set(play(r).notes.map((n) => `${n.a
 
 const SETTINGS = [
   { name: 'a major scale', head: '&key scan(2 2 1 2 2 2 1)\n&bar scan(1 1 1 1) step=90bpm', riff: 'over=&key step=16n', entries: 7 },
-  { name: 'a scale on 19-EDO', head: '&g cycle=19 map=edo\n&key over=&g scan(3 3 2 3 3 3 2)\n&bar scan(1 1 1 1) step=90bpm', riff: 'over=&key step=16n', entries: 7 },
+  { name: 'a scale on 19-EDO', head: '&g map=edo(19)\n&key over=&g scan(3 3 2 3 3 3 2)\n&bar scan(1 1 1 1) step=90bpm', riff: 'over=&key step=16n', entries: 7 },
   { name: 'a swung clock', head: '&key scan(2 2 1 2 2 2 1)\n&bar 1!8 step=100bpm swing=.67', riff: 'over=&key step=&bar', entries: 7 },
   {
     name: 'a motor spinning up (a moving clock)',

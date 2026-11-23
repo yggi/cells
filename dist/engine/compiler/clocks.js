@@ -56,7 +56,6 @@ function fraction(x) {
 }
 export function clockCells(ctx, decls, given) {
     const { rateOf, error, warn, unknownCell, broken } = ctx;
-    const retired = (message, span) => (ctx.parsed.old ? warn : error)(message, span);
     const cells = new Map(given);
     const clocks = new Map();
     const tempoOf = (d) => {
@@ -95,7 +94,7 @@ export function clockCells(ctx, decls, given) {
                 const whole = level === null ? null : noteValue(level);
                 const leans = whole !== null && swingLevelProblem(m, whole) === null;
                 if (leans)
-                    retired(`swing=${share(d.params.swing)} on a meter is retired: name the level it leans, swing=${level}:${share(d.params.swing)} (Migrate rewrites it)`, swingSpan);
+                    error(`swing=${share(d.params.swing)} on a meter needs the level it leans: swing=${level}:${share(d.params.swing)}`, swingSpan);
                 else
                     warn(`swing=${share(d.params.swing)} leans the meter cell's own steps, and they are its beats, which swing never moves: name the level it leans, swing=8n:${share(d.params.swing)}`, swingSpan);
             }
@@ -124,7 +123,7 @@ export function clockCells(ctx, decls, given) {
     for (const d of roots.slice(1)) {
         const [root, c] = [cells.get(roots[0].name), cells.get(d.name)];
         const tap = derivedTap({ meter: root.meter, perSecond: clocks.get(root.name).perSecond }, { beat: c.beat, scan: !!c.scan, perSecond: clocks.get(d.name).perSecond });
-        retired(`&${d.name} is a second meter with a tempo of its own, and a piece has one (&${root.name}): a second meter is derived from it${tap ? `, step=${tap}` : ' by a tap (step=beat/2, step=pulse*5/4)'} — read as any meter is, and it follows &${root.name}'s tempo (Migrate writes it; decision 095)`, d.step?.span ?? d.span);
+        error(`&${d.name} is a second meter with a tempo of its own, and a piece has one (&${root.name}): a second meter is derived from it${tap ? `, step=${tap}` : ' by a tap (step=beat/2, step=pulse*5/4)'} — read as any meter is, and it follows &${root.name}'s tempo (decision 095)`, d.step?.span ?? d.span);
     }
     const meters = (roots.length ? roots : rooted).map((d) => d.name);
     const tapped = new Map();
@@ -132,11 +131,9 @@ export function clockCells(ctx, decls, given) {
     const meterOfTap = (st, spelled, broke) => {
         const meter = st.meter?.name ?? mainMeter();
         if (!st.meter && meters.length > 1 && !roots.length) {
-            retired(`${spelled} names no meter, and the piece has ${meters.length} with a tempo of their own (${meters.map((m) => '&' + m).join(', ')}): name the one it taps, ${spelled.slice(0, spelled.indexOf('=') + 1)}&${meters[0]}:${spelled.slice(spelled.indexOf('=') + 1)} (Migrate writes the first in the text, which it read; decision 091)`, st.span);
-            if (!ctx.parsed.old) {
-                broke();
-                return null;
-            }
+            error(`${spelled} names no meter, and the piece has ${meters.length} with a tempo of their own (${meters.map((m) => '&' + m).join(', ')}): name the one it taps, ${spelled.slice(0, spelled.indexOf('=') + 1)}&${meters[0]}:${spelled.slice(spelled.indexOf('=') + 1)} (decision 091)`, st.span);
+            broke();
+            return null;
         }
         if (!meter) {
             error(`${spelled} taps the piece's main meter, and it has none: write one (&bar meter("4/4") step=100bpm)`, st.span);
@@ -245,7 +242,7 @@ export function clockCells(ctx, decls, given) {
             if (d && !st.whole && !st.cycle && cells.get(drv)?.meter && clocks.has(drv)) {
                 const m = cells.get(drv).meter;
                 const tap = tapFor(m.levels.length, m.pulses, decls.get(drv)?.step?.kind === 'rate' ? m.unit : 0, st.ratio);
-                retired(`step=&${drv}${chainText(st.chain)} is retired: a line taps the meter by pulse, beat or a note value, never its cell's own steps (step=${mainMeter() === drv ? '' : `&${drv}:`}${tap}; Migrate rewrites it)`, st.span);
+                error(`step=&${drv}${chainText(st.chain)}: a line taps a meter by pulse, beat or a note value, never its cell's own steps (step=${mainMeter() === drv ? '' : `&${drv}:`}${tap})`, st.span);
             }
             if (!d)
                 warn(`&${drv} never moves, so &${name} stands still — give &${drv} a rate (step=84bpm) or ${what}&cell`, st.driver.span);

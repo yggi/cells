@@ -19,8 +19,6 @@ const READERS = [
   '&f step=&second:1m 5',
   '&out map=sample [&a * &lead, &b * &lead, &c * &lead, &d * &lead, &e * &lead, &f * &lead]',
 ];
-// (a second meter with a tempo of its own is the old way, decision 095: read so, to compare a derived one with it)
-const OLD = { old: true };
 const piece = (march: string, second: string) => [`&march meter("4/4") ${march}`, `&second ${second}`, ...READERS].join('\n');
 
 describe('a meter derived from another (#778, rung 1)', () => {
@@ -31,15 +29,14 @@ describe('a meter derived from another (#778, rung 1)', () => {
     ['6/8, its beat a dotted quarter', 'meter("6/8") step=beat/3', 'meter("6/8") step=40bpm'],
     ['7/8, three unequal beats', 'meter("7/8") step=beat*3/4', 'meter("7/8") step=90bpm'],
     ['a phase, 121 against 120', 'meter("4/4") step=beat*121/120', 'meter("4/4") step=121bpm'],
-  ])('%s plays as the same meter at that tempo', (_, derived, own) => {
+  ])('%s compiles, and a second meter with a tempo of its own is an error that writes its tap', (_, derived, own) => {
     expect(errors(piece('step=120bpm', derived))).toEqual([]);
-    expect(soundsIdentical(piece('step=120bpm', derived), piece('step=120bpm', own), undefined, OLD)).toBe(true);
+    expect(errors(piece('step=120bpm', own))).toEqual([expect.stringMatching(/is a second meter with a tempo of its own, and a piece has one \(&march\)/)]);
   });
 
-  it('follows the meter it taps: the root’s tempo moved moves it, where a tempo of its own stays', () => {
+  it('follows the meter it taps: the root’s tempo moved moves it', () => {
     const derived = 'meter("3/4") step=beat/2';
-    expect(soundsIdentical(piece('step=90bpm', derived), piece('step=90bpm', 'meter("3/4") step=45bpm'), undefined, OLD)).toBe(true);
-    expect(soundsIdentical(piece('step=90bpm', derived), piece('step=90bpm', 'meter("3/4") step=60bpm'), undefined, OLD)).toBe(false);
+    expect(soundsIdentical(piece('step=90bpm', derived), piece('step=120bpm', derived))).toBe(false);
   });
 
   it('its ratio may be left free: a slider, read as the number it stands at (decisions 078, 095)', () => {

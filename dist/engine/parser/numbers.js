@@ -122,7 +122,7 @@ export const NUMBER_PLACES = {
     phase: place({ form: 'scale(t, phase) (retired)', name: 'phase', whole: true, min: 0, max: 6, cell: BUILT, example: '&key scale(2, free(3, 0..6))' }),
     meter: place({ form: 'meter(n, n)', name: 'meter', key: 'choice', cell: BUILT, example: '&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm' }),
     grid: place({ form: 'map=edo(n) · map=ed(n, r) · map=midi(c, p)', name: 'grid', whole: true, min: 1, cell: BUILT, example: '&edo map=edo(free(19, 5..31))' }),
-    ratio: place({ form: 'map=ed(r)', name: 'ratio', cell: BUILT, example: '&bp cycle=13 map=ed(free(3, 1.5..4))' }),
+    ratio: place({ form: 'map=ed(r)', name: 'ratio', cell: BUILT, example: '&bp map=ed(13, free(3, 1.5..4))' }),
     step: place({
         form: '0 2 4 (a step of a braid)',
         name: 'value',

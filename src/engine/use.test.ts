@@ -57,15 +57,14 @@ const linesAlone = (text: string) =>
     .join('\n');
 
 describe('the use line, retired (#588)', () => {
-  it('is an error, read the old way or not, whatever it says, and takes nothing; a name that starts with use is a name', () => {
-    for (const bad of ['use * from gm_kit', 'use &bd, &sd from gm_kit', 'use &aeolian', 'use "core kit"', 'use', 'use bd from kit'])
-      for (const old of [false, true]) {
-        expect(
-          parse(bad, { old }).diagnostics.map((d) => [d.severity, d.message]),
-          bad,
-        ).toEqual([['error', USE_RETIRED]]);
-        expect(parse(bad, { old }).takes, bad).toBeUndefined();
-      }
+  it('is an error, whatever it says, and takes nothing; a name that starts with use is a name', () => {
+    for (const bad of ['use * from gm_kit', 'use &bd, &sd from gm_kit', 'use &aeolian', 'use "core kit"', 'use', 'use bd from kit']) {
+      expect(
+        parse(bad).diagnostics.map((d) => [d.severity, d.message]),
+        bad,
+      ).toEqual([['error', USE_RETIRED]]);
+      expect(parse(bad).takes, bad).toBeUndefined();
+    }
     expect(compileSource(`use * from gm_kit\n${GROOVE.split('\n').slice(1).join('\n')}`, undefined, seed).ok).toBe(false);
     expect(parse('&user s=sine').diagnostics).toEqual([]);
   });
