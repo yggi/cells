@@ -527,6 +527,12 @@ function instantiate(from, id, signature, path, text, resolve, run, say, taken, 
     }
     const reached = new Set();
     const byName = new Map(full.flatMap((l) => (l.name ? [[l.name, l]] : [])));
+    const readsOf = (n) => {
+        const l = byName.get(n);
+        if (!l)
+            return [];
+        return heads.includes(n) && from.head.length && one ? lineOf(withAttributes(l.code, from.head)).reads : l.reads;
+    };
     for (const queue = [...heads.filter((h) => names.has(h))]; queue.length;) {
         const n = queue.shift();
         if (reached.has(n))
@@ -534,7 +540,7 @@ function instantiate(from, id, signature, path, text, resolve, run, say, taken, 
         reached.add(n);
         if (byReference.has(n))
             continue;
-        for (const r of byName.get(n)?.reads ?? [])
+        for (const r of readsOf(n))
             if (byName.has(r))
                 queue.push(r);
     }
@@ -572,7 +578,7 @@ function instantiate(from, id, signature, path, text, resolve, run, say, taken, 
             reached.add(n);
             if (byReference.has(n))
                 continue;
-            for (const r of byName.get(n)?.reads ?? [])
+            for (const r of readsOf(n))
                 if (byName.has(r))
                     queue.push(r);
         }
