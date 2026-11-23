@@ -20,6 +20,7 @@ import { expand } from '../engine/use';
 import { BOSSA_NOVA, FUNK } from './styles';
 import { STYLE_FRAGMENTS } from './styles';
 import { seedFragments } from './seed';
+import { answered } from './answered';
 
 // (the compile counted, for what it costs: the real one, called through)
 
@@ -41,7 +42,7 @@ const unionOf = (fragment: string, workbench: string) => fitOf(fragment, workben
 
 /** A fragment's lines, its signature and its own `from` lines aside: a groove read as a collection's lines (#637). */
 const linesAlone = (text: string) =>
-  text
+  answered(text)
     .split('\n')
     .filter((l) => readFrom(l.trim()) === undefined)
     .join('\n');
@@ -208,6 +209,8 @@ const FITS: Record<string, readonly string[]> = {
   // beats and three eighths, so it fits 12/8 alone: in 6/8 its four beats are two bars)
   aksak_drums: ['meter(grouping=meter("3/4"))', 'meter(grouping=meter("7/8"))'],
   twelve_eight_drums: ['meter(grouping=meter("12/8"))'],
+  // (#799: the breathing pulse's lines lap a bar of sixteenths, as the trip-hop beat's, so it fits the 4/4s)
+  breathing_drums: FOUR_FOURS,
 };
 
 describe('every rhythm against every meter of the library', () => {

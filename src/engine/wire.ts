@@ -21,8 +21,8 @@ export const WIRE = 1;
 /** The name an argument is compiled under: no cell of a text can have it (a name starts with a letter or `_`, and this has two). */
 const ARG = '__wire_arg';
 
-/** A number or a word: passed as written (`12`, `3/4`, `-2`, `dorian`, `C4`). */
-const PLAIN = /^(-?\d+(\.\d+)?(\/\d+)?|[A-Za-z_][A-Za-z0-9_#-]*)$/;
+/** A number or a word: passed as written (`12`, `.3`, `3/4`, `-2`, `dorian`, `C4`). */
+const PLAIN = /^(-?(\d+(\.\d+)?|\.\d+)(\/\d+)?|[A-Za-z_][A-Za-z0-9_#-]*)$/;
 
 /** An argument as the wire hands it: its text, and the key it is read over (semitones from C, tonic first), if any. */
 export interface WireArg {
@@ -63,13 +63,20 @@ export function wireArg(value: string, context: string): WireArg | { refused: st
   } catch (e) {
     return { refused: `${value} doesn't read: ${e instanceof Error ? e.message : String(e)}` };
   }
-  const errors = result.diagnostics.filter((d) => d.severity === 'error');
+  // (what the context says of lines the argument doesn't read, a cell a from line left out gives, is not its to say)
+  const line = context.split('\n').length + 1;
+  const errors = result.diagnostics.filter((d) => d.severity === 'error' && d.span.line === line);
   if (errors.length || !result.cells.has(ARG)) return { refused: `${value} doesn't read: ${errors[0]?.message ?? 'no cell'}` };
   // (a fill is handed as its answer, 085 §8.3: one with none, a stream's laps or a refused fill, can't be)
   const unanswered = [...result.cells.values()].find((c) => c.fill && new RegExp(`&${c.name}(?![A-Za-z0-9_])`).test(value));
   if (unanswered) return { refused: `&${unanswered.name} is a fill with no answer to hand (a stream's, or one refused): a braid fill is handed answers (wire 1)` };
   const shifts = codeShifts(result);
-  const events = flatten(result, ARG, shifts);
+  let events: StepEvent[];
+  try {
+    events = flatten(result, ARG, shifts);
+  } catch (e) {
+    return { refused: `${value} doesn't read: ${e instanceof Error ? e.message : String(e)}` };
+  }
   const lap = stepsOf(result, ARG, null);
   // (what the grammar can't carry: chance, a note by name, a hand)
   if (events.some((e) => e.chance !== undefined || e.options || e.chosen)) return { refused: `${value} draws by chance, and a plugin can't draw cells' (wire 1)` };

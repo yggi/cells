@@ -16,7 +16,6 @@ export const STUBS = new Set([
         .map((k) => `parameter ${k}`),
 ]);
 export const PENDING = new Set([
-    'sort plain: a sum of values',
     'free free(v, lo..hi, unit=bpm)',
 ]);
 export function formKey(e) {
@@ -164,7 +163,7 @@ export const TIERS = [
     },
     {
         name: 'Sound and tuning',
-        concept: 'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; a style the voices read; a level a cell names',
+        concept: 'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; a style the voices read; a level a cell names, a number or a sum',
         forms: [
             'parameter pan',
             'parameter glide',
@@ -187,6 +186,7 @@ export const TIERS = [
             'attribute style',
             'reference &name[slot]',
             'sort plain: a cell that is one number and nothing else',
+            'sort plain: a sum of values',
         ],
     },
     {

@@ -45,7 +45,10 @@ export interface PluginFragment {
 }
 /** The plugin-fragments cells ships, by the word `law=` names them with. */
 export declare const BUILT_IN: ReadonlyMap<string, PluginFragment>;
-/** The built-ins by their fragment file's id (`five_to_twelve`): what a `from` line's copy names its fills by. */
+/**
+ * The built-ins by their fragment file's id (`five_to_twelve`, `metric_accent`): what a `from` line's copy names its
+ * fills by. The laws, `BUILT_IN`, and the braid fills (#799), which no `law=` ever named.
+ */
 export declare const BY_FRAGMENT: ReadonlyMap<string, PluginFragment>;
 /**
  * The built-in a cell's `law=` names, or null. Since #792 no compiled cell has `law=` (the old spelling is read as its

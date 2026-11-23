@@ -1,5 +1,8 @@
-const PARTS = ['drums', 'bass', 'pad', 'stab', 'lead'];
-export const ROLES = new Set(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'ostinato', 'clave', 'fill']);
+export const SECTION_TYPES = ['intro', 'groove', 'bridge', 'build', 'drop', 'breakdown'];
+export const FEEL_PARTS = ['drums', 'bass', 'pad', 'stab', 'lead'];
+const PARTS = FEEL_PARTS;
+export const DRUM_ROLES = ['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'ostinato', 'clave', 'fill'];
+export const ROLES = new Set(DRUM_ROLES);
 const ROLES_BY_NAME = new Set(['kick', 'backbeat', 'ghost', 'hat', 'pedal', 'euclid', 'clave', 'fill']);
 export function readingOf(output) {
     const [first, second, third] = (output ?? '').split(':');

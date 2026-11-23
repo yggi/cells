@@ -20,6 +20,7 @@ import { isDeclaration } from './declarations';
 import { LIBRARY, resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { seedFragments } from './seed';
+import { answered } from './answered';
 
 const METER_FRAGMENTS = seedFragments('meters');
 const RHYTHM_FRAGMENTS = seedFragments('rhythms');
@@ -116,7 +117,7 @@ const meterText = (id: string) => METER_FRAGMENTS.find((f) => f.id === id || f.i
 const BPM = 120;
 /** A fragment's lines, its `from` lines aside: a rhythm's signature and the kit it takes (decision 075, #637), which the host's kit fills. */
 const linesAlone = (text: string) =>
-  text
+  answered(text)
     .split('\n')
     .filter((l) => readFrom(l.trim()) === undefined)
     .join('\n');

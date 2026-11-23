@@ -5,6 +5,7 @@ import { readFrom } from "../engine/parser/use.js";
 import { counts } from "../engine/core/desugar.js";
 import { splitComment } from "../engine/edit.js";
 import { argsOf, ofArgs } from "./variants.js";
+import { answered } from "./answered.js";
 export const FILING_WEIGHT = 0.1;
 export const USE_STEP = 0.1;
 export const USE_CAP = 1.2;
@@ -38,7 +39,7 @@ function canonicalOf(text) {
         .map((code) => code.replace(NAME, (written, name) => (index.has(name) ? `&#${index.get(name)}` : written)))
         .join('\n');
 }
-const linesAlone = (text) => text
+const linesAlone = (text) => answered(text)
     .split('\n')
     .filter((l) => readFrom(splitComment(l)[0].trim()) === undefined)
     .join('\n');

@@ -29,14 +29,14 @@ Each step of the plan moves a count in the ledger: the symbols a frontend reache
 | entry point | layer | what | modules |
 |---|---|---|---|
 | `@yggi/cells` | language | compile, plan, window; the shared types | 14 |
-| `@yggi/cells/edit` | language | edit, patch, capture, vary, shorten, normalise, migrate a text; a piece file | 38 |
+| `@yggi/cells/edit` | language | edit, patch, capture, vary, shorten, normalise, migrate a text (one rule: `arguments`); a piece file | 38 |
 | `@yggi/cells/inspect` | language | read a compiled piece: its cells, pitches, clocks, values, written graph | 22 |
 | `@yggi/cells/midi` | language | text to MIDI notes and hits, MIDI files, keys, the performer | 26 |
 | `@yggi/cells/time` | language | analysis of what plays: scalograms, structure, motifs | 11 |
 | `@yggi/cells/repository` | repository | query, fit and learn; a fragment read as cells means it | 21 |
 | `@yggi/cells/library` | library | the seed, styles, kit, roles, modes, the band; every vocabulary as values | 13 |
 | (leaves for Cell studio, decision 086) | | the view: drawing only | 5 |
-| (internal) | | named by no entry point | 52 |
+| (internal) | | named by no entry point | 54 |
 
 #### `@yggi/cells`
 
@@ -88,7 +88,7 @@ On the root index today (73): `ALL_OPERATORS`, `Audition`, `AuditionOptions`, `C
 
 Planned modules: `engine/compiler/declare`, `engine/dough-params`, `engine/examples`, `engine/order`, `engine/parser/generators`, `engine/style`, `engine/tags`, `repository/band`, `repository/library`, `repository/seed`, `repository/styles`, `theory/modes`, `theory/tonal`.
 
-Exported by its entry point, `src/library.ts` (49): `AXES`, `AXIS_NAMES`, `Axis`, `CENTRE`, `DOUGH_PARAMS`, `DOUGH_SOURCES`, `EXAMPLES`, `Example`, `ExampleKey`, `FoundInstrument`, `INSTRUMENT_REACH`, `LIBRARY`, `MIDI_FILE`, `NOTE_NAMES`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SCALES`, `SLOTS`, `STYLES`, `Style`, `TONAL_SCALES`, `TUTORIAL`, `TagKind`, `VOICE_KIT`, `VoicedPart`, `bandAt`, `bandLine`, `bjorklund`, `canonicalTags`, `fromId`, `headOf`, `instrumentsAt`, `isLibraryFragment`, `midiOf`, `mod`, `modeBrightness`, `modeName`, `nearestStyle`, `noteName`, `parseTag`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `tagKind`, `tagName`, `usesOf`.
+Exported by its entry point, `src/library.ts` (57): `AXES`, `AXIS_NAMES`, `Axis`, `CENTRE`, `DOUGH_PARAMS`, `DOUGH_SOURCES`, `DRUM_ROLES`, `EXAMPLES`, `Example`, `ExampleKey`, `FACETS`, `FEEL_PARTS`, `FoundInstrument`, `GM_KIT`, `INSTRUMENT_REACH`, `LIBRARY`, `MIDI_FILE`, `NOTE_NAMES`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SCALES`, `SECTION_KINDS`, `SECTION_TYPES`, `SLOTS`, `STYLES`, `Style`, `TONAL_SCALES`, `TUTORIAL`, `TagKind`, `VOICE_KIT`, `VoicedPart`, `backbeatOf`, `bandAt`, `bandLine`, `bjorklund`, `canonicalTags`, `fromId`, `headOf`, `instrumentsAt`, `isLibraryFragment`, `kitVoiceOf`, `midiOf`, `mod`, `modeBrightness`, `modeName`, `nearestStyle`, `noteName`, `parseTag`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `tagKind`, `tagName`, `usesOf`.
 
 On the root index today (24): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example`, `ExampleKey`, `FoundInstrument`, `LIBRARY`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SLOTS`, `STYLES`, `Style`, `VoicedPart`, `bandAt`, `instrumentsAt`, `nearestStyle`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `usesOf`.
 
@@ -96,7 +96,7 @@ On the root index today (24): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example
 
 | frontend | pin | app: modules / symbols deep | an entry point exports | on purpose | work left | app: symbols from the root | tests and tools: modules / symbols deep |
 |---|---|---|---|---|---|---|---|
-| jambot (`bbb1cb6`) | v0.26.1 | 29 / 88 | 88 | 0 | 0 | 16 | 20 / 37 |
+| jambot (`c33b94b`) | v0.28.0 | 5 / 86 | 0 | 0 | 0 | 21 | 4 / 38 |
 | cell-studio (`9216e32`) | v0.26.1 | 82 / 313 | 292 | 16 | 0 | 0 | 64 / 162 |
 
 Reached by a module path on purpose: engine/fiveto12 (a piece's own data, a plugin ultimately; the owner, 2026-11-21): `dayLaw`; engine/helix (leaves for Cell studio, decision 086): `positionHue`, `positionOctave`; engine/live (leaves for Cell studio, decision 086): `LiveState`, `liveAt`; engine/order (the same type as `ExampleKey` of `engine/examples`, which `library` exports): `ExampleKey`; engine/parser/index (leaves for Cell studio, decision 086): `SHOWS`; engine/plugins (leaves for Cell studio, decision 086): `ShowPlugin`, `pluginKey`; engine/routing (leaves for Cell studio, decision 086): `Routing`, `State`, `drawn`, `edgeStateOf`, `nodeStateOf`, `routing`; theory/modes (leaves for Cell studio, decision 086): `pitchHue`.

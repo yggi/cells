@@ -34,9 +34,6 @@ export const STUBS: ReadonlySet<string> = new Set([
  * (decision 047): it goes on a tier with a piece whose cells it clusters.
  */
 export const PENDING: ReadonlySet<string> = new Set([
-  // a sum of values read as a level (decision 079): a named product of notes and such a sum is notes with their levels
-  // now (#856, decision 087 §7); its tutorial piece is `style`'s level, a follow-up to #862
-  'sort plain: a sum of values',
   // (a slider's unit as an argument, the core's spelling, decision 069: toCore writes it, a tutorial piece doesn't, the
   // examples staying in their normal form, the unit written after the number): the core tier teaches it (#850)
   'free free(v, lo..hi, unit=bpm)',
@@ -230,7 +227,7 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
   {
     name: 'Sound and tuning',
     concept:
-      'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; a style the voices read; a level a cell names',
+      'stereo: pan=; waveforms from braids: audio rates, sin(), ramps, tables, an instrument; moving parameters: a filter that opens, a fade in decibels; tuning: grids; free(): sliders and named choices; a style the voices read; a level a cell names, a number or a sum',
     forms: [
       // stereo
       'parameter pan',
@@ -259,8 +256,9 @@ export const TIERS: readonly { readonly name: string; readonly concept: string; 
       'map map=style',
       'attribute style',
       'reference &name[slot]',
-      // a number a cell holds, read as a level (decision 088)
+      // a number a cell holds, and a sum of values, read as a level (decisions 088, 079; #856)
       'sort plain: a cell that is one number and nothing else',
+      'sort plain: a sum of values',
     ],
   },
   {

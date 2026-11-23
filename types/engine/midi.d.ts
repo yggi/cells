@@ -48,6 +48,8 @@ export declare const GM_KIT: readonly {
     readonly name: string;
     readonly aliases: readonly string[];
 }[];
+/** The kit member's name for a General MIDI drum note (`GM_KIT`: 36 is `bd`, 38 `sd`, 75 `claves`), or null for a note that is none: `gmDrumNote`'s inverse, for a name's canonical form. */
+export declare function kitVoiceOf(note: number): string | null;
 /** The General MIDI drum note for a kit member's name or alias (`GM_KIT`; lower case, a trailing number ignored: `bd2` is a kick), or null for a name it doesn't know. */
 export declare function gmDrumNote(name: string): number | null;
 /**

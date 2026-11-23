@@ -1,6 +1,7 @@
 import { FIVETO12 } from "./fiveto12.js";
+import { METRIC_ACCENT } from "./accent.js";
 export const BUILT_IN = new Map([[FIVETO12.id, FIVETO12]]);
-export const BY_FRAGMENT = new Map([...BUILT_IN.values()].map((f) => [f.fragment, f]));
+export const BY_FRAGMENT = new Map([...BUILT_IN.values(), METRIC_ACCENT].map((f) => [f.fragment, f]));
 export const lawOf = (params) => (typeof params?.law === 'string' && BUILT_IN.get(params.law)) || null;
 export const pluginIn = (result, fragment) => result.pluginFragments?.get(fragment) ?? BY_FRAGMENT.get(fragment);
 const streamsIn = (result) => [...result.cells.values()].flatMap((cell) => {
