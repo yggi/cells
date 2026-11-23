@@ -31,7 +31,9 @@ export type StyleNames = ReadonlyMap<string, StylePoint>;
 export const FOLDER_FACETS: Readonly<Record<string, string>> = {
   bands: 'band',
   bass: 'bass',
+  counts: 'count',
   expression: 'expression',
+  fills: 'fill',
   forms: 'form',
   harmony: 'harmony',
   instruments: 'instrument',

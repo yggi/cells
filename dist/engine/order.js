@@ -48,6 +48,7 @@ export const ORDER = [
     'lullaby',
     'jazz',
     'funk',
+    'drumtrack',
     'twelve',
     'five',
     'aksak',

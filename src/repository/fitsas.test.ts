@@ -89,6 +89,8 @@ const STYLE = '&style style=&(map=style sync=.5 harm=.5 bite=.5 mood=.5)';
 const KEYED = [METER, '&key scale(dorian, D)'];
 const benches: Readonly<Record<string, readonly string[]>> = {
   '&tempo': ['&tempo step=120bpm'],
+  // (a count, #720: the meter it clicks)
+  '&bar': [METER],
   '&tonic': [METER, '&tonic D'],
   '&key': KEYED,
   '&harm': [...KEYED, '&harm over=&key step=1m [0,2,4] [3,5,7]'],

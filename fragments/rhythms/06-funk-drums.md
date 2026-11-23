@@ -7,6 +7,7 @@ lifted: yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8
 ```cells
 &kick, &backbeat, &fill, &ghost, &hat, &euclid, &euclidLevel, &groove from (&bd, &rim, &sd, &hh, &oh) style=&(map=style sync=1 harm=.12 bite=.85)
 &bd, &rim, &sd, &hh, &oh from gm_kit
+&kick, &backbeat, &fill, &ghost, &hat, &euclid, &euclidLevel, &groove from (&bd, &rim, &sd, &hh, &oh) style=&(map=style sync=1 harm=.12 bite=.85) facet=fill
 &kick role=kick step=16n &bd:0:.645049 ~ ~ &bd:0:.386943 ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
 &backbeat role=backbeat step=16n ~ ~ ~ ~ &sd:0:.536239 ~ ~ ~ ~ ~ ~ ~ &sd:0:.536239 ~ ~ ~
 &fill role=fill step=16n ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ &sd:0:.180792 &sd:0:.367599 &sd:0:.447951
@@ -22,3 +23,5 @@ Jambot's E31 bar for Funk (yggi/jambot#317): the band's drum part as cells text,
 **Its signature** (decision 075, #637): its lines are its heads, and the drums it strikes (`&bd`, `&rim`, `&sd`, `&hh`, `&oh`) are optional parameters, each the General MIDI kit's own line by default, taken inside it (`&bd, &rim, &sd, &hh, &oh from gm_kit`). A piece takes its lines by their names, or renamed (`&kick2=kick`), and passes its own drum where it has one: `funk_drums(bd=&mine)`.
 
 **Its euclid's levels** are the bar's metric accents (`&euclidLevel from metric_accent(floor=.23, peak=.3)`, #799), the downbeat strongest: written by a built-in plugin-fragment, no longer the velocities Jambot's band wrote in E31's bar, which lay between the same two. The rest of the bar is E31's word for word.
+
+**Its fill is found on its own** (#718): a second declaration places the groove as the facet `fill` too, at its own point, so a query for a fill there returns it and a text takes its fill alone, by its head: `&fill from funk_drums`. The groove itself plays its fill every bar, as Jambot's E31 bar wrote it (`&groove` holds `&fill`), which is why Jambot's band leaves it out (#718); a piece that wants it at a section's end takes the line alone and places it (`snare_run` says how).

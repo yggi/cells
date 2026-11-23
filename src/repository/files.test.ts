@@ -77,8 +77,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are the seed files (the law five_to_twelve, #772; the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; #540’s five harmonies; #646’s two drum bars, for 7/8 and 12/8; and Kinderlied’s six tunes its own parts since decision 082; the nine section kinds and the seven song forms, #810; the built-in braid fill metric_accent and the breathing pulse that takes it, #799; the four melodic scales, #719: a hundred and ninety-eight)', () =>
-    expect(files).toHaveLength(198));
+  it('are the seed files (the law five_to_twelve, #772; the seven mode files one, diatonic, #387; the eight modules, #457, decision 074; the thirteen meters one, meter, #507; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; #540’s five harmonies; #646’s two drum bars, for 7/8 and 12/8; and Kinderlied’s six tunes its own parts since decision 082; the nine section kinds and the seven song forms, #810; the built-in braid fill metric_accent and the breathing pulse that takes it, #799; the four melodic scales, #719; the eight fills and the four counts, #718 and #720: two hundred and ten)', () =>
+    expect(files).toHaveLength(210));
 
   it.each(files)('%s writes back byte for byte', (path, markdown) => {
     expect(writeFragment(read(markdown, optionsAt(path)), optionsAt(path))).toBe(markdown);
@@ -189,7 +189,10 @@ describe('the seed files', () => {
     const onItsAxes = (id: string, p: object) => (NO_MODE(id) ? Object.fromEntries(Object.entries(p).filter(([axis]) => axis !== 'mood')) : p);
     for (const [id, points] of Object.entries(AT_PRESETS))
       expect(
-        LIBRARY.find((f) => f.id === id)!.association.map((wp) => wp.point),
+        // (a groove's points as a fill, #718, are its own and the styles its fill is placed at: rhythms.test.ts)
+        LIBRARY.find((f) => f.id === id)!
+          .association.filter((wp) => wp.facet !== 'fill')
+          .map((wp) => wp.point),
         id,
       ).toEqual(points.map((p) => onItsAxes(id, p)));
     for (const [id, points] of Object.entries(AFTER_OWN_POINT))
@@ -253,6 +256,8 @@ describe('the seed files', () => {
           ...HARMONY_FRAGMENTS.filter((f) => !WRITTEN.has(f.id)),
           ...STAB_FRAGMENTS,
           ...MODE_FRAGMENTS.filter((f) => f.id === 'harmonic_minor'),
+          // (the ending's drums, Jambot's finale, #720)
+          ...SEED.filter((f) => f.fragment.id === 'landing').map((f) => f.fragment),
           ...MOTIF_FRAGMENTS.filter((f) =>
             ['gypsy', 'raveHook', 'sequencer', 'melodie', 'ghostPhrase', 'royalTheme', 'bluesRiff', 'drunkenSailor', 'korobeinikiBar'].includes(f.id),
           ),
@@ -264,6 +269,7 @@ describe('the seed files', () => {
       new Set([
         'yggi/jambot packages/score/experiments/drums-in-cells.ts @ 327d6a8',
         'yggi/jambot packages/engine/src/bass.ts @ 1037a80',
+        'yggi/jambot packages/engine/src/ending.ts @ b98e69f',
         'yggi/jambot packages/engine/src/themes.ts @ 0a56da9',
         'yggi/cells examples/electroswing.md @ 2c120d4',
         'yggi/cells examples/electroswing.md @ 7622a87',
