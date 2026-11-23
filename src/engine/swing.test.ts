@@ -3,12 +3,9 @@ import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan, swingOfBar } from './realize';
 import { toCore } from './core';
-import { migrations } from './migrate';
 
 const METER_FRAGMENTS = seedFragments('meters');
 
-/** Migrate's rule `rule` on a text, if it has one to offer. */
-const migration = (src: string, rule: string) => migrations({ old: true })(src, compileSource(src, undefined, { old: true })).find((r) => r.rule === rule);
 import swing from '../../fixtures/contracts/swing.json';
 import { seedFragments } from '../repository/seed';
 
@@ -16,15 +13,15 @@ import { seedFragments } from '../repository/seed';
 // every node keeps its ends: a bar line, a beat and an odd bar never drift. Taps are placed through it.
 
 const VOICE = '\n&v s=sine loop=C4\n&out map=sample [&x * &v]';
-const compiled = (src: string, old = false) => {
-  const r = compileSource(src, undefined, { old });
+const compiled = (src: string) => {
+  const r = compileSource(src);
   if (!r.ok) throw new Error(r.diagnostics.map((d) => d.message).join('; '));
   return r;
 };
 const warnings = (src: string) => compileSource(src).diagnostics.map((d) => d.message);
 /** Where a tap's notes fall in the first `bars` bars of a meter at 60 bpm, in pulses from the downbeat, unrounded. */
-const onsets = (meter: string, tap: string, bars = 1, old = false) => {
-  const r = compiled(`&bar ${meter} step=60bpm\n&x step=${tap} 0${VOICE}`, old);
+const onsets = (meter: string, tap: string, bars = 1) => {
+  const r = compiled(`&bar ${meter} step=60bpm\n&x step=${tap} 0${VOICE}`);
   const bar = r.cells.get('bar')!;
   const barSeconds = bar.steps / r.clocks.get('bar')!.perSecond;
   return eventsBetween(plan(r, codeShifts(r)), 0, bars * barSeconds - 1e-6).map((e) => (e.at / barSeconds) * bar.meter!.pulses);
@@ -126,25 +123,16 @@ describe('swing on the bar: one level of the meter leans, named by note value', 
     expect(onsets('meter("4/4") swing=4n:.67', '8n')).toEqual(onsets('meter("4/4")', '8n'));
   });
 
-  it('a bare swing= on a meter is retired: an error that names the level, read the old way with a warning, and Migrate writes the level (#15, rung 5)', () => {
+  it('a bare swing= on a meter is an error that names the level it leans (#15, rung 5)', () => {
     const bare = `&bar meter("4/4", 2) step=60bpm swing=.67\n&x step=8n 0${VOICE}`;
-    const said = 'swing=.67 on a meter is retired: name the level it leans, swing=8n:.67 (Migrate rewrites it)';
-    const told = (old: boolean) => compileSource(bare, undefined, { old }).diagnostics.map((d) => [d.severity, d.message]);
-    expect([told(false), told(true)]).toEqual([[['error', said]], [['warning', said]]]);
-    // (read the old way, it leans its own steps' level, as the level named does)
-    expect(onsets('meter("4/4", 2) swing=.67', '8n', 1, true)).toEqual(onsets('meter("4/4", 2) swing=8n:.67', '8n'));
-    const s = migration(bare, 'swing')!;
-    expect(s.after).toBe('&bar meter("4/4", 2) step=60bpm swing=8n:.67');
-    expect(warnings(s.apply(bare))).toEqual([]);
-    // (left free, it stays free)
-    const free = bare.replace('swing=.67', 'swing=free(.5, .5..75)');
-    expect(migration(free, 'swing')!.after).toBe('&bar meter("4/4", 2) step=60bpm swing=8n:free(.5, .5..75)');
+    const said = 'swing=.67 on a meter needs the level it leans: swing=8n:.67';
+    expect(compileSource(bare).diagnostics.map((d) => [d.severity, d.message])).toEqual([['error', said]]);
+    expect(compileSource(bare.replace('swing=.67', 'swing=8n:.67')).diagnostics.filter((d) => d.severity !== 'info')).toEqual([]);
   });
 
   it('a bare swing= on beats that are the meter’s own steps is left to the author: the warning stands, Migrate offers nothing (#166)', () => {
     const bare = `&bar meter("4/4") step=120bpm swing=.67\n&x step=8n 0${VOICE}`;
     expect(warnings(bare)).toEqual(["swing=.67 leans the meter cell's own steps, and they are its beats, which swing never moves: name the level it leans, swing=8n:.67"]);
-    expect(migration(bare, 'swing')).toBeUndefined();
   });
 
   it('several levels at once nest, each node keeping its ends', () => {
@@ -259,48 +247,21 @@ describe('the pairs alone in a mixed meter play the band’s T16 (yggi/jambot do
   });
 });
 
-describe('`:pairs` as written, decision 053’s word: read as the swing without it, with a warning that Migrate drops it (decision 071; #15, rung 6)', () => {
+describe('`:pairs`, decision 053’s word, is no form: every swing leans a level’s pairs alone (decision 071)', () => {
   const errors = (src: string) =>
     compileSource(src)
       .diagnostics.filter((d) => d.severity === 'error')
       .map((d) => d.message);
-  const levels = (src: string) =>
-    compiled(`&bar ${src}`)
-      .cells.get('bar')!
-      .meter!.swing!.map((l) => [l.level, l.share]);
 
-  it('after a level’s share, a decimal, a fraction or one free(…), on one level or several, it is the swing without it, and says so', () => {
-    for (const [word, plain] of [
-      ['swing=8n:.67:pairs', 'swing=8n:.67'],
-      ['swing=8n:2/3:pairs,16n:.55', 'swing=8n:2/3,16n:.55'],
-      ['swing=8n:free(.6, .5..75):pairs', 'swing=8n:free(.6, .5..75)'],
-    ]) {
-      expect(levels(`meter("7/8") ${word}`)).toEqual(levels(`meter("7/8") ${plain}`));
-      expect(onsets(`meter("7/8") ${word}`, '16n')).toEqual(onsets(`meter("7/8") ${plain}`, '16n'));
-      expect(warnings(`&bar meter("7/8") step=60bpm ${word}\n&x step=8n 0${VOICE}`)).toEqual([
-        ":pairs says nothing more: every swing leans a level's pairs alone and keeps its groups of three straight (decision 071); Migrate drops it",
-      ]);
-    }
+  it('a word after a level’s share is an error at the word, :pairs too', () => {
+    for (const word of ['pairs', 'threes']) expect(errors(`&bar meter("7/8") swing=8n:2/3:${word}`)).toEqual([expect.stringContaining('a share takes no word after it')]);
+    expect(errors('&bar meter("7/8") legato=8n:.5:pairs')).toEqual([expect.stringContaining('a share takes no word after it')]);
   });
 
   it('16ths swing inside 7/8’s straight three', () => {
     expect(rounded(onsets('meter("7/8") swing=8n:2/3,16n:.6', '16n'))).toEqual(
       rounded([0, 0.6, 1, 1.6, 2, 2.6, 3, 3 + 0.6 * (4 / 3), 3 + 4 / 3, 3 + 4 / 3 + 0.6 * (2 / 3), 5, 5 + 0.6 * (4 / 3), 5 + 4 / 3, 5 + 4 / 3 + 0.6 * (2 / 3)]),
     );
-  });
-
-  it('another word, or :pairs on legato=, fails at the word', () => {
-    expect(errors('&bar meter("7/8") swing=8n:2/3:threes')).toEqual([expect.stringContaining('a share takes no word after it')]);
-    expect(errors('&bar meter("7/8") legato=8n:.5:pairs')).toEqual([expect.stringContaining(":pairs was swing='s word")]);
-    expect(errors('&bar meter("7/8") swing=8n:free(.6, .5..75):pairs,16n:.55')).toEqual([expect.stringContaining('one level alone')]);
-  });
-
-  it('Migrate drops it, every level’s, playing the same', () => {
-    const src = `&bar meter("7/8") step=60bpm swing=8n:2/3:pairs,16n:.55   # a band's 7/8\n&x step=8n 0${VOICE}`;
-    const m = migration(src, 'pairs');
-    expect(m?.after).toBe('&bar meter("7/8") step=60bpm swing=8n:2/3,16n:.55');
-    expect(m!.apply(src).split('\n')[0]).toBe('&bar meter("7/8") step=60bpm swing=8n:2/3,16n:.55   # a band\'s 7/8');
-    expect(migration(`&bar meter("7/8") step=60bpm label="swing=8n:2/3:pairs"\n&x step=8n 0${VOICE}`, 'pairs')).toBeUndefined();
   });
 });
 

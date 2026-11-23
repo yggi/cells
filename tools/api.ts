@@ -21,11 +21,11 @@ export const ROOT = fileURLToPath(new URL('..', import.meta.url));
 /** The seven entry points, in the order the page lists them, with the layer each belongs to. */
 export const ENTRIES = [
   { name: '@yggi/cells', layer: 'language', role: 'compile, plan, window; the shared types' },
-  { name: '@yggi/cells/edit', layer: 'language', role: 'edit, patch, capture, vary, shorten, normalise, migrate a text; a piece file' },
+  { name: '@yggi/cells/edit', layer: 'language', role: 'edit, patch, capture, vary, shorten, normalise, migrate a text (one rule: `arguments`); a piece file' },
   { name: '@yggi/cells/inspect', layer: 'language', role: 'read a compiled piece: its cells, pitches, clocks, values, written graph' },
   { name: '@yggi/cells/midi', layer: 'language', role: 'text to MIDI notes and hits, MIDI files, keys, the performer' },
   { name: '@yggi/cells/time', layer: 'language', role: 'analysis of what plays: scalograms, structure, motifs' },
-  { name: '@yggi/cells/repository', layer: 'repository', role: 'query, fit, learn and migrate a layer; a fragment read as cells means it' },
+  { name: '@yggi/cells/repository', layer: 'repository', role: 'query, fit and learn; a fragment read as cells means it' },
   { name: '@yggi/cells/library', layer: 'library', role: 'the seed, styles, kit, roles, modes, the band; every vocabulary as values' },
 ] as const;
 export type EntryName = (typeof ENTRIES)[number]['name'];
@@ -85,12 +85,10 @@ export const ENTRY_POINTS: readonly { readonly match: string; readonly entry: En
   // Time.
   { match: 'engine/time/', entry: '@yggi/cells/time' },
   // Repository: fragments, their fit and learning, and a fragment read as cells means it (reading/*, ruled 2026-11-16).
-  ...['fragments', 'learned', 'fit', 'holes', 'files', 'decompose', 'recognise', 'extract', 'audition', 'catalogue', 'corefragment', 'migratelayer'].map(
-    (m): { match: string; entry: Entry } => ({
-      match: `repository/${m}`,
-      entry: '@yggi/cells/repository',
-    }),
-  ),
+  ...['fragments', 'learned', 'fit', 'holes', 'files', 'decompose', 'recognise', 'extract', 'audition', 'catalogue', 'corefragment'].map((m): { match: string; entry: Entry } => ({
+    match: `repository/${m}`,
+    entry: '@yggi/cells/repository',
+  })),
   ...['takein', 'references', 'use', 'renamed', 'reading/'].map((m): { match: string; entry: Entry } => ({ match: `engine/${m}`, entry: '@yggi/cells/repository' })),
   // Library: the seed, styles, the kit and roles, modes, the band.
   ...['library', 'seed', 'styles', 'band'].map((m): { match: string; entry: Entry } => ({ match: `repository/${m}`, entry: '@yggi/cells/library' })),

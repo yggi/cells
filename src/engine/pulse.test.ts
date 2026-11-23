@@ -4,10 +4,7 @@ import { compileSource } from './compile';
 import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { tapPositions } from './meter';
-import { migrations } from './migrate';
 
-/** Migrate's rule `rule` on a text, if it has one to offer. */
-const migration = (src: string, rule: string) => migrations({ old: true })(src, compileSource(src, undefined, { old: true })).find((r) => r.rule === rule);
 import { mainMeter } from './midiclock';
 
 // Decision 040: a meter knows its bar, its pulse (the numerator) and its beat (what is counted); a line taps it by pulse,
@@ -314,17 +311,13 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
     expect(compileSource('&bar meter("4/4") step=60bpm\n&x step=&bar:9n 0').ok).toBe(false);
   });
 
-  it('a raw step=&bar is retired: an error with the tap that says the same, read the old way with a warning, and Migrate rewrites it so (#15, rung 5)', () => {
+  it('a raw step=&bar is an error that names the tap that says the same: a line taps a meter, never its cell’s own steps (decision 040)', () => {
     const src = `&bar scan(1 1 1 1) step=120bpm\n&x step=&bar*2 0 2 4 5${VOICE}`;
-    const said = "step=&bar*2 is retired: a line taps the meter by pulse, beat or a note value, never its cell's own steps (step=8n; Migrate rewrites it)";
-    const told = (old: boolean) => compileSource(src, undefined, { old }).diagnostics.map((d) => [d.severity, d.message]);
-    expect([told(false), told(true)]).toEqual([[['error', said]], [['warning', said]]]);
-    const tap = migration(src, 'tap')!;
-    expect(tap.after).toBe('&x step=8n 0 2 4 5');
-    expect(compileSource(tap.apply(src)).diagnostics).toEqual([]);
+    const said = "step=&bar*2: a line taps a meter by pulse, beat or a note value, never its cell's own steps (step=8n)";
+    expect(compileSource(src).diagnostics.map((d) => [d.severity, d.message])).toEqual([['error', said]]);
     // (a meter stepped by another, scan(2 1) step=8n, is tapped by its pulse, by name)
     const swing = `&bar scan(1 1 1 1) step=120bpm\n&swing scan(2 1) step=8n\n&x step=&swing 0 1${VOICE}`;
-    expect(migration(swing, 'tap')!.after).toBe('&x step=&swing:pulse 0 1');
+    expect(compileSource(swing).diagnostics.map((d) => d.message)).toEqual([expect.stringContaining('step=&swing:pulse')]);
   });
 
   it('tapPositions: by index, a lap of bars', () => {
@@ -335,7 +328,7 @@ describe('taps by pulse, beat and note value (decision 040)', () => {
 });
 
 describe('a tapped line comes round where cycle= says, every n bars (#116, decision 040)', () => {
-  const kick = '&bd oneshot s=sine loop=A1 env=&(map=adsr 0 .1 0 0)';
+  const kick = '&bd oneshot=1 s=sine loop=A1 env=&(map=adsr 0 .1 0 0)';
   /** The onsets of &k over its first `bars` bars of 7/8, in sixteenths (14 a bar), read off the bar's own length. */
   const hits = (line: string, bars = 3) => {
     const r = compileSource(`&bar meter("7/8") step=60bpm\n${kick}\n${line}\n&out map=sample [&k * .5]`);

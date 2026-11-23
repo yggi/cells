@@ -84,7 +84,6 @@
         "hasFrom",
         "holesOf",
         "layerProblems",
-        "migrateLayer",
         "partDistance",
         "pointDistance",
         "readChords",

@@ -35,7 +35,6 @@ import { FROM_FORM, HEAD_FLAGS, isAttribute, readFrom, topTokens, type FromForm 
 import { counts } from './core/desugar';
 import type { Diagnostic, Span } from './ast';
 import { STYLE } from './style';
-import { MOVED, RENAMED_IDS } from './renamed';
 import { BOUND_BY_NAME, byNameMessage } from './byname';
 import type { CompileOptions, LockedAnswer, Origin, Resolve, Take } from './program';
 import { BY_FRAGMENT, type PluginFragment, type Refusal } from './fills';
@@ -991,19 +990,6 @@ function fragmentLines(path: readonly string[], text: string, resolve: Resolve, 
   return merge([...own, ...copies], used, (_, message) => sayHere(message), quoted(path.at(-1)!)).lines;
 }
 
-/** What a use of an id the seed renamed says: its start (`is renamed`) is stable, for a frontend that matches it. */
-const renamedMessage = (id: string, word: string) => `${quoted(id)} is renamed ${word}: write from ${word} (#387; Migrate rewrites it)`;
-
-/**
- * The line a fragment forwards to, where its text is one `from` line of a collection and nothing else (a retired id the
- * library reads so, #196): what a line of it is told, which Migrate's `forwarded` rule writes.
- */
-function forwardsTo(text: string): string | null {
-  const lines = linesOf(text);
-  const only = lines.length === 1 ? lines[0]!.from : null;
-  return only?.kind === 'use' && !only.head.length && !only.args && only.main === null ? only.id : null;
-}
-
 /** The expansion of a text, as the compiler reads it. */
 export interface Expansion {
   /** The piece's own text as written, then the used lines (so the piece's lines keep their numbers). */
@@ -1055,10 +1041,7 @@ export function expansion(text: string, { resolve, locked = [], old = false, plu
     // (a document's part is locked by its id and head, `kinderlied/twinkle`, decision 082)
     const head = (u.from.takes ?? u.from.names)?.[0]?.slice(1);
     const recorded = (locked.find((k) => head !== undefined && k.id === `${id}/${head}`) ?? locked.find((k) => k.id === id))?.hash;
-    // (a seed fragment a piece took in as its part, read the old way as that part, decision 082: Migrate's `moved` rewrites it)
-    const moved = old ? MOVED.get(id) : undefined;
-    if (moved) diagnostics.push({ severity: 'warning', message: `${quoted(id)} is a part of ${moved.document} now: take it from there (Migrate rewrites it)`, span });
-    const whole = resolve ? (moved ? partOf(resolve(moved.document) ?? '', moved.head) : resolve(id, ...(recorded ? [recorded] : []))) : null;
+    const whole = resolve ? resolve(id, ...(recorded ? [recorded] : [])) : null;
     const picked = whole === null ? null : pickPart(id, whole, u.from, say);
     const theirs = picked?.text ?? null;
     parts[i] = picked?.part;
@@ -1073,12 +1056,6 @@ export function expansion(text: string, { resolve, locked = [], old = false, plu
     hashes[i] = hash;
     if (recorded && !hashIs(recorded, theirs))
       diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });
-    // (an id the seed renamed, which this resolver reads as its word: the old way for a minor version, #387)
-    const word = RENAMED_IDS.get(id);
-    if (word !== undefined && resolve!(word) === theirs) diagnostics.push({ severity: 'warning', message: renamedMessage(id, word), span });
-    // (an id that only forwards to another, retired: read as what it forwards to, for a minor version, #196)
-    const to = forwardsTo(theirs);
-    if (to !== null) diagnostics.push({ severity: 'warning', message: `${quoted(id)} only forwards to ${quoted(to)}: take from it (Migrate rewrites it)`, span });
     const binding = old
       ? { defines: new Set(own.flatMap((l) => (l.name ? [l.name] : []))), warn: (message: string) => diagnostics.push({ severity: 'warning', message, span }) }
       : undefined;

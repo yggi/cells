@@ -29,7 +29,7 @@ const AGOGO = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'gm_kit')!
 const filled = (text: string) => (text.includes('&highagogo') ? `${text}\n${AGOGO}` : text);
 const BASS_VOICE = INSTRUMENT_FRAGMENTS.find((f) => f.id === 'bass')!.text;
 import { LIBRARY, resolveSeed } from './library';
-import { newPoint } from '../engine/migrate/axes';
+import { newPoint } from './oldaxes.testutil';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { moodOf } from '../engine/style';
 import { seedFragments } from './seed';

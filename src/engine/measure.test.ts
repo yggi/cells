@@ -11,7 +11,7 @@ describe("the structure measure: decision 049's (leaves, attribute values, cells
     expect(at('&bar scan(1!432 .72!96 2) step=120bpm', 'bar')).toMatchObject({ leaves: 3, attributes: 1, total: 5 });
   });
   it('an attribute value is one, a flag too; how a cell is shown or named costs nothing', () => {
-    expect(at('&v s=saw loop=C4 lpf=800 oneshot', 'v').attributes).toBe(4);
+    expect(at('&v s=saw loop=C4 lpf=800 oneshot=1', 'v').attributes).toBe(4);
     expect(at('&t label="a tune" tags="lead" show=notes step=4n 0 2', 't')).toMatchObject({ attributes: 1, leaves: 2, total: 4 });
   });
   it('a copy is measured as written, its base= one attribute value', () => {
@@ -29,8 +29,8 @@ describe("the structure measure: decision 049's (leaves, attribute values, cells
     const piece = (lpf: string) => `&bar meter("4/4") step=120bpm\n&tune step=8n 0 2\n&v s=saw loop=C4 ${lpf}\n&out map=sample [&tune * &v]`;
     expect(structureOf(piece('cutoff=800'))).toEqual(structureOf(piece('lpf=800')));
   });
-  it('BWV 847: the generator wrote 1,397, by hand 1,114 (#181, #182; its vibrato and its envelopes the library’s since #196; its bass’s part= since #560)', () => {
-    expect(structureOf(readFileSync('fixtures/bwv847-generated.cells', 'utf8')).total).toBe(1397);
+  it('BWV 847: the generator wrote 1,396, by hand 1,114 (#181, #182; its vibrato and its envelopes the library’s since #196; 1,397 while Migrate wrote its bass’s part= from its name, #560, which it no longer does, #643)', () => {
+    expect(structureOf(readFileSync('fixtures/bwv847-generated.cells', 'utf8')).total).toBe(1396);
     expect(structureOf(EXAMPLES.bwv847!.source).total).toBe(1114);
   });
 });

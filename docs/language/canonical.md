@@ -40,7 +40,6 @@ leaves it for the author.
 
 ## The main key: named, `over=&key`
 
-`over=key`, the main key read the old way ([tables.md](tables.md), [decision 060](https://github.com/yggi/cells/blob/main/docs/decisions/060-the-key-is-named.md)), is written `over=&key`, the cell it reads, by its name (Migrate's rule, `migrate/mainkey.ts`, which Normalise runs first): the first cell in the text whose braid is `scale(…)`, whatever it is called (`over=&chords` where `&chords scale(aeolian, A)` comes first). The two read one table, so the rewrite plays the same notes. A text with no main key is left as it is: its `over=key` is an error.
 
 | written | Normalise writes |
 |---|---|
@@ -133,7 +132,7 @@ Normalise keeps each `from` line in its order, a collection's the narrowest (`* 
 
 ## `from`: what a `use` line was
 
-A `use` line was the old way ([decision 065](https://github.com/yggi/cells/blob/main/docs/decisions/065-fragments-take-arguments.md)). Migrate wrote it as the `from` line that plays the same until v0.20.0; since #588 nothing reads one, and [use.md](use.md#use-retired) says how to write it by hand.
+A `use` line was the old way ([decision 065](https://github.com/yggi/cells/blob/main/docs/decisions/065-fragments-take-arguments.md)). Since #588 nothing reads one, and [use.md](use.md#use-retired) says how to write it by hand.
 
 ## The narrowest `from`: the cells a piece uses
 

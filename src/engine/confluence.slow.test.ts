@@ -23,7 +23,7 @@ import { LIBRARY, resolveSeed } from '../repository/library';
 
 const O = { resolve: resolveSeed, library: LIBRARY };
 // (as `normalise` runs: a retired form read the old way)
-const OLD = { ...O, old: true };
+const OLD = { ...O };
 const written = FAMILIES.find((f) => f.key === 'from')!.rewrite;
 const ORDERS = 4;
 const source = (key: string) => written(EXAMPLES[key as keyof typeof EXAMPLES].source, { resolve: resolveSeed });

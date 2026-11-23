@@ -3,7 +3,7 @@ import { leaves } from '../subseq';
 import type { Braid, CellDecl, FreeSpec, MapSpec, ParamCells, Ref, Span, StepSpec, StylePoint, StyleSpec, Token } from '../ast';
 import { TIME_PARAMS } from '../attributes';
 import { RETIRED_PARAMS } from '../dough-params';
-import { LABEL_FIELDS, MAIN_KEY, MAX_EVENTS } from '../program';
+import { LABEL_FIELDS, MAX_EVENTS } from '../program';
 import { CELL_PARAMS, CORE, filterModel, PARAMS, PARAM_ALIASES, nearestAttribute } from '../attributes';
 import { IDENT, LineScanner } from './scanner';
 import { OPERATIONS, parseToken, pushStep } from './braid';
@@ -133,15 +133,7 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
     form: 'over=&table · over=&table[<<n] · over=scale(name, tonic)',
     examples: ['&tune over=&major step=2 0 2 4', '&mode over=&major[<<2] 0 2 4', '&tune over=scale(minor, A) step=2 0 2 4', '&bass over=&key step=16n 0 4 7'],
     read: (s, b) => {
-      const bare = /key(?![A-Za-z0-9_])/y;
-      bare.lastIndex = s.i;
-      if (bare.test(s.text)) {
-        // over=key, the old way (#124; #301, decision 060): the piece's main key; compile names the cell and warns (declare.ts)
-        const at = s.i;
-        s.i += 3;
-        if (s.peek() === '[') s.fail('over=key is the old way: name the key, and turn it there (over=&key[<<2])', s.i, 1);
-        b.over = { name: MAIN_KEY, pick: null, shift: 0, span: s.place(at) };
-      } else if (s.text.startsWith('scale(', s.i)) {
+      if (s.text.startsWith('scale(', s.i)) {
         // over=scale(name, tonic): a table of its own, unnamed and not drawn — the scale's scan over its key
         const at0 = s.i;
         s.i += 5;
@@ -550,18 +542,11 @@ const readLevels: Reader = (s, b, word) => {
         share = parseFloat(n!);
       }
     }
-    // (:pairs, decision 053's word: a level's pairs leaning alone, its groups of three straight, which every swing does
-    //  since decision 071; read, with a warning that Migrate drops it (#15, rung 6: Jambot's section texts stopped
-    //  writing it at yggi/jambot#591))
     if (s.peek() === ':') {
       const at = s.i;
       s.i++;
       const named = s.match(/[a-z]+/y);
-      if (named !== 'pairs')
-        s.fail(`a share takes no word after it: a swing leans a level's pairs alone and keeps its groups of three straight (swing=${level}:2/3)`, at, 1 + (named?.length ?? 0));
-      if (word === 'legato') s.fail(`:pairs was swing='s word; a legato= share holds every note of its level: legato=${level}:.5`, at, 6);
-      if (free && s.peek() === ',') s.fail(`a share left free(…) is one level alone: ${word}=8n:free(.5, .5..75)`, vs, s.i - vs);
-      s.warn(":pairs says nothing more: every swing leans a level's pairs alone and keeps its groups of three straight (decision 071); Migrate drops it", at, 6);
+      s.fail(`a share takes no word after it: a swing leans a level's pairs alone and keeps its groups of three straight (swing=${level}:2/3)`, at, 1 + (named?.length ?? 0));
     }
     levels.push({ level: level!, share });
     if (s.peek() !== ',') break;
@@ -879,13 +864,6 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       }
       if (key === null) {
         if (word in RETIRED_KEYS) s.fail(RETIRED_KEYS[word], at, word.length);
-        // (decision 076: articulation is bite now, and energy is off the point; Migrate writes a style on the old axes on the new)
-        if ((word === 'artic' || word === 'energy') && b.map?.kind === 'style')
-          s.fail(
-            `${word}= is retired: a style's axes are ${AXIS_NAMES.join(' ')}, bite its articulation and energy off the point (decision 076); Migrate rewrites it`,
-            at,
-            word.length,
-          );
         const near = nearestAttribute(word);
         s.fail(
           `Unknown attribute ${word}=${near ? ` — did you mean ${near}=?` : ''} (a cell: ${Object.keys(CORE).join(' ')}; a sound or a physical cell: ${Object.keys(PARAMS).join(' ')})`,
@@ -990,13 +968,6 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     if (word === 'off' && s.atBoundary()) {
       if (off) s.fail('off is given twice', at, word.length);
       off = true;
-      continue;
-    }
-    if (word === 'oneshot' && s.atBoundary()) {
-      if (oneshot) s.fail('oneshot is given twice', at, word.length);
-      oneshot = true;
-      // (a line holds names, attributes and a braid, decision 068: playing through is a voice's parameter, #440)
-      s.warn('oneshot is retired as a line word: a voice’s parameter, oneshot=1 (Migrate rewrites it, decision 068)', at, word.length);
       continue;
     }
     // a note by name is a step (C, Bb3): read again as one

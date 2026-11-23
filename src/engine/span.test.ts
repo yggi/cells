@@ -62,7 +62,7 @@ describe('the MIDI file’s signature', () => {
   });
   it('is the meter’s where its rate is a cell (step=&tempo), as a seed meter’s is', () => {
     const at = (text: string) => {
-      const r = compileSource(text, undefined, { resolve: resolveSeed, old: true });
+      const r = compileSource(text, undefined, { resolve: resolveSeed });
       expect(r.diagnostics, text).toEqual([]);
       return pieceMidi(r, codeShifts(r)).smf.meters;
     };

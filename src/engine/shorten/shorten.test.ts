@@ -12,7 +12,7 @@ import { soundsIdentical } from '../sameness';
 
 const tail = '\n&v s=sine loop=C4\n&out loop=SAMPLE_RATE map=sample [&t * &v]';
 const sounds = (src: string, until = SAMENESS_SECONDS) => {
-  const r = compileSource(src, undefined, { resolve: resolveSeed, old: true });
+  const r = compileSource(src, undefined, { resolve: resolveSeed });
   expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
   return eventsBetween(plan(r, codeShifts(r)), 0, until)
     .map((e) => `${e.voice} ${e.at.toFixed(5)} ${e.dur.toFixed(5)} ${e.freq.toFixed(3)} ${e.gains.map((g) => g.toFixed(4)).join(',')}`)
@@ -116,7 +116,7 @@ describe('shorten, on every example: every suggestion sounds the same, and saves
     it(
       key,
       () => {
-        const suggestions = shorten(p.source, { resolve: resolveSeed, old: true });
+        const suggestions = shorten(p.source, { resolve: resolveSeed });
         const before = sounds(p.source);
         for (const s of suggestions) {
           const next = s.apply(p.source);
@@ -171,7 +171,7 @@ describe('shorten: turns, alike cells, and all the way', () => {
   });
   it('a piece with use: what the piece written out is offered, read through the resolver (#241)', () => {
     const src = '* from "gm_kit"\n&bar meter("4/4") step=100bpm\n&a &bd ~ &hh ~ &sd ~ &hh &hh\n&b &bd ~ &hh ~ &sd ~ &hh &hh\n&beat step=8n &a &b &a &b\n&out map=sample [&beat]\n';
-    const seed = { resolve: resolveSeed, old: true };
+    const seed = { resolve: resolveSeed };
     expect(shorten(src)).toEqual([]);
     const offered = shorten(src, seed);
     expect(offered.map((s) => [s.id, s.saving])).toEqual(shorten(expand(src, resolveSeed)).map((s) => [s.id, s.saving]));
@@ -260,7 +260,7 @@ describe('shorten: whole lines (#10)', () => {
     expect(kinds).toEqual(['cycle=1', 'loop=SAMPLE_RATE', 'pan=.5']);
     expect(sounds(shortenAll(src).source)).toEqual(sounds(src));
     // (a grid's cycle= is its size: not a default to drop)
-    expect(shorten('&edo cycle=19 map=edo\n&t over=&edo step=2 0 1' + tail).some((x) => x.before.startsWith('cycle='))).toBe(false);
+    expect(shorten('&edo map=edo(19)\n&t over=&edo step=2 0 1' + tail).some((x) => x.before.startsWith('cycle='))).toBe(false);
   });
   it('the measure is the structure (#157): an attribute value dropped saves one, its comment and spacing free', () => {
     const src = '&bar step=1 0\n&key step=&bar stride=7 cycle=1          # one lap\n&t over=&key step=&bar 0 4 7' + tail;

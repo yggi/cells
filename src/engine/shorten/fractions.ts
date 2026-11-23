@@ -3,7 +3,6 @@
  * slow the clock to match (4 2 0@2, step=&bar/2).
  */
 import { attrsOf, setAttr, setBraid } from '../edit';
-import { tapOfRaw } from '../migrate/taps';
 import { savesChars, type Candidate, type Result, type ShortenRewrite } from './harness';
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a);
@@ -49,9 +48,8 @@ export function fractions(source: string, cells: readonly Candidate[], result: R
       d /= k;
       slower = `&${driven[1]}${n > 1 ? `*${n}` : ''}${d > 1 ? `/${d}` : ''}`;
     } else if (/^[0-9]*\.?[0-9]+$/.test(step)) slower = String(+(+step / g).toFixed(6));
-    // a meter's own steps (the old spelling) say the tap that says it, slowed; a tap is slowed as written
-    if (driven && tapOfRaw(result, c.name) !== null) slower = tapOfRaw(result, c.name, g);
-    else slower = slowerTap(step, g) ?? slower;
+    // a tap is slowed as written
+    slower = slowerTap(step, g) ?? slower;
     if (!slower) continue;
     const next = c.tokens.map((t, i) => t.slice(0, cut(t)) + t.slice(cut(t)).replace(/@[0-9]+/, held[i] / g > 1 ? `@${held[i] / g}` : ''));
     const s: ShortenRewrite = {

@@ -94,13 +94,13 @@ export const MAP_KINDS = {
     adsr: syntax('map', 'map=adsr a d s r', 'An envelope: attack, decay, release in seconds, sustain a level; one per note.', ['&pluck map=adsr .01 .3 .5 .4'], 'sound.md'),
     sample: syntax('map', 'map=sample', 'The sound card: its entries are channels, one (mono) or two (left, right).', ['&out loop=SAMPLE_RATE map=sample &left &right'], 'mix.md'),
     midi: syntax('map', 'map=midi', "A MIDI card: its entries are MIDI channels, in order (~ skips one); a voice only here is sent and heard, at its entry's gain.", ['&synth map=midi [&theme * &reed] [&bass * &sub] ~!7 &groove'], 'midi.md'),
-    edo: syntax('map', 'map=edo', 'A grid: cycle= equal steps to the octave.', ['&edo19 cycle=19 map=edo'], 'tuning.md'),
+    edo: syntax('map', 'map=edo', 'A grid: n equal steps to the octave, written map=edo(n).', ['&edo19 map=edo(19)'], 'tuning.md'),
     ratios: syntax('map', 'map=ratios', "A grid of ratios: one period's tones, then the period (the last).", ['&just map=ratios 1 9/8 5/4 4/3 3/2 5/3 15/8 2'], 'tuning.md'),
     style: syntax('map', 'map=style', "A style: a point in style space, one value an axis in the table's order (sync harm bite mood, each 0 to 1), or each by its name (sync=.3); it doesn't sound. A pick reads an axis by name: &funk[bite].", ['&funk map=style .3 .45 .55 .5', '&funk map=style sync=.3 harm=.45 bite=.55 mood=.5'], 'style.md'),
     role: syntax('map', 'map=role', 'A role: its name is the role, its entries the gates that play it (two entries, two players); a gate no role names plays as written.', ['&comp map=role &violin2 &viola'], 'mix.md'),
 };
 export const MAP_SYNTAX = [
-    syntax('map', 'map=ed(r)', 'A grid: cycle= equal steps to the ratio r (a number or a fraction): ed(2) the octave, ed(3/2) the fifth.', ['&bp cycle=13 map=ed(3)', '&fifths cycle=7 map=ed(3/2)'], 'tuning.md'),
+    syntax('map', 'map=ed(r)', 'A grid: n equal steps to the ratio r (a number or a fraction), written map=ed(n, r): ed(12, 2) the octave, ed(7, 3/2) the fifth.', ['&bp map=ed(13, 3)', '&fifths map=ed(7, 3/2)'], 'tuning.md'),
     syntax('map', 'map=midi(c) · map=midi(c, p)', 'A MIDI card on one channel c (1–16), and on output slot p (1–16; the nth output of the MIDI page, 1 the first).', ['&drums map=midi(10) &groove', '&keys map=midi(1, 2) [&theme * &reed]'], 'midi.md'),
     syntax('map', 'map=&table', 'Each value looked up in a table cell first, then sounded as amp.', ['&shaped loop=220 map=&curve 0 1 2 3'], 'sound.md'),
 ];

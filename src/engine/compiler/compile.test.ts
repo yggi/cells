@@ -60,7 +60,7 @@ describe('cells as helices', () => {
 
   it('decimals are fine on a root grid; other roots work', () => {
     expect(compileSource('&g 0 3.24 6 9.12').ok).toBe(true);
-    const r = compileSource('&edo19 cycle=19 map=edo\n&m over=&edo19 0 11 19');
+    const r = compileSource('&edo19 map=edo(19)\n&m over=&edo19 0 11 19');
     expect(resolvePitch(r, 'm', 11, 0, codeShifts(r)).root).toBe('edo19');
   });
 });
@@ -192,10 +192,9 @@ describe('motifs and shifted references', () => {
 
 describe('step=, loop=, clocks and voices', () => {
   it('rates multiply along the chain: per step, ×n, ÷n, per cycle', () => {
-    // (the chain's arithmetic on a meter cell's own steps, the spelling decision 040 retired and #15's rung 5 made an
-    // error: read the old way, as Migrate reads it to write its taps)
+    // (the chain's arithmetic on a clock's own steps: a cell that is no meter, whose steps a tap would not read)
     const r = compileSource(
-      `&m scan(27 23 26 24) step=90bpm
+      `&m step=90bpm
 &a step=&m 0 1 2 3 4
 &b step=&m/2 0
 &c step=&m*3 0
@@ -203,15 +202,13 @@ describe('step=, loop=, clocks and voices', () => {
 &e step=cycle(&a)/2 0
 &f step=cycle(&a)*2 0
 &g step=&d*5 0`,
-      undefined,
-      { old: true },
     );
     expect(r.ok).toBe(true);
     const rate = (n: string) => r.cells.get(n)!.rate;
     expect([rate('m'), rate('a'), rate('b'), rate('c')]).toEqual([1, 1, 1 / 2, 3]);
     expect([rate('d'), rate('e'), rate('f'), rate('g')]).toEqual([1 / 5, 1 / 10, 2 / 5, 1]);
     expect(r.cells.get('g')!.clock).toBe('m');
-    expect(r.clocks.get('m')).toMatchObject({ perSecond: 1.5, positional: true });
+    expect(r.clocks.get('m')).toMatchObject({ perSecond: 1.5 });
   });
 
   it('loop= counts whole turns: rate × the cell’s own steps', () => {
@@ -608,7 +605,7 @@ describe('the sound card holds its mix', () => {
 
 describe('map=edo: grids say so; cycle= has one job', () => {
   it('a blank cell with cycle= is not a grid: it reads the default grid and wraps there', () => {
-    const r = compileSource('&k cycle=24\n&edo19 cycle=19 map=edo');
+    const r = compileSource('&k cycle=24\n&edo19 map=edo(19)');
     expect(r.cells.get('k')).toMatchObject({ root: false, wrap: 24, steps: 12 }); // as long as the grid below
     expect(r.cells.get('edo19')).toMatchObject({ root: true, cycle: 19 });
   });
@@ -617,7 +614,7 @@ describe('map=edo: grids say so; cycle= has one job', () => {
       compileSource(s)
         .diagnostics.map((d) => d.message)
         .join();
-    expect(msgs('&g cycle=7 map=edo 0 1 2')).toMatch(/A grid \(map=edo, map=ed\(r\)\) reads nothing and has no braid/);
+    expect(msgs('&g map=edo(7) 0 1 2')).toMatch(/A grid \(map=edo, map=ed\(r\)\) reads nothing and has no braid/);
     expect(msgs('&s scan(1 2 2 1 2 2 2)\n&g over=&s map=edo')).toMatch(/A grid \(map=edo/);
   });
 });
@@ -712,27 +709,27 @@ describe('grids of any period: map=ed(r)', () => {
     return semitones(r, p.root, p.position);
   };
   it('Studie II: 25 equal steps to 5:1 — each step 5^(1/25), and 25 of them exactly 5:1', () => {
-    const src = '&studie cycle=25 map=ed(5)\n&t over=&studie 0';
+    const src = '&studie map=ed(25, 5)\n&t over=&studie 0';
     expect(Math.pow(2, pitchOf(src, 't', 1) / 12)).toBeCloseTo(Math.pow(5, 1 / 25), 10);
     expect(Math.pow(2, pitchOf(src, 't', 25) / 12)).toBeCloseTo(5, 10);
     expect(Math.pow(2, pitchOf(src, 't', 80) / 12) * 100).toBeCloseTo(100 * Math.pow(5, 80 / 25), 6); // the 81st frequency
   });
   it('Carlos’ alpha: nine equal steps to the fifth (a fraction: 3/2) — no octave', () => {
-    const src = '&alpha cycle=9 map=ed(3/2)\n&t over=&alpha 0';
+    const src = '&alpha map=ed(9, 3/2)\n&t over=&alpha 0';
     expect(pitchOf(src, 't', 1) * 100).toBeCloseTo(77.995, 2); // cents per step
     expect(Math.pow(2, pitchOf(src, 't', 9) / 12)).toBeCloseTo(1.5, 10); // a pure fifth
     expect(pitchOf(src, 't', 5) * 100).toBeCloseTo(390, 0); // ≈ 5:4 (386)
     expect(pitchOf(src, 't', 4) * 100).toBeCloseTo(312, 0); // ≈ 6:5 (316)
   });
   it('a table over such a grid climbs by its period: a lap up multiplies by r', () => {
-    const src = '&bp cycle=13 map=ed(3)\n&s over=&bp scan(2 1 1 2 1 2 1 2 1)\n&t over=&s 0';
+    const src = '&bp map=ed(13, 3)\n&s over=&bp scan(2 1 1 2 1 2 1 2 1)\n&t over=&s 0';
     const r = compileSource(src);
     expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
     const lap = r.cells.get('s')!.units.length;
     expect(Math.pow(2, (pitchOf(src, 't', lap) - pitchOf(src, 't', 0)) / 12)).toBeCloseTo(3, 10); // Bohlen–Pierce: the tritave
   });
   it('colours a rainbow per period, by position — on every grid (12 to the octave: C red, G light blue)', () => {
-    const r = compileSource('&studie cycle=25 map=ed(5)\n&g12 cycle=12 map=edo');
+    const r = compileSource('&studie map=ed(25, 5)\n&g12 map=edo(12)');
     expect(positionHue(r, 'studie', 0)).toBe(0);
     expect(positionHue(r, 'studie', 5)).toBeCloseTo(72); // a fifth of the way round
     expect(positionHue(r, 'studie', 25)).toBe(0); // round again
@@ -740,8 +737,8 @@ describe('grids of any period: map=ed(r)', () => {
     expect(positionHue(r, 'g12', 2)).toBe(60); // D: yellow
   });
   it('says what a period must be', () => {
-    expect(compileSource('&g cycle=7 map=ed(1)').diagnostics[0].message).toMatch(/divides a ratio above 1/);
-    expect(compileSource('&g cycle=7 map=ed(x)').diagnostics[0].message).toMatch(/divides a ratio above 1/);
+    expect(compileSource('&g map=ed(7, 1)').diagnostics[0].message).toMatch(/divides a ratio above 1/);
+    expect(compileSource('&g map=ed(7, x)').diagnostics[0].message).toMatch(/divides a ratio above 1/);
   });
 });
 
@@ -776,7 +773,7 @@ describe('ratios grids, geometric intervals, decibels; colours and names on a vo
     expect(e.levels.map((l) => +l.level.toFixed(3))).toEqual([1, 0.501, 0.1, 0]);
   });
   it('a voice’s colours and names follow its grid: position, nearest 12-tone note and cents', () => {
-    const r = compileSource('&steps cycle=25 map=ed(5)\n&m step=1\n&t over=&steps step=&m 0 5\n&s s=sine loop=100\n&mix loop=SAMPLE_RATE map=sample [&t * &s]');
+    const r = compileSource('&steps map=ed(25, 5)\n&m step=1\n&t over=&steps step=&m 0 5\n&s s=sine loop=100\n&mix loop=SAMPLE_RATE map=sample [&t * &s]');
     expect(voiceGrid(r, 's')).toBe('steps');
     expect(freqHue(r, 's', 100)).toBe(0);
     expect(freqHue(r, 's', 100 * Math.pow(5, 5 / 25))).toBeCloseTo(72); // five steps up: a fifth of the rainbow
@@ -830,7 +827,7 @@ describe('moving a reference: &x^n by its table (degrees), &x^$n by the grid (#1
     expect(sounds('&m 0 4\n&t &m^3')).toEqual(sounds('&m 0 4\n&t &m^$3'));
   });
   it('on another grid, ^$n is n of its steps: Studie II, 8 steps up the 5:1 grid', () => {
-    const ps = sounds('&steps cycle=25 map=ed(5)\n&m 0 1\n&t over=&steps &m &m^$8');
+    const ps = sounds('&steps map=ed(25, 5)\n&m 0 1\n&t over=&steps &m &m^$8');
     expect(Math.pow(2, ps[2] / 12)).toBeCloseTo(Math.pow(5, 8 / 25), 5);
   });
   it('nested: the steps add up', () => {
@@ -963,10 +960,6 @@ describe('diagnostics: nothing plays, or the wrong thing, without a word (#143)'
     // (the head's attribute, before from (decision 065 §4), said on the from line)
     expect(said(law('&cycle anchor=13.00 from five_to_twelve &day'))).toEqual([
       ['warning', 2, 1, "anchor= sets the clock a law reads, not the law: write it on &day — the law on &cycle doesn't read it"],
-    ]);
-    // (written the old way, law= says so too, rung 5 of #691)
-    expect(said(law('&cycle law=fiveto12 over=&day step=84bpm')).map((d) => d[3])).toEqual([
-      'law=fiveto12 is the old way: write &cycle from five_to_twelve &day, the law taken from its clock (decision 085; Migrate rewrites it)',
     ]);
   });
 

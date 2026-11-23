@@ -3,7 +3,7 @@
 Grids: how positions become frequencies, and how they're named and coloured.
 
 - **The default grid** is `&fifths12TET map=edo(12)`: 12 to the octave.
-- **`map=edo(n)`** — `&edo19 map=edo(19)` turns positions into frequencies, 19 equal steps per octave (`map=edo` alone is 12). A grid reads nothing and has no braid. Its size is the map's ([#75](https://github.com/yggi/cells/issues/75)): `cycle=19 map=edo`, the old way, still reads, warns, and Migrate rewrites it.
+- **`map=edo(n)`** — `&edo19 map=edo(19)` turns positions into frequencies, 19 equal steps per octave (`map=edo` alone is 12). A grid reads nothing and has no braid. Its size is the map's ([#75](https://github.com/yggi/cells/issues/75)): `map=edo(19)`, the old way, still reads, warns, and Migrate rewrites it.
 - **`map=ed(n, r)`** divides any ratio into n steps, not just the octave, as "25ed5" reads: `map=ed(25, 5)` is Stockhausen's Studie II scale (25 steps to 5:1), `map=ed(9, 3/2)` Wendy Carlos' alpha (nine steps to a pure fifth, no octave), `map=ed(13, 3)` Bohlen–Pierce. `map=edo(n)` is `map=ed(n, 2)`; `map=ed(r)` alone is 12 steps. Climbing a lap multiplies by r.
 - **`map=ratios`** — a grid whose braid lists one period's tones as ratios, the last the period. Numbers can be fractions anywhere (`9/8`).
 - **Note names** are rates from the environment, tuned from `A4` (440 by default): `loop=C4`, `loop=F#3`, `loop=Bb2`.

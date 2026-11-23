@@ -30,37 +30,37 @@ const errors = (src: string) =>
     .diagnostics.filter((d) => d.severity === 'error')
     .map((d) => d.message);
 
-describe('a gate (trigger=): a product with a name', () => {
+describe('a gate (play=): a product with a name', () => {
   it('plays each receiver with each note of its trigger, as the product it stands for', () => {
-    expect(played('&leadOut trigger=&tune velocity=&accent gain=.4 &lead &bell\n&out map=sample &leadOut')).toEqual(
+    expect(played('&leadOut play=&tune level=&accent*.4 [&lead, &bell]\n&out map=sample &leadOut')).toEqual(
       played('&leadOut [&tune * &accent * &lead * .4, &tune * &accent * &bell * .4]\n&out map=sample &leadOut'),
     );
   });
 
   it('a gate= cell is one more level, over time', () => {
     const duck = '&duck map=amp step=4n 1 .25\n';
-    expect(played(duck + '&leadOut trigger=&tune gate=&duck &lead\n&out map=sample &leadOut')).toEqual(played(duck + '&leadOut [&tune * &duck * &lead]\n&out map=sample &leadOut'));
+    expect(played(duck + '&leadOut play=&tune level=&duck &lead\n&out map=sample &leadOut')).toEqual(played(duck + '&leadOut [&tune * &duck * &lead]\n&out map=sample &leadOut'));
   });
 
   it('a kit among its receivers is played as a pattern read through it: the trigger’s numbers pick the member', () => {
     const through = played('&beat over=&kit step=8n 0 2 1 2\n&out map=sample [&beat * .6]');
     expect(through.map((e) => e.split(' ')[0])).toEqual(['bd', 'hh', 'sd', 'hh', 'bd', 'hh', 'sd', 'hh']);
-    expect(played('&beat step=8n 0 2 1 2\n&drums trigger=&beat gain=.6 &kit\n&out map=sample &drums')).toEqual(through);
+    expect(played('&beat step=8n 0 2 1 2\n&drums play=&beat level=.6 &kit\n&out map=sample &drums')).toEqual(through);
     // (inside the sound card's own mix, as beside other sounds)
-    expect(played('&beat step=8n 0 2 1 2\n&drums trigger=&beat gain=.6 &kit\n&out map=sample [&drums, &tune * &lead * 0]').filter((e) => !e.startsWith('lead'))).toEqual(through);
+    expect(played('&beat step=8n 0 2 1 2\n&drums play=&beat level=.6 &kit\n&out map=sample [&drums, &tune * &lead * 0]').filter((e) => !e.startsWith('lead'))).toEqual(through);
     // (a trigger read through the kit already: the kit adds nothing)
-    expect(played('&beat over=&kit step=8n 0 2 1 2\n&drums trigger=&beat gain=.6 &kit\n&out map=sample &drums')).toEqual(through);
+    expect(played('&beat over=&kit step=8n 0 2 1 2\n&drums play=&beat level=.6 &kit\n&out map=sample &drums')).toEqual(through);
   });
 
   it('routes what a kit gate plays: its trigger, the kit and its members', () => {
-    const r = compileSource(BASE + '&beat step=8n 0 2 1 2\n&drums trigger=&beat &kit\n&out map=sample [&drums]');
+    const r = compileSource(BASE + '&beat step=8n 0 2 1 2\n&drums play=&beat &kit\n&out map=sample [&drums]');
     const on = routing(r, new Set()).nodes;
     for (const n of ['beat', 'kit', 'bd', 'sd', 'hh', 'drums']) expect(on.has(`cell:${n}`), n).toBe(true);
   });
 
   it('a MIDI card takes a gate as an entry, as any mix: its receivers on that channel, a kit gate by drum note', () => {
     const r = compileSource(
-      BASE + '&beat step=8n 0 2 1 2\n&drums trigger=&beat &kit\n&leadOut trigger=&tune &lead &bell\n&out map=sample [&leadOut, &drums]\n&synth map=midi &leadOut ~!8 &drums',
+      BASE + '&beat step=8n 0 2 1 2\n&drums play=&beat &kit\n&leadOut play=&tune [&lead, &bell]\n&out map=sample [&leadOut, &drums]\n&synth map=midi &leadOut ~!8 &drums',
     );
     expect(r.diagnostics.filter((d) => d.severity === 'error').map((d) => d.message)).toEqual([]);
     const route = router(r, channelTable(r));
@@ -76,15 +76,15 @@ describe('a gate (trigger=): a product with a name', () => {
   });
 
   it('its braid lists receivers only', () => {
-    expect(errors('&leadOut trigger=&tune &lead 3\n&out map=sample &leadOut').join()).toMatch(/is a gate \(trigger=\): its braid is what it plays/);
+    expect(errors('&leadOut play=&tune &lead 3\n&out map=sample &leadOut').join()).toMatch(/is a gate \(play=\): its braid is what it plays/);
   });
 });
 
 describe('a gate (play=, level=): decision 023', () => {
-  it('play= is what it plays, level= a product of levels and a gain: the old spelling’s product', () => {
+  it('play= is what it plays, level= a product of levels and a gain', () => {
     const duck = '&duck map=amp step=4n 1 .25\n';
     expect(played(duck + '&leadOut play=&tune level=&accent*&duck*.4 &lead\n&out map=sample &leadOut')).toEqual(
-      played(duck + '&leadOut trigger=&tune velocity=&accent gate=&duck gain=.4 &lead\n&out map=sample &leadOut'),
+      played(duck + '&leadOut [&tune * &accent * &duck * &lead * .4]\n&out map=sample &leadOut'),
     );
     expect(played('&leadOut play=&tune level=.4 &lead\n&out map=sample &leadOut')).toEqual(played('&leadOut [&tune * &lead * .4]\n&out map=sample &leadOut'));
     expect(played('&leadOut play=&tune level=.5*&accent &lead\n&out map=sample &leadOut')).toEqual(played('&leadOut [&tune * &accent * &lead * .5]\n&out map=sample &leadOut'));
@@ -195,7 +195,7 @@ describe("a gate is a performer (decision 058), its role a role cell's (decision
       return braid;
     };
     // (19 steps of a 19-tone grid: an octave)
-    const edo = '&edo19 cycle=19 map=edo\n&k19 over=&edo19 scan(3 3 2 3 3 3 2)\n&t over=&k19 step=8n 0 1 2 3';
+    const edo = '&edo19 map=edo(19)\n&k19 over=&edo19 scan(3 3 2 3 3 3 2)\n&t over=&k19 step=8n 0 1 2 3';
     expect(played(`${edo}\n&g play=&t^$-19 &lead\n&out map=sample &g`).map((e) => Math.round(+e.split(' ')[2] * 2))).toEqual(
       played(`${edo}\n&g play=&t &lead\n&out map=sample &g`).map((e) => Math.round(+e.split(' ')[2])),
     );

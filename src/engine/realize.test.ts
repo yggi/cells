@@ -472,10 +472,9 @@ describe('a turning table comes round after its own length; cycle= says otherwis
       .replace(/[[\],]/g, ' ')
       .trim()
       .split(/\s+/);
-    const strided = p.replace(line[0], `&chords step=&bar/4 stride=5 cycle=1 ${n.join(' ')}`);
-    // (the old text read the old way: its line on the meter cell's own steps is retired, an error that Migrate rewrites, #15 rung 5)
-    const all = (src: string, old = false) => events(compileSource(src, undefined, { old }), 0, 150).map((e) => `${e.at.toFixed(4)} ${e.freq.toFixed(2)}`);
-    expect(all(p)).toEqual(all(strided, true));
+    const strided = p.replace(line[0], `&chords step=1m stride=5 ${n.join(' ')}`);
+    const all = (src: string) => events(compileSource(src), 0, 150).map((e) => `${e.at.toFixed(4)} ${e.freq.toFixed(2)}`);
+    expect(all(p)).toEqual(all(strided));
   });
   it('per tonos rises a whole tone a pass — and an octave after six', () => {
     const r = compileSource(EXAMPLES.pertonos.source);

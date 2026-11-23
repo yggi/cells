@@ -15,7 +15,7 @@ import { compileSource } from '../engine/compile';
 import { bassCards } from './benches';
 import { LIBRARY, resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, KINDERLIED, LO_FI, SPOOKY, stylePoint, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
-import { newPoint } from '../engine/migrate/axes';
+import { newPoint } from './oldaxes.testutil';
 import { seedFragments } from './seed';
 
 const BASS_FRAGMENTS = seedFragments('bass');

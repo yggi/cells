@@ -1,10 +1,10 @@
 // The library (#138): the meters and the rhythms in one repository. A query that names the facet `meter` returns what the
 // meters alone return, at every point Jambot asks at and over a grid, so the rhythms change no meter query (Jambot's,
 // yggi/jambot#384). What a query costs: `timing.slow.test.ts`.
-import { newPoint } from '../engine/migrate/axes';
+import { newPoint } from './oldaxes.testutil';
 import { describe, expect, it } from 'vitest';
 import { createRepository, type Fragment, type StylePoint } from './fragments';
-import { isLibraryFragment, LIBRARY, ofFacet, resolveSeed, RETIRED } from './library';
+import { isLibraryFragment, LIBRARY, ofFacet, resolveSeed } from './library';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, ELECTRO_SWING, FUNK, LO_FI, SPOOKY, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { STYLE_FRAGMENTS } from './styles';
 import { seedFragments } from './seed';
@@ -80,15 +80,8 @@ describe('the library', () => {
     ]).toEqual([13, 33, 17, 17, 29, 3, 9, 5, 3, 56, 6, 1, 1]);
   });
 
-  it('resolves a retired id for a minor version as a use of what took its place, and lists none of them (#196)', () => {
-    for (const [id, text] of RETIRED) {
-      expect(
-        LIBRARY.some((f) => f.id === id),
-        id,
-      ).toBe(false);
-      expect(resolveSeed(id)).toBe(text);
-    }
-    expect([...RETIRED.keys()]).toEqual(['core kit', 'gm kit']);
+  it('resolves no retired id, and a seed id as its own text (#196, #643)', () => {
+    for (const id of ['core kit', 'gm kit']) expect(resolveSeed(id), id).toBeNull();
     expect(resolveSeed('gm_kit')).toBe(LIBRARY.find((f) => f.id === 'gm_kit')!.text);
   });
 
