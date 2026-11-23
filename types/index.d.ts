@@ -49,6 +49,7 @@ export { takeIn, type TakenIn } from './engine/takein';
 export type { Atom, Braid, Diagnostic, FreeSpec, Pick, Token } from './engine/ast';
 export { createRepository, EMPTY_LAYER, layerProblems, pointDistance, type Fragment, type Found, type LearnedLayer, type LearnedPoint, type Merged, type QueryOptions, type Repository, type StylePoint, type UsedPair, type WeightedPoint, } from './repository/fragments';
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
+export { ancestry, BY, familyOf, originOf, rootOf, variationMeta, VARIES } from './repository/lineage';
 export { AXES, AXIS_NAMES, SLOTS, type Axis } from './engine/style';
 export { styleAt } from './engine/styleat';
 export { CONTRACT_WIDTHS, feelOf, played, readerOf, readingOf, type DrumRole, type FeelEvent, type FeelFrame, type FeelPart, type Reading, type SectionType, type Widths, } from './engine/perform/feel';

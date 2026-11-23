@@ -9,6 +9,7 @@
  */
 export { byId, CO_USE_PULL, createRepository, EMPTY_LAYER, fragmentDistance, layerProblems, pointDistance, type Found, type Fragment, type LearnedLayer, type LearnedPoint, type Merged, type QueryOptions, type RepositoryOptions, type Repository, type StylePoint, type UsedPair, type WeightedPoint, } from './repository/fragments';
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
+export { ancestry, BY, familyOf, originOf, rootOf, variationMeta, VARIES } from './repository/lineage';
 export { cachedFit, declarations, fitsAs, unionOf, useOn, type FitAs, type FragmentRef, type Union, type UseOn, type UseOnOptions } from './repository/fit';
 export { holesOf, type ClockNeed, type Holes } from './repository/holes';
 export { answered } from './repository/answered';

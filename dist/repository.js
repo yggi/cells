@@ -1,5 +1,6 @@
 export { byId, CO_USE_PULL, createRepository, EMPTY_LAYER, fragmentDistance, layerProblems, pointDistance, } from "./repository/fragments.js";
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments } from "./repository/learned.js";
+export { ancestry, BY, familyOf, originOf, rootOf, variationMeta, VARIES } from "./repository/lineage.js";
 export { cachedFit, declarations, fitsAs, unionOf, useOn } from "./repository/fit.js";
 export { holesOf } from "./repository/holes.js";
 export { answered } from "./repository/answered.js";

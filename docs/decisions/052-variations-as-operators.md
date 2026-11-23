@@ -1,6 +1,6 @@
 # 052 · The ladder's variations are operators in cells, from a fragment's text to texts: rotate, drop and add first, then transpose, invert and reverse; anchors derived from the text; which and when stays the frontend's
 
-**Date:** 2026-10-20 · **Status:** accepted (owner, 2026-10-20: "all as suggested", the eight questions in point 6 as recommended) · Issues: #208, #49, #81, #29, #46, yggi/jambot#423, yggi/jambot#424, yggi/jambot#425 · Point 7 added by #293 (accepted, owner, 2026-10-27: `base=` rather than `mask`, "it is more powerful") · Points 8 and 9 added by #208 (owner, 2026-11-23: the two harmony operators with rotate and reverse a level up, the cadence the last bar of each four, a variation replayed by its `by:`)
+**Date:** 2026-10-20 · **Status:** accepted (owner, 2026-10-20: "all as suggested", the eight questions in point 6 as recommended) · Issues: #208, #49, #81, #29, #46, yggi/jambot#423, yggi/jambot#424, yggi/jambot#425 · Point 7 added by #293 (accepted, owner, 2026-10-27: `base=` rather than `mask`, "it is more powerful") · Points 8 and 9 added by #208 (owner, 2026-11-23: the two harmony operators with rotate and reverse a level up, the cadence the last bar of each four, a variation replayed by its `by:`) · Point 10 added by #51 (owner, 2026-11-23: forms and song plans, one set of slot operators at every scale, a mask for the anchors)
 
 ## Context
 
@@ -296,7 +296,7 @@ A progression is varied as a line is, a level up (#51, one shape at every level)
 
 - **A progression** is a harmony the fragment defines itself: a cell no line plays, stepped on the meter, each step a stack of degrees of the table it reads, a run written `!n`, or a step's two halves (`[[1,3,5] [4,6#,8]]`), each tone a degree with at most one accidental: every seed progression (17 of 17) and what Jambot's `progressionText` writes. One written otherwise is not read, and not varied.
 - **Its cadence:** every step that sounds in the last bar of a four-bar phrase (bars 4, 8, 12 … of a lap of 4k bars), else in the lap's last bar (`PHRASE_BARS`, 4). It is an anchor, `reason: 'cadence'`, and `anchorsOf` gives it. This settles point 3's "rung 3 settles its place", as yggi/jambot#425 asks: "never the cadence in the fourth bar".
-- **Four operators** (`HARMONY_OPERATORS`), in this order:
+- **Six operators** (`HARMONY_OPERATORS`), in this order (swap and substitute, the slot operators every level shares, joined with point 10):
 
 | operator | what it does to a progression | `by:` |
 |---|---|---|
@@ -304,13 +304,16 @@ A progression is varied as a line is, a level up (#51, one shape at every level)
 | **reverse** | each phrase between two cadences in reverse order (a line's retrograde, `&x[::-1]` a span) | `reverse &harm` |
 | **third** | one step's chord moved a third, every tone n degrees, n in −2, 2 (`THIRDS`): I to vi or iii | `third &harm <step> <n>` |
 | **dominant** | the secondary dominant of the next step's chord on a step's second half: a major triad a fifth above that chord's root (a dominant seventh where it has four tones or more), each tone the stack's degree with the accidental the key needs, in the octave nearest the chord before it (Jambot's `themes.ts` at high harmony) | `dominant &harm <step>` |
+| **swap** | two adjacent free chords exchanged (point 10) | `swap &harm <step>` |
+| **substitute** | one free chord replaced by another chord the progression holds, each once (point 10) | `substitute &harm <step> <from>` |
 
 - `third` and `dominant` act on a step of one chord; `dominant` gives none into a chord on the step's own root, into a diminished triad, or after a chord already its dominant (a ii–V–I has none: Jambot's `alreadyItsDominant`).
-- **Asked by name:** a progression is varied only where a frontend asks for `third` or `dominant`; `rotate` and `reverse` then act on it too, so a frontend that asks for the line operators alone (Jambot's drums, bass and lead, Cell studio's default) gets what it got before, to the variation.
+- **Asked by name:** a progression is varied only where a frontend asks for `third`, `dominant`, `swap` or `substitute`; `rotate` and `reverse` then act on it too, so a frontend that asks for the line operators alone (Jambot's drums, bass and lead, Cell studio's default) gets what it got before, to the variation.
 - **The key spells it:** a dominant's accidentals are read from the workbench's key (`&key scale(minor, C)`: V/VI is E♭ major, the key's own III), so a frontend varies a progression on the key it plays it in.
 - **Other chords:** each plays other chords than its source and every one before it (S2, the chords keyed as they sound: onset, length, tones sorted); its cadence plays as before.
-- **No reference** (point 7) yet: a progression's variation is filed as its text.
-- **Measured** (`src/engine/vary/harmony.test.ts`): on the 17 seed progressions over 4/4 and C, **209 variations in major and 210 in minor**; a vamp of one or two chords by its thirds alone (12 each), a progression by all four. Each compiles, plays other chords than its source and the others, keeps its cadence's chords, and does what its operator says; each seed's variations, its compile included, in under 4 ms (the test's bound 10 ms; #425's ask is under 5 ms beyond the compile).
+- **Its reference** (point 7): a copy of the progression, `base=`, changed on the steps the variation changes (`base=&harm =!2 [1,3,5]`, `base=&harm [[0,2,4] [2,4#,6]]`), `=!k` keeping k steps; a cell that plays it reads the progression's table and grid. Each of the seed progressions' 789 variations has one, and plays what its variation plays, read beside its source. The text is still what is filed.
+- **Heard:** recognition's default, `ALL_OPERATORS`, holds every operator, so a heard progression is known as a seed's variation by its `by:` (decision 055): each of the 789 at distance 0 but one, the montuno's third bar given its second's chord, which is the vamp to the fourth, a seed, and recognised as it.
+- **Measured** (`src/engine/vary/harmony.test.ts`): on the 17 seed progressions over 4/4 and C, **394 variations in major and 395 in minor** (209 and 210 before swap and substitute joined): 332 thirds, 316 substitutions, 54 swaps, 24 rotations, 18 retrogrades, 45 dominants; a vamp of one or two chords by its thirds and substitutions alone. Each compiles, plays other chords than its source and the others, keeps its cadence's chords, and does what its operator says; each seed's variations, its compile included, in under 4 ms (the test's bound 10 ms; #425's ask is under 5 ms beyond the compile).
 
 A progression and three of its 11 variations, on its workbench; the fourth bar, V, is its cadence:
 
@@ -349,6 +352,67 @@ A filed variation records its origin as `varies: <id>` and `by: <operator> <line
 - **Why:** Jambot stores a groove variation by its source and `by` and rebuilds it by making every variation and finding the one of that `by` (`rebuiltGroove`, yggi/jambot#553); with a third part (harmony) and a fourth (Cell studio's vary) that would be written again for each.
 - **The same variation:** for every `by` that `variations` gives, `variationBy` gives that variation (its `after` the same; tested over every seed progression in both keys and a groove). A `by:` the text has none of (its line anchored or kept, its step a cadence, an unknown operator) gives null. One that `variations` leaves out as playing the notes of a variation before it, by another operator or line, is still given: `variationBy` doesn't make those.
 - **Its amounts** are the variation's, as `by:` writes them: a step (`drop &hat 6`), degrees (`transpose &bass -1`), or both (`third &harm 2 -2`).
+- **The lineage, in the language** (`src/repository/lineage.ts`): `variationMeta(varies, variation)` writes the two keys a variation is filed with; `originOf(layer, id)` reads them back; `ancestry(layer, id)` is the chain of `varies` from a filing to its root, each step with the `by:` that made it, so a lineage replays from its seed, step by step, by `variationBy`; `rootOf` and `familyOf`, the root and every filing descended from it, the family a frontend's ladder tires of (Jambot's `familyOf`). A chain that comes round to an id already on it ends there.
+
+
+### 10. A form is a line two levels up; one set of slot operators at every scale (#51)
+
+A form's letters (`&chorus step=8n &a &a &b &a`, `fragments/forms/`) and a song plan's sections (`&verseChorus &intro &verse &chorus …`, `fragments/songs/`) are lines of slots, as a progression's chords are, and are varied by the same functions (`src/engine/vary/slots.ts`): the owner, 2026-11-23, "keeping it as analogous as reasonably possible, ideally the same functions work on different scales", with a mask that fixes the anchors.
+
+- **A form** (`src/engine/vary/form.ts`) is a cell of the fragment's own that no line plays, with no voice, every step a splice of another cell (`&a`, `&a^3`, `inverse(&call)`, `&call[::-1]`), two or more. Two forms of as many slots that pair one to one (a song plan and its plan of who plays, `&intro` always beside `&introPlays`) are one form, varied by the first, the other carried slot for slot.
+- **The slot operators** (`SLOT_OPERATORS`, `FORM_OPERATORS`), each giving where every slot of a variation is taken from, never moving a fixed slot:
+
+| operator | what it does to a line of slots | `by:` |
+|---|---|---|
+| **rotate** | each span between two fixed slots one slot later, its last to its first | `rotate &chorus` |
+| **reverse** | each span between two fixed slots in reverse order | `reverse &chorus` |
+| **swap** | two adjacent free slots exchanged | `swap &verseChorus <slot>` |
+| **substitute** | one free slot given what another slot plays, each different one once, by its first place | `substitute &chorus <slot> <from>` |
+
+- **Anchors:** a form's first and last slot (its statement and its return, a song's intro and outro); a progression's cadence (point 8). **A mask** replaces them at any scale: `VaryOptions.fixed`, by line, `{ '&chorus': [] }` none, `{ '&harm': [0, -1] }` a progression's first and last bar as a form's, a negative counting from the end. `anchorsOf` gives the level's own.
+- **Asked by name:** a form is varied only where a frontend asks for `swap` or `substitute`, as a progression where it asks for one of the slot levels' own, after every line and progression; a frontend that asks for the line operators alone gets what it got before.
+- **Other notes:** two slots are one where they play alike: a form on a grid has each distinct slot spliced alone in one compile beside the fragment (the rounded binary's `&bridge^1` and `&close` are both `&call^-2`); a song plan's slots splice values `flatten` doesn't read as played (a section's intensity, `[&song + -.3]`), so they are one where they are written alike.
+- **Only the fragment's own lines are varied**, at every level: a workbench's lines (a motif a form takes, the host's bass) are what it is read on. Before this, a pitched line of the workbench was offered too; no seed's variations change.
+- **No reference** yet for a form: a song plan's would be two lines.
+- **Measured** (`src/engine/vary/form.test.ts`): on the 6 seed forms (over two motifs that differ in every note) and the 7 seed song plans, **186 variations**: 42 of the forms (a form of two letters has none: both are anchors) and 144 of the songs. Each compiles, splices other slots than its source and the others (a form's plays other notes), keeps its first and last slot, carries its partner, does what its operator says, and is given back by its `by:`; each fragment in under 15 ms.
+
+A form and two of its three variations, on a workbench that gives its motif:
+
+```cells
+# source: AABA, its motif the host's
+&bar meter("4/4") step=120bpm
+&key scale(major, C)
+&a over=&key step=8n 0 2 4 2
+&mix map=sample [&chorus * &tri]
+&tri s=tri
+
+&chorus step=8n &a &a &b &a
+&b step=8n &a^3
+```
+
+```cells
+# by: rotate &chorus
+&bar meter("4/4") step=120bpm
+&key scale(major, C)
+&a over=&key step=8n 0 2 4 2
+&mix map=sample [&chorus * &tri]
+&tri s=tri
+
+&chorus step=8n &a &b &a &a
+&b step=8n &a^3
+```
+
+```cells
+# by: substitute &chorus 1 2
+&bar meter("4/4") step=120bpm
+&key scale(major, C)
+&a over=&key step=8n 0 2 4 2
+&mix map=sample [&chorus * &tri]
+&tri s=tri
+
+&chorus step=8n &a &b &b &a
+&b step=8n &a^3
+```
 
 ## Why
 

@@ -2,6 +2,7 @@ import { declWords } from "../edit.js";
 import { resolveIn } from "../helix.js";
 import { codeShifts } from "../program.js";
 import { tapWhole } from "./lines.js";
+import { SLOT_OPERATORS, slotMoves } from "./slots.js";
 export const THIRDS = [-2, 2];
 export const PHRASE_BARS = 4;
 const TONE = /^(-?\d+)([#b])?$/;
@@ -98,32 +99,16 @@ export function progressionKey(p, slots) {
         .join(' '))
         .join('|');
 }
-function spansOf(p) {
-    const n = p.slots.length;
-    if (!p.cadence.length)
-        return [Array.from({ length: n }, (_, s) => s)];
-    return p.cadence.map((start, k) => {
-        const end = p.cadence[(k + 1) % p.cadence.length] + (k + 1 === p.cadence.length ? n : 0);
-        return Array.from({ length: end - start - 1 }, (_, j) => (start + 1 + j) % n);
-    });
-}
-function respanned(p, place) {
-    const slots = [...p.slots];
-    for (const span of spansOf(p))
-        for (const [j, step] of span.entries())
-            slots[step] = p.slots[span[place(span, j)]];
-    return slots;
-}
-export function progressionCandidates(p, operators, result) {
+export function progressionCandidates(p, operators, result, fixed = p.cadence) {
     const out = [];
-    const free = (s) => !p.cadence.includes(s);
+    const free = (s) => !fixed.includes(s);
+    const keys = p.slots.map(slotText);
     const shifts = codeShifts(result);
     const at = (degree, alter = 0) => resolveIn(result, p.table, 0, degree, alter, shifts).position;
     for (const operator of operators) {
-        if (operator === 'rotate')
-            out.push({ operator, amounts: [], slots: respanned(p, (span, j) => (j + span.length - 1) % span.length), what: 'each phrase a step later, its last chord to its first' });
-        else if (operator === 'reverse')
-            out.push({ operator, amounts: [], slots: respanned(p, (span, j) => span.length - 1 - j), what: 'each phrase in reverse order, the cadences kept' });
+        if (SLOT_OPERATORS.includes(operator))
+            for (const m of slotMoves(keys, fixed, [operator]))
+                out.push({ operator: m.operator, amounts: m.amounts, slots: m.from.map((f) => p.slots[f]), what: m.what });
         else if (operator === 'third')
             p.slots.forEach((slot, s) => {
                 if (!free(s) || slot.length !== 1)
@@ -175,4 +160,23 @@ function dominantOf(target, here, at) {
     const ways = [spelled(root.degree + 4, base + 7), spelled(root.degree - 3, base - 5)].filter((t) => t !== null);
     const away = (t) => Math.abs(at(t[0].degree, t[0].alter) - from);
     return ways.sort((a, b) => away(a) - away(b))[0] ?? null;
+}
+export function progressionReference(p, slots, written) {
+    const delta = [];
+    let kept = 0;
+    for (const [s, slot] of slots.entries()) {
+        if (slotText(slot) === slotText(p.slots[s])) {
+            kept++;
+            continue;
+        }
+        if (kept)
+            delta.push(kept === 1 ? '=' : `=!${kept}`);
+        delta.push(slotText(slot));
+        kept = 0;
+    }
+    if (!delta.length)
+        return null;
+    const form = `base=${p.name} ${delta.join(' ')}`;
+    const line = (name) => `&${name} ${form}`;
+    return line(p.name.slice(1)).length <= written.join(' ').length ? { form, line } : null;
 }

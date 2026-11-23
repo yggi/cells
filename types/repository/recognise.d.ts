@@ -9,7 +9,11 @@
  */
 import { type Operator, type VaryOptions } from '../engine/vary';
 import type { Fragment } from './fragments';
-/** Every operator, in decision 052's order: what recognition tries where a frontend names none. */
+/**
+ * Every operator, in decision 052's order, each once: what recognition tries where a frontend names none. A progression's
+ * own (`third`, `dominant`, point 8) are among them, so a heard progression is known as a seed's variation, and with them
+ * rotate and reverse act on a progression too.
+ */
 export declare const ALL_OPERATORS: readonly Operator[];
 /** One step of a path: an operator on one line, as a variation's `by` names it (`drop &hat 6`). */
 export interface PathStep {
@@ -32,7 +36,7 @@ export interface Recognised {
 }
 /** What a recognition may say: the workbench both are read under, the tolerance, the depth, and Vary's options. */
 export interface RecogniseOptions extends Omit<VaryOptions, 'operators'> {
-    /** The operators a path may use, in this order; by default all eight. */
+    /** The operators a path may use, in this order; by default all ten (`ALL_OPERATORS`). */
     readonly operators?: readonly Operator[];
     /** The most notes that may differ, a whole number ≥ 0 (the licence's); by default 0, the notes exactly. */
     readonly tolerance?: number;

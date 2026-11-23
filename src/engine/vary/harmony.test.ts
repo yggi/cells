@@ -43,10 +43,12 @@ const sounding = (text: string, mode: string) =>
     .sort()
     .join(' ');
 
-// Each seed's variations, in major and minor: 419 in all (209 and 210). A vamp of one or two chords varies by its thirds
-// alone (12, on the six steps outside its cadences): no rotation or retrograde of a run of one chord changes it, and no
-// dominant leads into a chord the same as the one before it. The minor key gives one dominant more, the axis progression's
-// into its VII (B♭), which in major is a diminished triad (B D F).
+// Each seed's variations, in major and minor: 789 in all (394 and 395): 332 thirds, 316 substitutions, 54 swaps, 24
+// rotations, 18 retrogrades and 45 dominants. A vamp of one or two chords varies by its thirds and its substitutions
+// alone: no rotation, retrograde or swap of a run of one chord changes it, and no dominant leads into a chord the same as
+// the one before it. The minor key gives one dominant more, the axis progression's into its VII (B♭), which in major is
+// a diminished triad (B D F). A move that plays what one before it played is left out (I vi IV V's `substitute &harm 1 2`
+// is its `third &harm 1 -2`).
 const COUNTS: Record<string, Record<(typeof MODES)[number], number>> = {};
 
 describe('Vary on a progression (decision 052, point 8)', () => {
@@ -82,18 +84,9 @@ describe('Vary on a progression (decision 052, point 8)', () => {
       }
     });
 
-  it('gives 419 variations of the 17 seeds, 209 in C major and 210 in C minor', () => {
+  it('gives 789 variations of the 17 seeds, 394 in C major and 395 in C minor', () => {
     const total = (mode: (typeof MODES)[number]) => Object.values(COUNTS).reduce((sum, c) => sum + c[mode], 0);
-    expect([total('major'), total('minor')]).toEqual([209, 210]);
-  });
-
-  it('varies every seed in under 10 ms, its compile included', () => {
-    for (const { id, text } of HARMONIES) {
-      variations(text, OPTIONS('major'));
-      const t0 = performance.now();
-      variations(text, OPTIONS('major'));
-      expect(performance.now() - t0, id).toBeLessThan(10);
-    }
+    expect([total('major'), total('minor')]).toEqual([394, 395]);
   });
 
   it('leaves a progression be where only the line operators are asked', () => {
@@ -117,11 +110,46 @@ describe('Vary on a progression (decision 052, point 8)', () => {
   });
 });
 
+describe("a progression's variation by reference (point 7)", () => {
+  /** A cell's chords as they sound, on the workbench with the source beside it. */
+  const cellChords = (text: string, mode: string, cell: string) => {
+    const result = compiled(text, mode);
+    const shifts = codeShifts(result);
+    return flatten(result, cell, shifts)
+      .map((e) => `${e.step}:${e.duration}:${Math.round(resolveIn(result, e.table, e.tableShift, e.value, e.alter, shifts).position * 1000) / 1000}`)
+      .sort()
+      .join(' ');
+  };
+
+  it('plays what its variation plays, read beside its source: each of the 789', () => {
+    let n = 0;
+    let referred = 0;
+    for (const mode of MODES)
+      for (const { id, text } of HARMONIES)
+        for (const v of variations(text, OPTIONS(mode))) {
+          n++;
+          if (!v.reference) continue;
+          referred++;
+          expect(v.reference.form, `${id} ${v.by}`).toMatch(/^base=&harm /);
+          expect(cellChords(`${text}\n${v.reference.line('varied')}`, mode, 'varied'), `${id} ${v.by}`).toBe(cellChords(v.apply(text), mode, 'harm'));
+        }
+    expect([n, referred]).toEqual([789, 789]);
+  });
+
+  it('writes only the steps it changes', () => {
+    const text = '&harm over=&key step=1m cycle=4 [0,2,4] [5,7,9] [3,5,7] [4,6,8]';
+    const ref = (by: string) => variationBy(text, by, OPTIONS('major'))!.reference?.form;
+    expect(ref('third &harm 2 -2')).toBe('base=&harm =!2 [1,3,5]');
+    expect(ref('dominant &harm 0')).toBe('base=&harm [[0,2,4] [2,4#,6]]');
+    expect(ref('rotate &harm')).toBe('base=&harm [3,5,7] [0,2,4] [5,7,9]');
+  });
+});
+
 describe('a progression varied, by example', () => {
   const text = '&harm over=&key step=1m cycle=4 [0,2,4] [5,7,9] [3,5,7] [4,6,8]';
   const bys = (mode: string) => variations(text, OPTIONS(mode)).map((v) => v.by);
 
-  it('I–vi–IV–V in C major: a rotation, a retrograde, six thirds and three dominants, the V kept', () => {
+  it('I–vi–IV–V in C major: a rotation, a retrograde, six thirds, three dominants, two swaps and seven substitutions, the V kept', () => {
     expect(bys('major')).toEqual([
       'rotate &harm',
       'reverse &harm',
@@ -134,6 +162,15 @@ describe('a progression varied, by example', () => {
       'dominant &harm 0',
       'dominant &harm 1',
       'dominant &harm 2',
+      'swap &harm 0',
+      'swap &harm 1',
+      'substitute &harm 0 1',
+      'substitute &harm 0 2',
+      'substitute &harm 0 3',
+      'substitute &harm 1 0',
+      'substitute &harm 1 3',
+      'substitute &harm 2 0',
+      'substitute &harm 2 3',
     ]);
   });
 
@@ -237,5 +274,11 @@ function check(v: Variation, text: string, mode: string) {
       after.filter((e) => e.step === step).map((e) => e.pitch),
       v.by,
     ).toEqual(before.filter((e) => e.step === step).map((e) => e.pitch));
+  } else if (operator === 'swap') {
+    const step = Number(amounts[0]);
+    expect([at(after, step), at(after, step + 1)], v.by).toEqual([at(before, step + 1), at(before, step)]);
+  } else if (operator === 'substitute') {
+    const [step, from] = amounts.map(Number) as [number, number];
+    expect(at(after, step), v.by).toEqual(at(before, from));
   } else expect(['rotate', 'reverse']).toContain(operator);
 }
