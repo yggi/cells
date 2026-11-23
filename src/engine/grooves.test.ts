@@ -3,8 +3,6 @@ import { compileSource } from './compile';
 import { eventsBetween, plan } from './realize';
 import { codeShifts } from './program';
 import { shorten } from './shorten';
-import { liveAt } from './live';
-import { cellId } from './ids';
 
 const voices =
   '&bar scan(1 1 1 1) step=120bpm\n&bd note=36 s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)\n&hh note=42 s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)\n&sd note=38 s=white hpf=1500 env=&(map=adsr 0 .1 0 .04)\n';
@@ -143,11 +141,7 @@ describe('a kit read only selects: the rest of the product acts on the member it
     ]);
     // the factors commute
     expect(notes(src.replace('[&theme * &orch * .5]', '[.5 * &orch * &theme]'))).toEqual(notes(src));
-    // the live view lights the member the kit read picks now
-    const r = compileSource(src);
-    const live = (t: number) => [...liveAt(r, codeShifts(r), new Set(), t).voices].filter((v) => v.includes('lead') || v.includes('organ'));
-    expect(live(0.7)).toEqual([cellId('lead')]);
-    expect(live(2.7)).toEqual([cellId('organ')]);
+    // (the live view lighting the member the kit read picks now is the graph's: Cell studio's layout/live.ts)
   });
   it('a pitch held under a drum pattern transposes the member it picks; a number in the sum too', () => {
     const src = voices + '&kit &bd &hh\n&drums over=&kit step=4n 0 0 0 0\n&key step=1m 0 7\n&out map=sample [&drums * &key]';

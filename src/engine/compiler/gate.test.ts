@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { compileSource } from '../compile';
 import { codeShifts } from '../program';
 import { eventsBetween, plan } from '../realize';
-import { routing } from '../routing';
 import { channelTable, router, routesOf } from '../midi';
 
 const BASE = `&bar scan(1 1 1 1) step=120bpm
@@ -50,12 +49,6 @@ describe('a gate (play=): a product with a name', () => {
     expect(played('&beat step=8n 0 2 1 2\n&drums play=&beat level=.6 &kit\n&out map=sample [&drums, &tune * &lead * 0]').filter((e) => !e.startsWith('lead'))).toEqual(through);
     // (a trigger read through the kit already: the kit adds nothing)
     expect(played('&beat over=&kit step=8n 0 2 1 2\n&drums play=&beat level=.6 &kit\n&out map=sample &drums')).toEqual(through);
-  });
-
-  it('routes what a kit gate plays: its trigger, the kit and its members', () => {
-    const r = compileSource(BASE + '&beat step=8n 0 2 1 2\n&drums play=&beat &kit\n&out map=sample [&drums]');
-    const on = routing(r, new Set()).nodes;
-    for (const n of ['beat', 'kit', 'bd', 'sd', 'hh', 'drums']) expect(on.has(`cell:${n}`), n).toBe(true);
   });
 
   it('a MIDI card takes a gate as an entry, as any mix: its receivers on that channel, a kit gate by drum note', () => {

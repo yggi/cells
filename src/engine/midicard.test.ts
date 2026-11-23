@@ -7,8 +7,7 @@ import { codeShifts } from './program';
 import { eventsBetween, outputPlays, outputSounds, plan } from './realize';
 import { channelTable, midiNote, router, routesOf } from './midi';
 import { flows } from './flows';
-import { routing } from './routing';
-import { cellId, edgeId } from './ids';
+import { cellId } from './ids';
 import { EXAMPLES } from './examples';
 
 const BAND = `&bar scan(1 1 1 1) step=2
@@ -200,16 +199,6 @@ describe('a MIDI card in the flows, the routing and the graph', () => {
       ['midi', 'sub', 2],
       ['midi', 'groove', 10],
     ]);
-  });
-
-  it('what only a MIDI card reaches is routed, through the card; switched off, not', () => {
-    const r = compileSource(src);
-    const all = routing(r, new Set());
-    for (const n of ['synth', 'sub', 'bass']) expect(all.nodes.has(cellId(n)), n).toBe(true);
-    expect(all.edges.has(edgeId(cellId('sub'), cellId('synth')))).toBe(true);
-    const off = routing(r, new Set([cellId('synth')]));
-    for (const n of ['sub', 'bass']) expect(off.nodes.has(cellId(n)), n).toBe(false);
-    expect(off.nodes.has(cellId('reed'))).toBe(true);
   });
 });
 

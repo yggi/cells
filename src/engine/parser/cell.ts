@@ -61,36 +61,6 @@ interface Key {
   readonly examples: readonly string[];
 }
 
-/** How a cell is shown (never how it sounds); the default for everything below it. Meanings: layout/show.ts. */
-export const SHOWS = [
-  'braid',
-  'pattern',
-  'equal',
-  'notes',
-  'midi',
-  'do',
-  'degrees',
-  'table',
-  'scale',
-  'mode',
-  'key',
-  'grid',
-  'meter',
-  'spectrum',
-  'wave',
-  'levels',
-  'adsr',
-  'mix',
-  'note',
-  'petal',
-  'off',
-  'matrix',
-  'lfo',
-  'brightness',
-] as const;
-/** Naming conventions, after a colon: show=notes:flats. */
-export const SHOW_CONVENTIONS: Readonly<Record<string, readonly string[]>> = { notes: ['flats', 'sharps', 'german'], do: ['fixed', 'movable'] };
-
 const whole =
   (key: 'shift' | 'stride'): Reader =>
   (s, b, _word, at) => {
@@ -169,9 +139,9 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
     read: (s, b) => {
       const at2 = s.i;
       const w = s.match(/[a-z]+/y);
-      // (a word: whether it is one of SHOWS or a plugin the piece carries is compile's to say: it knows the plugins)
-      if (w === null) s.fail(`show= takes one of: ${SHOWS.join(' ')}, or a plugin of the piece`, at2, 1);
-      // a naming convention: notes:flats, notes:sharps, notes:german, do:fixed
+      // (a word the frontend draws: which words show= takes, and what each draws, is the frontend's, decision 086 §2)
+      if (w === null) s.fail("show= takes a word, what the cell is drawn as (show=notes, show=sun): which words is the frontend's", at2, 1);
+      // a naming convention after it, a word the frontend reads too: notes:flats, do:movable
       let conv = '';
       // a mix's colours: the grid it follows (show=mix:&edo19), whatever grids its voices are on
       if (w === 'mix' && s.peek() === ':' && !s.text.startsWith(':&', s.i))
@@ -186,9 +156,8 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
       }
       if (s.peek() === ':') {
         s.i++;
-        const cw = s.match(/[a-z]+/y) ?? '';
-        const ok = SHOW_CONVENTIONS[w!]?.includes(cw);
-        if (!ok) s.fail(`show=${w}: takes ${w === 'notes' ? 'flats, sharps or german' : w === 'do' ? 'fixed or movable' : 'no convention'}`, at2, s.i - at2);
+        const cw = s.match(/[a-z]+/y);
+        if (cw === null) s.fail(`show=${w}: a word after the colon, its convention (show=notes:german)`, at2, s.i - at2);
         conv = `:${cw}`;
       }
       b.show = w + conv;

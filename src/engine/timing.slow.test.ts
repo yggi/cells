@@ -3,27 +3,11 @@
 // `npm run test:all`, on a machine quiet enough to read them.
 import { describe, expect, it } from 'vitest';
 import e31 from '../../fixtures/jambot-e31.json';
-import { compileSource } from './compile';
-import { liveAt } from './live';
-import { EXAMPLES } from './examples';
-import { codeShifts } from './program';
 import { FORM_OPERATORS, HARMONY_OPERATORS, variations, varied, type Variation } from './vary';
 import { resolveSeed } from '../repository/library';
 import { seedFragments } from '../repository/seed';
 
 describe('what the engine costs', () => {
-  // (as `routing.test.ts` works them out: a piece is opened or edited and this runs once, so a sign if one example is slow)
-  it('the heads at rest of an example take under 50 ms, on average over every example', () => {
-    const t0 = performance.now();
-    let n = 0;
-    for (const p of Object.values(EXAMPLES)) {
-      const r = compileSource(p.source, undefined, { resolve: resolveSeed });
-      liveAt(r, codeShifts(r), r.off, 0);
-      n++;
-    }
-    expect((performance.now() - t0) / n).toBeLessThan(50);
-  });
-
   // (as `vary/rhythm.test.ts` counts their compiles: all eight of E31's bars, their variations and a draw on each, five
   // times over)
   it('every variation of E31’s eight bars, and a draw on each, five times over, take under 10 s', () => {

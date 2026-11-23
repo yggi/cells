@@ -4,7 +4,8 @@ export { ancestry, BY, familyOf, originOf, rootOf, variationMeta, VARIES } from 
 export { cachedFit, declarations, fitsAs, unionOf, useOn } from "./repository/fit.js";
 export { holesOf } from "./repository/holes.js";
 export { answered } from "./repository/answered.js";
-export { readFragment, readFragments, writeFragment } from "./repository/files.js";
+export { readFragment, readFragments, styleNamesIn, writeFragment } from "./repository/files.js";
+export { placeOf } from "./repository/declarations.js";
 export { hitsOf } from "./repository/hits.js";
 export { decompose, writtenOut } from "./repository/decompose.js";
 export { ALL_OPERATORS, createRecogniser } from "./repository/recognise.js";

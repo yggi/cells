@@ -9,8 +9,6 @@ import { codeShifts } from './program';
 import { shiftsAt, timeMap } from './clocking';
 import { flatten } from './flatten';
 import { eventsBetween, plan, returnGains } from './realize';
-import { liveAt } from './live';
-import { routing } from './routing';
 import { EXAMPLES } from './examples';
 import { resolveSeed } from '../repository/library';
 /** As Cell studio compiles an example: its `use` lines read the seed library (#196); a text with none compiles as it would without. */
@@ -208,31 +206,11 @@ describe('royal: every key in fifths, then every mode', () => {
   });
 });
 
-describe('live view', () => {
+describe('the turn at a moment, and the live view', () => {
   const r = compileSource(EXAMPLES.royal.source);
   const spb = 60 / 84;
   it('turns the key a fifth after one pass', () => {
-    expect(liveAt(r, codeShifts(r), new Set(), 21 * spb).shifts('key')).toBe(7);
-  });
-  it('lights the cell under the playhead, every table its note passes through, and the voice', () => {
-    const at = liveAt(r, codeShifts(r), new Set(), 8.2 * spb);
-    expect(at.cells.get('theme')!.local).toBeCloseTo(8.2, 0);
-    expect([...at.cells.get('scale')!.entries]).toContain(6);
-    expect([...at.cells.get('key')!.entries]).toContain(11);
-    expect(at.cells.has('lead')).toBe(true);
-    expect(at.edges.has('cell:theme->cell:scale')).toBe(true);
-    expect(at.edges.has('cell:theme~>cell:bar')).toBe(true);
-    expect(at.edges.has('cell:theme->cell:lead')).toBe(true);
-    expect(at.bars.get('bar')).toBe(2);
-  });
-  it('routing follows sounding outputs only', () => {
-    const on = routing(r, new Set(['cell:lead']));
-    expect(['pedal', 'scale', 'bar', 'bass'].every((c) => on.nodes.has(`cell:${c}`))).toBe(true);
-    // the theme is silent, but still turns the key the pedal is read through (step=cycle(&theme))
-    expect(on.edges.has('cell:theme->cell:lead')).toBe(false);
-    expect(on.edges.has('cell:theme->cell:scale')).toBe(false);
-    expect(on.edges.has('cell:key~>cell:theme')).toBe(true);
-    expect(on.nodes.has('cell:theme')).toBe(true);
+    expect(shiftsAt(r, codeShifts(r), 21 * spb)('key')).toBe(7);
   });
 });
 
@@ -338,18 +316,6 @@ describe('stereo from two mixes', () => {
     expect(g.reed[0]).toBeGreaterThan(g.reed[1]);
     expect(g.cello[1]).toBeGreaterThan(g.cello[0]);
     expect(events(r, 0, 4).find((e) => (e.instrument ?? e.voice) === 'cello')!.gains).toEqual(g.cello);
-  });
-});
-
-describe('pulses', () => {
-  it('phases: how far each clocked cell is through its step', () => {
-    const r = compileSource('&m step=2\n&a step=&m 0 1\n&b step=&m*2 0\n&c step=&m/2 0\n&v loop=440\n&mix [&a * &v]\n&out loop=SAMPLE_RATE map=sample &mix');
-    const at = liveAt(r, codeShifts(r), new Set(), 0.125); // a quarter of a step of &m
-    expect(at.phases.get('m')).toBeCloseTo(0.25);
-    expect(at.phases.get('a')).toBeCloseTo(0.25);
-    expect(at.phases.get('b')).toBeCloseTo(0.5); // two steps per step of &m
-    expect(at.phases.get('c')).toBeCloseTo(0.125); // one step per two
-    expect(at.phases.has('v')).toBe(false); // voices move at audio rate: no pulse
   });
 });
 
@@ -1272,10 +1238,7 @@ describe('selectors, live', () => {
 &v s=tri loop=C4
 &w s=sine loop=C4
 &out loop=SAMPLE_RATE map=sample [&a * &v, &b * &w]`);
-    const live = (t: number) => [...liveAt(r, codeShifts(r), new Set(), t).voices].sort();
-    expect(live(0.5)).toEqual(['cell:v']);
-    expect(live(2.5)).toEqual(['cell:w']);
-    expect(live(4.5)).toEqual([]);
+    // (which voice is lit at each moment is the graph's: Cell studio's layout/live.ts, decision 086)
     // the selector, its table and the section are on the way: the graph draws them reached
     expect(r.outputs.find((o) => o.voice === 'v')!.via).toEqual(expect.arrayContaining(['song', 'sections', 'aBar']));
   });
@@ -1307,12 +1270,10 @@ describe('Korobeiniki in Tetris form', () => {
     const firsts = chords.map((_, k) => pc(lead.find((e) => e.at >= 2 * sec + k * bar - 1e-6)!.freq));
     expect(firsts.filter((n, k) => chords[k].includes(n)).length).toBeGreaterThanOrEqual(6);
   });
-  it('the selector’s playhead: which section, which parts', () => {
-    const live = liveAt(r, codeShifts(r), new Set(), 2.5 * sec).cells.get('tetris')!;
-    expect(live.local).toBeCloseTo(2.5, 6); // half way through the third section
-    expect([...live.entries].sort()).toEqual([1, 3, 5]);
+  it('the selector doesn’t turn like a table', () => {
+    // (its playhead, which section and which parts, is the graph's: Cell studio's layout/live.ts, decision 086)
     // a selector steps through its sections; it doesn't turn like a table
-    expect(liveAt(r, codeShifts(r), new Set(), 2.5 * sec).shifts('tetris')).toBe(0);
+    expect(shiftsAt(r, codeShifts(r), 2.5 * sec)('tetris')).toBe(0);
   });
 });
 
@@ -1365,9 +1326,6 @@ describe('Cellscape: a cycle of twelve', () => {
         expect(CONS.has(Math.abs(midiOf(a.freq) - midiOf(b.freq)) % 12), `scene ${n + 1} at ${e.at.toFixed(2)}`).toBe(true);
       }
     }
-  });
-  it('the score both barrels read is reached, not dimmed', () => {
-    expect(routing(r, new Set()).nodes.has('cell:scenes')).toBe(true);
   });
   it('one score, read for each ear: the leader mostly left, the follower mostly right', () => {
     const g = (voice: string) => r.outputs.filter((o) => o.voice === voice).reduce((a, o) => [a[0] + o.gains[0], a[1] + o.gains[1]], [0, 0]);

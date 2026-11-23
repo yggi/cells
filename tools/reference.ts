@@ -11,8 +11,7 @@ import { CORE, PARAMS, PARAM_ALIASES, rolesText, type Attribute } from '../src/e
 import { BODIES } from '../src/engine/program';
 import { DOUGH_SOURCES } from '../src/engine/dough-params';
 import { CHANCE_SYNTAX, EUCLID_SYNTAX, LEVEL_SYNTAX, MODIFIERS, SLOW_SYNTAX, STEP_SYNTAX } from '../src/engine/parser/braid';
-import { KEYS, LINE_SYNTAX, SHOWS, SHOW_CONVENTIONS } from '../src/engine/parser/cell';
-import { BUILTIN_PLUGINS } from '../src/engine/builtinPlugins';
+import { KEYS, LINE_SYNTAX } from '../src/engine/parser/cell';
 import { FREE_SYNTAX } from '../src/engine/parser/free';
 import { GENERATORS } from '../src/engine/parser/generators';
 import { GATE_SYNTAX, MIX_SYNTAX } from '../src/engine/parser/mix';
@@ -21,7 +20,6 @@ import { SECTIONS, syntax, type Section, type Syntax } from '../src/engine/parse
 import { MAP_KINDS, MAP_SYNTAX, STEP_SYNTAX as RATE_SYNTAX } from '../src/engine/parser/values';
 import { NUMBER_PLACES } from '../src/engine/parser/numbers';
 import { RATE_UNITS } from '../src/engine/parser/units';
-import { SHOW_MEANING } from '../src/engine/parser/showMeaning';
 import { SORT_SYNTAX } from '../src/engine/compiler/sorts';
 
 const sentence = (s: string) => s[0].toUpperCase() + s.slice(1) + (/[.)]$/.test(s) ? '' : '.');
@@ -113,11 +111,7 @@ export function renderReference(): string {
     out.push('', `## ${SECTIONS[section]}`, '');
     if (section === 'attribute')
       out.push(
-        `An attribute is \`key=value\`, anywhere on a cell's line, each at most once (\`step=\` and \`loop=\` are one setting). What the values of \`step=\`, \`loop=\` and \`map=\` can be is above. \`show=\` takes one of: ${SHOWS.map((k) => `\`${k}\` (${SHOW_MEANING[k]})`).join(', ')}, or a plugin ([plugins.md](plugins.md)): ${BUILTIN_PLUGINS.map((p) => `\`${p.name}\` (built in: ${p.meaning})`).join(', ')}, or one the piece carries; ${Object.entries(
-          SHOW_CONVENTIONS,
-        )
-          .map(([k, cs]) => `\`${k}:\` ${cs.map(code).join(', ')}`)
-          .join('; ')}.`,
+        `An attribute is \`key=value\`, anywhere on a cell's line, each at most once (\`step=\` and \`loop=\` are one setting). What the values of \`step=\`, \`loop=\` and \`map=\` can be is above. \`show=\` takes a word, what a frontend draws the cell as, and a convention after a colon (\`show=notes:german\`), or a plugin the piece carries ([plugins.md](plugins.md)): the text keeps the word and gives it no meaning, and which words a frontend draws, and how, is its own (decision 086; Cell studio's words and what each draws: [its \`layout/show.ts\`](https://github.com/yggi/cell-studio/blob/main/src/layout/show.ts)).`,
         '',
       );
     if (section === 'parameter')

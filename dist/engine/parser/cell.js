@@ -13,33 +13,6 @@ import { atTap, parseMap, parseStep } from "./values.js";
 import { syntax } from "./syntax.js";
 import { AXES, AXIS_NAMES, SLOTS } from "../style.js";
 const ADSR_SLOTS = SLOTS.adsr;
-export const SHOWS = [
-    'braid',
-    'pattern',
-    'equal',
-    'notes',
-    'midi',
-    'do',
-    'degrees',
-    'table',
-    'scale',
-    'mode',
-    'key',
-    'grid',
-    'meter',
-    'spectrum',
-    'wave',
-    'levels',
-    'adsr',
-    'mix',
-    'note',
-    'petal',
-    'off',
-    'matrix',
-    'lfo',
-    'brightness',
-];
-export const SHOW_CONVENTIONS = { notes: ['flats', 'sharps', 'german'], do: ['fixed', 'movable'] };
 const whole = (key) => (s, b, _word, at) => {
     b[key] = s.int(`a whole number after ${key}=`, NUMBER_PLACES[key]);
     b.paramSpans[key] = s.place(at);
@@ -111,7 +84,7 @@ export const KEYS = {
             const at2 = s.i;
             const w = s.match(/[a-z]+/y);
             if (w === null)
-                s.fail(`show= takes one of: ${SHOWS.join(' ')}, or a plugin of the piece`, at2, 1);
+                s.fail("show= takes a word, what the cell is drawn as (show=notes, show=sun): which words is the frontend's", at2, 1);
             let conv = '';
             if (w === 'mix' && s.peek() === ':' && !s.text.startsWith(':&', s.i))
                 s.fail('show=mix:&grid: the grid whose colours the mix wears, like show=mix:&edo19 (no space after the colon)', at2, s.i + 1 - at2);
@@ -126,10 +99,9 @@ export const KEYS = {
             }
             if (s.peek() === ':') {
                 s.i++;
-                const cw = s.match(/[a-z]+/y) ?? '';
-                const ok = SHOW_CONVENTIONS[w]?.includes(cw);
-                if (!ok)
-                    s.fail(`show=${w}: takes ${w === 'notes' ? 'flats, sharps or german' : w === 'do' ? 'fixed or movable' : 'no convention'}`, at2, s.i - at2);
+                const cw = s.match(/[a-z]+/y);
+                if (cw === null)
+                    s.fail(`show=${w}: a word after the colon, its convention (show=notes:german)`, at2, s.i - at2);
                 conv = `:${cw}`;
             }
             b.show = w + conv;
