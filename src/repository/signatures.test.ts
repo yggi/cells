@@ -25,7 +25,8 @@ const WORKBENCH: Record<string, (head: string, use: string) => string> = {
   '&tonic': (head, use) => lines(METER, `${head} from ${use} D`, `&heard over=${head.includes('&key') ? '&key' : head} step=8n 0 1 2`, SOUND),
   // (a count, #720: the meter it clicks, and its click heard)
   '&bar': (head, use) => lines(METER, `${head} from ${use} &bar`, `&out map=sample [${head.split(',')[0]}]`),
-  '&key': (head, use) => lines(METER, KEY, `${head} from ${use} &key`, '&heard step=8n &x', SOUND),
+  // (a template of several heads, an ending's, #720: its first played)
+  '&key': (head, use) => lines(METER, KEY, `${head} from ${use} &key`, `&heard step=8n ${head.split(',')[0]}`, SOUND),
   '&harm': (head, use) => lines(METER, KEY, '&harm over=&key step=1m [0,2,4] [3,5,7]', `${head} from ${use} &harm`, '&heard step=8n &x', SOUND),
   '&call': (head, use) => lines(METER, KEY, '&m over=&key step=8n 0 2 4 7', `${head} from ${use} &m`, '&heard step=8n &x', SOUND),
   '&a': (head, use) => lines(METER, KEY, '&m over=&key step=8n 0 2 4 7', `${head} from ${use} &m`, '&heard step=8n &x', SOUND),
@@ -45,8 +46,8 @@ const templates = LIBRARY.filter((f) => signatureOf(f.text) && !f.association.so
 const NOTHING_PLAYS = 'Nothing plays yet — write a sound: a voice alone plays its own pitch (&a loop=A4), a melody plays on one ([&melody * &a])';
 
 describe('the seed library’s signatures', () => {
-  it('199 templates (#718 and #720: the eight fills and the four counts; #719: the melodic scales, the pentatonic two; #799: the metric accent and the breathing pulse; #810: the nine section kinds and the seven song forms; #772: the law five_to_twelve; #572: ten more, two stabs, three bass lines, a harmony and four motifs; #542: ten more, three harmonies, three bass lines and four motifs, then eleven more, four beats, four bass lines, a harmony and two motifs; #540: five harmonies; #637: the 26 rhythms, now 32 with #646’s two): the meters, modes, harmonies, bass lines, motifs, forms, section kinds, song forms, the stabs, the performers, the four instruments that read a style, the band and the rhythms; the rest collections', () => {
-    expect(templates).toHaveLength(199);
+  it('200 templates (#720: the ending, finale; #718 and #720: the eight fills and the four counts; #719: the melodic scales, the pentatonic two; #799: the metric accent and the breathing pulse; #810: the nine section kinds and the seven song forms; #772: the law five_to_twelve; #572: ten more, two stabs, three bass lines, a harmony and four motifs; #542: ten more, three harmonies, three bass lines and four motifs, then eleven more, four beats, four bass lines, a harmony and two motifs; #540: five harmonies; #637: the 26 rhythms, now 32 with #646’s two): the meters, modes, harmonies, bass lines, motifs, forms, section kinds, song forms, the stabs, the performers, the four instruments that read a style, the band and the rhythms; the rest collections', () => {
+    expect(templates).toHaveLength(200);
     const collections = LIBRARY.filter((f) => !signatureOf(f.text)).map((f) => f.id);
     expect(collections).toContain('gm_kit');
     expect(collections).toContain('upright_bass');
