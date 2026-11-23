@@ -165,8 +165,14 @@ export function outlineOf(result: CompileResult, { facetsOf = () => [] }: Outlin
     const { line, id, within, cells } = made.get(key)!;
     const take = within === null ? takes.get(line) : undefined;
     const outer = within === null ? undefined : takes.get(line);
-    // (a take's named heads are its own, given or not; `*`'s, and an inner part's, are those of its cells)
-    const heads = take?.names ? headsOf(take) : take || outer ? headsOf((take ?? outer)!).filter((h) => cells.includes(h)) : cells.filter((c) => !result.cells.get(c)?.lambda);
+    // (a take's named heads are its own, given or not; `*`'s, and an inner part's, are those of its cells, but for an inner
+    // part those its take names already, which are that take's: a groove's `&euclidLevel` its nested from line gives, #799)
+    const named = (outer?.names ?? []).map((n) => n.slice(1));
+    const heads = take?.names
+      ? headsOf(take)
+      : take || outer
+        ? headsOf((take ?? outer)!).filter((h) => cells.includes(h) && !named.includes(h))
+        : cells.filter((c) => !result.cells.get(c)?.lambda);
     return {
       key,
       line,

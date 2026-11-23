@@ -11,6 +11,7 @@ export { byId, CO_USE_PULL, createRepository, EMPTY_LAYER, fragmentDistance, lay
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments, type Filed, type Filing, type Use } from './repository/learned';
 export { cachedFit, declarations, fitsAs, unionOf, useOn, type FitAs, type FragmentRef, type Union, type UseOn, type UseOnOptions } from './repository/fit';
 export { holesOf, type ClockNeed, type Holes } from './repository/holes';
+export { answered } from './repository/answered';
 export { readFragment, readFragments, writeFragment, type FragmentFile, type FragmentFileProblems, type LibraryFile, type Meta } from './repository/files';
 export { decompose, writtenOut, type DecomposeOptions, type Decomposition, type LineNote } from './repository/decompose';
 export { ALL_OPERATORS, createRecogniser, type PathStep, type Recognised, type RecogniseOptions, type Recogniser } from './repository/recognise';

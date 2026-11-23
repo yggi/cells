@@ -84,3 +84,9 @@ export declare function expansion(text: string, { resolve, locked, old, plugins:
  * lines gone, then the used lines it doesn't define. A `use` that doesn't resolve stays, so nothing is lost.
  */
 export declare function expand(text: string, resolve: Resolve, locked?: CompileOptions['locked'], plugins?: CompileOptions['plugins']): string;
+/**
+ * A text with each `from` line that takes a built-in plugin-fragment written out where it stands, its fill answered
+ * (#799): its lines as they are once the plugin has answered, as Core writes them. What reads a fragment's own lines (Vary,
+ * a template's lines alone) reads a groove's `&euclidLevel from metric_accent(…)` as the levels it writes.
+ */
+export declare const answeredIn: (text: string, resolve: Resolve) => string;

@@ -116,6 +116,22 @@ const CLAVES: Record<string, { bars: number; strokes: number[] }> = {
 };
 
 const drumBars = e31.witnesses.map((w) => ({ ...w, fragment: byId(wordOf(`${w.preset} drums`)) }));
+/**
+ * E31's hits as its bars play since #799: in the three whose euclid's levels `metric_accent` writes (`ACCENTED`), each
+ * rim stroke at the level of its sixteenth on that line, its velocity as MIDI out strikes it (127·√level); every other
+ * hit as the band wrote it.
+ */
+const heard = (w: (typeof drumBars)[number]) => {
+  const line = answered(w.fragment.text)
+    .split('\n')
+    .find((l) => l.startsWith('&euclidLevel '));
+  if (!line || !ACCENTED.includes(w.fragment.id)) return w.hits;
+  const levels = line
+    .replace(/^&euclidLevel map=amp step=16n /, '')
+    .split(' ')
+    .map(Number);
+  return w.hits.map((h) => (h.note === 37 ? { ...h, velocity: Math.round(127 * Math.sqrt(Math.min(1, levels[h.step]!))) } : h));
+};
 
 describe('the rhythm fragments', () => {
   it('are E31’s eight drum bars, one per preset, six claves, the electroswing example’s beat, the Spooky beats and the Kinderlied beat, the ones read from the examples (#572, #542) the four written for the styles placed by hand (#542) and the two for 7/8 and 12/8 (#646), and one whose levels a plugin writes (#799), every point associated as the facet rhythm', () => {
@@ -137,12 +153,19 @@ describe('the rhythm fragments', () => {
     expect(bar).toMatch(/^&bar scan\(1 1 1 1\) step=\d+bpm$/);
     // (the stand-in voices `&bd note=36 s=white` …, E31's own, are holes the kit fills: #244; its card is the workbench's, its mix &groove: #291)
     // (and the drum roles it declares, #560 rung 2: E31 read them off the lines' names)
-    expect(linesAlone(w.fragment.text).replace(/ role=\w+/g, '')).toBe(
+    // (but its euclid's levels, where the bar has a euclid: since #799 the bar's metric accents, which metric_accent writes,
+    // not the band's velocities; the owner, 2026-11-23)
+    const own = linesAlone(w.fragment.text).replace(/ role=\w+/g, '');
+    const accent = own.split('\n').find((l) => l.startsWith('&euclidLevel '));
+    expect(!!accent, w.preset).toBe(ACCENTED.includes(w.fragment.id));
+    expect(own).toBe(
       rest
         .filter((l) => !/^&\w+ s=white$/.test(l))
+        .map((l) => (accent && l.startsWith('&euclidLevel ') ? accent : l))
         .join('\n')
         .replace('&drums map=midi(10) [', '&groove ['),
     );
+    if (accent) expect(w.fragment.text).toMatch(/^&euclidLevel from metric_accent\(floor=\.\d+, peak=\.\d+\)$/m);
   });
 
   it.each(RHYTHM_FRAGMENTS.map((f) => [f.id, f.text] as const))('%s is open on its meter: no meter of its own, and alone it asks for one', (_, text) => {
@@ -202,7 +225,7 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
   it.each(drumBars.map((w) => [w.preset, w] as const))('%s: every hit, its note, step, written length and velocity, under 4/4 at its bpm', (_, w) => {
     const { hits, diagnostics } = played(hosted(meterText('meter'), w.bpm, w.fragment.text, coreKit), w.bpm);
     expect(diagnostics).toEqual([]);
-    const want = sorted(w.hits);
+    const want = sorted(heard(w));
     expect(hits).toHaveLength(want.length);
     want.forEach((h, i) => expect(sameHit(hits[i]!, h), `${JSON.stringify(h)}, played ${JSON.stringify(hits[i])}`).toBe(true));
   });
@@ -210,7 +233,7 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
   it('144 of 144, counted', () => {
     const matched = drumBars.reduce((n, w) => {
       const { hits } = played(hosted(meterText('meter'), w.bpm, w.fragment.text, coreKit), w.bpm);
-      return n + sorted(w.hits).filter((h, i) => hits[i] && sameHit(hits[i], h)).length;
+      return n + sorted(heard(w)).filter((h, i) => hits[i] && sameHit(hits[i], h)).length;
     }, 0);
     expect(matched).toBe(144);
   });
@@ -222,7 +245,7 @@ describe('E31’s drum bars, under a host’s meter, play E31’s hits', () => {
   const underOwnMeter = (w: (typeof drumBars)[number]) => {
     const { point, swing } = PRESETS[w.preset]!;
     const onsets = [...path.find((v) => v.s === swing)!.onsets, 16];
-    const want = sorted(w.hits.map((h) => ({ ...h, step: onsets[h.step]!, length: onsets[h.step + 1]! - onsets[h.step]! })));
+    const want = sorted(heard(w).map((h) => ({ ...h, step: onsets[h.step]!, length: onsets[h.step + 1]! - onsets[h.step]! })));
     return { want, ...played(hosted(meters.query(point, 1)[0]!.fragment.text, w.bpm, w.fragment.text, coreKit), w.bpm) };
   };
   it.each(drumBars.map((w) => [w.preset, w] as const))('%s: under its own meter, every hit through Jambot’s swing, the rim’s Euclid too (#121)', (_, w) => {
@@ -320,6 +343,8 @@ const METERED: Record<string, string[]> = {
   aksak_drums: ['&bd', '&hh', '&sd'],
   twelve_eight_drums: ['&bd', '&rd', '&sd'],
 };
+/** E31's bars whose euclid's levels `metric_accent` writes (#799): the three with a euclid. */
+const ACCENTED = ['funk_drums', 'lo_fi_hip_hop_drums', 'bossa_nova_drums'];
 /** The one whose levels a built-in plugin-fragment writes (#799): its hats' accents `metric_accent`'s. */
 const ANSWERED: Record<string, string[]> = {
   breathing_drums: ['&bd', '&hh'],

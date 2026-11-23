@@ -2,6 +2,7 @@ export { byId, CO_USE_PULL, createRepository, EMPTY_LAYER, fragmentDistance, lay
 export { canonicalText, fileFragment, sameText, usedTogether, useFragments } from "./repository/learned.js";
 export { cachedFit, declarations, fitsAs, unionOf, useOn } from "./repository/fit.js";
 export { holesOf } from "./repository/holes.js";
+export { answered } from "./repository/answered.js";
 export { readFragment, readFragments, writeFragment } from "./repository/files.js";
 export { decompose, writtenOut } from "./repository/decompose.js";
 export { ALL_OPERATORS, createRecogniser } from "./repository/recognise.js";

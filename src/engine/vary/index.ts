@@ -46,6 +46,7 @@ import type { Rewrite } from '../rewrite';
 import { anchorsAmong, type Anchor } from './anchors';
 import { drumNoteOf, linesOf, moved, pitchKey, pitchOf, tapWhole, written, type Line, type LineNote } from './lines';
 import { referenceOf, type Reference } from './reference';
+import { answeredIn } from '../use';
 
 export { backbeatOf, type Anchor } from './anchors';
 export type { Reference } from './reference';
@@ -102,7 +103,9 @@ export interface VaryOptions {
 }
 
 /** A fragment read under its workbench: the workbench's lines it doesn't write itself, then its own. */
-function read(fragment: string, workbench = '', resolve?: Resolve): { lines: Line[]; anchors: Anchor[]; result: CompileResult | null; own: ReadonlySet<string> } {
+function read(source: string, workbench = '', resolve?: Resolve): { lines: Line[]; anchors: Anchor[]; result: CompileResult | null; own: ReadonlySet<string> } {
+  // (a plugin's from line read as the lines it answers, so a groove's levels a plugin writes are lines to vary by, #799)
+  const fragment = resolve ? answeredIn(source, resolve) : source;
   const own = new Set(declarations(fragment).map((l) => l.name));
   const bench = declarations(workbench)
     .filter((l) => !own.has(l.name))

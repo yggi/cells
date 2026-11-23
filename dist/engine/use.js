@@ -833,3 +833,10 @@ export function expand(text, resolve, locked, plugins) {
     const added = x.text.split('\n').slice(text.split('\n').length);
     return [own.replace(/\s+$/, ''), ...added].join('\n') + (text.endsWith('\n') ? '\n' : '');
 }
+export const answeredIn = (text, resolve) => text
+    .split('\n')
+    .flatMap((l) => {
+    const f = readFrom(splitComment(l)[0].trim());
+    return f?.kind === 'use' && BY_FRAGMENT.has(f.id) ? expand(l.trim(), resolve).split('\n').filter(Boolean) : [l];
+})
+    .join('\n');
