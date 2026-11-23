@@ -15,6 +15,7 @@ const FOLDERS = [
     'instruments',
     'expression',
     'modes',
+    'melodic',
     'performers',
     'stab',
     'motifs',
