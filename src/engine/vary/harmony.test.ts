@@ -89,12 +89,13 @@ describe('Vary on a progression (decision 052, point 8)', () => {
     expect([total('major'), total('minor')]).toEqual([394, 395]);
   });
 
-  it('varies every seed in under 10 ms, its compile included', () => {
+  it('varies every seed in under 10 ms, its compile included: the median of 7 runs, as a collection or a busy runner stalls one', () => {
     for (const { id, text } of HARMONIES) {
       variations(text, OPTIONS('major'));
-      const t0 = performance.now();
-      variations(text, OPTIONS('major'));
-      expect(performance.now() - t0, id).toBeLessThan(10);
+      expect(
+        medianMs(() => variations(text, OPTIONS('major'))),
+        id,
+      ).toBeLessThan(10);
     }
   });
 
@@ -290,4 +291,14 @@ function check(v: Variation, text: string, mode: string) {
     const [step, from] = amounts.map(Number) as [number, number];
     expect(at(after, step), v.by).toEqual(at(before, from));
   } else expect(['rotate', 'reverse']).toContain(operator);
+}
+
+/** The median of 7 runs of `run`, in milliseconds: a garbage collection or a loaded machine stalls one run, not the median. */
+function medianMs(run: () => unknown): number {
+  const times = Array.from({ length: 7 }, () => {
+    const t0 = performance.now();
+    run();
+    return performance.now() - t0;
+  }).sort((a, b) => a - b);
+  return times[3]!;
 }
