@@ -21,6 +21,11 @@ export const FOLDER_FACETS = {
     stab: 'stab',
     styles: 'style',
 };
+export const FACET_AXES = Object.fromEntries(['meter', 'rhythm', 'performer', 'module', 'form'].map((f) => [f, AXIS_NAMES.filter((a) => a !== 'mood')]));
+const onAxes = (point, facet) => {
+    const axes = facet === undefined ? undefined : FACET_AXES[facet];
+    return axes ? Object.fromEntries(Object.entries(point).filter(([a]) => axes.includes(a))) : point;
+};
 export const RESERVED = ['style', 'facet'];
 const NUMBER = /^-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)$/;
 const NAMES = /^&[A-Za-z_][A-Za-z0-9_]*(?:\s*,\s*&[A-Za-z_][A-Za-z0-9_]*)*$/;
@@ -48,10 +53,10 @@ function declarationAttributes(code) {
         return null;
     return after.slice(i).every(isAttr) ? after.slice(i) : null;
 }
-function readPoint(text, styles) {
+function readPoint(text, styles, facet) {
     if (/^&[A-Za-z_][A-Za-z0-9_]*$/.test(text)) {
         const point = styles.get(text.slice(1));
-        return point ? { point } : `style=${text}: no style of that name in styles`;
+        return point ? { point: onAxes(point, facet) } : `style=${text}: no style of that name in styles`;
     }
     const inline = /^&\(\s*map=style\s+([\s\S]*)\)$/.exec(text);
     if (!inline)
@@ -87,13 +92,13 @@ function readPoint(text, styles) {
         return `style=${text}: a point names an axis at least`;
     return Object.keys(reach).length ? { point, reach } : { point };
 }
-function readStyle(text, styles) {
+function readStyle(text, styles, facet) {
     const set = /^\(([\s\S]*)\)$/.exec(text);
     const members = set ? splitTop(set[1], '|') : [text];
     const out = [];
     for (const raw of members) {
         const m = /^([\s\S]*?)(?:\s*\*\s*(-?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)))?$/.exec(raw.trim());
-        const read = readPoint(m[1].trim(), styles);
+        const read = readPoint(m[1].trim(), styles, facet);
         if (typeof read === 'string')
             return read;
         const weight = m[2] === undefined ? 1 : parseFloat(m[2]);
@@ -156,7 +161,7 @@ export function readDeclaration(code, options) {
     const extra = { ...(facet === undefined ? {} : { facet }), ...(Object.keys(args).length ? { args } : {}) };
     if (style === null)
         return { points: [{ point: {}, weight: 1, ...extra }], problems };
-    const read = readStyle(style, options.styles);
+    const read = readStyle(style, options.styles, facet);
     if (typeof read === 'string')
         return { points: [], problems: [...problems, read] };
     return { points: read.map(({ point, weight, reach }) => ({ point, weight, ...extra, ...(reach ? { reach } : {}) })), problems };
