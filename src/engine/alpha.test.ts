@@ -130,8 +130,15 @@ describe('alpha substitution: every name a text defines renamed, it plays, says 
     for (const [key, p] of Object.entries(EXAMPLES)) {
       const r = compileSource(p.source, undefined, O);
       const outputs = r.outputs.map((o) => o.id);
+      // (the exception, only shrinking: electroswing takes its beat from Electro swing drums, whose lines write roles since #715: the
+      // clap the backbeat, the hats and the ticks the hat, the ghosts of the snare a ghost, which no name of theirs said)
+      if (key === 'electroswing') continue;
       expect(outputs.map(readerOf(r)), key).toEqual(outputs.map(readerByName(r)));
     }
+    const r = compileSource(EXAMPLES.electroswing.source, undefined, O);
+    const read = readerOf(r);
+    const kit = r.outputs.filter((o) => o.id.startsWith('kit:voices:'));
+    expect(Object.fromEntries(kit.map((o) => [o.id.split(':')[2], read(o.id)?.role]))).toEqual({ kick: 'kick', clap: 'backbeat', hats: 'hat', ticks: 'hat', ghosts: 'ghost' });
   });
 
   it('the meter, the key, the tempo, the tonic and the harmony have no names of their own', () => {

@@ -60,8 +60,8 @@ describe('hitsOf', () => {
     // (the bell and scale is a mode's and a rhythm's, no groove: it has no mix of lines)
     expect(none).toEqual(['bell_and_scale']);
     expect(hits).toBeGreaterThan(400);
-    // (the lines that write no role, only shrinking: Electro swing drums', the owner's call, #717)
-    expect(unroled.map((u) => u.split(':')[0]).filter((v, i, a) => a.indexOf(v) === i)).toEqual(['electro_swing_drums']);
+    // (every line of every groove says its role)
+    expect(unroled).toEqual([]);
   });
 
   it('gives, for every rhythm, the hits of each line compiled alone: line, key, step and velocity, 100 %', () => {
