@@ -78,7 +78,7 @@ export interface Expansion {
     readonly origins: ReadonlyMap<string, readonly Origin[]>;
 }
 /** The expansion of a text (see the module's comment), its `use` and `from` lines resolved by `options`. */
-export declare function expansion(text: string, { resolve, locked, old, plugins: theirs, answers: lockedAnswers }?: CompileOptions): Expansion;
+export declare function expansion(text: string, { resolve, locked, plugins: theirs, answers: lockedAnswers }?: CompileOptions): Expansion;
 /**
  * A piece's expansion written out (decision 054; #177's `inline`, Cell studio's "write out"): its own lines, its `use`
  * lines gone, then the used lines it doesn't define. A `use` that doesn't resolve stays, so nothing is lost.

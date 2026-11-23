@@ -29,14 +29,14 @@ Each step of the plan moves a count in the ledger: the symbols a frontend reache
 | entry point | layer | what | modules |
 |---|---|---|---|
 | `@yggi/cells` | language | compile, plan, window; the shared types | 14 |
-| `@yggi/cells/edit` | language | edit, patch, capture, vary, shorten, normalise, migrate a text (one rule: `arguments`); a piece file | 39 |
+| `@yggi/cells/edit` | language | edit, patch, capture, vary, shorten, normalise, migrate a text (no rule before 1.0.0); a piece file | 38 |
 | `@yggi/cells/inspect` | language | read a compiled piece: its cells, pitches, clocks, values, written graph | 22 |
 | `@yggi/cells/midi` | language | text to MIDI notes and hits, MIDI files, keys, the performer | 28 |
 | `@yggi/cells/time` | language | analysis of what plays: scalograms, structure, motifs | 11 |
 | `@yggi/cells/repository` | repository | query, fit and learn; a fragment read as cells means it | 22 |
 | `@yggi/cells/library` | library | the seed, styles, kit, roles, modes, the band; every vocabulary as values | 13 |
 | (leaves for Cell studio, decision 086) | | the view: drawing only | 5 |
-| (internal) | | named by no entry point | 54 |
+| (internal) | | named by no entry point | 53 |
 
 #### `@yggi/cells`
 
@@ -46,7 +46,7 @@ On the root index today (69): `Atom`, `AudioOptions`, `AudioTape`, `Braid`, `Com
 
 #### `@yggi/cells/edit`
 
-Planned modules: `engine/capture`, `engine/core/desugar`, `engine/core/fold`, `engine/core/index`, `engine/core/interface`, `engine/core/minify`, `engine/edit`, `engine/held`, `engine/literate`, `engine/migrate/arguments`, `engine/migrate/index`, `engine/normalise/aliases`, `engine/normalise/index`, `engine/normalise/kept`, `engine/normalise/library`, `engine/normalise/meter`, `engine/normalise/names`, `engine/normalise/narrowest`, `engine/normalise/seeds`, `engine/outline`, `engine/patch`, `engine/piecefile`, `engine/rewrite`, `engine/shorten/aliases`, `engine/shorten/card`, `engine/shorten/defaults`, `engine/shorten/fractions`, `engine/shorten/harness`, `engine/shorten/index`, `engine/shorten/phrases`, `engine/shorten/progressions`, `engine/shorten/runs`, `engine/shorten/same`, `engine/shorten/stereo`, `engine/shorten/wrappers`, `engine/vary/anchors`, `engine/vary/index`, `engine/vary/lines`, `engine/vary/reference`.
+Planned modules: `engine/capture`, `engine/core/desugar`, `engine/core/fold`, `engine/core/index`, `engine/core/interface`, `engine/core/minify`, `engine/edit`, `engine/held`, `engine/literate`, `engine/migrate/index`, `engine/normalise/aliases`, `engine/normalise/index`, `engine/normalise/kept`, `engine/normalise/library`, `engine/normalise/meter`, `engine/normalise/names`, `engine/normalise/narrowest`, `engine/normalise/seeds`, `engine/outline`, `engine/patch`, `engine/piecefile`, `engine/rewrite`, `engine/shorten/aliases`, `engine/shorten/card`, `engine/shorten/defaults`, `engine/shorten/fractions`, `engine/shorten/harness`, `engine/shorten/index`, `engine/shorten/phrases`, `engine/shorten/progressions`, `engine/shorten/runs`, `engine/shorten/same`, `engine/shorten/stereo`, `engine/shorten/wrappers`, `engine/vary/anchors`, `engine/vary/index`, `engine/vary/lines`, `engine/vary/reference`.
 
 Exported by its entry point, `src/edit.ts` (81): `Anchor`, `CodeLine`, `Core`, `CoreOptions`, `Interface`, `Jack`, `Layout`, `Literate`, `LiterateProblems`, `LockChange`, `MOVING`, `Operator`, `Outline`, `OutlineNode`, `OutlineOptions`, `OutlinePart`, `PITCHED_OPERATORS`, `PatchError`, `PieceFile`, `PieceFileProblems`, `PieceFrontmatter`, `RHYTHM_OPERATORS`, `RecordTarget`, `Recording`, `ShortenOptions`, `Suggestion`, `Variation`, `VaryOptions`, `Written`, `addCell`, `anchorsOf`, `attrValue`, `attrsOf`, `declLine`, `declWords`, `deleteCell`, `drawn`, `fileLine`, `freeIndex`, `freeList`, `isPieceFile`, `jacksOf`, `linesOf`, `lockChanges`, `lockfileOf`, `migrate`, `movedCard`, `nameProblem`, `normalise`, `offProblem`, `outlineOf`, `patch`, `readLiterate`, `readPiece`, `readVariations`, `recordTarget`, `renameCell`, `rewrite`, `setAttr`, `setBraid`, `setFree`, `setOff`, `setShift`, `setTiming`, `shorten`, `shortenAll`, `spansLines`, `splitComment`, `splitToken`, `splitWords`, `tableReader`, `tapWhole`, `textLockfile`, `toCore`, `unpatch`, `usersOf`, `variations`, `varied`, `withHeld`, `withLockfile`, `writePiece`.
 

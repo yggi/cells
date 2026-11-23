@@ -1,5 +1,8 @@
 # Migrate's and Normalise's retired forms: an inventory (#643)
 
+> **Status (2026-11-23):** all of it went: the 18 rules in #877, and `arguments`, the one left, in the PR that followed #882 (the seed band passed its style, so the rule had no case). Migrate holds no rule until 1.0.0.
+
+
 Read on `main` @ a90fb30d, 2026-11-22. The inventory #643 asks for before anything is removed: each rule, the form it serves, when it retired, where the compiler still reads the form, and what still writes it. Counts at the foot.
 
 ## What the issue assumed, and what is there
