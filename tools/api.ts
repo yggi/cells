@@ -78,17 +78,19 @@ export const ENTRY_POINTS: readonly { readonly match: string; readonly entry: En
     'attributes',
   ].map((m): { match: string; entry: Entry } => ({ match: `engine/${m}`, entry: '@yggi/cells/inspect' })),
   // MIDI, and the folder that writes cells from notes.
-  ...['midi', 'midiclock', 'midifile', 'midiimport', 'midiexport', 'miditext', 'keys', 'perform/', 'fold/'].map((m): { match: string; entry: Entry } => ({
+  ...['midi', 'notesof', 'readback', 'midiclock', 'midifile', 'midiimport', 'midiexport', 'miditext', 'keys', 'perform/', 'fold/'].map((m): { match: string; entry: Entry } => ({
     match: `engine/${m}`,
     entry: '@yggi/cells/midi',
   })),
   // Time.
   { match: 'engine/time/', entry: '@yggi/cells/time' },
   // Repository: fragments, their fit and learning, and a fragment read as cells means it (reading/*, ruled 2026-11-16).
-  ...['fragments', 'learned', 'fit', 'holes', 'files', 'decompose', 'recognise', 'extract', 'audition', 'catalogue', 'corefragment'].map((m): { match: string; entry: Entry } => ({
-    match: `repository/${m}`,
-    entry: '@yggi/cells/repository',
-  })),
+  ...['fragments', 'learned', 'fit', 'holes', 'files', 'decompose', 'recognise', 'extract', 'audition', 'catalogue', 'corefragment', 'hits'].map(
+    (m): { match: string; entry: Entry } => ({
+      match: `repository/${m}`,
+      entry: '@yggi/cells/repository',
+    }),
+  ),
   ...['takein', 'references', 'use', 'renamed', 'reading/'].map((m): { match: string; entry: Entry } => ({ match: `engine/${m}`, entry: '@yggi/cells/repository' })),
   // Library: the seed, styles, the kit and roles, modes, the band.
   ...['library', 'seed', 'styles', 'band'].map((m): { match: string; entry: Entry } => ({ match: `repository/${m}`, entry: '@yggi/cells/library' })),
