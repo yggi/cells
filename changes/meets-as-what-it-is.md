@@ -1,3 +1,0 @@
-### Changed
-
-- **A fit takes a workbench cell as a template's main argument only where the template reads it as what it is** (decision 104, #920): a meter as a clock or its levels as values, never as a key, a phrase or a part; a lone note (`&tonic D`) as a tonic alone; a text cell never. **What a frontend sees at its next pin:** fewer fits on a workbench of a meter alone (at Bossa nova's point 75 of 234, where a plain meter line fitted 165: no harmony over the bar, no performer playing it, no form spliced from it); the song forms still take the bar as their intensity, which a workbench that offers its `&song` settles.
