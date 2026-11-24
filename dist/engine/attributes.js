@@ -227,6 +227,7 @@ export const VOICE_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].
 export const VOICE_MAKERS = new Set([...VOICE_PARAMS].filter((k) => k !== 'pan'));
 export const LINE_PARAMS = new Set(Object.keys(PARAMS).filter((k) => PARAMS[k].doc !== 'physics.md' && PARAMS[k].on?.every((r) => r === 'clock' || r === 'driven')));
 export const PLAYED_AS = new Set(['part', 'role']);
+export const NOT_HEARD = new Set(['label', 'show', 'size', 'about', 'tags', ...PLAYED_AS]);
 export const memberParams = (params) => Object.keys(params).some((k) => !LINE_PARAMS.has(k) && !PLAYED_AS.has(k));
 export function rolesText(on) {
     const NAMES = {

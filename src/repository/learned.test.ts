@@ -8,7 +8,10 @@ import { chanceOf } from '../engine/realize';
 import { readFragment, writeFragment } from './files';
 import { byId, createRepository, EMPTY_LAYER, layerProblems, type Fragment, type LearnedLayer, type QueryOptions, type StylePoint } from './fragments';
 import { canonicalText, FILING_WEIGHT, fileFragment, sameText, USE_CAP, USE_STEP, usedTogether, useFragments, type Filing } from './learned';
-import { LIBRARY } from './library';
+import { LIBRARY, resolveSeed } from './library';
+import { EXAMPLES } from '../engine/examples';
+import { identityOf } from '../engine/use';
+import { extract } from './extract';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { seedFragments } from './seed';
 
@@ -164,6 +167,26 @@ describe('canonicalText is kept per text (#867)', () => {
   });
 });
 
+describe('a text of from lines alone (#941)', () => {
+  it('is no library fragment: the vamp and bass of Kinderlied, extracted, match none of the 245 (stick_count, hat_count, clave_count before)', () => {
+    const k = EXAMPLES.kinderlied!.source;
+    const at = (head: string) => k.split('\n').findIndex((l) => l.startsWith(head)) + 1;
+    const r = extract(k, [at('&harm '), at('&bassline ')], { id: 'my_vamp_bass', resolve: resolveSeed });
+    if (!('fragment' in r)) throw new Error('no extraction');
+    expect(LIBRARY.filter((f) => sameText(r.fragment, f.text)).map((f) => f.id)).toEqual([]);
+  });
+
+  it('and no two fragments of the library share an identity, the names free', () => {
+    const ids = new Map<string, string[]>();
+    for (const f of LIBRARY) {
+      const hash = identityOf(f.text, 'free').hash;
+      ids.set(hash, [...(ids.get(hash) ?? []), f.id]);
+    }
+    expect(LIBRARY).toHaveLength(245);
+    expect([...ids.values()].filter((v) => v.length > 1)).toEqual([]);
+  });
+});
+
 describe('filing', () => {
   it('a filed fragment is found first at its point, at distance 0: at 200 points, and at each preset’s, where a seed fragment sits at 0 too', () => {
     for (const point of [...drawn(200, 'filed'), ...PRESETS]) {
@@ -265,7 +288,8 @@ describe('identity, until the hash', () => {
     expect(sameText('&b meter("3/4")', '&bar meter("3/4")')).toEqual(new Map([['&b', '&bar']]));
     expect(sameText('&b from (&s) &t\n&b meter("3/4") step=&t swing=&s\n&s 8n:.6', '&bar from (&s) &t\n&bar meter("3/4") step=&t swing=&s\n&s 8n:.6')).toBeNull();
     expect(sameText('&x step=16n &harm', '&x step=16n &chord')).toBeNull();
-    expect(sameText('&a step=16n 0 2\n&b step=16n 4', '&b step=16n 4\n&a step=16n 0 2')).toBeNull();
+    // (the order of the lines is no part of a text's identity, L19, #945)
+    expect(sameText('&a step=16n 0 2\n&b step=16n 4', '&b step=16n 4\n&a step=16n 0 2')?.size).toBe(0);
   });
 
   it('a filed text held already adds a point to the fragment that holds it, not a second fragment', () => {

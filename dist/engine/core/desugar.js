@@ -583,6 +583,7 @@ function named(text) {
     return keys.length ? `${next.replace(/\s+$/, '')}\n${keys.join('\n')}` : text;
 }
 const INERT = /^(?:label|show|size|about)=/;
+const PLAYED = /^(?:part|role)=/;
 function inert(text) {
     let now = text;
     for (const d of parse(text).cells)
@@ -593,11 +594,12 @@ function inert(text) {
         .map((raw) => {
         const name = HEAD_NAME.exec(splitComment(raw)[0])?.[1];
         const w = name ? declWords(raw, name) : null;
-        if (!w || !w.attrs.some((a) => INERT.test(a)))
+        const cut = (a) => INERT.test(a) || (PLAYED.test(a) && !w?.attrs.includes('map=role'));
+        if (!w || !w.attrs.some(cut))
             return raw;
         const [code, comment] = splitComment(raw);
         let next = code;
-        for (const a of w.attrs.filter((x) => INERT.test(x))) {
+        for (const a of w.attrs.filter(cut)) {
             const at = next.indexOf(a);
             if (at > 0)
                 next = (next.slice(0, at).trimEnd() + ' ' + next.slice(at + a.length).trimStart()).trimEnd();

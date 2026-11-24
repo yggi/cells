@@ -284,9 +284,10 @@ describe('the echo (decision 062 R2, #452)', () => {
 describe('the reverb (decision 062 R2, #452)', () => {
   const RATE = 48000;
   /** A click through the reverb: the mix and its return, at a rate. */
+  // (a seed pinned: the two sends throw the same grain, though their cells differ, #945)
   const room = (rate: number, params = 'room=1') => {
     const r = compileSource(
-      `&v s=white ${params} env=&(map=adsr 0 .002 0 .001)\n&n step=1 0\n&out map=sample postgain=1 [&n * &v]`,
+      `&v seed=1 s=white ${params} env=&(map=adsr 0 .002 0 .001)\n&n step=1 0\n&out map=sample postgain=1 [&n * &v]`,
       { ...DEFAULT_ENV, SAMPLE_RATE: rate },
       { resolve: resolveSeed },
     );

@@ -32,13 +32,7 @@ import { libraryCells, libraryLines, libraryTemplates, takenArguments, type Libr
 import { narrowestFroms } from './narrowest';
 import { interfaceNames } from './names';
 import { evenScan, swingClock } from './meter';
-import { seeds } from './seeds';
 
-/** The rewrites of the second phase: a seed a cell writes (decision 098), once no other rule has anything left, so no rule's order changes the text (law L15) and a seed is the place its cell has when it is written. */
-export { seeds };
-
-/** How many seeds a text may be written in: one a round. */
-export const SEED_ROUNDS = 400;
 import { migrations } from '../migrate';
 
 /** What Normalise reads besides the text: the compile's options, and the library whose lines a piece takes by `use`. */
@@ -80,7 +74,5 @@ export const normalise = (source: string, options?: NormaliseOptions): { source:
   // (it writes Migrate's rule before its own: a `from` line is read the old way)
   const old = { ...options, old: true };
   const first = rewriteAll(source, normalisations(old), ROUNDS, old);
-  // (then the seeds, once nothing else is left to move a cell's place or its content: decision 098)
-  const then = rewriteAll(first.source, seeds, SEED_ROUNDS, old);
-  return { source: then.source, steps: [...first.steps, ...then.steps] };
+  return { source: first.source, steps: first.steps };
 };

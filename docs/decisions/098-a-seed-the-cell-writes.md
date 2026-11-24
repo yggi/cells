@@ -1,6 +1,6 @@
 # 098 · A seed the cell writes: a chancy cell draws from the seed it carries, no edit to what it carries throws the dice again
 
-**Date:** 2026-11-23 · **Status:** accepted (the owner on #779, 2026-11-22 and 2026-11-23: "I tend to 2c", then "as suggested A, and seed replaces content key")
+**Date:** 2026-11-23 · **Status:** accepted; items 2, 3 and 6 amended by #945 (below) (the owner on #779, 2026-11-22 and 2026-11-23: "I tend to 2c", then "as suggested A, and seed replaces content key")
 
 *Read with [031](031-chance-keyed-on-time.md) (chance is keyed on the cell, the lap and the step; amended by #481 to key on what a cell plays), [050](050-the-equalities.md) (S1, the same sounds) and the laws L1, L7 and L12 ([laws.md](../language/laws.md)).*
 
@@ -24,3 +24,14 @@ A draw is thrown per seed, cell, lap and step. Its cell's key hashed every attri
 - **What moved:** only the `chance` example (451 notes, now 442), whose `&ghosts` wrote `seed=3`, which was mixed with its content and is now the seed alone. No other example, no seed fragment's notes moved (`snapshot.txt`).
 - **Noise:** the own noise voices of 26 examples (45 lines) carry a seed (the tutorial's three below tier 5, `voice`, `drums` and `rhythm`, stay unseeded: the ladder teaches `seed` at tier 5, and they stay thrown from their places); no sample moves (10 examples rendered 6 s at 8 kHz before and after, equal, and every voice's grain key equal over the 40 examples with a noise voice), and an edit that adds a noise voice leaves theirs.
 - **The test:** a role, a part and a label on every chancy cell of every example and every fragment of the library move 0 events, and shown firing with the seeds taken off.
+
+## Amended (#945, the owner 2026-11-24: "the structural identity hash of the canonical, desugared form is the right track")
+
+A seed pinned what a cell's identity moved with: a `role=` or a `label=` threw the dice again. The remedy is the identity, not the pin.
+
+- **A cell's identity leaves out what no listener hears.** `label=` `show=` `size=` `about=` `tags=` and `part=` `role=` are one list (`NOT_HEARD`, `attributes.ts`), read by a cell's draw key, by the core (`toCore` cuts them, but a `map=role` cell's own, its interface), and by the measure of structure (free). So a cell throws the dice it threw whatever it is labelled, shown, tagged or played as: 0 of the 96 unseeded examples move, and no seed is needed for it.
+- **Item 2 is withdrawn: Normalise writes no seed.** Its second phase (400 rounds), `seeds.ts` and the three `kept.ts` exceptions (`voice`, `drums`, `rhythm`) are gone. Seeds already written stay, as pins (items 1, 3, 4): a hand-written `seed=n` is the way to keep a cell's dice under an edit to what it *plays*, which changes its identity by design.
+- **Item 6 changed: a noise voice that writes no seed is thrown from its identity**, `noise#<its draw key>`, not from its place among the noise voices, so a voice added above, a line moved or a voice renamed moves no grain. Voices that are alike would stack (two of one noise sum to one louder, not blend): the k-th of them (k ≥ 1, in the compile's order, the voices being alike whichever is which) takes the key hashed with k, so none throws alike, whatever the order of the lines. Which of two identical voices is which may switch between compiles of an edited text; both sound alike, so it is heard as nothing. A voice that writes a seed throws from it alone, as before. The General MIDI kit's noise voices are thrown from their identity too.
+- **A change to what is heard changes the identity, and so the draws and grains of an unseeded cell**: accepted, semi-intentional (an edit to a cell's sound or steps is a different cell).
+
+What it moves: no event (the examples' snapshot is unchanged); the grains of the unseeded noise voices (the tutorial's `voice`, `drums`, `rhythm`, the library's, the GM kit's), a render's samples with them.

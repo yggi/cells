@@ -699,6 +699,8 @@ function named(text: string): string {
 
 /** The attributes that say how a cell is drawn or named, never how it sounds (068: outside, inert). */
 const INERT = /^(?:label|show|size|about)=/;
+/** …and what a line is played as, `part=` `role=` (#945), on a line that is no performer: a `map=role` cell's own `part=` is its interface. */
+const PLAYED = /^(?:part|role)=/;
 
 /**
  * What plays nothing left out (068's rows 2 and 85–90, inert): a note (a cell with a label and nothing else)
@@ -712,11 +714,12 @@ function inert(text: string): string {
     .map((raw) => {
       const name = HEAD_NAME.exec(splitComment(raw)[0])?.[1];
       const w = name ? declWords(raw, name) : null;
-      if (!w || !w.attrs.some((a) => INERT.test(a))) return raw;
+      const cut = (a: string) => INERT.test(a) || (PLAYED.test(a) && !w?.attrs.includes('map=role'));
+      if (!w || !w.attrs.some(cut)) return raw;
       // each one cut where it stands: the line's order kept, a braid that runs on past the line left whole
       const [code, comment] = splitComment(raw);
       let next = code;
-      for (const a of w.attrs.filter((x) => INERT.test(x))) {
+      for (const a of w.attrs.filter(cut)) {
         const at = next.indexOf(a);
         if (at > 0) next = (next.slice(0, at).trimEnd() + ' ' + next.slice(at + a.length).trimStart()).trimEnd();
       }

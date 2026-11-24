@@ -10,10 +10,10 @@
 import type { CompileResult } from './program';
 import { codeShifts } from './program';
 import { flatten } from './flatten';
-import { CELL_PARAMS } from './attributes';
+import { CELL_PARAMS, NOT_HEARD } from './attributes';
 
 /** A number for a text, the same for the same text: cyrb53 written in base 36 (a key, not a chance). */
-function hashOf(text: string): string {
+export function hashOf(text: string): string {
   let h1 = 0xdeadbeef;
   let h2 = 0x41c6ce57;
   for (let i = 0; i < text.length; i++) {
@@ -45,9 +45,6 @@ export function drawSeedOf(result: CompileResult): (cell: string) => string {
     return `${c && !c.seeded ? c.seed : 0}|${key(cell)}`;
   };
 }
-
-/** A cell's content key as the number a `seed=` writes: the same dice, thrown from the seed (`drawSeedOf`). */
-export const keyAsSeed = (key: string): number => parseInt(key, 36);
 
 /** What a program's cells draw on, by name (see the module's comment); a name the program doesn't hold is its own key. */
 export function drawKeyOf(result: CompileResult): (cell: string) => string {
@@ -82,7 +79,7 @@ export function drawKeyOf(result: CompileResult): (cell: string) => string {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([p, v]) => [p, typeof v === 'string' && CELL_PARAMS.has(p) ? keyOf(v, inner) : v]);
     // (its chance= is in its steps, each step's as thrown: a bare x? reads it, x?.3 says its own)
-    const key = hashOf(JSON.stringify([c.seed, c.steps, steps, params.filter(([p]) => p !== 'chance'), c.env ? keyOf(c.env, inner) : null]));
+    const key = hashOf(JSON.stringify([c.seed, c.steps, steps, params.filter(([p]) => p !== 'chance' && !NOT_HEARD.has(String(p))), c.env ? keyOf(c.env, inner) : null]));
     if (!seen.size) memo.set(name, key);
     return key;
   };

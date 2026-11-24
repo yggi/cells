@@ -25,7 +25,7 @@ import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
 import { fromLine } from '../engine/references';
 import type { CompileResult, Resolve, Take } from '../engine/program';
-import { expansion, fragmentHash, signatureOf } from '../engine/use';
+import { expansion, fragmentHashE2, signatureOf } from '../engine/use';
 import { parse, readFrom } from '../engine/parser';
 import { braidReadsOf } from '../engine/compiler/builtin';
 import { readsOf } from '../engine/reads';
@@ -267,7 +267,7 @@ export function cachedFit(resolve: Resolve, limit = 512): (text: string, workben
     return fitsAs(id, workbench, { resolve: resolving, compiled, ...(main === null ? {} : { main }) });
   });
   return (text, workbench, main) => {
-    const id = `fit_${fragmentHash(text).slice(3)}`;
+    const id = `fit_${fragmentHashE2(text).slice(3)}`;
     own.set(id, text);
     return fit(JSON.stringify({ id, workbench, main: main ?? null }));
   };
@@ -319,7 +319,7 @@ export type FragmentRef = string | { readonly text: string; readonly head?: stri
 /** The id a fragment is read by and the options that read it: for a text, its own id, `resolve` reading it, and its head. */
 function refOf(ref: FragmentRef, options: UseOnOptions): { id: string; options: UseOnOptions } {
   if (typeof ref === 'string') return { id: ref, options };
-  const id = `fit_${fragmentHash(ref.text).slice(3)}`;
+  const id = `fit_${fragmentHashE2(ref.text).slice(3)}`;
   const resolve: Resolve = (other, hash) => (other === id ? ref.text : options.resolve(other, hash));
   return { id, options: { ...options, resolve, ...(ref.head === undefined ? {} : { head: ref.head }) } };
 }

@@ -1,4 +1,5 @@
 import { splitComment } from "./edit.js";
+import { NOT_HEARD } from "./attributes.js";
 import { FROM_FORM, HEAD_FLAGS, isAttribute, readFrom, topTokens } from "./parser/use.js";
 import { counts } from "./core/desugar.js";
 import { STYLE } from "./style.js";
@@ -234,19 +235,64 @@ export function identityText(text) {
         .map((code) => code.replace(WRITTEN, (written, name) => (index.has(name) ? `&#${index.get(name)}` : written)))
         .join('\n');
 }
+function withoutMetadata(code) {
+    const tokens = topTokens(code);
+    const role = tokens.some((t) => t.text === 'map=role');
+    const kept = tokens.filter((t) => !(isAttribute(t.text) && NOT_HEARD.has(keyOf(t.text)) && !(role && /^(?:part|role)=/.test(t.text))));
+    return kept.length === tokens.length ? code : kept.map((t) => t.text).join(' ');
+}
+export function identityOf(text, names = 'interface') {
+    const seen = new Set();
+    const lines = linesOf(text).flatMap((l) => {
+        const code = withoutAssociation(l.code);
+        if (code === null)
+            return [];
+        if (readFrom(code) !== undefined && seen.has(code))
+            return [];
+        seen.add(code);
+        return [{ code: withoutMetadata(code), name: l.name }];
+    });
+    const signature = signatureOf(lines.map((l) => l.code).join('\n'));
+    const kept = new Set(signature ? [...signature.names, ...signature.optional, ...(signature.main ? [signature.main] : [])].map((n) => n.slice(1)) : []);
+    const own = new Set(lines.flatMap((l) => ((signature || names === 'free') && l.name && !kept.has(l.name) ? [l.name] : [])));
+    const codes = counts(lines.map((l) => l.code).join('\n')).split('\n');
+    const rows = lines.map((l, i) => ({ name: l.name, code: codes[i] }));
+    const memo = new Map();
+    const read = (code, head, inner) => code.replace(WRITTEN, (written, name) => (own.has(name) ? `&#${name === head ? '' : idOf(name, inner)}` : written));
+    const idOf = (name, inner) => {
+        const known = memo.get(name);
+        if (known !== undefined)
+            return known;
+        if (inner.has(name))
+            return '↺';
+        const next = new Set([...inner, name]);
+        const id = hash64(rows
+            .filter((r) => r.name === name)
+            .map((r) => read(r.code, name, next))
+            .sort()
+            .join('\n'));
+        if (!inner.size)
+            memo.set(name, id);
+        return id;
+    };
+    const cells = new Map([...own].map((name) => [name, idOf(name, new Set())]));
+    const final = rows.map((r) => read(r.code, r.name, new Set())).sort();
+    return { hash: `e3:${hash64(final.join('\n'))}`, cells };
+}
 const hashes = new Map();
 const HASHES = 4096;
+export const fragmentHashE2 = (text) => `e2:${hash64(identityText(text))}`;
 export const fragmentHash = (text) => {
     const known = hashes.get(text);
     if (known !== undefined)
         return known;
-    const hash = `e2:${hash64(identityText(text))}`;
+    const hash = identityOf(text).hash;
     if (hashes.size >= HASHES)
         hashes.clear();
     hashes.set(text, hash);
     return hash;
 };
-export const hashIs = (recorded, text) => recorded === (recorded.startsWith('e1:') ? fragmentHashE1(text) : fragmentHash(text));
+export const hashIs = (recorded, text) => recorded === (recorded.startsWith('e1:') ? fragmentHashE1(text) : recorded.startsWith('e2:') ? fragmentHashE2(text) : fragmentHash(text));
 const quoted = (id) => JSON.stringify(id);
 const pathOf = (path) => path.map(quoted).join(' → ');
 function merge(own, used, say, host) {
@@ -749,7 +795,7 @@ export function expansion(text, { resolve, locked = [], plugins: theirs = [], an
             args[i] = undefined;
             return { id, names, lines: [], resolved: false };
         }
-        const hash = fragmentHash(theirs);
+        const hash = recorded && hashIs(recorded, theirs) ? recorded : fragmentHash(theirs);
         hashes[i] = hash;
         if (recorded && !hashIs(recorded, theirs))
             diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });
