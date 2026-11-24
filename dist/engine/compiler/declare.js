@@ -1,4 +1,5 @@
-import { numberCellOf, valueSumOf } from "../valuesum.js";
+import { valueSumOf } from "../valuesum.js";
+import { builtHoles, builtNumber } from "./built.js";
 import { refLabel } from "../ast.js";
 import { MAX_SPLICE_DEPTH, ROOT } from "../program.js";
 import { evenProblem, evenSteps, parseGenerator, SCALE_KEY } from "../parser/generators.js";
@@ -19,6 +20,7 @@ export function declare(ctx) {
             decls.set(c.name, c);
     }
     const mainKey = mainKeyOf(decls);
+    builtHoles(ctx, decls);
     meters(ctx, decls);
     tonics(ctx, decls);
     modes(ctx, decls);
@@ -165,6 +167,15 @@ function meters(ctx, decls) {
         let filled = call;
         let ok = true;
         for (const r of [...reads].sort((a, b) => b.from - a.from)) {
+            if (r.kind === 'number') {
+                const got = builtNumber(ctx, decls, r.ref, `${generator}(…)'s number`);
+                if (!got) {
+                    ok = false;
+                    continue;
+                }
+                filled = filled.slice(0, r.from) + String(got.value) + filled.slice(r.to);
+                continue;
+            }
             const c = decls.get(r.ref.name);
             if (!c) {
                 ctx.unknownCell(r.ref.name, r.ref.span);
@@ -175,15 +186,12 @@ function meters(ctx, decls) {
                 ok = false;
                 continue;
             }
-            const value = c.step ? null : r.kind === 'text' ? (c.text === undefined ? null : JSON.stringify(c.text)) : c.text === undefined ? numberCellOf(c) : null;
-            if (value === null) {
-                ctx.error(r.kind === 'text'
-                    ? `&${c.name} is read as ${generator}(…)'s text: a text cell, filled as the piece is built (&${c.name} "3/4")`
-                    : `&${c.name} is read as ${generator}(…)'s number: a cell that is one number, filled as the piece is built (&${c.name} 3)`, c.span);
+            if (c.step || c.text === undefined) {
+                ctx.error(`&${c.name} is read as ${generator}(…)'s text: a text cell, filled as the piece is built (&${c.name} "3/4")`, c.span);
                 ok = false;
                 continue;
             }
-            filled = filled.slice(0, r.from) + String(value) + filled.slice(r.to);
+            filled = filled.slice(0, r.from) + JSON.stringify(c.text) + filled.slice(r.to);
         }
         if (!ok)
             continue;
@@ -229,22 +237,11 @@ function evens(ctx, decls) {
         const read = (x, what) => {
             if (typeof x === 'number')
                 return { value: x, word: false, at: span };
-            const c = decls.get(x.name);
-            if (!c) {
-                ctx.unknownCell(x.name, x.span);
+            const got = builtNumber(ctx, decls, x, `even(…)'s ${what}`);
+            if (!got)
                 return null;
-            }
-            if (c.fill && c.braid.kind === 'blank')
-                return null;
-            const value = c.step ? null : numberCellOf(c);
-            if (value === null) {
-                ctx.error(c.step
-                    ? `&${c.name} is read as even(…)'s ${what}: a stepped one is not yet a form; write one number (&${c.name} 3)`
-                    : `&${c.name} is read as even(…)'s ${what}: a cell that is one number, filled as the piece is built (&${c.name} 3)`, c.span);
-                return null;
-            }
-            const t = c.braid.kind === 'list' ? c.braid.tokens[0].atom : null;
-            return { value, word: t?.kind === 'note' && t.mode === true, at: x.span };
+            const t = got.cell.braid.kind === 'list' ? got.cell.braid.tokens[0]?.atom : null;
+            return { value: got.value, word: t?.kind === 'note' && t.mode === true, at: x.span };
         };
         const steppedCell = typeof even.phase !== 'number' ? decls.get(even.phase.name) : undefined;
         if (steppedCell?.step) {

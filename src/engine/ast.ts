@@ -363,6 +363,20 @@ export type MapSpec =
  * a slider on the node. Moving it rewrites this free(…) in the code. Also
  * free(adagio) etc.: a tempo marking's range, its middle the default.
  */
+/**
+ * A number read as the piece is built where the text wrote a cell (decision 105, after 093): `seed=&s`, `cycle=&n`. The
+ * scanner reads the place with a placeholder and records the cell; compile (`compiler/built.ts`) reads the cell's value,
+ * a cell that is one number or a sum of numbers alone, and sets the attribute.
+ */
+export interface BuiltHole {
+  /** The attribute it sets (a field of the declaration): `seed`, `shift`, `stride`, `cycle`, `laps`, `chance`, `size`. */
+  readonly field: 'seed' | 'shift' | 'stride' | 'cycle' | 'laps' | 'chance' | 'size';
+  /** The cell it reads. */
+  readonly ref: Ref;
+  /** The place it fills, as the table of places writes it: `seed=n`. */
+  readonly form: string;
+}
+
 export interface FreeSpec {
   /** What it sets: a rate (step / loop), shift, stride, or a gain in a mix. */
   readonly key: 'step' | 'loop' | 'shift' | 'stride' | 'gain' | 'interval' | 'chance' | 'text' | 'choice' | 'param' | 'tonic' | 'braid';
@@ -424,6 +438,8 @@ export interface CellDecl {
   /** A cell `readStyles` made for a style's slot read, `lpf=… * &style[bite]`: the style it reads and the slot's position (decision 063). */
   /** Cells whose one number compile read into this cell's table and left no reference to (`scale(&mode, …)`, `even(&k, &n, &mode)`): what a reader of the text still names. */
   readonly valueReads?: readonly string[];
+  /** The numbers this line reads from cells as the piece is built (`seed=&s`), filled by compile (decision 105). */
+  readonly holes?: readonly BuiltHole[];
   readonly readsSlot?: { readonly cell: string; readonly slot: number; readonly named?: string };
   /** `off`: switched off — silences it and everything that reads through it or plays it. */
   readonly off: boolean;

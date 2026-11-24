@@ -1,5 +1,6 @@
 /** Phase 1: the declarations — one per name, the default grid and scale() tables added, over= chains known and acyclic. */
-import { numberCellOf, valueSumOf } from '../valuesum';
+import { valueSumOf } from '../valuesum';
+import { builtHoles, builtNumber } from './built';
 import { refLabel, type Atom, type CellDecl, type Expr, type Ref, type Span, type Token } from '../ast';
 import { MAX_SPLICE_DEPTH, ROOT } from '../program';
 import { evenProblem, evenSteps, parseGenerator, SCALE_KEY } from '../parser/generators';
@@ -43,6 +44,7 @@ export function declare(ctx: Ctx): Declared {
   }
   const mainKey = mainKeyOf(decls);
   // (a generator's arguments read from cells first, decision 101: a meter written meter(&m) is its meter before any pass reads it)
+  builtHoles(ctx, decls);
   meters(ctx, decls);
   tonics(ctx, decls);
   modes(ctx, decls);
@@ -218,6 +220,16 @@ function meters(ctx: Ctx, decls: Map<string, CellDecl>): void {
     let ok = true;
     // (from the last, so each one's place in the call stays where it was written)
     for (const r of [...reads].sort((a, b) => b.from - a.from)) {
+      // (a number is the one built reader's, builtNumber: a cell that is one number, or a sum of numbers alone)
+      if (r.kind === 'number') {
+        const got = builtNumber(ctx, decls, r.ref, `${generator}(…)'s number`);
+        if (!got) {
+          ok = false;
+          continue;
+        }
+        filled = filled.slice(0, r.from) + String(got.value) + filled.slice(r.to);
+        continue;
+      }
       const c = decls.get(r.ref.name);
       if (!c) {
         ctx.unknownCell(r.ref.name, r.ref.span);
@@ -229,18 +241,12 @@ function meters(ctx: Ctx, decls: Map<string, CellDecl>): void {
         ok = false;
         continue;
       }
-      const value = c.step ? null : r.kind === 'text' ? (c.text === undefined ? null : JSON.stringify(c.text)) : c.text === undefined ? numberCellOf(c) : null;
-      if (value === null) {
-        ctx.error(
-          r.kind === 'text'
-            ? `&${c.name} is read as ${generator}(…)'s text: a text cell, filled as the piece is built (&${c.name} "3/4")`
-            : `&${c.name} is read as ${generator}(…)'s number: a cell that is one number, filled as the piece is built (&${c.name} 3)`,
-          c.span,
-        );
+      if (c.step || c.text === undefined) {
+        ctx.error(`&${c.name} is read as ${generator}(…)'s text: a text cell, filled as the piece is built (&${c.name} "3/4")`, c.span);
         ok = false;
         continue;
       }
-      filled = filled.slice(0, r.from) + String(value) + filled.slice(r.to);
+      filled = filled.slice(0, r.from) + JSON.stringify(c.text) + filled.slice(r.to);
     }
     if (!ok) continue;
     try {
@@ -283,25 +289,10 @@ function evens(ctx: Ctx, decls: Map<string, CellDecl>): void {
     const readCells = [even.k, even.n, even.phase].flatMap((x) => (typeof x === 'number' ? [] : [x.name]));
     const read = (x: number | Ref, what: 'k' | 'n' | 'phase'): { value: number; word: boolean; at: Span } | null => {
       if (typeof x === 'number') return { value: x, word: false, at: span };
-      const c = decls.get(x.name);
-      if (!c) {
-        ctx.unknownCell(x.name, x.span);
-        return null;
-      }
-      // (a fill not answered yet, a fragment read alone: its plugin answers it in a piece, #792)
-      if (c.fill && c.braid.kind === 'blank') return null;
-      const value = c.step ? null : numberCellOf(c);
-      if (value === null) {
-        ctx.error(
-          c.step
-            ? `&${c.name} is read as even(…)'s ${what}: a stepped one is not yet a form; write one number (&${c.name} 3)`
-            : `&${c.name} is read as even(…)'s ${what}: a cell that is one number, filled as the piece is built (&${c.name} 3)`,
-          c.span,
-        );
-        return null;
-      }
-      const t = c.braid.kind === 'list' ? c.braid.tokens[0]!.atom : null;
-      return { value, word: t?.kind === 'note' && t.mode === true, at: x.span };
+      const got = builtNumber(ctx, decls, x, `even(…)'s ${what}`);
+      if (!got) return null;
+      const t = got.cell.braid.kind === 'list' ? got.cell.braid.tokens[0]?.atom : null;
+      return { value: got.value, word: t?.kind === 'note' && t.mode === true, at: x.span };
     };
     // (a stepped phase, the next rung (#531, 081's rule): its phase in force at each bar line, the scale and its key turned to it)
     const steppedCell = typeof even.phase !== 'number' ? decls.get(even.phase.name) : undefined;

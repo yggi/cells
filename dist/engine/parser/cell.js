@@ -933,6 +933,7 @@ export function parseBody(s, head) {
         ...(fill ? { fill } : {}),
         ...(text !== null ? { text } : {}),
         frees: [...s.frees],
+        ...(s.holes.length ? { holes: [...s.holes] } : {}),
     };
 }
 export function parseCell(s) {
