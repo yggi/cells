@@ -21,7 +21,7 @@ describe('the roles an attribute acts on, over every example (#782)', () => {
     }
     expect(Object.fromEntries([...count].sort())).toMatchInlineSnapshot(`
       {
-        "(none)": 907,
+        "(none)": 914,
         "card": 94,
         "card + clock": 1,
         "carrier + voice": 12,
