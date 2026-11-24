@@ -13,7 +13,7 @@ import type { CompileResult, ResolvedCell } from './program';
 /** What the rules read of a piece: its cells, its clocks and its sections (each to its table). A compiled piece is one. */
 export type KindPiece = Pick<CompileResult, 'cells' | 'clocks' | 'sections'>;
 /** The kinds, in the order their rules are tried. */
-export declare const KINDS: readonly ["note", "card", "midi card", "gate", "role", "style", "scope", "fill", "tape", "head", "sum", "phrase", "mix", "resonator", "wave", "voice", "kit", "band", "meter", "tempo", "groove", "grid", "envelope", "ramp", "volume", "sections", "selector", "number", "line", "table", "blank", "steps"];
+export declare const KINDS: readonly ["note", "card", "midi card", "gate", "role", "style", "scope", "fill", "tape", "head", "sum", "phrase", "mix", "resonator", "wave", "voice", "kit", "band", "meter", "tempo", "groove", "grid", "envelope", "ramp", "volume", "sections", "selector", "number", "line", "table", "text", "blank", "steps"];
 export type Kind = (typeof KINDS)[number];
 /** What a rule may look at beside the cell: the piece. */
 interface Seen {

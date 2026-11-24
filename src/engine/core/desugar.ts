@@ -31,6 +31,31 @@ export interface CoreContext extends CompileOptions {
   readonly keep?: ReadonlySet<string>;
 }
 
+/**
+ * A generator's text arguments read from text cells written in (decision 101): `meter(&m)` with `&m "4/4"` is
+ * `meter("4/4")`, and `spell(&word, &keys, &names)` its texts likewise; a table spell reads by reference stays a reference.
+ */
+function textArguments(text: string, keep?: ReadonlySet<string>): string {
+  const texts = new Map<string, string>();
+  for (const raw of text.split('\n')) {
+    const m = /^\s*&([A-Za-z_]\w*)\s+("[^"]*")\s*$/.exec(splitComment(raw)[0]);
+    // (a cell the text is cored up to stays read by name: a fragment's parameter, decision 077 §2)
+    if (m && !keep?.has(m[1]!)) texts.set(m[1]!, m[2]!);
+  }
+  if (!texts.size) return text;
+  const fill = (arg: string) => {
+    const m = /^(\s*)&([A-Za-z_]\w*)(\s*)$/.exec(arg);
+    return m && texts.has(m[2]!) ? `${m[1]}${texts.get(m[2]!)}${m[3]}` : arg;
+  };
+  const TEXT_ARGS: Record<string, readonly number[]> = { meter: [0], spell: [0, 2] };
+  return codeWise(text, (c) =>
+    c.replace(/\b(meter|spell)\(([^()]*)\)/g, (all, g: string, args: string) => {
+      const parts = args.split(',');
+      return `${g}(${parts.map((a, i) => (TEXT_ARGS[g]!.includes(i) ? fill(a) : a)).join(',')})`;
+    }),
+  );
+}
+
 /** Each line's code and comment, the code rewritten by `f` (a comment and a string stay as written). */
 const codeWise = (text: string, f: (code: string) => string) =>
   text
@@ -68,6 +93,12 @@ export const FAMILIES: readonly Family[] = [
     rows: '7 `from`',
     // (a `from` line's fragment written in, read through the caller's library: none, and the line stays)
     rewrite: (text, options) => (options.resolve ? inPlace(text, options.resolve, options.plugins) : text),
+  },
+  {
+    key: 'text cells',
+    rows: 'a generator’s text argument read from a text cell, `meter(&m)` with `&m "4/4"` (decision 101)',
+    // (filled as the piece is built: the text written into the call, as `meter("4/4")`; the cell, read by nothing then, folds away)
+    rewrite: (text, options) => textArguments(text, options.keep),
   },
   {
     key: 'units',

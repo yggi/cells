@@ -9,6 +9,25 @@ import { expansion } from "../use.js";
 import { readFrom } from "../parser/use.js";
 import { declLine, declWords, deleteCell, splitComment } from "../edit.js";
 const num = (x) => String(x);
+function textArguments(text, keep) {
+    const texts = new Map();
+    for (const raw of text.split('\n')) {
+        const m = /^\s*&([A-Za-z_]\w*)\s+("[^"]*")\s*$/.exec(splitComment(raw)[0]);
+        if (m && !keep?.has(m[1]))
+            texts.set(m[1], m[2]);
+    }
+    if (!texts.size)
+        return text;
+    const fill = (arg) => {
+        const m = /^(\s*)&([A-Za-z_]\w*)(\s*)$/.exec(arg);
+        return m && texts.has(m[2]) ? `${m[1]}${texts.get(m[2])}${m[3]}` : arg;
+    };
+    const TEXT_ARGS = { meter: [0], spell: [0, 2] };
+    return codeWise(text, (c) => c.replace(/\b(meter|spell)\(([^()]*)\)/g, (all, g, args) => {
+        const parts = args.split(',');
+        return `${g}(${parts.map((a, i) => (TEXT_ARGS[g].includes(i) ? fill(a) : a)).join(',')})`;
+    }));
+}
 const codeWise = (text, f) => text
     .split('\n')
     .map((raw) => {
@@ -38,6 +57,11 @@ export const FAMILIES = [
         key: 'from',
         rows: '7 `from`',
         rewrite: (text, options) => (options.resolve ? inPlace(text, options.resolve, options.plugins) : text),
+    },
+    {
+        key: 'text cells',
+        rows: 'a generator’s text argument read from a text cell, `meter(&m)` with `&m "4/4"` (decision 101)',
+        rewrite: (text, options) => textArguments(text, options.keep),
     },
     {
         key: 'units',

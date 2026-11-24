@@ -10,7 +10,7 @@ An original acid line: a saw through a resonant low-pass whose envelope opens on
 * from style=&acid
 &filterNote label="Every note opens the filter (&fenv); accents open it further, and play louder (&accent)." about=(&fenv &accent)
 &knobsNote label="Two knobs turn slowly, the cutoff and the resonance: listen to the squeal as they meet." about=(&knob &res)
-&bar from meter &tempo
+&bar from bar &tempo
 &strike, &thump, &snap, &click from envelopes
 &tempo step=free(126bpm, 100..150)
 &minor scan(2 1 2 2 1 2 2)                                   # A minor (the voices sit on A)

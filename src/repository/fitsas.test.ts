@@ -49,11 +49,15 @@ describe('useOn: a template by a from line', () => {
 
   it('finds the main argument by what a cell is, never its name: one that meets it is it; several, none', () => {
     // (a rate alone is the one cell a meter's &tempo can be: whatever its name)
-    expect(useOn('&t step=96bpm', 'meter', { resolve }).main).toBe('&t');
-    // (Jambot's bench: the meter, the key and the harmony each read as a table, so a walking bass meets three, and
-    //  none is picked, though one is called &harm; the bench offers one, or the host names it)
+    expect(useOn('&t step=96bpm', 'bar', { resolve }).main).toBe('&t');
+    // (Jambot's bench: the meter, the key and the harmony. A meter meets a parameter only where it is read as a meter (a clock,
+    //  its levels as values, decision 104), so of the three it isn't one; the key and the harmony are both tables a walking
+    //  bass reads its chords from, so it meets two, and none is picked, though one is called &harm: the bench offers one, or
+    //  the host names it)
     expect(useOn(HARMONY, 'walking_bass', { resolve }).main).toBeNull();
     expect(fitsAs('walking_bass', HARMONY, { resolve })).toMatchObject({ fits: false, missing: ['&harm'] });
+    // (two tables that meet are still none: a key and a harmony beside each other, for a harmony's &key)
+    expect(useOn([METER, '&key scale(ionian, C)', '&key2 scale(dorian, D)'].join('\n'), 'dark_cadence', { resolve }).main).toBeNull();
     const renamed = OFFERING.replace(/&harm\b/g, '&chords');
     expect(useOn(renamed, 'walking_bass', { resolve }).main).toBe('&chords');
     expect(fitsAs('walking_bass', renamed, { resolve })).toMatchObject({ fits: true, diagnostics: [] });
@@ -110,9 +114,7 @@ const benches: Readonly<Record<string, readonly string[]>> = {
 };
 const meters = [
   'meter("16/8") step=120bpm',
-  ...['meter', 'meter(grouping=meter("3/4"))', 'meter(grouping=meter("6/8"))', 'meter(grouping=meter("5/4"))', 'meter(grouping=meter("7/8"))', 'meter(grouping=meter("12/8"))'].map(
-    (m) => `from ${m} 120bpm`,
-  ),
+  ...['bar', 'bar(meter="3/4")', 'bar(meter="6/8")', 'odd_meter', 'odd_meter(meter="7/8")', 'bar(meter="12/8")'].map((m) => `from ${m} 120bpm`),
 ];
 const TEMPLATES = LIBRARY.filter((f) => signatureOf(f.text));
 

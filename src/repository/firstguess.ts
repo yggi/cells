@@ -20,6 +20,7 @@ import { windowAt } from '../engine/schedule';
 import { midiOf } from '../theory/modes';
 import { audition } from './audition';
 import { fitsAs } from './fit';
+import { signatureOf } from '../engine/use';
 import type { Fragment, StylePoint } from './fragments';
 
 /** The part a facet's fragment plays as, where it plays notes a reading can read. */
@@ -52,6 +53,9 @@ const STEP = BAR_SECONDS / 16;
 /** The meter a fragment is read in: the host's 4/4. */
 const FOUR_FOUR = '&bar meter("4/4") step=120bpm';
 
+/** What stands in for a fragment's main argument while its clock is judged: a harmony in C, a chord a bar. */
+const STAND_IN = '&firstGuessArg over=scale(ionian, C) step=1m [0,2,4] [3,5,7]';
+
 /**
  * What a fragment of a facet plays, read as its part: its reading, or null where it plays nothing a reading can read.
  * A fragment whose clock 4/4 doesn't meet (`fitsAs`'s `unmet`: a waltz's beat, an aksak's, a motif in 6/8) is not read:
@@ -68,7 +72,9 @@ export function readFragment(text: string, facet: string, resolve: Resolve): Poi
  * still a hole (`readPart`: the document's key). The 4/4 fit is judged on the text alone, as a fragment's.
  */
 export function readAudition(text: string, part: Part, resolve: Resolve, given = ''): PointReading | null {
-  if (fitsAs({ text }, FOUR_FOUR, { resolve }).unmet.length) return null;
+  // (its main argument, where it has one, a harmony in C the host stands in, so its clock is judged: a part reads its chords
+  // or its key over it; the host's meter is no argument, decision 104)
+  if (fitsAs({ text }, `${FOUR_FOUR}\n${STAND_IN}`, { resolve, main: signatureOf(text)?.main ? '&firstGuessArg' : undefined }).unmet.length) return null;
   const a = audition(given ? `${text}\n${given}` : text, { resolve });
   if (a.why) return null;
   const plan = planOf(a.text, undefined, { resolve });

@@ -11,7 +11,7 @@ description: The Baroque sequence I IV vii° iii vi ii V, its chords one triad t
 # The diatonic circle of fifths, the Baroque sequence I IV vii° iii vi ii V: each chord a fourth above the last.
 # No chord is written out: the key's degrees turn a fourth a bar (stride=3), the triad reads them, and every part
 # reads the triad, so 0 1 2 is the chord of the bar, whichever it is (#508).
-&bar from meter &tempo
+&bar from bar &tempo
 &tempo step=free(84bpm, 60..120)
 &key scale(major, &tonic) label="{mode} on {tonic}"
 &tonic C

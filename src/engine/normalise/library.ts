@@ -249,7 +249,7 @@ function templates(library: readonly LibraryFragment[], resolve?: Resolve): Temp
 
 /**
  * A line that is a template's head line with its parameters filled in, as a `from` line of the template with those
- * arguments (#524): `&bar meter("7/8") step=&tempo swing=8n:2/3` is `&bar from meter(grouping=meter("7/8"), swing=8n:2/3)
+ * arguments (#524): `&bar meter("7/8") step=&tempo swing=8n:2/3` is `&bar swing=8n:2/3 from bar(meter="7/8")
  * &tempo`, `&key scale(minor, &tonic)` is `&key from diatonic(mode=minor) &tonic`. The line's attributes are the
  * template's, by key, each binding the parameter the template writes there (`base=&p` binds the line's own braid, as a
  * copy of &p is &p's braid); its braid matches the template's, a parameter where the template has one; a parameter it
@@ -308,6 +308,13 @@ export function libraryTemplates(source: string, library: readonly LibraryFragme
     const use = `&${t.head} from ${isWordId(t.id) ? t.id : JSON.stringify(t.id)}${args.length ? `(${args.join(', ')})` : ''}${t.main ? ` ${bound.get(t.main)}` : ''}`;
     const before = codeOf(lines[i]!);
     if (out.some((r) => r.after === use)) continue;
+    // (two templates that write one head alike, `bar` and `odd_meter` (decision 103): the line is the one whose arguments are
+    // fewest, its default's, so a 4/4 bar is `from bar`, never `from odd_meter(meter="4/4")`)
+    const rival = out.findIndex((r) => r.id.startsWith('template:') && r.id.endsWith(`:${t.head}`) && r.before === before);
+    if (rival >= 0) {
+      if (out[rival]!.after.length <= use.length) continue;
+      out.splice(rival, 1);
+    }
     out.push({
       id: `template:${t.id}:${t.head}`,
       tool: 'normalise',

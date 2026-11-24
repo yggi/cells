@@ -11,7 +11,7 @@ The band is the library's too: the plainest beat, `kinderlied_drums` (the kick o
 
 ```cells
 * from style=&kinderlied
-&bar from meter &tempo
+&bar from bar &tempo
 &tempo step=free(100bpm, 80..120)
 &key from diatonic(mode=ionian) C
 &harm from vamp_to_the_fifth &key

@@ -8,10 +8,10 @@ import { SEED } from '../repository/seed';
 
 describe('references', () => {
   it('reads each kind of from line, with the span of its id', () => {
-    const text = ['&bar from meter(swing=&swing) &tempo', '  &bd, &sd from gm_kit', '* from band', '&riff from "my riff" &key', '&key from diatonic(mode=ionian) C'].join('\n');
+    const text = ['&bar from bar(meter="7/8") &tempo', '  &bd, &sd from gm_kit', '* from band', '&riff from "my riff" &key', '&key from diatonic(mode=ionian) C'].join('\n');
     const refs = references(text);
-    expect(refs.map((r) => r.id)).toEqual(['meter', 'gm_kit', 'band', 'my riff', 'diatonic']);
-    expect(refs[0]).toMatchObject({ names: ['&bar'], args: [{ name: 'swing', value: '&swing' }], main: '&tempo', span: { line: 1, col: 11, len: 5 } });
+    expect(refs.map((r) => r.id)).toEqual(['bar', 'gm_kit', 'band', 'my riff', 'diatonic']);
+    expect(refs[0]).toMatchObject({ names: ['&bar'], args: [{ name: 'meter', value: '"7/8"' }], main: '&tempo', span: { line: 1, col: 11, len: 3 } });
     expect(refs[1]).toMatchObject({ names: ['&bd', '&sd'], args: null, main: null, span: { line: 2, col: 17, len: 6 } });
     expect(refs[2]).toMatchObject({ names: null, span: { line: 3, col: 8, len: 4 } });
     expect(refs[3]!.span).toEqual({ line: 4, col: 12, len: 9 });
@@ -20,8 +20,8 @@ describe('references', () => {
   });
 
   it('leaves out a signature, a comment and a label that says from', () => {
-    const text = ['&twinkle from &key', '# &x from gm_kit', '&note label="taken from the library"', '&bar from meter &tempo # from here'].join('\n');
-    expect(references(text).map((r) => r.id)).toEqual(['meter']);
+    const text = ['&twinkle from &key', '# &x from gm_kit', '&note label="taken from the library"', '&bar from bar &tempo # from here'].join('\n');
+    expect(references(text).map((r) => r.id)).toEqual(['bar']);
   });
 
   it("agrees with the parser on every line of every example and seed file, each id's span the id", () => {
@@ -52,7 +52,7 @@ describe('fromLine', () => {
   it('writes each part of a from line: renamed names, the head, a quoted id, named arguments and the main one', () => {
     expect(fromLine({ names: ['&bassline'], id: 'funk_bass', main: '&harm' })).toBe('&bassline from funk_bass &harm');
     expect(fromLine({ names: null, id: 'band', args: [{ name: 'style', value: '&style' }] })).toBe('* from band(style=&style)');
-    expect(fromLine({ names: ['&bar'], id: 'meter', args: [{ name: 'grouping', value: 'meter("7/8")' }], main: '104bpm' })).toBe('&bar from meter(grouping=meter("7/8")) 104bpm');
+    expect(fromLine({ names: ['&bar'], id: 'bar', args: [{ name: 'meter', value: '"7/8"' }], main: '104bpm' })).toBe('&bar from bar(meter="7/8") 104bpm');
     expect(fromLine({ names: ['&kick', '&sd'], takes: ['&bd', '&sd'], head: ['off'], id: 'gm_kit' })).toBe('&kick=bd, &sd off from gm_kit');
     expect(fromLine({ names: ['&drumlines'], id: 'funk_drums~2' })).toBe('&drumlines from "funk_drums~2"');
     expect(fromLine({ names: ['&tw'], takes: ['&wonder'], id: 'kinderlied', main: '&key' })).toBe('&tw=wonder from kinderlied &key');

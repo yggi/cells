@@ -2,7 +2,7 @@
  * A meter found from onsets (#648, part of #15 and #35): the cycles a performance repeats, read as the meter cells writes,
  * a pulse grouped in twos and threes under a bar, a pair's swing a share of it (decision 071), the tempo a rate. It reads
  * only when notes start, how strongly, how long they last and how low they lie; it writes
- * `&bar from meter(grouping=…, swing=…) &tempo` (`meterText`), with a confidence for each choice. The steps:
+ * `&bar swing=… from bar(meter="…") &tempo` (`meterText`), with a confidence for each choice. The steps:
  *
  *  1. `events`: notes struck together (within `TOGETHER`) are one event; its accent their weights, a long note more;
  *     its `low` the accent of its notes in the piece's lowest `LOW` (the bass, the kick: where a bar's line falls).
@@ -157,5 +157,8 @@ export interface Grid {
 export declare function gridOf(es: readonly Event[], enough?: number): Grid | null;
 /** A meter found from onsets: the finest grid, the bar over it, its beats; null where too little is heard to say. */
 export declare function findMeter(onsets: readonly Onset[]): Found | null;
-/** A found meter as cells writes it: the meter fragment taken with its grouping and swing, and the tempo a rate. */
+/**
+ * A found meter as cells writes it: the bar fragment taken with its meter, its swing on the head (decision 103), and the
+ * tempo a rate: `&bar swing=8n:.6 from bar(meter="7/8") &tempo`.
+ */
 export declare function meterText(f: Found): string;

@@ -12,7 +12,7 @@ The share here is a slider, 2/3 to start: in the Groove MIDI Dataset (#19, [the 
 
 ```cells
 &swingNote label="swing=8n: the eighths lean. Of each pair, the second starts this share of the way through the beat: 1/2 straight, 2/3 the triplet swing, 3/4 hard. Jazz drummers swing theirs at .59 to .71, a median of .65 (Groove, #19)." about=&swing
-&bar from meter(swing=&swing) &tempo
+&bar swing=&swing from bar &tempo
 &tempo step=free(160bpm, 100..240)
 &swing swing=8n:free(2/3, 1/2..3/4)
 ```

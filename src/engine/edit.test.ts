@@ -198,7 +198,7 @@ describe('editor operations', () => {
 
   it('switches off a head a from line takes alone, before from, and the piece plays without it; and back, byte for byte (#686)', () => {
     const events = (text: string) => windowAt(planOf(text, undefined, { resolve: resolveSeed }), 0, 3).events;
-    const meter = '&tempo step=120bpm\n&bar from meter &tempo\n&tick step=4n 0 2\n&v s=sine loop=C4\n&out map=sample [&tick * &v]';
+    const meter = '&tempo step=120bpm\n&bar from bar &tempo\n&tick step=4n 0 2\n&v s=sine loop=C4\n&out map=sample [&tick * &v]';
     const walk =
       '&bar meter("4/4") step=120bpm\n&key scale(aeolian, A)\n&harm over=&key step=1m [0,2,4]\n&walk from walking_bass &harm\n&v s=sine loop=C2\n&out map=sample [&walk * &v, &harm * &v]';
     for (const [text, name, before, after] of [
@@ -215,7 +215,7 @@ describe('editor operations', () => {
       expect(offProblem(text, name)).toBeNull();
       expect(offProblem(off, name)).toBeNull();
     }
-    expect(events(meter.replace('&bar from meter &tempo', '&bar off meter("4/4") step=&tempo'))).toHaveLength(0);
+    expect(events(meter.replace('&bar from bar &tempo', '&bar off meter("4/4") step=&tempo'))).toHaveLength(0);
   });
 
   it('says why it can’t switch off a head among several, a collection’s cell, or a cell the piece hasn’t (#686)', () => {

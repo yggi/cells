@@ -52,7 +52,7 @@ export declare function topTokens(text: string): {
 }[];
 /** A token that is an attribute, `key=value`. */
 export declare const isAttribute: (token: string) => boolean;
-/** The flags a head may carry before `from`, as a cell's line does: `off` (#686: `&bar off from meter &tempo`). */
+/** The flags a head may carry before `from`, as a cell's line does: `off` (#686: `&bar off from bar &tempo`). */
 export declare const HEAD_FLAGS: ReadonlySet<string>;
 /**
  * A `from` line (decision 065), read: a use of a fragment or a signature; null where the line has a top-level `from`

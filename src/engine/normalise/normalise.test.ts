@@ -220,10 +220,13 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const tune = '&tune over=scale(minor) step=8n 0 2 4 2 3 1 0 ~\n&lead s=saw loop=C4\n&mix [&tune * &lead]';
     const keyed = '&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&tune over=&key step=8n 0 2 4 2\n&lead s=saw loop=C4\n&mix [&tune * &lead]';
     it.each([
-      ['&bar meter("4/4") step=&tempo', '&bar from meter &tempo'],
-      ['&bar meter("7/8") step=&tempo', '&bar from meter(grouping=meter("7/8")) &tempo'],
-      ['&bar meter("7/8") step=&tempo swing=8n:2/3', '&bar from meter(grouping=meter("7/8"), swing=8n:2/3) &tempo'],
-      ['&bar meter("2/2", 2) step=&tempo', '&bar from meter(grouping=meter("2/2", 2)) &tempo'],
+      ['&bar meter("4/4") step=&tempo', '&bar from bar &tempo'],
+      ['&bar meter("7/8") step=&tempo', '&bar from bar(meter="7/8") &tempo'],
+      // (a swing on the line is no parameter of bar's since decision 103: the line is no template's, and stays)
+      ['&bar meter("7/8") step=&tempo swing=8n:2/3', '&bar meter("7/8") step=&tempo swing=8n:2/3'],
+      ['&bar meter("4/4 in 2") step=&tempo', '&bar from bar(meter="4/4 in 2") &tempo'],
+      // (two arguments are no text bar's meter= takes: the line stays)
+      ['&bar meter("2/2", 2) step=&tempo', '&bar meter("2/2", 2) step=&tempo'],
     ])('the meter: %s → %s', (line, use) => {
       const written = `${line}\n&tempo step=100bpm\n${tune}`;
       const { source } = normalise(written, seed);
@@ -266,13 +269,13 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const written = `&bar meter("4/4") step=&tempo  # four beats\n&tempo step=100bpm\n${line('bd')}\n${line('sd')}\n${line('hh')}\n${beat}`;
     const { source, steps } = normalise(written, seed);
     // (written as a from line, decision 065, in one step; and the bar as the meter template with its defaults, #524)
-    expect(source).toBe(`&bar from meter &tempo         # four beats\n&tempo step=100bpm\n&bd, &sd, &hh from gm_kit\n${beat}`);
+    expect(source).toBe(`&bar from bar &tempo           # four beats\n&tempo step=100bpm\n&bd, &sd, &hh from gm_kit\n${beat}`);
     expect(steps).toHaveLength(2);
     expect(soundsIdentical(written, source, undefined, seed)).toBe(true);
     expect(normalise(source, seed)).toEqual({ source, steps: [] });
     // (a use of the fragment already written takes the names too)
     expect(normalise(`&bd from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n${line('sd')}\n${line('hh')}\n${beat}`, seed).source).toBe(
-      `&bd, &sd, &hh from gm_kit\n&bar from meter &tempo\n&tempo step=100bpm\n${beat}`,
+      `&bd, &sd, &hh from gm_kit\n&bar from bar &tempo\n&tempo step=100bpm\n${beat}`,
     );
     // (a line that differs by a word stays the piece's; with no library given, nothing is taken)
     const own = written.replace(line('hh'), line('hh').replace('hpf=8000', 'hpf=7000'));
@@ -284,7 +287,7 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const seed = { resolve: resolveSeed, library: LIBRARY };
     const vib = '&(map=lin loop=5 0 .1 0 -.1 0)';
     // (the bar the meter fragment's: the from line goes before the first line that reads the cell, #729)
-    const base = BASE.replace('&bar meter("4/4") step=&tempo', '&bar from meter &tempo');
+    const base = BASE.replace('&bar meter("4/4") step=&tempo', '&bar from bar &tempo');
     const written = `${base}&lead s=saw loop=C4 pitch=${vib}\n&pad s=tri loop=C3 pitch=${vib}\n&mix [&tune * &lead, &tune * &pad]`;
     const { source, steps } = normalise(written, seed);
     expect(source).toBe(written.replace('&lead s=saw', '&vibrato from vibrato\n&lead s=saw').replaceAll(vib, '&vibrato'));
@@ -345,7 +348,9 @@ describe('Normalise’s rules reach one text in any order (#729, law L15)', () =
   });
 
   it('a template waits for a second clock to be folded and the tempo named: breve, forwards and backwards', () => {
-    const breve = FAMILIES.find((f) => f.key === 'from')!.rewrite(EXAMPLES.breve.source, { resolve: resolveSeed });
+    // (breve's bar written as bar's template writes it, meter("2/2") a text: its own meter("2/2", 2) is no template's line, decision 103)
+    const text = EXAMPLES.breve.source.replace('meter("2/2", 2)', 'meter("2/2")');
+    const breve = FAMILIES.find((f) => f.key === 'from')!.rewrite(text, { resolve: resolveSeed });
     const a = forwards(breve).source;
     expect(a).toContain('&tempo step=60bpm');
     expect(backwards(breve).source).toBe(a);

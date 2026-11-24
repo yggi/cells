@@ -8,7 +8,7 @@ import { EXAMPLES } from '../engine/examples';
 const O = { id: 'my_vamp_bass', resolve: resolveSeed };
 /** Kinderlieder's vamp and bass, written out (the plan's mock-up, yggi/cell-studio docs/notes/fragments.md). */
 const PIECE = [
-  '&bar from meter &tempo',
+  '&bar from bar &tempo',
   '&tempo step=100bpm',
   '&key from diatonic(mode=ionian) C',
   '&harm over=&key step=1m cycle=8 [0,2,4]!4 [4,6,8]!4',

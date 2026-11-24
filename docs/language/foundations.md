@@ -8,7 +8,7 @@ The reference for each form is on [time.md](time.md) and [tables.md](tables.md).
 ## Two wheels
 
 ```cells
-&bar from meter &tempo                     # the clock: a meter, at a tempo
+&bar from bar &tempo                     # the clock: a meter, at a tempo
 &tempo step=96bpm
 &key from diatonic(mode=dorian) &tonic     # the table: a mode, on a tonic
 &tonic D
@@ -25,7 +25,7 @@ Each wheel is a fragment of the seed library taken by a `from` line ([use.md](us
 | the table | `&key from (&mode) &tonic` | a note, the tonic | the mode (major) |
 
 The main argument is required: a meter with no tempo has no time, and a key with no tonic would play a wrong key silently ([#117](https://github.com/yggi/cells/issues/117)).
-The shape has a default, and a piece passes its own by name: `meter(grouping=meter("7/8"), swing=8n:2/3)`, `diatonic(mode=dorian)`.
+The shape has a default, and a piece passes its own by name: `bar(meter="7/8")`, `diatonic(mode=dorian)`.
 The names `&bar`, `&tempo`, `&key` and `&tonic` are a convention, which Normalise writes; nothing reads them by name ([decision 075](https://github.com/yggi/cells/blob/main/docs/decisions/075-a-name-is-only-a-name.md)).
 
 ## The tempo
@@ -58,7 +58,7 @@ So changing the meter, or its swing, never changes what a line means.
 **A tap comes round at the bar**: a note value longer than what is left of the bar is cut there, and a line walks its braid across the bar line unless `cycle=n` brings it round every n bars ([#116](https://github.com/yggi/cells/issues/116)).
 
 ```cells
-&bar from meter(grouping=meter("7/8")) &tempo
+&bar from bar(meter="7/8") &tempo
 &tempo step=90bpm
 &count step=beat 0 3 5                     # a dotted quarter, two quarters
 &eighths step=8n 0!7
@@ -112,7 +112,7 @@ A number in a line over the key is a degree of it: `0` the tonic, `7` an octave 
 A chord is a table over the key, as a beat is a level of the meter: the triad on degree k is `&triad over=&key[>>k] even(3, 7)`, and its root and fifth `&power over=&triad even(2, 3, 1)` ([#508](https://github.com/yggi/cells/issues/508)).
 
 ```cells
-&bar from meter &tempo
+&bar from bar &tempo
 &tempo step=90bpm
 &key from diatonic C
 &triad over=&key[>>4] even(3, 7)           # the dominant's triad: G B D
@@ -140,12 +140,11 @@ A key of other than seven notes takes the same chain: a pentatonic's "triad" is 
 ## Written out
 
 A `from` line is sugar ([decision 069](https://github.com/yggi/cells/blob/main/docs/decisions/069-compile-writes-the-core.md)): the fragment's lines, its parameters bound, its helpers named after the head.
-`&bar from meter(grouping=meter("7/8"), swing=8n:2/3) &tempo` is:
+`&bar swing=8n:2/3 from bar(meter="7/8") &tempo` is:
 
 ```cells
-&bar base=&bar_grouping step=&tempo swing=&bar_swing
-&bar_grouping meter("7/8")
-&bar_swing swing=8n:2/3
+&bar meter(&bar_meter) step=&tempo swing=8n:2/3
+&bar_meter "7/8"
 &tempo step=96bpm
 ```
 
@@ -159,5 +158,5 @@ and `&key from diatonic(mode=dorian) D`:
 
 The other way round, Normalise writes a hand-written meter or key as its template ([#524](https://github.com/yggi/cells/issues/524), [canonical.md](canonical.md)).
 It first names the tempo and the tonic as cells, then takes the template:
-`&bar meter("7/8") step=96bpm swing=8n:2/3` becomes `&bar from meter(grouping=meter("7/8"), swing=8n:2/3) &tempo` with `&tempo step=96bpm`, and `&key scale(dorian, D)` becomes `&key from diatonic(mode=dorian) &tonic` with `&tonic D`, each only where it sounds the same.
+`&bar meter("7/8") step=96bpm swing=8n:2/3` becomes `&bar swing=8n:2/3 from bar(meter="7/8") &tempo` with `&tempo step=96bpm`, and `&key scale(dorian, D)` becomes `&key from diatonic(mode=dorian) &tonic` with `&tonic D`, each only where it sounds the same.
 A key with no tonic written (`scale(major)`) stays as it is: the template's main argument is its tonic.

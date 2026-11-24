@@ -50,8 +50,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the law five_to_twelve (#772), the thirteen meters, the thirty-three rhythms (#799: the breathing pulse), the seventeen bass lines, the seventeen harmonies, the twenty-nine instruments, the vibrato, the envelopes and the metric accent (#799), the nine modes, the five melodic scales (#719), the eight fills and the four counts (#718, #720), the ending (#720), the five performers, the three stab lines, the fifty-six motifs, the six forms, the nine section kinds and the seven song forms (#810), the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: two hundred and thirty-six (#572, #542, #540, #646, #719, #718, #720)', () => {
-    expect(LIBRARY).toHaveLength(236);
+  it('is the law five_to_twelve (#772), the twelve meters (#902: bar, three style meters, the odd ones), the thirty-three rhythms (#799: the breathing pulse), the seventeen bass lines, the seventeen harmonies, the twenty-nine instruments, the vibrato, the envelopes and the metric accent (#799), the nine modes, the five melodic scales (#719), the eight fills and the four counts (#718, #720), the ending (#720), the five performers, the three stab lines, the fifty-six motifs, the six forms, the nine section kinds and the seven song forms (#810), the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: two hundred and thirty-five (#572, #542, #540, #646, #719, #718, #720)', () => {
+    expect(LIBRARY).toHaveLength(235);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     // (E31's eight grooves are found as their fills too, #718)
     expect(LIBRARY.filter((f) => facetsOf(f)[0] === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
@@ -92,7 +92,7 @@ describe('the library', () => {
       FORM_FRAGMENTS.length,
       BAND_FRAGMENTS.length,
       STYLE_FRAGMENTS.length,
-    ]).toEqual([13, 33, 17, 17, 29, 3, 9, 5, 8, 4, 5, 3, 56, 6, 1, 1]);
+    ]).toEqual([12, 33, 17, 17, 29, 3, 9, 5, 8, 4, 5, 3, 56, 6, 1, 1]);
   });
 
   it('resolves no retired id, and a seed id as its own text (#196, #643)', () => {
@@ -144,12 +144,12 @@ describe('the motifs', () => {
 describe('the points proposed for two more presets (#349)', () => {
   // (the library as it was before them: their new fragments out, and the associations they added to old ones)
   const ADDED: Record<string, StylePoint> = {
-    'meter(swing=8n:2/3)': ELECTRO_SWING,
+    swing_meter: ELECTRO_SWING,
     walking_bass: ELECTRO_SWING,
     harmonic_minor: SPOOKY,
-    'meter(grouping=meter("5/4"))': SPOOKY,
-    'meter(grouping=meter("6/8"))': { sync: SPOOKY.sync!, harm: SPOOKY.harm!, bite: 0.22 },
-    'meter(grouping=meter("3/4"))': { sync: SPOOKY.sync!, harm: SPOOKY.harm!, bite: 0.38 },
+    odd_meter: SPOOKY,
+    'bar(meter="6/8")': { sync: SPOOKY.sync!, harm: SPOOKY.harm!, bite: 0.22 },
+    'bar(meter="3/4")': { sync: SPOOKY.sync!, harm: SPOOKY.harm!, bite: 0.38 },
   };
   // (a fragment's point over the axes it has: a meter's has no mood)
   const same = (a: StylePoint, b: StylePoint) => AXES.every((axis) => !(axis in a) || a[axis] === b[axis]);
@@ -222,7 +222,7 @@ describe('the points proposed for two more presets (#349)', () => {
         .filter((f) => f.distance === 0)
         .map((f) => f.fragment.id);
     expect(['meter', 'rhythm', 'bass', 'mode', 'stab', 'motif'].map((facet) => at(ELECTRO_SWING, facet))).toEqual([
-      ['meter(swing=8n:2/3)'],
+      ['swing_meter'],
       ['electro_swing_drums'],
       ['walking_bass'],
       ['harmonic_minor'],
@@ -230,7 +230,7 @@ describe('the points proposed for two more presets (#349)', () => {
       ['gypsy'],
     ]);
     expect(['meter', 'rhythm', 'bass', 'harmony', 'mode', 'motif'].map((facet) => at(SPOOKY, facet))).toEqual([
-      ['meter(grouping=meter("5/4"))'],
+      ['odd_meter'],
       ['spooky_drums'],
       ['creeping_bass'],
       ['dark_cadence'],
