@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&keysV from (&style) style=(&synthPop * .25 | &deepHouse * .25 | &lofi * .25 | &bossaNova * .25 | &swingJazz * .25 | &funk * .25)
+&keysV from (&style) style=(&synthPop * .25 | &deepHouse * .25 | &lofi * .25 | &bossaNova * .25 | &swingJazz * .25 | &funk * .25 | &pop * .25)
 &keysV s=tri loop=C3 env=&(map=adsr attack=.3..0.01 * &style[bite] decay=0 sustain=1 release=.7..0.12 * &style[bite])
 &style map=style sync=.5 harm=.5 bite=.5 mood=.5
 ```
@@ -18,4 +18,4 @@ It declares the style it reads, as `bass` does: `(&style)`, its default the cent
 
 Associated as `bass` is, as the facet `instrument` at a quarter of the kit's weight; a performer asks for it by its id.
 
-**Where it is found** (#540): on the points of Synth-pop, Deep house, Lo-fi hip hop and Bossa nova, where the centre point it had found it first, and of Swing jazz and Funk, where keys comp; weight 0.25.
+**Where it is found** (#540): on the points of Synth-pop, Deep house, Lo-fi hip hop and Bossa nova, where the centre point it had found it first, and of Swing jazz and Funk, where keys comp, and of Pop, the default band's genre (#947); weight 0.25.

@@ -161,10 +161,10 @@ describe('the presets find their modes', () => {
       // mode's, moodOf: mixolydian .75, phrygian .375, lydian .9, locrian .3)
       // (aeolian at the three styles read from the examples too, #572: Acid's, Happy hardcore's and Elektro's A minor)
       // (and #542's: ionian at Baroque, mixolydian at Blues shuffle, dorian at Sea shanty, harmonic minor at Chiptune; then
-      // mixolydian at Salsa, ionian at Waltz and March, aeolian at Trip-hop)
+      // mixolydian at Salsa, ionian at Waltz and March, aeolian at Trip-hop; and ionian at Pop, #947)
       const also =
         id === 'ionian'
-          ? [KINDERLIED, stylePoint('baroque'), stylePoint('waltz'), stylePoint('march')]
+          ? [KINDERLIED, stylePoint('baroque'), stylePoint('waltz'), stylePoint('march'), stylePoint('pop')]
           : id === 'aeolian'
             ? ['acid', 'happyHardcore', 'elektro', 'darkAmbient', 'tripHop'].map(stylePoint)
             : id === 'mixolydian'

@@ -118,7 +118,8 @@ describe('the seed files', () => {
       lofi_meter: [LO_FI],
       // (and near Acid, a second meter behind its plain 4/4, #540)
       funk_meter: [DEEP_HOUSE, FUNK, { ...ACID, bite: 0.95 }],
-      synth_pop_drums: [SYNTH_POP],
+      // (and Pop's, #947)
+      synth_pop_drums: [SYNTH_POP, stylePoint('pop')],
       techno_drums: [TECHNO],
       deep_house_drums: [DEEP_HOUSE],
       ambient_drums: [AMBIENT],
@@ -157,7 +158,7 @@ describe('the seed files', () => {
       harmonic_minor: [ELECTRO_SWING, SPOOKY, CHIPTUNE],
       'diatonic(mode=aeolian)': [SYNTH_POP, TECHNO, LO_FI, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT, TRIP_HOP],
       'diatonic(mode=dorian)': [DEEP_HOUSE, FUNK, SEA_SHANTY],
-      'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ, KINDERLIED, BAROQUE, WALTZ, MARCH],
+      'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ, KINDERLIED, BAROQUE, WALTZ, MARCH, stylePoint('pop')],
       // (and the shares, #540: on a style's point where it has none of the voice, near it where it has)
       upright_bass: [ELECTRO_SWING, SWING_JAZZ, BLUES_SHUFFLE, near(BOSSA_NOVA)],
       brass_stab: [ELECTRO_SWING, FUNK, SALSA],
@@ -184,7 +185,10 @@ describe('the seed files', () => {
       electric_piano: [TRIP_HOP, near(LO_FI), near(DEEP_HOUSE)],
     };
     // (two bass lines sit first at a point of their own, placed by hand, and then at presets: #209)
-    const AFTER_OWN_POINT: Record<string, readonly object[]> = { root_bass: [SYNTH_POP, DEEP_HOUSE, AMBIENT, KINDERLIED], pumping_bass: [TECHNO, HAPPY_HARDCORE] };
+    const AFTER_OWN_POINT: Record<string, readonly object[]> = {
+      root_bass: [SYNTH_POP, DEEP_HOUSE, AMBIENT, KINDERLIED, stylePoint('pop')],
+      pumping_bass: [TECHNO, HAPPY_HARDCORE],
+    };
     // (a meter or a drum bar speaks to no mode, so its point leaves mood out: the preset's other axes, exactly, decision 076)
     const NO_MODE = (id: string) => METER_IDS.has(id) || RHYTHM_FRAGMENTS.some((f) => f.id === id);
     const onItsAxes = (id: string, p: object) => (NO_MODE(id) ? Object.fromEntries(Object.entries(p).filter(([axis]) => axis !== 'mood')) : p);

@@ -41,7 +41,8 @@ const above = (p: StylePoint): StylePoint => ({ ...p, bite: Math.round((p.bite! 
 const offset = (p: StylePoint, bite: number): StylePoint => ({ ...p, bite: Math.round((p.bite! + bite) * 1000) / 1000 });
 /** Each motif, the point it sits at, and the meter it is a bar of (4/4 where none is named). */
 const MOTIFS: Record<string, { point: StylePoint; meter?: Meter; also?: readonly StylePoint[] }> = {
-  hook: { point: SYNTH_POP },
+  // (and at Pop's, #947)
+  hook: { point: SYNTH_POP, also: [stylePoint('pop')] },
   octaves: { point: TECHNO },
   sigh: { point: DEEP_HOUSE },
   rising: { point: AMBIENT },

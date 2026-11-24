@@ -73,10 +73,11 @@ const near = (p: StylePoint) => ({ ...p, bite: p.bite! <= 0.9 ? Math.round((p.bi
 /** Where the kit and the defaults are placed by idiom (#540), at their own weights: no longer at the centre for "any style". */
 const PLACED: Record<string, readonly StylePoint[]> = {
   gm_kit: [SWING_JAZZ, BOSSA_NOVA, FUNK, stylePoint('bluesShuffle'), stylePoint('march'), stylePoint('waltz'), stylePoint('salsa'), KINDERLIED, stylePoint('seaShanty'), LO_FI],
-  bass: [SYNTH_POP, DEEP_HOUSE, LO_FI, BOSSA_NOVA, TECHNO, FUNK],
-  keys: [SYNTH_POP, DEEP_HOUSE, LO_FI, BOSSA_NOVA, SWING_JAZZ, FUNK],
-  pad: [SYNTH_POP, DEEP_HOUSE, LO_FI, BOSSA_NOVA, TECHNO, AMBIENT],
-  lead: [SYNTH_POP, DEEP_HOUSE, LO_FI, BOSSA_NOVA, TECHNO, AMBIENT, FUNK],
+  // (and Pop's, the default band's four at a quarter, #947)
+  bass: [SYNTH_POP, DEEP_HOUSE, LO_FI, BOSSA_NOVA, TECHNO, FUNK, stylePoint('pop')],
+  keys: [SYNTH_POP, DEEP_HOUSE, LO_FI, BOSSA_NOVA, SWING_JAZZ, FUNK, stylePoint('pop')],
+  pad: [SYNTH_POP, DEEP_HOUSE, LO_FI, BOSSA_NOVA, TECHNO, AMBIENT, stylePoint('pop')],
+  lead: [SYNTH_POP, DEEP_HOUSE, LO_FI, BOSSA_NOVA, TECHNO, AMBIENT, FUNK, stylePoint('pop')],
 };
 /** The instruments shared with other styles (#540), after their own point: on a style's point at their weight where it has none of their voice, near it at 0.5 where it has. */
 const SHARED: Record<string, readonly { point: StylePoint; weight: number }[]> = {

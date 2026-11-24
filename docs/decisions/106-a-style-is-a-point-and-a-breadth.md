@@ -40,6 +40,9 @@ The owner, on #947, asked for Pop as a style, and for genres and sub-genres as s
 - No point moves, so no piece moves: `npm run coverage` gives every one of the 23 styles the same first in every facet, and adds Pop's row.
 - The `styles` collection's association gains Pop's point; a name in `style=` carries the point, not the breadth.
 - Pop's progressions are seeds at Pop (#947): `authentic_cadence`, I–IV–V–I, its first harmony, and `four_chord_pop`, I–V–vi–IV, beside it.
-- Pop finds its own parts where every style does, at distance 0: it is added to the points of `finale` (its ending), `synth_pop_drums`' fill, `stick_count` and `plain`. Its form is `sentence`, Synth-pop's, found beside it. Of every other style, only Ambient's second count moves (`stick_count`, 0.370 to 0.301).
+- Pop finds its own parts at distance 0, as a preset does, in every facet but the meter, form, performer, stab and band, where it finds Synth-pop's beside it.
+  - It is added to the points of `diatonic(mode=ionian)` (a pop song is major), `synth_pop_drums` (its drum bar and its fill), `root_bass`, the default band's four instruments, `hook`, `verse_chorus`, `finale`, `stick_count` and `plain`.
+  - Its meter is the plain 4/4 `bar`, found at 0.041: Pop's own point on `bar` spread the meters' lock-in past its bound (0.2012 against 0.2) and moved the meter halfway between Synth-pop and Ambient.
+  - Of every other style, no first moves. Seconds move at Ambient (count), Dark ambient (drum bar) and Synth-pop (mode: ionian ties dorian at 0.106).
 - Tests: `styles.test.ts` (the breadth, within, and which styles lie within Pop).
 - Open: a query that reads the breadth (#644); a sub-genre written as its genre plus an offset (#954).
