@@ -153,7 +153,7 @@ describe('found by style', () => {
   const first = (id: string) => repository.query(stylePoint(id), 2, {}, { facet: 'melodic' });
 
   it('every style of styles finds a melodic scale at distance 0, the second never tied with it', () => {
-    expect(STYLES).toHaveLength(23);
+    expect(STYLES).toHaveLength(24);
     for (const s of STYLES) {
       const [a, b] = first(s.id);
       expect(a!.distance, s.id).toBe(0);

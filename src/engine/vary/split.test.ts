@@ -144,9 +144,9 @@ describe('a progression’s split is its dominant', () => {
     }
   });
 
-  it('gives the 17 seeds 45 over C major and minor, as their dominants', () => {
+  it('gives the 21 seeds 63 over C major and minor, as their dominants', () => {
     const n = ['major', 'minor'].reduce((sum, mode) => sum + seedFragments('harmony').reduce((k, f) => k + variations(f.text, { workbench: KEY(mode), ...SPLITS }).length, 0), 0);
-    expect(n).toBe(45);
+    expect(n).toBe(63);
   });
 });
 

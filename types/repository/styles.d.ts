@@ -1,13 +1,23 @@
 import { type Fragment, type StylePoint } from './fragments';
 /** The styles built so far: the collection `styles`, associated as the facet `style` at each of its points. */
 export declare const STYLE_FRAGMENTS: readonly Fragment[];
-/** One preset style: its id (its cell's name), its display name, its point on the axes and its default tempo in bpm. */
+/**
+ * One preset style: its id (its cell's name), its display name, its point on the axes, its default tempo in bpm, and its
+ * breadth where it has one: its reach on each axis it is written with (`sync=.3 ± .2`, decision 089 §6, 108), how far a
+ * genre spreads around its centre. A style written with none is a point. No query reads the breadth yet (#644).
+ */
 export interface Style {
     readonly id: string;
     readonly name: string;
     readonly point: StylePoint;
     readonly tempo: number;
+    readonly reach?: StylePoint;
 }
+/**
+ * Whether a style lies within another (decision 108): on every axis, its area (its point ± its reach, a point where it has
+ * none) inside the other's. A sub-genre lies within its genre: Synth-pop within Pop.
+ */
+export declare function within(inner: Style, outer: Style): boolean;
 /** The preset styles, in the collection's order: what a frontend offers as its presets. */
 export declare const STYLES: readonly Style[];
 /** A preset style's point by its id; it throws on an id the collection lacks. */
@@ -40,3 +50,4 @@ export declare const SWING_JAZZ: Readonly<Record<string, number>>;
 export declare const ELECTRO_SWING: Readonly<Record<string, number>>;
 export declare const SPOOKY: Readonly<Record<string, number>>;
 export declare const KINDERLIED: Readonly<Record<string, number>>;
+export declare const POP: Readonly<Record<string, number>>;

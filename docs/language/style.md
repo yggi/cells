@@ -163,7 +163,7 @@ Each is a style cell at its point, with its display name as `label=` and its def
 &funk map=style label="Funk" step=104bpm sync=1 harm=.12 bite=.85 mood=.65
 ```
 
-The collection is the presets' one source: a frontend reads it as `STYLES` (`src/repository/styles.ts`), each style `{ id, name, point, tempo }`, in its order (#537).
+The collection is the presets' one source: a frontend reads it as `STYLES` (`src/repository/styles.ts`), each style `{ id, name, point, tempo }`, in its order (#537), and its breadth, `reach`, where it writes one.
 Only the library reads `step=` on a style: `style=` and a query read the point alone, so a style has no tempo ([decision 037](https://github.com/yggi/cells/blob/main/docs/decisions/037-the-handshake-with-jambot.md), D6).
 A score takes one by name where its section sits exactly on it, and writes its numbers, or a mix of styles, where it doesn't ([decision 063](https://github.com/yggi/cells/blob/main/docs/decisions/063-the-score-and-the-band.md) §3).
 
@@ -172,7 +172,16 @@ A score takes one by name where its section sits exactly on it, and writes its n
 &style label="Funk, turning to Bossa nova" style=&funk..&bossaNova
 ```
 
-The collection is associated at each of the twenty-three points as the facet `style`, so the style nearest a point is a query too.
+The collection is associated at each of the twenty-four points as the facet `style`, so the style nearest a point is a query too.
+
+A style may have a breadth: a reach on each axis, how far a genre spreads around its centre ([decision 108](https://github.com/yggi/cells/blob/main/docs/decisions/108-a-style-is-a-point-and-a-breadth.md)).
+Pop is wide, and Synth-pop, its sub-genre, is narrower and lies within it: `within(synthPop, pop)`, its area inside Pop's on every axis.
+The point is the centre, and a query reads only the point (#644).
+
+```cells
+&pop map=style label="Pop" step=116bpm sync=.3 ± .15 harm=.4 ± .2 bite=.5 ± .25 mood=.7 ± .3
+&synthPop map=style label="Synth-pop" step=108bpm sync=.3 ± .1 harm=.45 ± .1 bite=.55 ± .1 mood=.5 ± .1
+```
 `nearestStyle(point)` ranks the styles themselves by it, nearest first: by `pointDistance`, the one distance between two styles, over the axes both have, with `axisWeights` to weigh an axis down and `styles` for a frontend that ranks on an axis of its own as well, such as a tempo (#538).
 
 ## The default band: a score played as its style says

@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&verseChorus, &verseChorusPlays from &song style=(&synthPop | &chiptune | &electroSwing)
+&verseChorus, &verseChorusPlays from &song style=(&synthPop | &chiptune | &electroSwing | &pop)
 &verseChorus &intro &verse &chorus &verse &chorus &bridge &chorus &outro
 &verseChorusPlays &introPlays &versePlays &chorusPlays &versePlays &chorusPlays &bridgePlays &chorusPlays &outroPlays
 &intro, &introPlays from intro &song
@@ -22,6 +22,6 @@ A song form (#810): its sections in order, each a section kind taken by name (`f
 
 It ends where its last section ends, and comes round: a song is its form's length, so a new one starts at a section boundary (yggi/jambot#547 rung 5).
 
-Where pop's idiom is: Synth-pop, Chiptune (a game's title tune written as a pop song) and Electro swing (vocal swing remade as a pop single), the song a radio plays whole. Each of those styles finds it first, at its own point (`npm run coverage -- --facet song`; the owner, 2026-11-09: "form follows idiom. same for sections").
+Where pop's idiom is: Pop itself (#947), Synth-pop, Chiptune (a game's title tune written as a pop song) and Electro swing (vocal swing remade as a pop single), the song a radio plays whole. Each of those styles finds it first, at its own point (`npm run coverage -- --facet song`; the owner, 2026-11-09: "form follows idiom. same for sections").
 
 **Its signature** (decision 065): `&verseChorus, &verseChorusPlays from &song`. `&verseChorus, &verseChorusPlays from verse_chorus &song` takes a copy of it, `&song` its main argument, the song's intensity (`&song .55`).

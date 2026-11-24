@@ -37,7 +37,7 @@ export { styleAt } from "./engine/styleat.js";
 export { CONTRACT_WIDTHS, feelOf, played, readerOf, readingOf, } from "./engine/perform/feel.js";
 export { perform, widthsOf } from "./engine/perform/perform.js";
 export { meterOfFrame, swungPlace, writtenPlace } from "./engine/meter.js";
-export { nearestStyle, STYLES } from "./repository/styles.js";
+export { nearestStyle, STYLES, within } from "./repository/styles.js";
 export { bandAt, instrumentsAt, resolveBand, scoreStyle, PERFORMER_VOICES } from "./repository/band.js";
 export { LIBRARY, PARTS, resolveSeed, resolverOf, usesOf } from "./repository/library.js";
 export { catalogue } from "./repository/catalogue.js";

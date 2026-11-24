@@ -182,7 +182,7 @@ describe('a text of from lines alone (#941)', () => {
       const hash = identityOf(f.text, 'free').hash;
       ids.set(hash, [...(ids.get(hash) ?? []), f.id]);
     }
-    expect(LIBRARY).toHaveLength(245);
+    expect(LIBRARY).toHaveLength(249); // (#947: Pop's two harmonies, Pachelbel's and bebop's)
     expect([...ids.values()].filter((v) => v.length > 1)).toEqual([]);
   });
 });

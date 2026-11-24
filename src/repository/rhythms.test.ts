@@ -145,7 +145,8 @@ describe('the rhythm fragments', () => {
       ...Object.keys(METERED),
       ...Object.keys(ANSWERED),
     ]);
-    expect(RHYTHM_FRAGMENTS.map((f) => f.association.filter((wp) => wp.facet === 'rhythm').length)).toEqual(RHYTHM_FRAGMENTS.map(() => 1));
+    // (Synth-pop's bar at Pop's too, its genre, #947)
+    expect(RHYTHM_FRAGMENTS.map((f) => f.association.filter((wp) => wp.facet === 'rhythm').length)).toEqual(RHYTHM_FRAGMENTS.map((f) => (f.id === 'synth_pop_drums' ? 2 : 1)));
     // (a groove whose fill is found on its own, #718: E31's eight, each a point as the facet fill at its own point first)
     const withFill = RHYTHM_FRAGMENTS.filter((f) => f.association.some((wp) => wp.facet === 'fill'));
     expect(withFill.map((f) => f.id)).toEqual(Object.keys(PRESETS).map((p) => wordOf(`${p} drums`)));

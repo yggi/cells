@@ -1,5 +1,5 @@
 // Recognition (decision 055, #224): each of the 277 variations on E31's bars (Jambot's 284 until #911), each of the bass seeds' 48, and each of
-// the seed progressions' 789 but one (decision 052, points 8 and 10), is
+// the seed progressions' 979 but thirteen (decision 052, points 8 and 10), is
 // recognised as its source's, by its operator, at distance 0, against the whole library; random bars of hits are
 // recognised as nothing; a recognition on a warmed recogniser compiles only the heard text (its milliseconds:
 // `timing.slow.test.ts`).
@@ -116,20 +116,41 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     expect(n).toBe(120);
   });
 
-  it('each of the seed progressions’ 789 (394 in C major, 395 in C minor), by its operator asked, at distance 0; one is a seed itself', () => {
+  // (a variation that plays what another seed plays, or one of its variations, is recognised as that, at distance 0 too:
+  // I–IV–V–I and I–V–vi–IV share their chords with the Korobeiniki changes (I I V I IV I V I), the montuno (I IV V IV)
+  // and the minor swing's I–IV–V, #947)
+  const ALSO: Readonly<Record<string, [string, string[], number]>> = {
+    'montuno, substitute &harm 2 1': ['vamp_to_the_fourth', [], 0],
+    'authentic_cadence, rotate &harm': ['korobeiniki_changes', [], 0],
+    'authentic_cadence, swap &harm 0': ['korobeiniki_changes', [], 0],
+    'authentic_cadence, substitute &harm 1 0': ['korobeiniki_changes', [], 0],
+    'authentic_cadence, substitute &harm 1 2': ['korobeiniki_changes', ['substitute &harm 1 2'], 0],
+    'authentic_cadence, substitute &harm 2 0': ['vamp_to_the_fourth', ['substitute &harm 1 4'], 0],
+    'authentic_cadence, substitute &harm 2 1': ['minor_swing', [], 0],
+    'four_chord_pop, third &harm 2 -2': ['montuno', ['swap &harm 1'], 0],
+    'four_chord_pop, swap &harm 1': ['montuno', ['third &harm 1 2'], 0],
+    'four_chord_pop, substitute &harm 1 0': ['minor_swing', ['third &harm 2 2'], 0],
+    'four_chord_pop, substitute &harm 2 0': ['korobeiniki_changes', [], 0],
+    'four_chord_pop, substitute &harm 2 1': ['montuno', ['substitute &harm 1 2'], 0],
+    // (bebop's ii7 given the tonic's chord: I V I I in sevenths, a window of the twelve-bar's)
+    'bebop_ii_v_i, substitute &harm 0 2': ['twelve_bar', [], 0],
+  };
+
+  it('each of the seed progressions’ 979 (489 in C major, 490 in C minor), by its operator asked, at distance 0; thirteen are another seed or its variation', () => {
     let n = 0;
     for (const mode of ['major', 'minor']) {
       const workbench = `&bar meter("4/4") step=120bpm\n&key scale(${mode}, C)`;
       for (const f of HARMONY_FRAGMENTS)
         for (const v of variations(f.text, { workbench, operators: HARMONY_OPERATORS })) {
           const [first] = recogniser.recognise(v.apply(f.text), LIBRARY, { workbench, operators: HARMONY_OPERATORS });
-          // (the montuno's third bar given its second's chord is the vamp to the fourth, a seed: recognised as that seed)
-          const as = f.id === 'montuno' && v.by === 'substitute &harm 2 1' ? ['vamp_to_the_fourth', [], 0] : [f.id, [v.by], 0];
+          // (the montuno's third bar given its second's chord is the vamp to the fourth, a seed: recognised as that seed; and
+          // twelve of #947's play what an older seed plays, or its variation, the same in both modes, below)
+          const as = ALSO[`${f.id}, ${v.by}`] ?? [f.id, [v.by], 0];
           expect([first?.fragment.id, first?.path.map((s) => s.by), first?.distance], `${mode}: ${f.id}, ${v.by}`).toEqual(as);
           n++;
         }
     }
-    expect(n).toBe(789);
+    expect(n).toBe(979);
   });
 
   it('a fragment itself by no operator, and a variation of a variation only at depth 2', () => {
@@ -202,13 +223,16 @@ describe('a pitched voice by its place, a bar of a longer fragment, and the lear
     // (and, since #572, as the axis progression's fourth bar, its VII, found first: named on #572, #542)
     // (and, since #542, as the circle of fifths' third bar, its vii°)
     // (and, since the harmony's operators joined recognition's default, decision 052 point 8, as a bar of four seeds with
-    // one chord moved a third onto vii°, each after the seeds that play it as written)
+    // one chord moved a third onto vii°, each after the seeds that play it as written; and #947's three that hold it, the same way)
     expect(found(recogniser.recognise('&harm over=&key step=1m [6,8,10]', LIBRARY, { workbench: BASS }))).toEqual([
       'fifths_sequence [] bar 2 at 0',
       'axis_progression [] bar 3 at 0',
       'vamp_to_the_seventh [] bar 4 at 0',
+      'four_chord_pop [third &harm 1 2] bar 1 at 0',
+      'pachelbel_canon [third &harm 1 2] bar 1 at 0',
       'korobeiniki_changes [third &harm 2 2] bar 2 at 0',
       'montuno [third &harm 2 2] bar 2 at 0',
+      'authentic_cadence [third &harm 2 2] bar 2 at 0',
       'vamp_to_the_fifth [third &harm 4 2] bar 4 at 0',
       'haunted_progression [third &harm 6 2] bar 6 at 0',
     ]);

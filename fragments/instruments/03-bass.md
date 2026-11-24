@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&bassV from (&style) style=(&synthPop * .25 | &deepHouse * .25 | &lofi * .25 | &bossaNova * .25 | &techno * .25 | &funk * .25)
+&bassV from (&style) style=(&synthPop * .25 | &deepHouse * .25 | &lofi * .25 | &bossaNova * .25 | &techno * .25 | &funk * .25 | &pop * .25)
 &bassV s=saw loop=C2 lpf=450..900 * &style[bite] lpq=4 env=&(map=adsr .005 .2 .7 .05)
 &style map=style sync=.5 harm=.5 bite=.5 mood=.5
 ```
@@ -17,4 +17,4 @@ It defines the one voice the five bass lines read and reads nothing it doesn't d
 
 Associated as the facet `instrument` at a quarter of the kit's weight; the composer asks for the bass by its id.
 
-**Where it is found** (#540): on the points of Synth-pop, Deep house, Lo-fi hip hop and Bossa nova, where the centre point it had found it first, and of Techno and Funk, a synth bass's styles; weight 0.25. It read `&style[bite]`, so it plays each style's bite. It stood at the centre, `.5 .5 .5 .5`, for "any style", and was found nearest Synth-pop and farthest from Techno for no musical reason.
+**Where it is found** (#540): on the points of Synth-pop, Deep house, Lo-fi hip hop and Bossa nova, where the centre point it had found it first, and of Techno and Funk, a synth bass's styles, and of Pop, the default band's genre (#947); weight 0.25. It read `&style[bite]`, so it plays each style's bite. It stood at the centre, `.5 .5 .5 .5`, for "any style", and was found nearest Synth-pop and farthest from Techno for no musical reason.

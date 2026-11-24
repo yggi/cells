@@ -78,8 +78,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are the seed files (the law five_to_twelve, #772; the seven mode files one, diatonic, #387; the nine modules, #457, decision 074, and the wander, #576; the thirteen meters one, meter, #507, then bar and three style meters and the odd ones, #902; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; #540’s five harmonies; #646’s two drum bars, for 7/8 and 12/8; and Kinderlied’s six tunes its own parts since decision 082; the nine section kinds and the seven song forms, #810; the built-in braid fill metric_accent and the breathing pulse that takes it, #799; the four melodic scales, #719; the eight fills and the four counts, #718 and #720; the ending, #720: two hundred and twenty-five, with #720’s five more endings, the solo, the coro, the mambo and son_montuno)', () =>
-    expect(files).toHaveLength(225));
+  it('are the seed files (the law five_to_twelve, #772; the seven mode files one, diatonic, #387; the nine modules, #457, decision 074, and the wander, #576; the thirteen meters one, meter, #507, then bar and three style meters and the odd ones, #902; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; #540’s five harmonies; #646’s two drum bars, for 7/8 and 12/8; and Kinderlied’s six tunes its own parts since decision 082; the nine section kinds and the seven song forms, #810; the built-in braid fill metric_accent and the breathing pulse that takes it, #799; the four melodic scales, #719; the eight fills and the four counts, #718 and #720; the ending, #720: two hundred and twenty-nine, with #720’s five more endings, the solo, the coro, the mambo and son_montuno, and #947’s four harmonies)', () =>
+    expect(files).toHaveLength(229));
 
   it.each(files)('%s writes back byte for byte', (path, markdown) => {
     expect(writeFragment(read(markdown, optionsAt(path)), optionsAt(path))).toBe(markdown);
@@ -118,7 +118,8 @@ describe('the seed files', () => {
       lofi_meter: [LO_FI],
       // (and near Acid, a second meter behind its plain 4/4, #540)
       funk_meter: [DEEP_HOUSE, FUNK, { ...ACID, bite: 0.95 }],
-      synth_pop_drums: [SYNTH_POP],
+      // (and Pop's, #947)
+      synth_pop_drums: [SYNTH_POP, stylePoint('pop')],
       techno_drums: [TECHNO],
       deep_house_drums: [DEEP_HOUSE],
       ambient_drums: [AMBIENT],
@@ -157,7 +158,7 @@ describe('the seed files', () => {
       harmonic_minor: [ELECTRO_SWING, SPOOKY, CHIPTUNE],
       'diatonic(mode=aeolian)': [SYNTH_POP, TECHNO, LO_FI, ACID, HAPPY_HARDCORE, ELEKTRO, DARK_AMBIENT, TRIP_HOP],
       'diatonic(mode=dorian)': [DEEP_HOUSE, FUNK, SEA_SHANTY],
-      'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ, KINDERLIED, BAROQUE, WALTZ, MARCH],
+      'diatonic(mode=ionian)': [AMBIENT, BOSSA_NOVA, SWING_JAZZ, KINDERLIED, BAROQUE, WALTZ, MARCH, stylePoint('pop')],
       // (and the shares, #540: on a style's point where it has none of the voice, near it where it has)
       upright_bass: [ELECTRO_SWING, SWING_JAZZ, BLUES_SHUFFLE, near(BOSSA_NOVA)],
       brass_stab: [ELECTRO_SWING, FUNK, SALSA],
@@ -184,7 +185,10 @@ describe('the seed files', () => {
       electric_piano: [TRIP_HOP, near(LO_FI), near(DEEP_HOUSE)],
     };
     // (two bass lines sit first at a point of their own, placed by hand, and then at presets: #209)
-    const AFTER_OWN_POINT: Record<string, readonly object[]> = { root_bass: [SYNTH_POP, DEEP_HOUSE, AMBIENT, KINDERLIED], pumping_bass: [TECHNO, HAPPY_HARDCORE] };
+    const AFTER_OWN_POINT: Record<string, readonly object[]> = {
+      root_bass: [SYNTH_POP, DEEP_HOUSE, AMBIENT, KINDERLIED, stylePoint('pop')],
+      pumping_bass: [TECHNO, HAPPY_HARDCORE],
+    };
     // (a meter or a drum bar speaks to no mode, so its point leaves mood out: the preset's other axes, exactly, decision 076)
     const NO_MODE = (id: string) => METER_IDS.has(id) || RHYTHM_FRAGMENTS.some((f) => f.id === id);
     const onItsAxes = (id: string, p: object) => (NO_MODE(id) ? Object.fromEntries(Object.entries(p).filter(([axis]) => axis !== 'mood')) : p);
@@ -209,6 +213,12 @@ describe('the seed files', () => {
   const WRITTEN = new Set([
     // (#799: the breathing pulse, written for the space beside Ambient, its hats' levels metric_accent's)
     'breathing_drums',
+    // (#947: Pop's two progressions, written for it, lifted from no example)
+    'authentic_cadence',
+    'four_chord_pop',
+    // (#947: Pachelbel's canon and bebop's ii–V–I, written beside Baroque and Swing jazz)
+    'pachelbel_canon',
+    'bebop_ii_v_i',
     // (#540: the harmonies written for the presets whose first harmony missed, lifted from no example)
     'ninth_vamp',
     'ninth_loop',

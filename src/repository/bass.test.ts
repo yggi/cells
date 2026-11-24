@@ -148,7 +148,7 @@ const POINT: Record<Pattern, StylePoint> = {
 // Electro swing's, as examples/electroswing.md walks.
 // (and the points proposed beside the patterns' own: the walking bass at Electro swing; the root bass at Kinderlied and the
 // pump at Happy hardcore, its offbeat bass, #572)
-const PROPOSED: Record<string, readonly StylePoint[]> = { walking_bass: [ELECTRO_SWING], root_bass: [KINDERLIED], pumping_bass: [stylePoint('happyHardcore')] };
+const PROPOSED: Record<string, readonly StylePoint[]> = { walking_bass: [ELECTRO_SWING], root_bass: [KINDERLIED, stylePoint('pop')], pumping_bass: [stylePoint('happyHardcore')] };
 
 const PRESETS: Record<string, { point: StylePoint; old: Old; eighth: number }> = {
   'Synth-pop': { point: SYNTH_POP, old: OLD['Synth-pop']!, eighth: 0 },

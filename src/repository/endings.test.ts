@@ -87,6 +87,8 @@ describe('found by style', () => {
     waltz: 'finale',
     march: 'finale',
     tripHop: 'drone_out',
+    // (#947: Pop's song ends on the same V–I)
+    pop: 'finale',
   };
   it('every style of styles finds an ending at distance 0, the second never tied with it: Jambot’s ten presets finale', () => {
     expect(STYLES.map((s) => s.id).sort()).toEqual(Object.keys(FOUND).sort());

@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&leadV from (&style) style=(&synthPop * .25 | &deepHouse * .25 | &lofi * .25 | &bossaNova * .25 | &techno * .25 | &ambient * .25 | &funk * .25)
+&leadV from (&style) style=(&synthPop * .25 | &deepHouse * .25 | &lofi * .25 | &bossaNova * .25 | &techno * .25 | &ambient * .25 | &funk * .25 | &pop * .25)
 &leadV s=tri..square * &style[bite] loop=C4 lpf=1400..3600 * &style[bite] env=&(map=adsr attack=.04..0.006 * &style[bite] decay=0 sustain=1 release=.08)
 &style map=style sync=.5 harm=.5 bite=.5 mood=.5
 ```
@@ -17,4 +17,4 @@ Its register is its own (decision 058): a performer that plays it higher or lowe
 
 Associated as `bass` is, as the facet `instrument` at a quarter of the kit's weight; a performer asks for it by its id.
 
-**Where it is found** (#540): on the points of Synth-pop, Deep house, Lo-fi hip hop and Bossa nova, where the centre point it had found it first, and of Techno, Ambient and Funk, a synth lead's styles; weight 0.25.
+**Where it is found** (#540): on the points of Synth-pop, Deep house, Lo-fi hip hop and Bossa nova, where the centre point it had found it first, and of Techno, Ambient and Funk, a synth lead's styles, and of Pop, the default band's genre (#947); weight 0.25.

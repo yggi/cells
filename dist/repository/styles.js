@@ -16,7 +16,14 @@ function styleOf(cell) {
         name: cell.label,
         point: Object.fromEntries(AXIS_NAMES.map((a, i) => [a, values[i]])),
         tempo: Math.round(cell.step.perSecond * 60 * 1e9) / 1e9,
+        ...(cell.reach ? { reach: { ...cell.reach } } : {}),
     };
+}
+export function within(inner, outer) {
+    return AXIS_NAMES.every((a) => {
+        const [c, r, C, R] = [inner.point[a], inner.reach?.[a] ?? 0, outer.point[a], outer.reach?.[a] ?? 0];
+        return c - r >= C - R - 1e-9 && c + r <= C + R + 1e-9;
+    });
 }
 export const STYLES = parse(STYLE_FRAGMENTS.find((f) => f.id === 'styles').text).cells.map(styleOf);
 export function stylePoint(id) {
@@ -45,3 +52,4 @@ export const SWING_JAZZ = stylePoint('swingJazz');
 export const ELECTRO_SWING = stylePoint('electroSwing');
 export const SPOOKY = stylePoint('spooky');
 export const KINDERLIED = stylePoint('kinderlied');
+export const POP = stylePoint('pop');

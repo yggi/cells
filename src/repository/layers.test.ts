@@ -36,7 +36,7 @@ describe('found by style', () => {
   const ranked = (id: string, facet: string) => repository.query(stylePoint(id), 2, {}, { facet });
 
   it.each(['fill', 'count'])('every style of styles finds a %s at distance 0, the second never tied with it', (facet) => {
-    expect(STYLES).toHaveLength(23);
+    expect(STYLES).toHaveLength(24);
     for (const s of STYLES) {
       const [a, b] = ranked(s.id, facet);
       expect(a!.distance, s.id).toBe(0);

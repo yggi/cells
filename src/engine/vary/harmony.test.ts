@@ -43,8 +43,8 @@ const sounding = (text: string, mode: string) =>
     .sort()
     .join(' ');
 
-// Each seed's variations, in major and minor: 789 in all (394 and 395): 332 thirds, 316 substitutions, 54 swaps, 24
-// rotations, 18 retrogrades and 45 dominants. A vamp of one or two chords varies by its thirds and its substitutions
+// Each seed's variations, in major and minor: 979 in all (489 and 490): 392 thirds, 392 substitutions, 74 swaps, 32
+// rotations, 26 retrogrades and 63 dominants (#947's four give 34, 42, 82 and 32 of them: Pop's two, Pachelbel's and bebop's). A vamp of one or two chords varies by its thirds and its substitutions
 // alone: no rotation, retrograde or swap of a run of one chord changes it, and no dominant leads into a chord the same as
 // the one before it. The minor key gives one dominant more, the axis progression's into its VII (B♭), which in major is
 // a diminished triad (B D F). A move that plays what one before it played is left out (I vi IV V's `substitute &harm 1 2`
@@ -84,9 +84,9 @@ describe('Vary on a progression (decision 052, point 8)', () => {
       }
     });
 
-  it('gives 789 variations of the 17 seeds, 394 in C major and 395 in C minor', () => {
+  it('gives 979 variations of the 21 seeds, 489 in C major and 490 in C minor', () => {
     const total = (mode: (typeof MODES)[number]) => Object.values(COUNTS).reduce((sum, c) => sum + c[mode], 0);
-    expect([total('major'), total('minor')]).toEqual([394, 395]);
+    expect([total('major'), total('minor')]).toEqual([489, 490]);
   });
 
   it('leaves a progression be where only the line operators are asked', () => {
@@ -121,7 +121,7 @@ describe("a progression's variation by reference (point 7)", () => {
       .join(' ');
   };
 
-  it('plays what its variation plays, read beside its source: each of the 789', () => {
+  it('plays what its variation plays, read beside its source: each of the 979', () => {
     let n = 0;
     let referred = 0;
     for (const mode of MODES)
@@ -133,7 +133,7 @@ describe("a progression's variation by reference (point 7)", () => {
           expect(v.reference.form, `${id} ${v.by}`).toMatch(/^base=&harm /);
           expect(cellChords(`${text}\n${v.reference.line('varied')}`, mode, 'varied'), `${id} ${v.by}`).toBe(cellChords(v.apply(text), mode, 'harm'));
         }
-    expect([n, referred]).toEqual([789, 789]);
+    expect([n, referred]).toEqual([979, 979]);
   });
 
   it('writes only the steps it changes', () => {
