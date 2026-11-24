@@ -107,7 +107,11 @@ export function parse(whole: string): ParseResult {
         const decl = parseCell(s);
         // (a line that reads cells as the piece is built keeps its text: compile writes their values in and reads it again, decision 106)
         if (s.holes.length && decl.base) {
-          diagnostics.push({ severity: 'error', message: 'base= and a cell read as the piece is built (seed=&s, 0!&n) are not yet one line: write the number, or the cell without base=', span: decl.base.span });
+          diagnostics.push({
+            severity: 'error',
+            message: 'base= and a cell read as the piece is built (seed=&s, 0!&n) are not yet one line: write the number, or the cell without base=',
+            span: decl.base.span,
+          });
           return;
         }
         const built = s.holes.length ? { text, line: lineNo, parts, lambdas: s.lambdas.map((l) => l.name), holes: [...s.holes] } : undefined;

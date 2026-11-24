@@ -55,7 +55,8 @@ export function builtNumber(said: Said, decls: ReadonlyMap<string, CellDecl>, re
 /** What a place's own limits say of a value, or null where it holds: a count is whole, a share within its range. */
 export function placeProblem(place: NumberPlace, value: number): string | null {
   if (place.whole && !place.rounds && !Number.isInteger(value)) return `it takes a whole number, not ${value}`;
-  if ((place.min !== undefined && value < place.min) || (place.max !== undefined && value > place.max)) return `it takes ${place.min ?? 'any'} to ${place.max ?? 'any'}, not ${value}`;
+  if ((place.min !== undefined && value < place.min) || (place.max !== undefined && value > place.max))
+    return `it takes ${place.min ?? 'any'} to ${place.max ?? 'any'}, not ${value}`;
   return null;
 }
 
@@ -85,7 +86,8 @@ function unfilled(holes: readonly { readonly from: number; readonly to: number; 
   };
 }
 
-const isSpan = (x: unknown): x is Span => !!x && typeof x === 'object' && typeof (x as Span).line === 'number' && typeof (x as Span).col === 'number' && typeof (x as Span).len === 'number';
+const isSpan = (x: unknown): x is Span =>
+  !!x && typeof x === 'object' && typeof (x as Span).line === 'number' && typeof (x as Span).col === 'number' && typeof (x as Span).len === 'number';
 
 /** A declaration with every span of its line given back in the line as written (the line was read again with its numbers in). */
 function respanned<T>(x: T, line: number, back: (p: number) => number, seen = new Map<unknown, unknown>()): T {
@@ -182,6 +184,5 @@ export function fillBuilt(parsed: ParseResult): ParseResult {
  * fragment read alone), said as any unknown cell is; the rest it said already.
  */
 export function unreadHoles(said: Said, decls: ReadonlyMap<string, CellDecl>): void {
-  for (const d of decls.values())
-    for (const h of d.built?.holes ?? []) if (!decls.has(h.ref.name)) said.unknownCell(h.ref.name, h.ref.span);
+  for (const d of decls.values()) for (const h of d.built?.holes ?? []) if (!decls.has(h.ref.name)) said.unknownCell(h.ref.name, h.ref.span);
 }
