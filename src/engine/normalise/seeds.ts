@@ -9,6 +9,7 @@
 import { setAttr } from '../edit';
 import { drawKeyOf, keyAsSeed } from '../drawkey';
 import { flatten } from '../flatten';
+import { noisePlaces } from '../noise';
 import { codeShifts, type CompileResult } from '../program';
 import type { Rewrite } from '../rewrite';
 
@@ -21,10 +22,39 @@ function draws(result: CompileResult, name: string): boolean {
   }
 }
 
-/** Each chancy cell the text declares that writes no seed, written with its content key as its seed. */
+/**
+ * Each noise voice the text declares that writes no seed, written with its place among the noise voices as its seed (#932): the
+ * grains it was thrown from, so no sample moves, and no edit to the text then moves them. A voice whose place another voice
+ * already writes as its seed (a voice added above one that wrote its own) takes the next number no voice uses, so no two noise
+ * voices throw alike.
+ */
+function noiseSeeds(result: CompileResult): Rewrite<'seed'>[] {
+  const places = noisePlaces(result);
+  const written = new Set([...places.keys()].flatMap((n) => (result.cells.get(n)?.seeded ? [result.cells.get(n)!.seed] : [])));
+  const out: Rewrite<'seed'>[] = [];
+  for (const [name, place] of places) {
+    const c = result.cells.get(name);
+    if (!c || c.implicit || c.lambda || c.seeded) continue;
+    let n = Number(place.slice('noise#'.length));
+    if (written.has(n)) for (n = places.size; written.has(n); n++);
+    written.add(n);
+    out.push({
+      id: `seed:${name}`,
+      tool: 'normalise',
+      rule: 'seed',
+      title: `&${name}: its noise starts where its place among the noise voices says — write the seed it is thrown from, seed=${n}`,
+      before: '',
+      after: `seed=${n}`,
+      apply: (src) => setAttr(src, name, 'seed', String(n)),
+    });
+  }
+  return out;
+}
+
+/** Each chancy cell the text declares that writes no seed, written with its content key as its seed, and each noise voice. */
 export function seeds(source: string, result: CompileResult): Rewrite<'seed'>[] {
   const key = drawKeyOf(result);
-  const out: Rewrite<'seed'>[] = [];
+  const out: Rewrite<'seed'>[] = [...noiseSeeds(result)];
   for (const c of result.cells.values()) {
     if (c.implicit || c.lambda || c.seeded || !draws(result, c.name)) continue;
     const n = keyAsSeed(key(c.name));

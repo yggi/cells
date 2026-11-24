@@ -16,8 +16,11 @@ A draw is thrown per seed, cell, lap and step. Its cell's key hashed every attri
 4. **Cells that write the same seed draw alike,** as two that played alike did. A fragment taken twice with different arguments keeps its one seed: its dice no longer follow its arguments. A frontend that writes a chancy line of its own writes a seed or leaves it to the content key.
 5. **A seed is part of the text a fragment's hash reads,** and a fragment of the library written with one changes its hash once.
 
+6. **A noise voice's grains are thrown from its seed too** (#932, the owner: "(b) is good", 2026-11-24). A voice of `s=white`, `pink` or `brown` that writes `seed=n` throws where each note starts in its noise from `n` alone, as the place `noise#n`; one that writes none is thrown from its place among the noise voices, as before (#481). Normalise writes `seed=<i>`, the place a voice has, so no sample moves; a voice added above one that wrote its own number takes the first number no voice uses, so no two noise voices throw alike (two that did would sum to one louder noise, not blend). A voice from a fragment (the General MIDI kit's) is not in the text Normalise writes: it stays thrown from its place, which an edit that adds a noise voice above it shifts.
+
 ## Consequences
 
 - L7 (chance is reproducible) gains a clause: under any edit that doesn't change what a cell plays, and a seeded cell's dice stay under any edit to what it carries. L1 holds: a seed is an attribute's value, never a name.
 - **What moved:** only the `chance` example (451 notes, now 442), whose `&ghosts` wrote `seed=3`, which was mixed with its content and is now the seed alone. No other example, no seed fragment's notes moved (`snapshot.txt`).
+- **Noise:** the own noise voices of 26 examples (45 lines) carry a seed (the tutorial's three below tier 5, `voice`, `drums` and `rhythm`, stay unseeded: the ladder teaches `seed` at tier 5, and they stay thrown from their places); no sample moves (10 examples rendered 6 s at 8 kHz before and after, equal, and every voice's grain key equal over the 40 examples with a noise voice), and an edit that adds a noise voice leaves theirs.
 - **The test:** a role, a part and a label on every chancy cell of every example and every fragment of the library move 0 events, and shown firing with the seeds taken off.

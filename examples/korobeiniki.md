@@ -32,7 +32,7 @@ The Russian folk song a famous puzzle game made its own, as a 1980s console woul
 &pulse tags="lead" loop=A4 0 0 0 1 env=&(map=adsr .002 .05 .8 .05)              # a 25% pulse: the lead
 &tri tags="bass" loop=A2 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1 0   # a stepped triangle
 &square tags="harmony" loop=A3 0 1 pitch=&(loop=20 0 3 7) env=&(map=adsr .002 .1 .7 .1)   # … arpeggiated, 60 notes a second
-&noise tags="drums" gain=.2 s=white hpf=5000 env=&(map=adsr 0 .05 0 .02)
+&noise seed=0 tags="drums" gain=.2 s=white hpf=5000 env=&(map=adsr 0 .05 0 .02)
 
 # B: half notes over Am and Em — our own (the game's middle section is its composer's)
 &chorale tags="lead" step=&leadBBar/2 3 2 0 -2 0 2 3 2 0 3 7 5 3 2 0@2

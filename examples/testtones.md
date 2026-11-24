@@ -28,7 +28,7 @@ description: "For the test bench, in the spirit of Hainbach: old sine generators
 
 &gen s=sine loop=110 env=&(map=adsr 2 1 .9 3)
 &osc s=sine loop=110 env=&(map=adsr .005 .18 0 .1)
-&noise s=pink lpf=200..3000 * &sweep lpq=8 env=&(map=adsr 3 2 .7 4)
+&noise seed=0 s=pink lpf=200..3000 * &sweep lpq=8 env=&(map=adsr 3 2 .7 4)
 &bench [(&drones + &drift) * &gen * .16, &beeps * &osc * .06, &swells * &noise * .12]
 
 &loop step=&reel write=&bench length=7 erase=.22 tone=1900 drive=.55 hiss=.004 print=.03 printgap=.7 dropout=.25 label="the tape: seven seconds, worn"

@@ -30,15 +30,15 @@ description: "90s happy hardcore and eurodance, an original: three minutes of eu
 &up tags="rise" map=lin loop=&bar/32 0 .2 .45 1 0
 
 &bd note=36 tags="drums" gain=.8 oneshot=1 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .05 0 0) distort=.2 env=&thump
-&hh note=42 tags="drums" gain=.2 s=white hpf=8000 env=&click
-&cp note=39 tags="drums" gain=.35 oneshot=1 s=white hpf=1400 room=.2 env=&snap
-&sn tags="drums" gain=.25 s=white hpf=900 env=&tap
+&hh seed=0 note=42 tags="drums" gain=.2 s=white hpf=8000 env=&click
+&cp seed=1 note=39 tags="drums" gain=.35 oneshot=1 s=white hpf=1400 room=.2 env=&snap
+&sn seed=2 tags="drums" gain=.25 s=white hpf=900 env=&tap
 &bass tags="bass" s=saw loop=C2 lpf=900 lpq=4 env=&strike
 &stab tags="synths" s=square loop=C4 lpf=2800 room=.25 env=&(map=adsr .002 .14 .1 .1)
 &sawA tags="synths" s=saw loop=C5 lpf=5200 room=.3 delaytime=&bar*8/3 delay=.2 delayfeedback=.3 env=&(map=adsr .01 .2 .7 .2)
 &sawB tags="synths" s=saw loop=527.4 lpf=5200 room=.3 env=&(map=adsr .01 .2 .7 .2)
 &padv tags="synths" s=saw loop=C4 lpf=1600 room=.5 env=&(map=adsr .8 .5 .8 1.5)
-&riser tags="rise" s=white lpf=300..9000 * &up lpq=6 env=&(map=adsr 1 .5 .9 .5)
+&riser seed=3 tags="rise" s=white lpf=300..9000 * &up lpq=6 env=&(map=adsr 1 .5 .9 .5)
 
 # the three mixes the spectrum (&eq) reads; the other parts go straight into the card
 &bassPart [(&off + &prog) * &bass * .35]

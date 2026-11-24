@@ -8,6 +8,16 @@ function seeded(seed) {
         return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
 }
+export function noisePlaces(result) {
+    return new Map([...result.cells.values()].filter((c) => ['white', 'pink', 'brown'].includes(String(c.params.s))).map((c, i) => [c.name, `noise#${i}`]));
+}
+export function grainKeyOf(result) {
+    const places = noisePlaces(result);
+    return (voice) => {
+        const c = result.cells.get(voice);
+        return c?.seeded ? { seed: 0, place: `noise#${c.seed}` } : { seed: c?.seed ?? 0, place: places.get(voice) ?? voice };
+    };
+}
 export function grainOffset(seed, voice, at, duration) {
     return chanceOf(`${seed}|${voice}|${at.toFixed(6)}|grain`) * duration;
 }

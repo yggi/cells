@@ -28,6 +28,11 @@
 import { type Rewrite } from '../rewrite';
 import type { CompileOptions, CompileResult } from '../program';
 import { type LibraryFragment } from './library';
+import { seeds } from './seeds';
+/** The rewrites of the second phase: a seed a cell writes (decision 098), once no other rule has anything left, so no rule's order changes the text (law L15) and a seed is the place its cell has when it is written. */
+export { seeds };
+/** How many seeds a text may be written in: one a round. */
+export declare const SEED_ROUNDS = 400;
 /** What Normalise reads besides the text: the compile's options, and the library whose lines a piece takes by `use`. */
 export interface NormaliseOptions extends CompileOptions {
     readonly library?: readonly LibraryFragment[];

@@ -29,14 +29,14 @@ description: "Big beat, an original in the manner of the Chemical Brothers: grit
 &up tags="build" map=lin loop=&bar/32 0 .3 1 0
 
 &bd note=36 tags="break" oneshot=1 s=sine loop=A1 pitch=0..24 * &(map=adsr 0 .06 0 0) distort=.5 env=&thump
-&sd note=38 tags="break" s=white hpf=900 distort=.6 crush=7 env=&snap
-&hh note=42 tags="break" s=white hpf=7000 crush=6 env=&click
+&sd seed=0 note=38 tags="break" s=white hpf=900 distort=.6 crush=7 env=&snap
+&hh seed=1 note=42 tags="break" s=white hpf=7000 crush=6 env=&click
 &tb tags="acid" s=saw loop=E2 lpf=120..3600 * &(map=adsr .003 .17 .1 .06) * &accent lpq=14 distort=.3 env=&strike
 &stab tags="riff" s=square loop=E3 distort=.9 lpf=2600 room=.2 env=&(map=adsr .003 .2 .3 .1)
 &siren1 tags="siren" s=sine loop=E5 delaytime=&bar*4/3 delay=.3 delayfeedback=.35 env=&(map=adsr .3 .5 .9 .6)
 &subv tags="sub" s=sine loop=E1 env=&(map=adsr .005 .4 .6 .1)
-&sn tags="build" s=white hpf=1000 distort=.4 env=&(map=adsr 0 .06 0 .03)
-&riser tags="build" s=white lpf=400..8000 * &up lpq=5 crush=8 env=&(map=adsr 1 .5 .9 .5)
+&sn seed=2 tags="build" s=white hpf=1000 distort=.4 env=&(map=adsr 0 .06 0 .03)
+&riser seed=3 tags="build" s=white lpf=400..8000 * &up lpq=5 crush=8 env=&(map=adsr 1 .5 .9 .5)
 
 &sections step=4n &acidBar &riffBar &breakBar &sirenBar &buildBar &subBar
 &song over=&sections step=1m/8 laps=1 label="break · bass · acid · build · riff · all · siren · build · all" [2] [2,5] [0,2,5] 4 [0,1,2,5] [0,1,2,3,5] [0,3] 4 [0,1,2,3,5]

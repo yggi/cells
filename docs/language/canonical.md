@@ -83,6 +83,7 @@ A line of the piece that is a library fragment's line word for word, its comment
 - The lines taken from one fragment are one `from` line, written where the first of them was, their comments kept; a `from` line of that fragment the piece already writes takes the names too.
 - Nothing is taken where it would not sound identical (a fragment whose helper the piece writes otherwise, which the compile refuses, or a template's line, which a `from` line takes only with its arguments).
 - **A chancy cell's seed** (decision 098, #779): a cell with a chance, a choice or a pick among its steps (`x?`, `[a|b]`, `chance=`) that writes no `seed=` is written with one, `seed=n`, `n` its content key as a number, so its draws are the ones it threw: `&ticks step=16n …0? …` → `&ticks seed=4350651875936865 step=16n …`. No edit to what the cell carries then throws the dice again. A cell that writes a seed is left as written.
+- **A noise voice's seed** (decision 098, #932): a voice of `s=white`, `pink` or `brown` that writes no `seed=` is written with its place among the noise voices, `seed=0`, `seed=1`, …, the number its grains were thrown from, so no sample moves; a voice added above one that wrote its own number takes the first number no voice uses. No edit to the text then moves a voice's noise.
 - The library comes with the call, `normalise(source, { resolve, library })`; `npm run normalise` reads the seed library. With none given, Normalise takes nothing.
 
 | written | Normalise writes |
