@@ -66,7 +66,7 @@ Cells runs no foreign code. A host runs a plugin-fragment's code (in Cell studio
 compileSource(text, env, { resolve, plugins: [countercell3] });
 ```
 
-- **The interface:** `fragment` (the id a `from` line names), `fills` (each fill's `lap` for a stream, none for a braid; its `fuel`), `origin`, `cycle` and `stepSeconds` (a stream's clock), `wire`, and `fill(name, lap, args, fuel)`, which answers text or `{ refused }`. It answers synchronously: a host fills ahead and answers from what it has.
+- **The interface:** `fragment` (the id a `from` line names), `fills` (each fill's `lap` for a stream, none for a braid; its `fuel`), `origin`, `cycle` and `stepSeconds` (a stream's clock), `wire`, and `fill(name, lap, args, fuel)`, which answers text or `{ refused }`. It answers synchronously: a host fills ahead and answers from what it has. A `from` line's fills are asked one after another, in the order `fills` names them, whatever order the fragment writes its lines in: a solver whose one search answers several may keep its last answer and give the rest from it (decision 085 §8.1).
 - **Braid fills** are answered when the text is expanded. **Stream fills** are answered lap by lap as the piece plays: the program keeps the host's plugins (`pluginFragments`), so realize, `lawIn` and `lawAt` find them before the built-ins. A host's plugin of a built-in's id stands in for it.
 - **Recorded answers:** a piece file's `answers:` (`answersOf(file)`) are handed as `compileSource(…, { answers })`, and each plays without its code being asked.
 - **The deadline:** a braid fill gets 10 s of wall clock. Past it, the host answers a refusal and drops the instance, never a partial answer (decision 085 §8.2).

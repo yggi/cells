@@ -106,3 +106,41 @@ describe('a braid fill refuses (decision 085 §8, #747, #748)', () => {
     expect(warnings(r).filter((w) => w.includes('refused'))).toEqual(['warning 1: "necklace" refused: 100 slots need more than its fuel, 64 (in "modes")']);
   });
 });
+
+describe('a call site’s fills are asked in its manifest’s order (decision 085 §8.1, #747)', () => {
+  // (a solver: one search answers both voices; it keeps its last answer and gives the second from it)
+  const asked: string[] = [];
+  let searches = 0;
+  let kept: { key: string; upper: string; lower: string } | null = null;
+  const solver: PluginFragment = {
+    id: 'twovoices',
+    fragment: 'twovoices',
+    fills: { upper: { fuel: 1 }, lower: { fuel: 1 } },
+    origin: 0,
+    cycle: 0,
+    stepSeconds: 0,
+    fill: (name, _lap, args) => {
+      asked.push(name);
+      const key = JSON.stringify(args);
+      if (kept?.key !== key) {
+        searches++;
+        kept = { key, upper: '7 9 11', lower: '0 2 4' };
+      }
+      return name === 'upper' ? kept.upper : kept.lower;
+    },
+  };
+  // (the fragment writes its lower voice first, its manifest names its upper first)
+  const TWO = '&upper, &lower from &subject\n&lower fill()\n&upper fill()';
+  const resolveTwo = (id: string) => (id === 'twovoices' ? TWO : null);
+
+  it('in the manifest’s order, whatever order the fragment writes its fills in; one search answers both', () => {
+    const r = compileSource('&upper, &lower from twovoices 0 2 4', undefined, { resolve: resolveTwo, plugins: [solver] });
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toEqual([]);
+    expect(asked).toEqual(['upper', 'lower']);
+    expect(searches).toBe(1);
+    // (and each answer in its own line, as the fragment wrote them)
+    expect(r.cells.get('upper')?.fill).toBeUndefined();
+    expect(r.cells.get('upper')?.units).toHaveLength(3);
+    expect(r.cells.get('lower')?.units).toHaveLength(3);
+  });
+});
