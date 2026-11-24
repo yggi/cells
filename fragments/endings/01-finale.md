@@ -5,7 +5,7 @@ lifted: yggi/jambot packages/engine/src/ending.ts @ b98e69f
 ---
 
 ```cells
-&cadence, &finaleBass, &finalePad, &finaleLead, &finaleDrums from (&half, &bd, &sd, &hh, &rd) &key style=(&synthPop | &techno | &deepHouse | &ambient | &lofi | &funk | &bossaNova | &swingJazz | &electroSwing | &spooky | &kinderlied | &acid | &happyHardcore | &elektro | &darkAmbient | &baroque | &bluesShuffle | &seaShanty | &chiptune | &salsa | &waltz | &march | &tripHop)
+&cadence, &finaleBass, &finalePad, &finaleLead, &finaleDrums from (&half, &bd, &sd, &hh, &rd) &key style=(&synthPop | &techno | &deepHouse | &ambient | &lofi | &funk | &bossaNova | &swingJazz | &electroSwing | &spooky | &waltz | &march)
 &half step=1m*2 0
 &bd, &sd, &hh, &rd from gm_kit
 &cadence over=&key step=&half [4,4####,4#######,4##########] [0,2,4]@3
@@ -36,6 +36,6 @@ A song's last bar, as Jambot's band ends one (`cadence` and `finale`, yggi/jambo
 
 **A song's last section.** The ending is what the outro's end plays (the section kind `outro`, #810): a score gives it two bars, the last bar and the ring, and its parts play these lines there. Jambot plays it in place of the band's own last bar, through its performers, so each part keeps its instrument and its register.
 
-At every style of `styles`, weight 1, as the facet `ending`: Jambot ends the same way at every style. Other endings (a jazz tag, a plagal amen, a dance track's stop on the one) can be placed beside it by style.
+At Jambot's ten presets, weight 1, as the facet `ending`, where Jambot ends so (#720's bound), and at Waltz and March, whose idiom is the same V–I; the other styles find an ending of their own: the stop on the one (`stop`), the tierce de Picardie (`picardy`), the amen (`plagal`), the blues' seventh (`blues_ending`) and the held drone (`drone_out`). Each has this one's heads and signature, so a score changes its ending by its name alone.
 
 **Its signature** (decision 065): `&cadence, &finaleBass, &finalePad, &finaleLead, &finaleDrums from (&half, &bd, &sd, &hh, &rd) &key`, the drums optional, each the General MIDI kit's by default. `&cadence, &finaleBass from finale &key` takes the chords and the bass line.

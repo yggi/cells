@@ -11,7 +11,7 @@ import { STYLES } from './styles';
 import { seedFragments } from './seed';
 
 const SECTIONS = seedFragments('sections');
-const KINDS = ['intro', 'verse', 'chorus', 'groove', 'bridge', 'build', 'drop', 'breakdown', 'outro'] as const;
+const KINDS = ['intro', 'verse', 'chorus', 'groove', 'bridge', 'build', 'drop', 'breakdown', 'outro', 'solo', 'coro', 'mambo'] as const;
 type Kind = (typeof KINDS)[number];
 
 // (yggi/jambot packages/engine/src/form.ts @ c472cf7: ENERGY_OFFSET and barEnergy's build; who rests by kind in
@@ -28,6 +28,10 @@ const offset = (kind: Kind, bar: number): number =>
     drop: 0.3,
     breakdown: -0.45,
     outro: (-0.45 * bar) / 7,
+    // (a style's own, chosen here: a jazz solo, salsa's coro and mambo)
+    solo: 0.05,
+    coro: 0.2,
+    mambo: 0.25,
   })[kind];
 const PLAYS: Readonly<Record<Kind, readonly number[]>> = {
   intro: [0, 1, 2, 3],
@@ -39,6 +43,9 @@ const PLAYS: Readonly<Record<Kind, readonly number[]>> = {
   drop: [0, 1, 2, 3, 4],
   breakdown: [0, 1, 2],
   outro: [0, 1, 2, 3],
+  solo: [0, 1, 3, 4],
+  coro: [0, 1, 2, 3, 4],
+  mambo: [0, 1, 3],
 };
 // (the band's entries in its order, `&band &drums &bass &pad &stab &lead`, as the voices they sound on)
 const VOICES = ['bd', 'bassV', 'padV', 'keysV', 'leadV'];
@@ -102,7 +109,7 @@ function wanted(kind: Kind, bar: number): Record<string, number> {
 }
 
 describe('the section kinds (#810 rung 2)', () => {
-  it('are nine fragments of the facet section, each two heads and the song’s intensity its main parameter', () => {
+  it('are twelve fragments of the facet section (and a style’s own: a solo, a coro, a mambo), each two heads and the song’s intensity its main parameter', () => {
     expect(SECTIONS.map((f) => f.id)).toEqual([...KINDS]);
     for (const f of SECTIONS) {
       expect(f.association.map((a) => a.facet)).toEqual(['section']);
@@ -115,7 +122,7 @@ describe('the section kinds (#810 rung 2)', () => {
     for (const { point } of STYLES) expect(repository.query(point, 5, {}, { facet: 'section' })).toEqual([]);
   });
 
-  it('play a plan of all nine through the default band: each section its kind’s intensity and players, bar by bar', () => {
+  it('play a plan of all twelve through the default band: each section its kind’s intensity and players, bar by bar', () => {
     const played = playedPlan(
       KINDS.map((k) => `&${k}, &${k}Plays from ${k} &song`),
       KINDS.map((k) => `&${k}`).join(' '),
@@ -138,10 +145,10 @@ const sectionsOf = (text: string, head: string): Kind[] =>
     .map((r) => r.slice(1) as Kind);
 
 describe('the song forms (#810 rung 3)', () => {
-  const FORMS = ['verse_chorus', 'build_drop', 'groove_breakdown', 'head_solos_head', 'strophic', 'vamp', 'binary'];
+  const FORMS = ['verse_chorus', 'build_drop', 'groove_breakdown', 'head_solos_head', 'strophic', 'vamp', 'binary', 'son_montuno'];
   const headOf = (f: { text: string }) => /^&(\w+), &\w+Plays from &song/.exec(f.text)![1]!;
 
-  it('are seven fragments of the facet song, each two heads, its sections section kinds taken by name', () => {
+  it('are eight fragments of the facet song, each two heads, its sections section kinds taken by name', () => {
     expect(SONGS.map((f) => f.id)).toEqual(FORMS);
     for (const f of SONGS) {
       expect(new Set(f.association.map((a) => a.facet))).toEqual(new Set(['song']));
@@ -168,6 +175,7 @@ describe('the song forms (#810 rung 3)', () => {
       kinderlied: 'strophic',
       funk: 'vamp',
       baroque: 'binary',
+      salsa: 'son_montuno',
     });
   });
 

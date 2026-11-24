@@ -20,15 +20,15 @@ const SONG_BENCH = '&bar meter("4/4") step=120bpm\n&song .55';
 const FORMS = seedFragments('forms').map((f) => ({ ...f, bench: FORM_BENCH }));
 const SONGS = seedFragments('songs').map((f) => ({ ...f, bench: SONG_BENCH }));
 /**
- * How many of the 186 have a reference: those whose forms written are no longer than the lines written out. The other
+ * How many of the 211 have a reference: those whose forms written are no longer than the lines written out. The other
  * 6 are rotations and retrogrades that change every inner slot (AABA's rotation, A B A A, `base=&chorus = &b &a` beside
  * `&chorus step=8n &a &b &a &a`).
  */
-const REFERRED = 180;
+const REFERRED = 205;
 const OPTIONS = (bench: string) => ({ workbench: bench, operators: FORM_OPERATORS, resolve: resolveSeed });
 
 /**
- * Each seed's variations: 186 in all, 42 of the forms and 144 of the songs. A form of two letters has none: both are
+ * Each seed's variations: 211 in all, 42 of the forms and 169 of the songs. A form of two letters has none: both are
  * anchors. The rounded binary's bridge moved up (`&bridge^1`) plays its close (`&call^-2`): a slot given either is one.
  */
 const COUNTS: Record<string, number> = {
@@ -45,6 +45,7 @@ const COUNTS: Record<string, number> = {
   strophic: 8,
   vamp: 30,
   binary: 3,
+  son_montuno: 25,
 };
 
 const compiled = (bench: string, text: string) => {
@@ -102,10 +103,10 @@ describe('Vary on a form and a song plan (decision 052, point 10)', () => {
     });
 
   // (each fragment's in under 15 ms: a wall-clock ceiling, in `timing.slow.test.ts`)
-  it('gives 186 in all', () => {
+  it('gives 211 in all', () => {
     let n = 0;
     for (const { text, bench } of [...FORMS, ...SONGS]) n += variations(text, OPTIONS(bench)).length;
-    expect(n).toBe(186);
+    expect(n).toBe(211);
   });
 
   it('leaves a form be where only the line operators are asked', () => {
@@ -115,7 +116,7 @@ describe('Vary on a form and a song plan (decision 052, point 10)', () => {
 });
 
 describe("a form's variation by reference", () => {
-  it('plays what its variation plays, read beside its source, its partner beside it: each of the 186 that has one', () => {
+  it('plays what its variation plays, read beside its source, its partner beside it: each of the 211 that has one', () => {
     let n = 0;
     let referred = 0;
     for (const { id, text, bench } of [...FORMS, ...SONGS])
@@ -130,7 +131,7 @@ describe("a form's variation by reference", () => {
         expect(played(bench, kept, 'varied'), `${id} ${v.by}`).toBe(played(bench, v.apply(text), cells[0]!));
         if (cells[1]) expect(played(bench, kept, 'variedPartner'), `${id} ${v.by}`).toBe(played(bench, v.apply(text), cells[1]));
       }
-    expect([n, referred]).toEqual([186, REFERRED]);
+    expect([n, referred]).toEqual([211, REFERRED]);
   });
 
   it('writes only the slots it changes', () => {

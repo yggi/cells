@@ -147,6 +147,7 @@ const OUT_OF_REACH: Record<Exclude<Action, 'renaming'>, readonly string[]> = {
     'midi-out',
     'funk',
     'drumtrack',
+    'ending',
     'twelve',
     'aksak',
     'patchbay',
