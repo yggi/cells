@@ -18,6 +18,7 @@ import {
   KINDERLIED,
   LO_FI,
   nearestStyle,
+  POP,
   SPOOKY,
   STYLE_FRAGMENTS,
   STYLES,
@@ -25,6 +26,7 @@ import {
   SWING_JAZZ,
   SYNTH_POP,
   TECHNO,
+  within,
 } from './styles';
 
 const AXIS_KEYS = ['sync', 'harm', 'bite', 'mood'] as const;
@@ -62,6 +64,8 @@ const PRESETS = {
   waltz: stylePoint('waltz'),
   march: stylePoint('march'),
   tripHop: stylePoint('tripHop'),
+  // (a genre with a breadth, decision 106, #947)
+  pop: POP,
 };
 const styles = STYLE_FRAGMENTS.find((f) => f.id === 'styles')!;
 const named = (name: string) => `&${name} from styles\n&style style=&${name}`;
@@ -133,6 +137,7 @@ describe('STYLES, the presets a frontend takes', () => {
       ['Waltz', 150],
       ['March', 120],
       ['Trip-hop', 80],
+      ['Pop', 116],
     ]);
   });
 
@@ -145,7 +150,7 @@ describe('STYLES, the presets a frontend takes', () => {
   it('find a style by its id, and say which there are for one they lack', () => {
     expect(stylePoint('funk')).toBe(FUNK);
     expect(() => stylePoint('polka')).toThrow(
-      /no style polka \(there are synthPop, techno, .*kinderlied, acid, happyHardcore, elektro, darkAmbient, baroque, bluesShuffle, seaShanty, chiptune, salsa, waltz, march, tripHop\)/,
+      /no style polka \(there are synthPop, techno, .*kinderlied, acid, happyHardcore, elektro, darkAmbient, baroque, bluesShuffle, seaShanty, chiptune, salsa, waltz, march, tripHop, pop\)/,
     );
   });
 
@@ -161,12 +166,47 @@ describe('STYLES, the presets a frontend takes', () => {
   });
 });
 
+describe('a style’s breadth (decision 106, #947)', () => {
+  const style = (id: string) => STYLES.find((s) => s.id === id)!;
+
+  it('is its reach on each axis, as written; a style written with none is a point', () => {
+    expect(style('pop').reach).toEqual({ sync: 0.15, harm: 0.2, bite: 0.25, mood: 0.3 });
+    expect(style('synthPop').reach).toEqual({ sync: 0.1, harm: 0.1, bite: 0.1, mood: 0.1 });
+    expect(STYLES.filter((s) => s.reach).map((s) => s.id)).toEqual(['synthPop', 'pop']);
+    // (the breadth is no axis: the point, what a query reads, is the centre alone)
+    expect(Object.keys(style('pop').point)).toEqual(AXIS_KEYS);
+  });
+
+  it('holds a sub-genre within its genre: Synth-pop’s area inside Pop’s on every axis, and narrower', () => {
+    expect(within(style('synthPop'), style('pop'))).toBe(true);
+    for (const a of AXIS_KEYS) expect(style('synthPop').reach![a]!, a).toBeLessThan(style('pop').reach![a]!);
+    // (it fires: Pop is not within Synth-pop, nor a style outside Pop's area, nor Synth-pop moved past Pop's edge on one axis)
+    expect(within(style('pop'), style('synthPop'))).toBe(false);
+    expect(within(style('techno'), style('pop'))).toBe(false);
+    expect(within({ ...style('synthPop'), point: { ...SYNTH_POP, mood: 0.35 } }, style('pop'))).toBe(false);
+    // (a style with no breadth is a point: within itself, and within a genre whose area holds it)
+    expect(within(style('funk'), style('funk'))).toBe(true);
+    expect(within(style('kinderlied'), style('pop'))).toBe(false);
+  });
+
+  it('holds, of the other twenty-three, Synth-pop and Deep house within Pop, and no other', () => {
+    // (a box on each axis: Deep house, a point at sync .35 harm .55 bite .65 mood .65, is inside it; Sea shanty, at sync .1, is not)
+    expect(STYLES.filter((s) => s.id !== 'pop' && within(s, style('pop'))).map((s) => s.id)).toEqual(['synthPop', 'deepHouse']);
+  });
+
+  it('moves no query: the styles are found at their centres, a breadth read by none (#644)', () => {
+    const repo = createRepository(STYLE_FRAGMENTS);
+    expect(repo.query(POP, 1, {}, { facet: 'style' }).map((f) => f.distance)).toEqual([0]);
+    expect(nearestStyle(POP, { k: 2 }).map((n) => n.style.id)).toEqual(['pop', 'synthPop']);
+  });
+});
+
 describe('nearestStyle, the styles nearest a point', () => {
   it('finds each style itself at distance 0, first', () => {
     for (const s of STYLES) expect(nearestStyle(s.point, { k: 1 }), s.id).toEqual([{ style: s, distance: 0 }]);
   });
 
-  it('ranks every style by pointDistance, nearest first: over all 253 pairs, each the other’s distance', () => {
+  it('ranks every style by pointDistance, nearest first: over all 276 pairs, each the other’s distance', () => {
     for (const a of STYLES) {
       const ranked = nearestStyle(a.point);
       expect(ranked.map((n) => n.style.id).sort(), a.id).toEqual(STYLES.map((s) => s.id).sort());
@@ -176,14 +216,14 @@ describe('nearestStyle, the styles nearest a point', () => {
       ).toEqual([...ranked.map((n) => n.distance)].sort((x, y) => x - y));
       for (const { style, distance } of ranked) expect(distance, `${a.id}→${style.id}`).toBe(pointDistance(a.point, style.point));
     }
-    // (253 distinct pairs of the twenty-three, each measured the same both ways)
+    // (276 distinct pairs of the twenty-four, each measured the same both ways)
     let pairs = 0;
     for (const [i, a] of STYLES.entries())
       for (const b of STYLES.slice(i + 1)) {
         pairs++;
         expect(pointDistance(a.point, b.point), `${a.id}–${b.id}`).toBe(pointDistance(b.point, a.point));
       }
-    expect(pairs).toBe(253);
+    expect(pairs).toBe(276);
   });
 
   it('takes k, axis weights, and a frontend’s own styles with an axis added', () => {

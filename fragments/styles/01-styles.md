@@ -4,8 +4,8 @@ source: seed
 ---
 
 ```cells
-* from style=(&synthPop | &techno | &deepHouse | &ambient | &lofi | &funk | &bossaNova | &swingJazz | &electroSwing | &spooky | &kinderlied | &acid | &happyHardcore | &elektro | &darkAmbient | &baroque | &bluesShuffle | &seaShanty | &chiptune | &salsa | &waltz | &march | &tripHop)
-&synthPop map=style label="Synth-pop" step=108bpm sync=.3 harm=.45 bite=.55 mood=.5
+* from style=(&synthPop | &techno | &deepHouse | &ambient | &lofi | &funk | &bossaNova | &swingJazz | &electroSwing | &spooky | &kinderlied | &acid | &happyHardcore | &elektro | &darkAmbient | &baroque | &bluesShuffle | &seaShanty | &chiptune | &salsa | &waltz | &march | &tripHop | &pop)
+&synthPop map=style label="Synth-pop" step=108bpm sync=.3 ± .1 harm=.45 ± .1 bite=.55 ± .1 mood=.5 ± .1
 &techno map=style label="Techno" step=130bpm sync=.12 harm=0 bite=1 mood=.4
 &deepHouse map=style label="Deep house" step=122bpm sync=.35 harm=.55 bite=.65 mood=.65
 &ambient map=style label="Ambient" step=72bpm sync=.05 harm=.3 bite=0 mood=.9
@@ -28,11 +28,14 @@ source: seed
 &waltz map=style label="Waltz" step=150bpm sync=0 harm=.7 bite=.3 mood=.9
 &march map=style label="March" step=120bpm sync=0 harm=.1 bite=.75 mood=.7
 &tripHop map=style label="Trip-hop" step=80bpm sync=.7 harm=.2 bite=.2 mood=.25
+&pop map=style label="Pop" step=116bpm sync=.3 ± .15 harm=.4 ± .2 bite=.5 ± .25 mood=.7 ± .3
 ```
 
-The library of styles (decision 063 §3, #391, #537): the twenty-three preset styles, each a `map=style` cell at its point, its axes by name (cells' table of axes, `AXES`), its display name its `label=` and its default tempo its `step=`. They are Jambot's eight from the prototype, then Electro swing and Spooky (#349), then Kinderlied (yggi/jambot#547), whose 96 bpm is Twinkle's, then four read from the examples (#572, #542): Acid, from *Acid-Cell* (its 303, its riff and its beat), Happy hardcore, from *Hypercell*, and Elektro, from *Zelluläre Aktivität*. Their moods are placed by hand: Acid's minor hypnotic and tense (.35), Happy hardcore's euphoric though it turns on A minor (.9: the mood goes beyond the mode), Elektro's cool (.45). Dark ambient, from *Ghost-Cells*, is the bottom of the mood axis (.1): a minor drone made menacing. Then four more cut from the examples (#542): Baroque, from the Bach pieces, Blues shuffle, from *Swing blues*, Sea shanty, from *Drunken Sailor*, and Chiptune, from *Korobeiniki*; and four placed by hand, with parts written for them (#542): Salsa (the clave's off-beats, the tumbao, mixolydian), Waltz (where 3/4 and the `waltz` motif already sat), March (2/4, stamping and bright) and Trip-hop (.7 .2 .2 .25, the offbeat, static, paddy and dark corner no style held).
+The library of styles (decision 063 §3, #391, #537): the twenty-four preset styles, each a `map=style` cell at its point, its axes by name (cells' table of axes, `AXES`), its display name its `label=` and its default tempo its `step=`. They are Jambot's eight from the prototype, then Electro swing and Spooky (#349), then Kinderlied (yggi/jambot#547), whose 96 bpm is Twinkle's, then four read from the examples (#572, #542): Acid, from *Acid-Cell* (its 303, its riff and its beat), Happy hardcore, from *Hypercell*, and Elektro, from *Zelluläre Aktivität*. Their moods are placed by hand: Acid's minor hypnotic and tense (.35), Happy hardcore's euphoric though it turns on A minor (.9: the mood goes beyond the mode), Elektro's cool (.45). Dark ambient, from *Ghost-Cells*, is the bottom of the mood axis (.1): a minor drone made menacing. Then four more cut from the examples (#542): Baroque, from the Bach pieces, Blues shuffle, from *Swing blues*, Sea shanty, from *Drunken Sailor*, and Chiptune, from *Korobeiniki*; and four placed by hand, with parts written for them (#542): Salsa (the clave's off-beats, the tumbao, mixolydian), Waltz (where 3/4 and the `waltz` motif already sat), March (2/4, stamping and bright) and Trip-hop (.7 .2 .2 .25, the offbeat, static, paddy and dark corner no style held).
 
-This file is the presets' one source: `STYLES` (`src/repository/styles.ts`) reads each as `{ id, name, point, tempo }`, in this order, and a frontend takes its presets from there. Only the library reads the `step=`: `style=` and a query read the point, so a style has no tempo (decision 037, D6).
+Then Pop (#947, decision 106), the first with a breadth: a reach on each axis, how far the genre spreads around its centre (`sync=.3 ± .15`). Its centre is mostly straight, triads and a seventh, middling bite and bright; its breadth runs from the ballad to dance pop on sync and bite, and from the bittersweet to the euphoric on mood; its 116 bpm is a pop song's middle. Synth-pop is its sub-genre: its point where it was, ± .1 on each axis, an area inside Pop's (`within`). Deep house, a point, lies inside Pop's area too. A query reads the point, the centre, alone (#644).
+
+This file is the presets' one source: `STYLES` (`src/repository/styles.ts`) reads each as `{ id, name, point, tempo }`, and its `reach` where it writes one, in this order, and a frontend takes its presets from there. Only the library reads the `step=`: `style=` and a query read the point, so a style has no tempo (decision 037, D6).
 
 A score names its section's style by one of them where the section sits exactly on it, and by its numbers or a mix of them where it doesn't:
 

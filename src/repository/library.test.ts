@@ -50,8 +50,8 @@ const ranked = (found: ReturnType<typeof library.query>) => found.map((f) => [f.
 
 describe('the library', () => {
   const facetsOf = (f: Fragment) => [...new Set(f.association.map((wp) => wp.facet))];
-  it('is the law five_to_twelve (#772), the twelve meters (#902: bar, three style meters, the odd ones), the thirty-three rhythms (#799: the breathing pulse), the seventeen bass lines, the seventeen harmonies, the twenty-nine instruments, the vibrato, the envelopes and the metric accent (#799), the nine modes, the five melodic scales (#719), the eight fills and the four counts (#718, #720), the six endings (#720), the five performers, the three stab lines, the fifty-six motifs, the six forms, the twelve section kinds and the eight song forms (#810), the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: two hundred and forty-five (#572, #542, #540, #646, #719, #718, #720)', () => {
-    expect(LIBRARY).toHaveLength(245);
+  it('is the law five_to_twelve (#772), the twelve meters (#902: bar, three style meters, the odd ones), the thirty-three rhythms (#799: the breathing pulse), the seventeen bass lines, the nineteen harmonies (#947: Pop’s two), the twenty-nine instruments, the vibrato, the envelopes and the metric accent (#799), the nine modes, the five melodic scales (#719), the eight fills and the four counts (#718, #720), the six endings (#720), the five performers, the three stab lines, the fifty-six motifs, the six forms, the twelve section kinds and the eight song forms (#810), the band, the styles and the eight modules, every point associated as its facet, the bell and scale as two: two hundred and forty-seven (#572, #542, #540, #646, #719, #718, #720, #947)', () => {
+    expect(LIBRARY).toHaveLength(247);
     expect(LIBRARY.filter((f) => facetsOf(f).join() === 'meter')).toEqual(METER_FRAGMENTS);
     // (E31's eight grooves are found as their fills too, #718)
     expect(LIBRARY.filter((f) => facetsOf(f)[0] === 'rhythm')).toEqual(RHYTHM_FRAGMENTS);
@@ -92,7 +92,7 @@ describe('the library', () => {
       FORM_FRAGMENTS.length,
       BAND_FRAGMENTS.length,
       STYLE_FRAGMENTS.length,
-    ]).toEqual([12, 33, 17, 17, 29, 3, 9, 5, 8, 4, 5, 3, 56, 6, 1, 1]);
+    ]).toEqual([12, 33, 17, 19, 29, 3, 9, 5, 8, 4, 5, 3, 56, 6, 1, 1]);
   });
 
   it('resolves no retired id, and a seed id as its own text (#196, #643)', () => {
@@ -290,6 +290,8 @@ describe('a seed placed for one preset (#404)', () => {
   };
   /** The progressions written for the presets whose first harmony missed (#540), and axis_progression's point at Synth-pop. */
   const BEFORE_540 = ['ninth_vamp', 'ninth_loop', 'turnaround', 'ii_v_i', 'minor_swing'];
+  /** Pop's progressions (#947), placed after #540: the witness's library, the one before #540, lacks them too. */
+  const AFTER_540 = ['authentic_cadence', 'four_chord_pop'];
   const withoutSynthPopAxis = (fragments: readonly Fragment[]) =>
     fragments.map((f) =>
       f.id === 'axis_progression' ? { ...f, association: f.association.filter((wp) => !(wp.facet === 'harmony' && plain(wp.point, ALL_PRESETS['Synth-pop']!) === 0)) } : f,
@@ -309,7 +311,7 @@ describe('a seed placed for one preset (#404)', () => {
     // so the witness would count it placed for Synth-pop; the witness is the library before #540)
     const unfilled = (fragments: readonly Fragment[]) =>
       fragments
-        .filter((f) => !BEFORE_540.includes(f.id))
+        .filter((f) => !BEFORE_540.includes(f.id) && !AFTER_540.includes(f.id))
         .map((f) => (f.id === 'haunted_progression' ? { ...f, association: f.association.filter((wp) => plain(wp.point, SPOOKY) < 0.1) } : f));
     expect(leaks(weighted('dark_cadence', 1))).toEqual([]);
     expect(leaks(unfilled(withoutSynthPopAxis(weighted('dark_cadence', 1))))).toEqual(

@@ -17,12 +17,17 @@ import { seedFragments } from './seed';
 /** The styles built so far: the collection `styles`, associated as the facet `style` at each of its points. */
 export const STYLE_FRAGMENTS: readonly Fragment[] = seedFragments('styles');
 
-/** One preset style: its id (its cell's name), its display name, its point on the axes and its default tempo in bpm. */
+/**
+ * One preset style: its id (its cell's name), its display name, its point on the axes, its default tempo in bpm, and its
+ * breadth where it has one: its reach on each axis it is written with (`sync=.3 ± .2`, decision 089 §6, 106), how far a
+ * genre spreads around its centre. A style written with none is a point. No query reads the breadth yet (#644).
+ */
 export interface Style {
   readonly id: string;
   readonly name: string;
   readonly point: StylePoint;
   readonly tempo: number;
+  readonly reach?: StylePoint;
 }
 
 /** A style cell of the collection as a style; it throws where the collection breaks its own form (a test holds it). */
@@ -37,7 +42,19 @@ function styleOf(cell: ReturnType<typeof parse>['cells'][number]): Style {
     name: cell.label,
     point: Object.fromEntries(AXIS_NAMES.map((a, i) => [a, values[i]!])),
     tempo: Math.round(cell.step.perSecond * 60 * 1e9) / 1e9,
+    ...(cell.reach ? { reach: { ...cell.reach } } : {}),
   };
+}
+
+/**
+ * Whether a style lies within another (decision 106): on every axis, its area (its point ± its reach, a point where it has
+ * none) inside the other's. A sub-genre lies within its genre: Synth-pop within Pop.
+ */
+export function within(inner: Style, outer: Style): boolean {
+  return AXIS_NAMES.every((a) => {
+    const [c, r, C, R] = [inner.point[a]!, inner.reach?.[a] ?? 0, outer.point[a]!, outer.reach?.[a] ?? 0];
+    return c - r >= C - R - 1e-9 && c + r <= C + R + 1e-9;
+  });
 }
 
 /** The preset styles, in the collection's order: what a frontend offers as its presets. */
@@ -85,3 +102,4 @@ export const SWING_JAZZ = stylePoint('swingJazz');
 export const ELECTRO_SWING = stylePoint('electroSwing');
 export const SPOOKY = stylePoint('spooky');
 export const KINDERLIED = stylePoint('kinderlied');
+export const POP = stylePoint('pop');

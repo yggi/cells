@@ -250,6 +250,8 @@ describe('the forms', () => {
       waltz: 'sentence',
       march: 'rounded_binary',
       tripHop: 'call_and_answer',
+      // (#947: Pop finds Synth-pop's, its sub-genre's, beside it)
+      pop: 'sentence',
     });
   });
 

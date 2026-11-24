@@ -90,7 +90,7 @@ Planned modules: `engine/compiler/declare`, `engine/dough-params`, `engine/examp
 
 Exported by its entry point, `src/library.ts` (59): `AXES`, `AXIS_NAMES`, `Axis`, `CENTRE`, `DOUGH_PARAMS`, `DOUGH_SOURCES`, `DRUM_ROLES`, `EXAMPLES`, `Example`, `ExampleKey`, `FACETS`, `FEEL_PARTS`, `FoundInstrument`, `GM_KIT`, `INSTRUMENT_REACH`, `LIBRARY`, `MIDI_FILE`, `NOTE_NAMES`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SCALES`, `SECTION_KINDS`, `SECTION_TYPES`, `SEED_FILES`, `SLOTS`, `STYLES`, `Style`, `TONAL_SCALES`, `TUTORIAL`, `TagKind`, `VOICE_KIT`, `VoicedPart`, `backbeatOf`, `bandAt`, `bandLine`, `bjorklund`, `canonicalTags`, `fromId`, `headOf`, `instrumentsAt`, `isLibraryFragment`, `kitVoiceOf`, `midiOf`, `mod`, `modeBrightness`, `modeName`, `nearestStyle`, `noteName`, `parseTag`, `pitchHue`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `tagKind`, `tagName`, `usesOf`.
 
-On the root index today (24): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example`, `ExampleKey`, `FoundInstrument`, `LIBRARY`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SLOTS`, `STYLES`, `Style`, `VoicedPart`, `bandAt`, `instrumentsAt`, `nearestStyle`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `usesOf`.
+On the root index today (25): `AXES`, `AXIS_NAMES`, `Axis`, `EXAMPLES`, `Example`, `ExampleKey`, `FoundInstrument`, `LIBRARY`, `NearStyle`, `PARTS`, `PERFORMER_VOICES`, `PartUse`, `SLOTS`, `STYLES`, `Style`, `VoicedPart`, `bandAt`, `instrumentsAt`, `nearestStyle`, `resolveBand`, `resolveSeed`, `resolverOf`, `scoreStyle`, `usesOf`, `within`.
 
 ### What the frontends reach by a module path
 
