@@ -52,6 +52,24 @@ The walk is Jambot's by the owner's ruling on #313 ("no attraction"), and #571's
 
 My reading: A with C's tuning for the part inside a song. The station's wandering is state, and a second implementation of the walk in the language would be the duplicate this epic exists to remove; what the language is good at is the offsets, and #883 and #896 just made them a chain. Not measured here: ramps (`map=lin`) between the walkers' holds, the walkers' weights (the spectrum of #571's table), and the music the band plays at a wandering style.
 
+## Built: A with C's tuning (the `wander` module, 2026-11-24)
+
+The owner chose A and C (2026-11-24: "carefully go ahead with A and C … whatever we do should point in the direction of generalization and abstraction, not special-casing"), and filed B as [#929](https://github.com/yggi/cells/issues/929), the walk as a generator. What was built is a module, not a radio:
+
+- **`wander`** (`fragments/modules/09-wander.md`), beside `lfo` and `sh`: six noises an octave apart from its clock, each a value drawn afresh at its step and ramped (`map=lin`) to the next, summed (decision 079) with the slowest weighing most (1, 2, 4, 8, 16, 32 parts of 63). Any parameter can read it; nothing in it is the radio's. The Radio example's three hand-written walkers are now `&drift from wander`.
+- **What tuning found** (the Radio's `bite`, window ±.35, 3 hours, bite read at each bar): *held* values jump by up to .54 a bar whatever their weights; *ramping* them alone left the jump at each lap's end, since a braid's last value holds and "starting again is a step" (`rampedSeries`), so a ramp needs a lap long enough that the seam is rare: 256 draws a lap, an hour or more at a section. Weights an octave doubled (a power falling as 1 / f², a random walk's, cut at the slowest octave) give the memory; equal weights, pink noise, give 3 sections.
+
+| the bite of | largest change a bar | remembers (sections) | rms change over 10 min / 1 h | sd |
+|---|---|---|---|---|
+| the example's drift (8, 64, 256 bars held, .5 .3 .2) | .54 | 1.4 | .22 / .22 | .15 |
+| six octaves held, alike | .41 | 3.0 | .15 / .15 | .10 |
+| six octaves ramped, alike (256 draws a lap) | .18 | 3.6 | .12 / .13 | .09 |
+| **`wander`: six octaves ramped, slow-weighted** | **.012** | **136** | .16 / .22 | .14 |
+
+(One run of 3 hours each, the module's seeds written; the walk's largest change at entropy 0.3 is .03 a section, .004 a bar glided over 8 bars as Jambot does, and at entropy 1 .0125 a bar; it remembers itself 262–393 sections at 0.3.) The rms change does not grow: it is bounded, it has a home, the window's centre. That is A: the station's position is a host's, set by the sliders (`free(.55, 0..1)`), and this moves the style around it.
+
+- **A gap this left, and the generalization it points at.** `wander` taken for four axes would move them together: its six seeds are written (1 to 6), and cells that write the same seed draw alike (decision 098 §4). A template can't take a seed, since `seed=&s` is refused (a build-time number a cell can't stand for, `NUMBER_PLACES.seed` is `BUILT`); decision 093 lets a cell that is one number fill the arguments of `even` alone. The general form is *a number read as the piece is built may be a cell wherever the language reads one*: `seed=`, `shift=`, `stride=`, `cycle=`, `step=&bar*n`. Filed apart as [#930](https://github.com/yggi/cells/issues/930); the module takes one seed today. The other: a ramp's last step holds and the next lap starts as a step, which is why `wander` writes laps of 256 draws, [#931](https://github.com/yggi/cells/issues/931).
+
 ## Bounds
 
 - `npm run radio -- [--hours 3] [--seeds 5] [--reach 3.5] [--json]`; the run takes seconds. `--reach` is the window's half-width in steps of the walk.
