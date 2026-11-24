@@ -227,9 +227,11 @@ export class LineScanner {
     const len = Math.max(1, /^[^\s,)\]]*/.exec(this.text.slice(this.i))![0].length);
     const how = ranged ? 'a range moved by cells' : 'a cell';
     this.fail(
-      place.cell.startsWith(BUILT)
-        ? `${place.form} is read as the piece is built: a number, or free(v, lo..hi), whose slider compiles it again — ${how} moves only a number read while the piece plays (decision 078)`
-        : `${place.form} takes a number, or free(v, lo..hi), and ${how} isn't read here: ${place.cell.replace(/^no: /, '')} (decision 078)`,
+      place.fills
+        ? `${place.form} is read as the piece is built: a number, a cell that is one number, or free(v, lo..hi), whose slider compiles it again — ${how} moves only a number read while the piece plays (decision 078)`
+        : place.cell.startsWith(BUILT)
+          ? `${place.form} is read as the piece is built: a number, or free(v, lo..hi), whose slider compiles it again — ${how} moves only a number read while the piece plays (decision 078)`
+          : `${place.form} takes a number, or free(v, lo..hi), and ${how} isn't read here: ${place.cell.replace(/^no: /, '')} (decision 078)`,
       this.i,
       len,
     );
