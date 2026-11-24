@@ -26,7 +26,8 @@ Syncopation and harmony are left to sliders (`free(…)`), for a hand to set, an
 &stabline over=&harm step=2n ~ [0,2,4]
 &leadline over=&key step=8n 4 ~ 3 2 0@4
 &mine map=style sync=free(.3, 0..1) harm=free(.45, 0..1) bite=free(.55, 0..1) ± free(.35, 0..0.5) * &drift mood=.5
-&drift from wander
+&section step=1m/8 0
+&drift from wander(clock=&section)
 &style style=&mine
 ```
 

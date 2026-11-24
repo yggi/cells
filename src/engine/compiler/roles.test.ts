@@ -30,7 +30,7 @@ describe('the roles an attribute acts on, over every example (#782)', () => {
         "clock + driven + motor": 3,
         "clock + law": 6,
         "clock + motor": 5,
-        "driven": 420,
+        "driven": 427,
         "driven + section": 68,
         "driven + selector": 13,
         "driven + tape": 6,

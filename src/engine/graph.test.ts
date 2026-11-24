@@ -125,6 +125,7 @@ describe('a name written in a form that reads it is one wire (#737, #618)', () =
     const has = (key: string, from: string, to: string, port: string) => graph(key).some((e) => e.from === cellId(from) && e.to === cellId(to) && e.port === port);
     // (the drift is the seed's wander module: its six octaves, each a term of the sum)
     for (let k = 0; k < 6; k++) expect(has('radio', `drift_o${k}`, 'drift', 'braid'), `octave ${k}`).toBe(true);
+    expect(has('radio', 'section', 'drift_o0', 'step')).toBe(true);
     expect(has('radio', 'mine', 'style', 'style')).toBe(true);
     expect(has('twelve', 'lean', 'bar', 'bend')).toBe(true);
   });
