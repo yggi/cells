@@ -3,7 +3,7 @@ import { type Fragment, type StylePoint } from './fragments';
 export declare const STYLE_FRAGMENTS: readonly Fragment[];
 /**
  * One preset style: its id (its cell's name), its display name, its point on the axes, its default tempo in bpm, and its
- * breadth where it has one: its reach on each axis it is written with (`sync=.3 ± .2`, decision 089 §6, 106), how far a
+ * breadth where it has one: its reach on each axis it is written with (`sync=.3 ± .2`, decision 089 §6, 107), how far a
  * genre spreads around its centre. A style written with none is a point. No query reads the breadth yet (#644).
  */
 export interface Style {
@@ -14,7 +14,7 @@ export interface Style {
     readonly reach?: StylePoint;
 }
 /**
- * Whether a style lies within another (decision 106): on every axis, its area (its point ± its reach, a point where it has
+ * Whether a style lies within another (decision 107): on every axis, its area (its point ± its reach, a point where it has
  * none) inside the other's. A sub-genre lies within its genre: Synth-pop within Pop.
  */
 export declare function within(inner: Style, outer: Style): boolean;
