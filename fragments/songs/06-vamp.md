@@ -4,7 +4,7 @@ source: seed
 ---
 
 ```cells
-&vamp, &vampPlays from &song style=(&funk | &salsa)
+&vamp, &vampPlays from &song style=&funk
 &vamp &intro &groove &groove &bridge &groove &breakdown &groove &outro
 &vampPlays &introPlays &groovePlays &groovePlays &bridgePlays &groovePlays &breakdownPlays &groovePlays &outroPlays
 &intro, &introPlays from intro &song
@@ -22,6 +22,6 @@ A song form (#810): its sections in order, each a section kind taken by name (`f
 
 It ends where its last section ends, and comes round: a song is its form's length, so a new one starts at a section boundary (yggi/jambot#547 rung 5).
 
-Where the vamp is the song: Funk and Salsa, one groove held long, broken by a bridge and a breakdown (funk's break, salsa's mambo and montuno). Each of those styles finds it first, at its own point (`npm run coverage -- --facet song`; the owner, 2026-11-09: "form follows idiom. same for sections").
+Where the vamp is the song: Funk, one groove held long, broken by a bridge and a breakdown (funk's break); Salsa finds its own form, `son_montuno`. Funk finds it first, at its own point (`npm run coverage -- --facet song`; the owner, 2026-11-09: "form follows idiom. same for sections").
 
 **Its signature** (decision 065): `&vamp, &vampPlays from &song`. `&vamp, &vampPlays from vamp &song` takes a copy of it, `&song` its main argument, the song's intensity (`&song .55`).

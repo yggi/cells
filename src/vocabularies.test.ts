@@ -58,7 +58,7 @@ describe('the library’s section kinds and facets', () => {
     const ids = files.map((f) => /^id: (.+)$/m.exec(readFileSync(new URL(`../fragments/sections/${f}`, import.meta.url), 'utf8'))![1]!);
     expect(SECTION_KINDS).toEqual(ids);
     expect(SECTION_KINDS).toEqual(expect.arrayContaining([...SECTION_TYPES]));
-    expect(SECTION_KINDS).toHaveLength(9);
+    expect(SECTION_KINDS).toHaveLength(12);
   });
 
   it('list every facet a fragment is associated as, each once, and no other', () => {

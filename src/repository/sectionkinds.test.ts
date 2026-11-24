@@ -7,8 +7,8 @@ import { SECTION_KINDS } from './library';
 const isSectionKind = (v: unknown): boolean => typeof v === 'string' && SECTION_KINDS.includes(v);
 
 describe('the section kinds', () => {
-  it('are the nine fragments of the facet section, and nothing else is one', () => {
-    expect([...SECTION_KINDS].sort()).toEqual(['breakdown', 'bridge', 'build', 'chorus', 'drop', 'groove', 'intro', 'outro', 'verse']);
+  it('are the twelve fragments of the facet section, and nothing else is one', () => {
+    expect([...SECTION_KINDS].sort()).toEqual(['breakdown', 'bridge', 'build', 'chorus', 'coro', 'drop', 'groove', 'intro', 'mambo', 'outro', 'solo', 'verse']);
     expect(['verse', 'chorus', 'outro'].every(isSectionKind)).toBe(true);
     expect([isSectionKind('coda'), isSectionKind(''), isSectionKind(3), isSectionKind(undefined)]).toEqual([false, false, false, false]);
   });
