@@ -1,3 +1,0 @@
-### Changed
-
-- **`wander` takes a seed** (#930, decision 105): a jack `&seed`, a number (0 by default), from which its six noises' seeds are derived, `&seed * 8 + 1` to `&seed * 8 + 6`, so `wander(seed=&a)` and `wander(seed=&b)` draw apart (over 48 hours, 15 pairs of seeds: the correlation of two wanders .016 on average, .068 at most) where two copies drew alike. A copy given no seed draws what the module drew before: no event moves, the Radio's included. **What a frontend sees at its next pin:** the module's signature gains a jack, `&wander from (&clock, &seed)`; a text that took `wander` unchanged plays as before.
