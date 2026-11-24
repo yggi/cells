@@ -6,7 +6,7 @@ description: "After Terry Riley's In C: four of its fifty-three cells, each play
 
 ```cells
 &resumeNote label="restart=resume: a player switched off is not rewound. Take restart=resume off &song (the default, restart) to hear each come back at the top of their score." about=&song
-&bar from meter &tempo
+&bar from bar &tempo
 &click from envelopes
 &tempo step=free(104bpm, 60..140)
 &key scale(major)

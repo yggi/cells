@@ -12,7 +12,7 @@ In the Groove MIDI Dataset's drummers (#19, [the measurements](../docs/notes/gro
 ```cells
 * from style=&funk
 &swingNote label="swing=16n: the sixteenths lean, the second of each pair this share of the way through its eighth (1/2 straight). The eighths stay straight: the level is the difference from jazz's swing=8n:2/3." about=&swing
-&bar from meter(swing=&swing) &tempo
+&bar swing=&swing from bar &tempo
 &tempo step=free(100bpm, 80..120)
 &swing swing=16n:free(.58, 1/2..2/3)
 ```

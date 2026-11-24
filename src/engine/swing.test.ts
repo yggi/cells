@@ -171,34 +171,37 @@ describe('a swing leans the pairs alone (#204, decisions 053 and 071): a level�
     const own = /\n&swing swing=(\S+)/.exec(text);
     return own ? text.replace(own[0], '').replace('swing=&swing', `swing=${own[1]}`) : text;
   };
-  /** The meter a fragment's text writes, as one line's braid and swing: its grouping (`&grouping meter(…)`, 4/4 by default) and its swing, bound or its default's (#507). */
+  /**
+   * The meter a fragment's text writes, as one line's braid and swing: its bar's `meter("…")`, bound, or its text cell's,
+   * `meter(&meter)` with `&meter "5/4"` (decisions 101, 103), and its swing.
+   */
   const meterOf = (text: string) => {
-    const grouping = /\n&grouping (meter\(.*\))/.exec(text)?.[1] ?? 'meter("4/4")';
+    const cell = /\n&meter "([^"]*)"/.exec(text)?.[1];
+    const grouping = /\n&bar (meter\("[^)]*\))/.exec(text)?.[1] ?? `meter("${cell ?? '4/4'}")`;
     const swing = /\n&bar .*swing=(\S+)/.exec(text)?.[1];
     return swing && !swing.startsWith('&') && swing !== '8n:1/2' ? `${grouping} swing=${swing}` : grouping;
   };
   // Where each eighth of one bar is played, in the meter's pulses, under the meter's own text swung at 2/3: a pair's second
   // eighth two thirds through it, a group of three at thirds of its beat (an eighth each). Literal, one row a meter.
   const expected: Record<string, readonly number[]> = {
-    meter: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    'meter(swing=8n:2/3)': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    'meter(swing=16n:.65)': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    'meter(swing=16n:.6)': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    'meter(swing=16n:31/60)': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
-    // (alla breve's pulse a half: its eighths at quarters of it, #507)
-    'meter(grouping=meter("2/2", 2))': [0, 1 / 3, 1 / 2, 5 / 6, 1, 4 / 3, 3 / 2, 11 / 6],
-    'meter(grouping=meter("2/4"))': [0, 2 / 3, 1, 5 / 3],
-    'meter(grouping=meter("3/4"))': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3],
-    'meter(grouping=meter("6/8"))': [0, 1, 2, 3, 4, 5],
-    'meter(grouping=meter("12/8"))': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-    'meter(grouping=meter("5/4"))': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3, 4, 14 / 3],
-    'meter(grouping=meter("7/8"))': [0, 1, 2, 3, 3 + 4 / 3, 5, 5 + 4 / 3],
-    'meter(grouping=meter("10/8"))': [0, 1, 2, 3, 3 + 4 / 3, 5, 6, 7, 8, 8 + 4 / 3],
+    bar: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    swing_meter: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    lofi_meter: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    funk_meter: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    // (alla breve, 4/4's tree counted in two (decision 102): its pulse a quarter, as 4/4's)
+    'bar(meter="4/4 in 2")': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3],
+    'bar(meter="2/4")': [0, 2 / 3, 1, 5 / 3],
+    'bar(meter="3/4")': [0, 2 / 3, 1, 5 / 3, 2, 8 / 3],
+    'bar(meter="6/8")': [0, 1, 2, 3, 4, 5],
+    'bar(meter="12/8")': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    odd_meter: [0, 2 / 3, 1, 5 / 3, 2, 8 / 3, 3, 11 / 3, 4, 14 / 3],
+    'odd_meter(meter="7/8")': [0, 1, 2, 3, 3 + 4 / 3, 5, 5 + 4 / 3],
+    'odd_meter(meter="10/8")': [0, 1, 2, 3, 3 + 4 / 3, 5, 6, 7, 8, 8 + 4 / 3],
   };
 
-  it('the table holds every meter of the repository, thirteen', () => {
-    expect(Object.keys(expected)).toEqual(METER_FRAGMENTS.map((f) => f.id));
-    expect(METER_FRAGMENTS).toHaveLength(13);
+  it('the table holds every meter of the repository, twelve', () => {
+    expect(Object.keys(expected).sort()).toEqual(METER_FRAGMENTS.map((f) => f.id).sort());
+    expect(METER_FRAGMENTS).toHaveLength(12);
   });
 
   it.each(METER_FRAGMENTS.map((f) => [f.id, inline(f.text)] as const))('%s: its eighths swung land where the table says', (id, text) => {

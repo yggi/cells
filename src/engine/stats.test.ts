@@ -63,7 +63,7 @@ describe('the cells counted by kind, over every example (#782)', () => {
         "card": 98,
         "envelope": 544,
         "gate": 25,
-        "line": 945,
+        "line": 886,
         "meter": 94,
         "mix": 34,
         "note": 208,

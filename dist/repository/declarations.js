@@ -5,6 +5,7 @@ export const FOLDER_FACETS = {
     bands: 'band',
     bass: 'bass',
     counts: 'count',
+    endings: 'ending',
     expression: 'expression',
     fills: 'fill',
     forms: 'form',

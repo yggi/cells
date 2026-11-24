@@ -143,7 +143,7 @@ describe('toCore: Normalise, de-sugar, fold, minify, until nothing changes', () 
     expect(core('&bar scan(1 1 1 1) step=&tempo', '&bd, &hh from gm_kit', '&v s=saw lpf=800 loop=C4')).toBe(one);
     // (the seed meter is a template, #507: its core writes its lines in, `base=` and a straight swing, which the compile
     //  tool doesn't fold yet (#482); it sounds as the bar written by hand)
-    expect(soundsIdentical(core('&bar from meter &tempo', '&bd, &hh from gm_kit', '&v s=saw lpf=800 loop=C4'), one, undefined, O)).toBe(true);
+    expect(soundsIdentical(core('&bar from bar &tempo', '&bd, &hh from gm_kit', '&v s=saw lpf=800 loop=C4'), one, undefined, O)).toBe(true);
   });
   it('plays the same, is its own core, and says which rows it hasn’t rewritten yet', () => {
     const text = piece('&bar meter("4/4") step=&tempo', '* from gm_kit', '&v s=saw cutoff=800 loop=C4');

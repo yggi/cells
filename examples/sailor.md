@@ -7,7 +7,7 @@ description: Drunken Sailor in D Dorian, with a fiddle, a bass and a drum kit.
 ```cells
 * from style=&seaShanty
 # D Dorian. The second line is the first, a step lower: &A^-1.
-&bar from meter &tempo
+&bar from bar &tempo
 &tempo step=free(112bpm, 90..140)
 &key from diatonic(mode=dorian) D
 

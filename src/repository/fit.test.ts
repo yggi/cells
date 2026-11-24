@@ -34,6 +34,7 @@ const MELODIC_FRAGMENTS = seedFragments('melodic');
 const LAYER_FRAGMENTS = [...seedFragments('fills'), ...seedFragments('counts')];
 const BAND_FRAGMENTS = seedFragments('bands');
 const MODULE_FRAGMENTS = seedFragments('modules');
+const SONG_FRAGMENTS = seedFragments('songs');
 vi.mock('../engine/compile', async (original) => {
   const actual = await original<typeof import('../engine/compile')>();
   return { ...actual, compileSource: vi.fn(actual.compileSource) };
@@ -104,7 +105,7 @@ describe('the union of lines', () => {
 });
 
 describe('the fit', () => {
-  const four = bench('meter');
+  const four = bench('bar');
 
   it('a fragment that uses a name the workbench doesn’t define doesn’t fit, nor one that reads a key it hasn’t', () => {
     const line = '&line step=8n 0 2 4 7 over=&harm\n&out [&line * &lead]\n&lead s=saw loop=C3';
@@ -135,8 +136,8 @@ describe('the fit', () => {
 
   it('a waltz’s line of six eighths fits 3/4, 6/8 and 12/8, not 4/4; five quarters over two bars fit 5/4 and 10/8', () => {
     const fits = (text: string) => METER_FRAGMENTS.filter((m) => fitOf(text, bench(m.id)).fits).map((m) => m.id);
-    expect(fits('&x step=8n 0!6\n&v s=sine\n&o [&x * &v]')).toEqual(['meter(grouping=meter("3/4"))', 'meter(grouping=meter("6/8"))', 'meter(grouping=meter("12/8"))']);
-    expect(fits('&x step=4n cycle=2 0!5\n&v s=sine\n&o [&x * &v]')).toEqual(['meter(grouping=meter("5/4"))', 'meter(grouping=meter("10/8"))']);
+    expect(fits('&x step=8n 0!6\n&v s=sine\n&o [&x * &v]')).toEqual(['bar(meter="3/4")', 'bar(meter="6/8")', 'bar(meter="12/8")']);
+    expect(fits('&x step=4n cycle=2 0!5\n&v s=sine\n&o [&x * &v]')).toEqual(['odd_meter', 'odd_meter(meter="10/8")']);
   });
 });
 
@@ -144,7 +145,7 @@ describe('the fit', () => {
 // swung, leaning and alla breve, and nothing else; no drum bar or two-bar clave fits 7/8, 5/4 or 12/8, the one-bar clave
 // 4/4 only. The Spooky beat (#349) cycles on a beat or spans the bar, so it fits every meter but 7/8, whose bar is no
 // whole number of quarters. No meter of the library has a bar of 32 sixteenths, so "a multiple of 16" is "16" here.
-const FOUR_FOURS = ['meter', 'meter(swing=8n:2/3)', 'meter(swing=16n:.65)', 'meter(swing=16n:.6)', 'meter(swing=16n:31/60)', 'meter(grouping=meter("2/2", 2))'];
+const FOUR_FOURS = ['bar', 'swing_meter', 'lofi_meter', 'funk_meter', 'bar(meter="4/4 in 2")'];
 const FITS: Record<string, readonly string[]> = {
   synth_pop_drums: FOUR_FOURS,
   techno_drums: FOUR_FOURS,
@@ -162,33 +163,31 @@ const FITS: Record<string, readonly string[]> = {
   cinquillo: FOUR_FOURS,
   electro_swing_drums: FOUR_FOURS,
   spooky_drums: [
-    'meter',
-    'meter(swing=8n:2/3)',
-    'meter(swing=16n:.65)',
-    'meter(swing=16n:.6)',
-    'meter(swing=16n:31/60)',
-    'meter(grouping=meter("2/2", 2))',
-    'meter(grouping=meter("2/4"))',
-    'meter(grouping=meter("3/4"))',
-    'meter(grouping=meter("6/8"))',
-    'meter(grouping=meter("12/8"))',
-    'meter(grouping=meter("5/4"))',
-    'meter(grouping=meter("10/8"))',
+    'bar',
+    'swing_meter',
+    'lofi_meter',
+    'funk_meter',
+    'bar(meter="4/4 in 2")',
+    'bar(meter="2/4")',
+    'bar(meter="3/4")',
+    'bar(meter="6/8")',
+    'bar(meter="12/8")',
+    'odd_meter',
+    'odd_meter(meter="10/8")',
   ],
   ghost_drums: [
-    'meter',
-    'meter(swing=8n:2/3)',
-    'meter(swing=16n:.65)',
-    'meter(swing=16n:.6)',
-    'meter(swing=16n:31/60)',
-    'meter(grouping=meter("2/2", 2))',
-    'meter(grouping=meter("2/4"))',
-    'meter(grouping=meter("3/4"))',
-    'meter(grouping=meter("6/8"))',
-    'meter(grouping=meter("12/8"))',
-    'meter(grouping=meter("5/4"))',
-    'meter(grouping=meter("7/8"))',
-    'meter(grouping=meter("10/8"))',
+    'bar',
+    'swing_meter',
+    'lofi_meter',
+    'funk_meter',
+    'bar(meter="4/4 in 2")',
+    'bar(meter="2/4")',
+    'bar(meter="3/4")',
+    'bar(meter="6/8")',
+    'bar(meter="12/8")',
+    'odd_meter',
+    'odd_meter(meter="7/8")',
+    'odd_meter(meter="10/8")',
   ],
   // (its lines lap a half note and a beat, so it fits every meter of the library's)
   kinderlied_drums: METER_FRAGMENTS.map((m) => m.id),
@@ -205,13 +204,13 @@ const FITS: Record<string, readonly string[]> = {
   // (#542's second four: the salsa's clave laps two bars and the trip-hop beat one bar of sixteenths, so they fit the 4/4s;
   // the waltz's lines lap three beats, so it fits 3/4, 6/8 and 12/8, and no 4/4; the march's lap the half note)
   salsa_drums: FOUR_FOURS,
-  waltz_drums: ['meter(grouping=meter("3/4"))', 'meter(grouping=meter("6/8"))', 'meter(grouping=meter("12/8"))'],
-  march_drums: [...FOUR_FOURS, 'meter(grouping=meter("2/4"))', 'meter(grouping=meter("12/8"))'],
+  waltz_drums: ['bar(meter="3/4")', 'bar(meter="6/8")', 'bar(meter="12/8")'],
+  march_drums: [...FOUR_FOURS, 'bar(meter="2/4")', 'bar(meter="12/8")'],
   trip_hop_drums: FOUR_FOURS,
   // (#646: the aksak's lines lap three beats and an eighth, so it fits the meters of three beats; the 12/8's lap four
   // beats and three eighths, so it fits 12/8 alone: in 6/8 its four beats are two bars)
-  aksak_drums: ['meter(grouping=meter("3/4"))', 'meter(grouping=meter("7/8"))'],
-  twelve_eight_drums: ['meter(grouping=meter("12/8"))'],
+  aksak_drums: ['bar(meter="3/4")', 'odd_meter(meter="7/8")'],
+  twelve_eight_drums: ['bar(meter="12/8")'],
   // (#799: the breathing pulse's lines lap a bar of sixteenths, as the trip-hop beat's, so it fits the 4/4s)
   breathing_drums: FOUR_FOURS,
 };
@@ -233,8 +232,8 @@ describe('every rhythm against every meter of the library', () => {
   it('a two-bar clave compiles under 7/8, and doesn’t fit it: 28 sixteenths in its two bars, 32 in its braid', () => {
     const clave = rhythm('son_clave_3_2');
     // (its `&claves` is a hole the General MIDI kit fills: #244)
-    expect(compileSource(bench('meter(grouping=meter("7/8"))', 90, linesAlone(clave), KIT)).diagnostics).toEqual([]);
-    const f = fitOf(clave, bench('meter(grouping=meter("7/8"))', 90));
+    expect(compileSource(bench('odd_meter(meter="7/8")', 90, linesAlone(clave), KIT)).diagnostics).toEqual([]);
+    const f = fitOf(clave, bench('odd_meter(meter="7/8")', 90));
     expect(f.fits).toBe(false);
     expect(f.unmet).toEqual([{ cell: '&clave', meter: null, tap: '16n', bars: 2, steps: 32, rate: 1, bar: 16 }]);
   });
@@ -306,7 +305,7 @@ describe('two drum bars on one workbench', () => {
   it('every ordered pair of E31’s eight bars: 56', () => expect(pairs).toHaveLength(56));
 
   it.each(pairs)('%s on the workbench, %s added: every shared line kept once, every colliding name renamed, both bars’ hits played as alone', (_, __, a, b) => {
-    const workbench = bench('meter', a.bpm, a.text);
+    const workbench = bench('bar', a.bpm, a.text);
     const f = fitOf(b.text, workbench);
     expect(f.fits).toBe(true);
     const u = f.union!;
@@ -336,7 +335,7 @@ describe('two drum bars on one workbench', () => {
   it('E31’s 144 hits, each bar’s checked in every pair it is in: 144 × 14 = 2016 of 2016', () => {
     let matched = 0;
     for (const [, , a, b] of pairs) {
-      const union = unionOf(b.text, bench('meter', a.bpm, a.text));
+      const union = unionOf(b.text, bench('bar', a.bpm, a.text));
       const { hits } = played(`${union.text}\n${KIT}\n${drumCard([...headsOf(a.text), ...headsOf(b.text).map((h) => (union.renamed.get(`&${h}`) ?? `&${h}`).slice(1))])}`, a.bpm);
       const left = [...hits];
       for (const h of [...a.hits, ...b.hits]) {
@@ -352,14 +351,21 @@ describe('a query given the workbench', () => {
   it('ranks only the fragments that fit, in the order they rank without it', () => {
     const r = createRepository(LIBRARY);
     const all = r.query(BOSSA_NOVA, LIBRARY.length).map((f) => f.fragment.id);
-    const fitting = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('meter') }).map((f) => f.fragment.id);
+    const fitting = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('bar') }).map((f) => f.fragment.id);
     // (the rhythms that fit 4/4, and the kits, the vibrato, the envelopes, the styles and the modules that take no input,
     // which fit any workbench: they use no name, or read what they take in as a sound; a filter module's input is its main
     // argument, `&in`, which a workbench of a meter alone has no cell for, #587; and the band, which declares every input
     // it reads, each a tacet or the centre by default, #560)
-    const open = [...INSTRUMENT_FRAGMENTS, ...EXPRESSION_FRAGMENTS, ...STYLE_FRAGMENTS, ...BAND_FRAGMENTS, ...MODULE_FRAGMENTS.filter((f) => !signatureOf(f.text)?.main)].map(
-      (f) => f.id,
-    );
+    // (and the song forms, which take the bar as their intensity: a meter read as a value, as a count reads its levels, is one
+    // decision 104 lets meet; a workbench that offers its &song, or a host that names it, says otherwise; #920 keeps it)
+    const open = [
+      ...INSTRUMENT_FRAGMENTS,
+      ...EXPRESSION_FRAGMENTS,
+      ...STYLE_FRAGMENTS,
+      ...BAND_FRAGMENTS,
+      ...SONG_FRAGMENTS,
+      ...MODULE_FRAGMENTS.filter((f) => !signatureOf(f.text)?.main),
+    ].map((f) => f.id);
     // (and a melodic scale that leaves the key reads its tonic too, the blues, #719)
     const modes = [...MODE_FRAGMENTS, ...MELODIC_FRAGMENTS.filter((f) => signatureOf(f.text)?.main === '&tonic')].map((f) => f.id);
     // (the rhythms that fit 4/4: all but the waltz's, #542, whose lines lap three beats)
@@ -368,29 +374,27 @@ describe('a query given the workbench', () => {
       const layer = LAYER_FRAGMENTS.find((f) => f.id === id);
       return !!layer && fitOf(layer.text, bench(meter)).fits;
     };
-    const isRhythm = (id: string) => (RHYTHM_FRAGMENTS.some((f) => f.id === id) && FITS[id]!.includes('meter')) || layerFits(id, 'meter');
+    const isRhythm = (id: string) => (RHYTHM_FRAGMENTS.some((f) => f.id === id) && FITS[id]!.includes('bar')) || layerFits(id, 'bar');
     // (a mode's main parameter is its tonic, and a query that names no argument takes the one cell that meets it, decision
     // 075: on a workbench of a meter alone, none, since a meter read as a tonic is said to be no note, #613; a query that
     // names the mode's argument fits a mode only where that cell is, #587)
     expect(fitting).toEqual(all.filter((id) => isRhythm(id) || open.includes(id)));
     const named = { arguments: { mode: '&tonic' } };
-    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('meter'), ...named }).map((f) => f.fragment.id)).toEqual(
-      all.filter((id) => isRhythm(id) || open.includes(id)),
-    );
-    const toned = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: `${bench('meter')}\n&tonic D`, ...named }).map((f) => f.fragment.id);
+    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('bar'), ...named }).map((f) => f.fragment.id)).toEqual(all.filter((id) => isRhythm(id) || open.includes(id)));
+    const toned = r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: `${bench('bar')}\n&tonic D`, ...named }).map((f) => f.fragment.id);
     expect(toned).toEqual(all.filter((id) => isRhythm(id) || open.includes(id) || modes.includes(id)));
     // (of the rhythms, only Ghost drums, Kinderlied drums and the three beats read from the examples (#572) fit 7/8: their lines
     // lap the bar, its half, the beat or the eighth, and nothing a sixteenth off the beat; and the aksak's, written for it, #646)
-    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('meter(grouping=meter("7/8"))'), ...named }).map((f) => f.fragment.id)).toEqual(
+    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench('odd_meter(meter="7/8")'), ...named }).map((f) => f.fragment.id)).toEqual(
       all.filter(
         (id) =>
           open.includes(id) ||
-          layerFits(id, 'meter(grouping=meter("7/8"))') ||
+          layerFits(id, 'odd_meter(meter="7/8")') ||
           ['ghost_drums', 'kinderlied_drums', 'acid_drums', 'happy_hardcore_drums', 'elektro_drums', 'shanty_drums', 'quiet_pulse', 'aksak_drums'].includes(id),
       ),
     );
-    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { facet: 'meter', workbench: bench('meter') })).toEqual([]);
-    expect(r.query(BOSSA_NOVA, 2, {}, { facet: 'rhythm', workbench: bench('meter') }).map((f) => f.fragment.id)).toEqual(
+    expect(r.query(BOSSA_NOVA, LIBRARY.length, {}, { facet: 'meter', workbench: bench('bar') })).toEqual([]);
+    expect(r.query(BOSSA_NOVA, 2, {}, { facet: 'rhythm', workbench: bench('bar') }).map((f) => f.fragment.id)).toEqual(
       fitting.filter((id) => RHYTHM_FRAGMENTS.some((f) => f.id === id) && isRhythm(id)).slice(0, 2),
     );
   });
@@ -407,14 +411,14 @@ describe('what it costs', () => {
   // its heads renamed clear of the workbench's where they collide (`&kick2=kick`, #637).
   const workbench = ['funk_drums', 'techno_drums', 'rumba_clave_3_2', 'bossa_nova_clave_one_bar'].reduce(
     (text, id) => fitsAs(id, text, { resolve: resolveSeed }).text,
-    bench('meter', 104),
+    bench('bar', 104),
   );
 
   it('the workbench of five compiles clean and every rhythm that fits 4/4 still fits it, renamed where it collides', () => {
     // (the claves' voice is a hole an instrument fills: the General MIDI kit's line; the waltz's beat fits no 4/4, #542)
     expect(compileSource(`${workbench}\n${KIT}`, undefined, { resolve: resolveSeed }).diagnostics).toEqual([]);
     expect(workbench).toMatch(/^&kick2=kick, /m);
-    for (const f of RHYTHM_FRAGMENTS) expect(fitOf(f.text, workbench).fits, f.id).toBe(FITS[f.id]!.includes('meter'));
+    for (const f of RHYTHM_FRAGMENTS) expect(fitOf(f.text, workbench).fits, f.id).toBe(FITS[f.id]!.includes('bar'));
   });
 
   // The bound, as the work it bounds: the compiles a query makes (counted at `compileSource`, which the cache stands in
@@ -438,12 +442,22 @@ describe('what it costs', () => {
     const cells = workbench.split('\n').length;
     for (const options of [named, {}]) {
       const r = (await import('./fragments')).createRepository(LIBRARY);
-      r.query(FUNK, LIBRARY.length, {}, { workbench: bench('meter'), ...options });
+      r.query(FUNK, LIBRARY.length, {}, { workbench: bench('bar'), ...options });
       const [first, fresh] = count(() => r.query(FUNK, LIBRARY.length, {}, { workbench, ...options }));
       // (the rhythms, the instruments, the vibrato, the envelopes, the styles, the band and the modules, a filter over the one voice that meets its input;
       // not the 9 modes, named or not: no cell of a workbench of drums meets a tonic, its meter said to be no note (#613); a
       // performer's part, a filter's input and a stab line's &harm are holes no workbench of drums fills)
-      const kinds = [...RHYTHM_FRAGMENTS, ...LAYER_FRAGMENTS, ...INSTRUMENT_FRAGMENTS, ...EXPRESSION_FRAGMENTS, ...STYLE_FRAGMENTS, ...MODULE_FRAGMENTS, ...BAND_FRAGMENTS];
+      // (and the song forms, the bar their intensity: decision 104's limit, #920)
+      const kinds = [
+        ...RHYTHM_FRAGMENTS,
+        ...LAYER_FRAGMENTS,
+        ...INSTRUMENT_FRAGMENTS,
+        ...EXPRESSION_FRAGMENTS,
+        ...STYLE_FRAGMENTS,
+        ...MODULE_FRAGMENTS,
+        ...BAND_FRAGMENTS,
+        ...SONG_FRAGMENTS,
+      ];
       // (and a melodic scale that leaves the key reads its tonic too, the blues, #719)
       const modes = [...MODE_FRAGMENTS, ...MELODIC_FRAGMENTS.filter((f) => signatureOf(f.text)?.main === '&tonic')].map((f) => f.id);
       expect(

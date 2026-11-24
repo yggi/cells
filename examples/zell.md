@@ -12,7 +12,7 @@ In the manner of Kraftwerk, an original. Am – F – C – G, two bars each. Th
 &bassNote label="Bass: octaves, transposed (^n)." about=&bassline
 &arpNote label="Arpeggio: one shape, read on the chord's step of the scale." about=(&shape &arp)
 &melodyNote label="Melody: plain, with echoes in time (delaytime=&bar)." about=(&melody &lead)
-&bar from meter &tempo
+&bar from bar &tempo
 &strike, &thump, &snap, &click from envelopes
 &tempo step=free(112bpm, 90..140)
 &minor scan(2 1 2 2 1 2 2)                                   # A minor (the voices sit on A)

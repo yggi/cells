@@ -21,41 +21,40 @@ const ids = METER_FRAGMENTS.map((f) => f.id);
 
 // What each meter is: its pulses, the note value of a pulse, and its beats in pulses (decision 040).
 const SHAPES: Record<string, { pulses: number; unit: number; beats: number[] }> = {
-  meter: { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
-  'meter(swing=8n:2/3)': { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
-  'meter(swing=16n:.65)': { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
-  'meter(swing=16n:.6)': { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
-  'meter(swing=16n:31/60)': { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
-  'meter(grouping=meter("2/2", 2))': { pulses: 2, unit: 2, beats: [1, 1] },
-  'meter(grouping=meter("2/4"))': { pulses: 2, unit: 4, beats: [1, 1] },
-  'meter(grouping=meter("3/4"))': { pulses: 3, unit: 4, beats: [1, 1, 1] },
-  'meter(grouping=meter("6/8"))': { pulses: 6, unit: 8, beats: [3, 3] },
-  'meter(grouping=meter("12/8"))': { pulses: 12, unit: 8, beats: [3, 3, 3, 3] },
-  'meter(grouping=meter("5/4"))': { pulses: 5, unit: 4, beats: [1, 1, 1, 1, 1] },
-  'meter(grouping=meter("7/8"))': { pulses: 7, unit: 8, beats: [3, 2, 2] },
-  'meter(grouping=meter("10/8"))': { pulses: 10, unit: 8, beats: [3, 2, 3, 2] },
+  bar: { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
+  swing_meter: { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
+  lofi_meter: { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
+  funk_meter: { pulses: 4, unit: 4, beats: [1, 1, 1, 1] },
+  // (alla breve, decision 102: 4/4's tree counted in two)
+  'bar(meter="4/4 in 2")': { pulses: 4, unit: 4, beats: [2, 2] },
+  'bar(meter="2/4")': { pulses: 2, unit: 4, beats: [1, 1] },
+  'bar(meter="3/4")': { pulses: 3, unit: 4, beats: [1, 1, 1] },
+  'bar(meter="6/8")': { pulses: 6, unit: 8, beats: [3, 3] },
+  'bar(meter="12/8")': { pulses: 12, unit: 8, beats: [3, 3, 3, 3] },
+  odd_meter: { pulses: 5, unit: 4, beats: [1, 1, 1, 1, 1] },
+  'odd_meter(meter="7/8")': { pulses: 7, unit: 8, beats: [3, 2, 2] },
+  'odd_meter(meter="10/8")': { pulses: 10, unit: 8, beats: [3, 2, 3, 2] },
 };
 
 // The levels each meter leans, coarse to fine, and their shares: Jambot's swingShares at its presets' swing (none: straight).
 const SWINGS: Record<string, { level: string; share: number }[]> = {
-  'meter(swing=8n:2/3)': [{ level: '8n', share: 2 / 3 }],
-  'meter(swing=16n:.65)': [{ level: '16n', share: 0.65 }],
-  'meter(swing=16n:.6)': [{ level: '16n', share: 0.6 }],
-  'meter(swing=16n:31/60)': [{ level: '16n', share: 31 / 60 }],
+  swing_meter: [{ level: '8n', share: 2 / 3 }],
+  lofi_meter: [{ level: '16n', share: 0.65 }],
+  funk_meter: [{ level: '16n', share: 0.6 }],
 };
 
 // Jambot's eight presets, every axis as Jambot has it today (swing, bpm: axes no fragment has), and the meter each
 // names (yggi/jambot#360, its level and share from swingParts at the preset's swing). Lifted from yggi/jambot
 // packages/engine/src/style.ts @ 7b078e8 (unchanged at 5fcf48f).
 const PRESETS: { name: string; point: StylePoint; names: string }[] = [
-  { name: 'Synth-pop', point: { swing: 0, sync: 0.3, harm: 0.45, bite: 0.55, mood: 0.5, bpm: 108 }, names: 'meter' },
-  { name: 'Techno', point: { swing: 0, sync: 0.12, harm: 0, bite: 1, mood: 0.4, bpm: 130 }, names: 'meter' },
-  { name: 'Deep house', point: { swing: 0.3, sync: 0.35, harm: 0.55, bite: 0.65, mood: 0.65, bpm: 122 }, names: 'meter(swing=16n:.6)' },
-  { name: 'Ambient', point: { swing: 0.05, sync: 0.05, harm: 0.3, bite: 0, mood: 0.9, bpm: 72 }, names: 'meter(swing=16n:31/60)' },
-  { name: 'Lo-fi hip hop', point: { swing: 0.45, sync: 0.5, harm: 0.75, bite: 0.35, mood: 0.5, bpm: 84 }, names: 'meter(swing=16n:.65)' },
-  { name: 'Funk', point: { swing: 0.3, sync: 1, harm: 0.12, bite: 0.85, mood: 0.65, bpm: 104 }, names: 'meter(swing=16n:.6)' },
-  { name: 'Bossa nova', point: { swing: 0, sync: 0.75, harm: 0.85, bite: 0.45, mood: 0.9, bpm: 132 }, names: 'meter' },
-  { name: 'Swing jazz', point: { swing: 1, sync: 0.35, harm: 1, bite: 0.3, mood: 0.85, bpm: 148 }, names: 'meter(swing=8n:2/3)' },
+  { name: 'Synth-pop', point: { swing: 0, sync: 0.3, harm: 0.45, bite: 0.55, mood: 0.5, bpm: 108 }, names: 'bar' },
+  { name: 'Techno', point: { swing: 0, sync: 0.12, harm: 0, bite: 1, mood: 0.4, bpm: 130 }, names: 'bar' },
+  { name: 'Deep house', point: { swing: 0.3, sync: 0.35, harm: 0.55, bite: 0.65, mood: 0.65, bpm: 122 }, names: 'funk_meter' },
+  { name: 'Ambient', point: { swing: 0.05, sync: 0.05, harm: 0.3, bite: 0, mood: 0.9, bpm: 72 }, names: 'bar' },
+  { name: 'Lo-fi hip hop', point: { swing: 0.45, sync: 0.5, harm: 0.75, bite: 0.35, mood: 0.5, bpm: 84 }, names: 'lofi_meter' },
+  { name: 'Funk', point: { swing: 0.3, sync: 1, harm: 0.12, bite: 0.85, mood: 0.65, bpm: 104 }, names: 'funk_meter' },
+  { name: 'Bossa nova', point: { swing: 0, sync: 0.75, harm: 0.85, bite: 0.45, mood: 0.9, bpm: 132 }, names: 'bar' },
+  { name: 'Swing jazz', point: { swing: 1, sync: 0.35, harm: 1, bite: 0.3, mood: 0.85, bpm: 148 }, names: 'swing_meter' },
 ];
 const first = (point: StylePoint) => repository.query(point, 1)[0]!.fragment.id;
 
@@ -69,9 +68,9 @@ const inFrame = (text: string, tapped = false) =>
   ].join('\n');
 
 describe('the meter fragments', () => {
-  it('are the nine meters that need no swing and the four swung 4/4s Jambot’s presets play', () => {
+  it('are the ten meters that need no swing and the three swung 4/4s Jambot’s presets play, Ambient’s straight (decision 103)', () => {
     expect([...ids].sort()).toEqual(Object.keys(SHAPES).sort());
-    expect(ids.filter((id) => SWINGS[id])).toEqual(Object.keys(SWINGS));
+    expect(ids.filter((id) => SWINGS[id]).sort()).toEqual(Object.keys(SWINGS).sort());
   });
 
   it.each(METER_FRAGMENTS.map((f) => [f.id, f.text]))('%s compiles with no diagnostic, in a host’s frame, as that meter', (id, text) => {
@@ -83,20 +82,19 @@ describe('the meter fragments', () => {
     expect(meter.swing?.map(({ level, share }) => ({ level, share }))).toEqual(SWINGS[id]);
   });
 
-  // (the owner's ruling on yggi/jambot#360: a meter swung on 8n brings in the jazz kit, so the id tells it from a 16n lean)
   it('10/8 plays the same events as the levels it used to be written as', () => {
     const events = (text: string) => {
       const r = compileSource(inFrame(text, true));
       expect(r.diagnostics).toEqual([]);
       return eventsBetween(plan(r, codeShifts(r)), 0, 4 - 1e-6).map((e) => e.at);
     };
-    expect(events(METER_FRAGMENTS.find((f) => f.id === 'meter(grouping=meter("10/8"))')!.text)).toEqual(events('&bar meter("*..+.+..+.")'));
+    expect(events(METER_FRAGMENTS.find((f) => f.id === 'odd_meter(meter="10/8")')!.text)).toEqual(events('&bar meter("*..+.+..+.")'));
   });
 
-  it.each(ids)('%s says in its id the level it swings, its swing= argument (#507)', (id) => {
-    const levels = (compileSource(inFrame(METER_FRAGMENTS.find((f) => f.id === id)!.text)).cells.get('bar')!.meter!.swing ?? []).map((l) => l.level);
-    expect(id.includes('swing=8n:')).toBe(levels.includes('8n'));
-    expect(id.includes('swing=16n:')).toBe(levels.includes('16n'));
+  // (the owner's ruling on yggi/jambot#360: a meter swung on 8n brings in the jazz kit; its fragment says so by its name, swing_meter, and its text)
+  it('the swung 4/4s are a style’s feel each, named for it: 8n is jazz’s swing_meter, 16n Funk’s and Lo-fi’s leans (decision 103)', () => {
+    const levelOf = (id: string) => (compileSource(inFrame(METER_FRAGMENTS.find((f) => f.id === id)!.text)).cells.get('bar')!.meter!.swing ?? []).map((l) => l.level);
+    expect(Object.fromEntries(ids.filter((id) => levelOf(id).length).map((id) => [id, levelOf(id)]))).toEqual({ swing_meter: ['8n'], funk_meter: ['16n'], lofi_meter: ['16n'] });
   });
 
   it.each(METER_FRAGMENTS.flatMap((f) => f.association.map((wp, i) => [f.id, i + 1, wp.point] as const)))('%s is found first at its point %i', (id, _, point) => {
@@ -111,7 +109,8 @@ describe('the presets find their meters', () => {
 
   // (a bar of 120 bpm is 2 s: a sixteenth is an eighth of a second)
   it.each(PRESETS.map((p) => [p.name, p] as const))('%s: the meter it finds plays each sixteenth within 1e-9 of Jambot’s leanMap', (_, preset) => {
-    const v = path.find((x) => x.s === preset.point.swing)!;
+    // (Ambient's faint lean, Jambot's .05, is dropped: its bar is straight, the owner on #902, decision 103)
+    const v = path.find((x) => x.s === (preset.name === 'Ambient' ? 0 : preset.point.swing))!;
     const r = compileSource(inFrame(repository.query(preset.point, 1)[0]!.fragment.text, true));
     expect(r.diagnostics).toEqual([]);
     const at = eventsBetween(plan(r, codeShifts(r)), 0, 2 - 1e-6).map((e) => e.at * 8);
@@ -126,10 +125,10 @@ describe('the presets find their meters', () => {
   const onMeterAxes = ({ swing: _swing, bpm: _bpm, mood: _mood, ...axes }: StylePoint) => axes;
   // (and the points proposed for two more presets, #349: Electro swing's swung 4/4, Spooky's 5/4 with 6/8 and 3/4 near it)
   const proposed = [
-    { name: 'Electro swing', point: ELECTRO_SWING, names: 'meter(swing=8n:2/3)' },
-    { name: 'Spooky', point: SPOOKY, names: 'meter(grouping=meter("5/4"))' },
-    { name: 'Spooky, less bite', point: { ...SPOOKY, bite: SPOOKY.bite! - 0.08 }, names: 'meter(grouping=meter("6/8"))' },
-    { name: 'Spooky, more bite', point: { ...SPOOKY, bite: SPOOKY.bite! + 0.08 }, names: 'meter(grouping=meter("3/4"))' },
+    { name: 'Electro swing', point: ELECTRO_SWING, names: 'swing_meter' },
+    { name: 'Spooky', point: SPOOKY, names: 'odd_meter' },
+    { name: 'Spooky, less bite', point: { ...SPOOKY, bite: SPOOKY.bite! - 0.08 }, names: 'bar(meter="6/8")' },
+    { name: 'Spooky, more bite', point: { ...SPOOKY, bite: SPOOKY.bite! + 0.08 }, names: 'bar(meter="3/4")' },
   ];
   const presets = createRepository(
     [...PRESETS, ...proposed].map((p) => ({ id: p.name, text: p.names, association: [{ point: onMeterAxes(p.point), weight: p.name.startsWith('Spooky, ') ? 0.75 : 1 }] })),
@@ -147,16 +146,16 @@ describe('the presets find their meters', () => {
   // other two the plain 4/4 placed at the styles read from the examples (Happy hardcore's, Elektro's) lies nearer than Deep
   // house's and Funk's swung one: named on #572, #540, #542)
   const between: Readonly<Record<string, string>> = {
-    'Synth-pop|Funk': 'meter',
+    'Synth-pop|Funk': 'bar',
     // (and since #542's second batch, the plain 4/4 placed at Salsa's point (sync .9 harm .5 bite .7) between Funk and three
     // presets: nearer than Blues shuffle's swung 4/4 between Deep house and Funk, which it found after the first batch, and
     // than Funk's or the other preset's own meter between Lo-fi hip hop and Funk, and between Funk and Bossa nova, whose
     // halfway point (.875, .485, .65) is 0.058 from Salsa's)
-    'Deep house|Funk': 'meter',
-    'Lo-fi hip hop|Funk': 'meter',
-    'Funk|Bossa nova': 'meter',
-    'Synth-pop|Ambient': 'meter(grouping=meter("6/8"))',
-    'Deep house|Swing jazz': 'meter(grouping=meter("5/4"))',
+    'Deep house|Funk': 'bar',
+    'Lo-fi hip hop|Funk': 'bar',
+    'Funk|Bossa nova': 'bar',
+    'Synth-pop|Ambient': 'bar(meter="6/8")',
+    'Deep house|Swing jazz': 'odd_meter',
   };
   it.each(pairs.map(([a, b]) => [a.name, b.name, a, b] as const))('halfway between %s and %s: the meter of the preset nearest there', (_, __, a, b) => {
     const halfway = halfwayOf(a, b);
@@ -176,17 +175,17 @@ describe('the presets find their meters', () => {
 describe('the points proposed for two more presets (#349)', () => {
   const ranked = (point: StylePoint, n: number) => repository.query(point, n).map((f) => [f.fragment.id, +f.distance.toFixed(9)]);
   it('Electro swing finds the swung 4/4 its example plays, at distance 0', () => {
-    expect(ranked(ELECTRO_SWING, 1)).toEqual([['meter(swing=8n:2/3)', 0]]);
+    expect(ranked(ELECTRO_SWING, 1)).toEqual([['swing_meter', 0]]);
   });
 
   // (0.08 off in bite over a meter's three axes, 0.08/√3, at weight 0.75 since #572: 0.08/√3/0.75)
   it('Spooky finds 5/4 at distance 0, then 6/8 and 3/4, each 0.08 off in bite and weighted 0.75, for the ladder to fetch', () => {
     // (the two tie: either first)
     const found = ranked(SPOOKY, 3);
-    expect(found[0]).toEqual(['meter(grouping=meter("5/4"))', 0]);
+    expect(found[0]).toEqual(['odd_meter', 0]);
     expect(found.slice(1).sort()).toEqual([
-      ['meter(grouping=meter("3/4"))', +(0.08 / Math.sqrt(3) / 0.75).toFixed(9)],
-      ['meter(grouping=meter("6/8"))', +(0.08 / Math.sqrt(3) / 0.75).toFixed(9)],
+      ['bar(meter="3/4")', +(0.08 / Math.sqrt(3) / 0.75).toFixed(9)],
+      ['bar(meter="6/8")', +(0.08 / Math.sqrt(3) / 0.75).toFixed(9)],
     ]);
   });
 });

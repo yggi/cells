@@ -8,7 +8,7 @@ description: Twinkle Twinkle from three motifs, one of them read a step up the s
 ```cells
 # Three motifs make the whole tune. The middle line is &down again,
 # a step up the scale: &down^1.
-&bar from meter &tempo
+&bar from bar &tempo
 &tempo step=96bpm
 &swell from envelopes
 &key label="{mode} on {tonic}" scale(major)                 # C major

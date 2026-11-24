@@ -1,7 +1,7 @@
 /**
- * The repository's library: every fragment built so far, the meters, the rhythms, the fills, the counts, the bass lines, the harmonies, the
+ * The repository's library: every fragment built so far, the meters, the rhythms, the fills, the counts, the endings, the bass lines, the harmonies, the
  * instruments, the modes, the melodic scales, the performers, the stab lines, the motifs, the forms, the band and the styles, their points associated as `meter`,
- * `rhythm`, `fill`, `count` (#718, #720), `bass`, `harmony`, `instrument`, `mode`, `melodic` (#719), `performer`, `stab`, `motif`, `form`, `band` and `style` (the
+ * `rhythm`, `fill`, `count`, `ending` (#718, #720), `bass`, `harmony`, `instrument`, `mode`, `melodic` (#719), `performer`, `stab`, `motif`, `form`, `band` and `style` (the
  * bell and scale both `mode` and `rhythm`). A query names its facet (`{ facet: 'meter' }`) and measures only the points
  * of that facet, so adding fragments of another never changes what it returns.
  */
@@ -24,6 +24,7 @@ const FOLDERS = [
   'rhythms',
   'fills',
   'counts',
+  'endings',
   'bass',
   'harmony',
   'instruments',
@@ -76,7 +77,7 @@ export const LIBRARY: readonly Fragment[] = [...FOLDERS.flatMap((folder) => seed
 /** The library's fragments of a facet, read off their points (decision 046), wherever they are kept: a folder or a document. */
 export const ofFacet = (facet: string): Fragment[] => LIBRARY.filter((f) => f.association.some((p) => p.facet === facet));
 
-/** A part's id: its document's key, a slash, its head (`kinderlied/twinkle`); a template's arguments may hold a slash of their own (`meter(grouping=meter("2/2"))`). */
+/** A part's id: its document's key, a slash, its head (`kinderlied/twinkle`); a template's arguments may hold a slash of their own (`bar(meter="2/2")`). */
 const PART_ID = /^[^(/]+\/[^(]+$/;
 
 /** The id a `from` line writes for a fragment: a part's document (`kinderlied/twinkle` → `kinderlied`), any other's own. */

@@ -584,10 +584,7 @@ function named(es, grid, places, groups, start) {
     return { bpm: (60 * groups.length) / seconds, signature: NAMED[key] ?? key, groups: whole ? eighths : [...groups], swing, start, bar: seconds };
 }
 export function meterText(f) {
-    const sig = `meter("${f.signature}")`;
-    const args = [
-        ...(f.signature === '4/4' ? [] : [`grouping=${sig}`]),
-        ...(f.swing.length ? [`swing=${f.swing.map((s) => `${s.level}:${String(+s.share.toFixed(2)).replace(/^0\./, '.')}`).join(',')}`] : []),
-    ];
-    return `&bar from meter${args.length ? `(${args.join(', ')})` : ''} &tempo\n&tempo step=${Math.round(f.bpm)}bpm`;
+    const swing = f.swing.length ? ` swing=${f.swing.map((s) => `${s.level}:${String(+s.share.toFixed(2)).replace(/^0\./, '.')}`).join(',')}` : '';
+    const meter = f.signature === '4/4' ? '' : `(meter="${f.signature}")`;
+    return `&bar${swing} from bar${meter} &tempo\n&tempo step=${Math.round(f.bpm)}bpm`;
 }

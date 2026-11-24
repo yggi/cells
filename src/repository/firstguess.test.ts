@@ -30,7 +30,7 @@ describe('a library fragment read from what it plays (#681)', () => {
 
   it('reads nothing of a facet that plays no part: a meter, a mode, an instrument', () => {
     expect(Object.keys(PART_OF)).toEqual(['rhythm', 'bass', 'harmony', 'stab', 'motif']);
-    expect(readFragment(byId('meter').text, 'meter', resolveSeed)).toBeNull();
+    expect(readFragment(byId('bar').text, 'meter', resolveSeed)).toBeNull();
     expect(readFragment(byId('tb303').text, 'instrument', resolveSeed)).toBeNull();
   });
 });

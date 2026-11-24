@@ -234,6 +234,8 @@ export interface ResolvedCell {
   readonly paramCells: Readonly<Record<string, { readonly range: readonly [number, number] | null; readonly factors: readonly string[]; readonly to?: string }>>;
   /** A fill a plugin-fragment's code writes (decision 085, #792): its fragment, its name there, the clock its call site gave. */
   readonly fill?: CellDecl['fill'];
+  /** A text cell's text (decision 101): `&meter "3/4"`, read by a generator's argument; it plays nothing. */
+  readonly text?: string;
   /** Used as the voice of an out(…), or has sound parameters. */
   readonly voice: boolean;
   /** Voice: turns of its braid per second at pitch 0 (loop=f, or step=r over its k steps). */
@@ -527,7 +529,7 @@ export interface CompileResult {
   readonly builtinCard?: string;
   /** What each of the piece's `from` lines resolved to and gave it (decision 065), in the order written; absent for none. */
   readonly takes?: readonly Take[];
-  /** Where each cell its `from` lines gave came from, by its name as compiled (`hh`, a copy's `bar_grouping`); absent for none. */
+  /** Where each cell its `from` lines gave came from, by its name as compiled (`hh`, a copy's `bar_meter`); absent for none. */
   readonly origins?: ReadonlyMap<string, readonly Origin[]>;
   /** Each cell's line of code, where the text has fills (decision 085, #792): what realize compiles a stream's laps from. */
   readonly codes?: ReadonlyMap<string, string>;

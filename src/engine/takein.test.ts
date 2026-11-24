@@ -46,7 +46,7 @@ describe('takeIn', () => {
 
   it('says why for a head among several on one line, and for a cell a copy keeps to itself', () => {
     expect(takeIn(EXAMPLES.electroswing.source, 'drumsOut', O)).toEqual({ why: expect.stringMatching(/^&drumsOut is one of &drums, &drumsOut/) });
-    expect(takeIn(EXAMPLES.clock.source, 'bar_grouping', O)).toEqual({ why: expect.stringMatching(/copy's own/) });
+    expect(takeIn(EXAMPLES.clock.source, 'bar_meter', O)).toEqual({ why: expect.stringMatching(/copy's own/) });
     expect(takeIn('&a 0 2', 'b', O)).toEqual({ why: expect.stringMatching(/not a cell this piece is given/) });
   });
 });

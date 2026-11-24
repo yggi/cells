@@ -12,7 +12,7 @@ Here the centre moves, `bpf=300..3000 * &sweep`: the range, scaled by a cell tha
 ```cells
 &bandNote label="bpf= is the band-pass's centre in Hz, bpq= how narrow the band is (its Q): the saw is heard only around the centre, which &sweep moves between 300 and 3000 Hz." about=(&wah &sweep)
 &stagesNote label="ftype=24db puts two stages in series: the same sweep, a steeper skirt. &wah is one stage, 12db, the default." about=&wah24
-&bar from meter &tempo
+&bar from bar &tempo
 &tempo step=free(moderato)
 
 &tune step=8n 0 0 7 0 3 0 5 7 0 0 7 0 3 5 3 ~

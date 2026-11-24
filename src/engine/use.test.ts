@@ -159,7 +159,7 @@ describe('a named use of a collection (decision 059)', () => {
   });
 
   it('naming every name a collection defines expands as * from it does, for every seed', () => {
-    // (but a template taken with arguments that hold a quote, `meter(grouping=meter("7/8"))`: only a from line takes it, unquoted, #507)
+    // (but a template taken with arguments that hold a quote, `odd_meter(meter="7/8")`: only a from line takes it, unquoted, #507)
     for (const f of LIBRARY.filter((x) => !x.id.includes('"'))) {
       const all = compileSource(`* from ${JSON.stringify(f.id)}`, undefined, seed).takes![0]!.gave;
       const named = `${all.join(', ')} from ${JSON.stringify(f.id)}`;
@@ -218,7 +218,7 @@ describe('a named use of a collection (decision 059)', () => {
 
   it('a use that adds nothing says so: twice on the issue’s section, on no seed fragment', () => {
     const section = [
-      '* from meter',
+      '* from bar',
       '* from harmonic_minor',
       '* from vamp_to_the_seventh',
       '* from funk_drums',
@@ -229,10 +229,10 @@ describe('a named use of a collection (decision 059)', () => {
       '&key scale(harmonic, D)',
     ].join('\n');
     expect(read(section).said).toEqual([
-      ['warning', 'The piece defines all "meter" gives (&bar): this use adds nothing', 1],
+      ['warning', 'The piece defines all "bar" gives (&bar): this use adds nothing', 1],
       ['warning', 'The piece defines all "harmonic_minor" gives (&key): this use adds nothing', 2],
     ]);
-    expect(read(`&bar from meter\n${BENCH}`).said).toEqual([['warning', 'The piece defines &bar, so taking it from "meter" adds nothing', 1]]);
+    expect(read(`&bar from bar\n${BENCH}`).said).toEqual([['warning', 'The piece defines &bar, so taking it from "bar" adds nothing', 1]]);
     for (const f of LIBRARY)
       expect(
         compileSource(f.text, undefined, seed).diagnostics.filter((d) => /adds nothing|old way/.test(d.message)),
