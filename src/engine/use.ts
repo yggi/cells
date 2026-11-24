@@ -722,6 +722,8 @@ interface Given {
   readonly taken: Taken;
   readonly copy: readonly Line[];
   readonly args?: Readonly<Record<string, string>>;
+  /** The heads a `*` take of a template leaves to the piece, which writes them itself (#885). */
+  readonly overrode?: readonly string[];
 }
 
 /**
@@ -1001,7 +1003,7 @@ function instantiate(
   // (what it took from a collection, shared by name, but a parameter's default an argument replaced)
   const sharing = shared.filter((l) => reached.has(l.name!) && !byReference.has(l.name!) && !sharedValued.includes(l.name!));
   const given = { id, names: new Set(sharing.map((l) => l.name!)), lines: sharing, resolved: true };
-  return { taken: given, copy, args: Object.fromEntries(values) };
+  return { taken: given, copy, args: Object.fromEntries(values), overrode: overridden.map((h) => `&${h}`) };
 }
 
 /**
@@ -1086,6 +1088,8 @@ export function expansion(text: string, { resolve, locked = [], plugins: theirs 
   const hashes: (string | null)[] = [];
   const copies: (readonly Line[])[] = [];
   const args: (Readonly<Record<string, string>> | undefined)[] = [];
+  // (the heads each template taken with * leaves to the piece's own lines, #885)
+  const overrodes: (readonly string[])[] = [];
   const parts: (string | undefined)[] = [];
   const answers: LockedAnswer[][] = uses.map(() => []);
   const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
@@ -1142,6 +1146,7 @@ export function expansion(text: string, { resolve, locked = [], plugins: theirs 
     const step = { id: null, line: u.line.line };
     copies[i] = via(g.copy, step);
     args[i] = g.args;
+    overrodes[i] = g.overrode ?? [];
     copiedSoFar.push(...g.copy.map((l) => l.code));
     return { ...g.taken, lines: via(g.taken.lines, step) };
   };
@@ -1183,7 +1188,7 @@ export function expansion(text: string, { resolve, locked = [], plugins: theirs 
         span: spanOf(u.line),
         hash: hashes[i] ?? null,
         gave: args[i] ? [...new Set([...visible, ...copied, ...merged.per[i]!.gave])] : merged.per[i]!.gave,
-        overrode: merged.per[i]!.overrode,
+        overrode: [...new Set([...merged.per[i]!.overrode, ...(overrodes[i] ?? [])])],
         ...(args[i] ? { args: args[i] } : {}),
         ...(parts[i] ? { part: parts[i] } : {}),
         ...(answers[i]!.length ? { answers: answers[i] } : {}),

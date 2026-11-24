@@ -1,3 +1,4 @@
+import { spoken } from "./spoken.js";
 import { readFrom } from "./parser/use.js";
 export function splitComment(line) {
     let quoted = false;
@@ -172,10 +173,10 @@ export function offProblem(source, name) {
         if (form?.kind !== 'use' || !(form.names?.includes(`&${name}`) ?? true))
             continue;
         if (form.names && form.names.length > 1)
-            return `&${name} is one of ${form.names.join(', ')}, which one line takes from ${form.id}: off before from would be every head's, so take &${name} in first (its own line) and switch that off`;
-        return `&${name} is ${form.id}'s cell, given by a from line: take it in first (its own line) and switch that off`;
+            return spoken(`&${name} is one of ${form.names.join(', ')}, which one line takes from ${form.id}: off before from would be every head's, so take &${name} in first (its own line) and switch that off`);
+        return spoken(`&${name} is ${form.id}'s cell, given by a from line: take it in first (its own line) and switch that off`);
     }
-    return `&${name} is no cell of this piece's to switch off`;
+    return spoken(`&${name} is no cell of this piece's to switch off`);
 }
 export function splitWords(code) {
     const out = [];
