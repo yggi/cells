@@ -161,23 +161,6 @@ export function progressionNotes(p: Progression, slots: readonly Slot[], k: numb
   );
 }
 
-/** What a progression plays, for S2: each chord's onset and length, its tones sorted as they sound. */
-export function progressionKey(p: Progression, slots: readonly Slot[]): string {
-  return slots
-    .map((slot, step) =>
-      slot
-        .map(
-          (chord, h) =>
-            `${step}.${h}/${slot.length}:${[...chord]
-              .map((t) => `${t.degree}${t.alter}`)
-              .sort()
-              .join(',')}`,
-        )
-        .join(' '),
-    )
-    .join('|');
-}
-
 /**
  * Every candidate variation of a progression by the operators asked, in their order: for each, its rotation, its
  * retrograde, its swaps, its substitutions (`slots.ts`), its thirds by step and then by `THIRDS`, its dominants by
@@ -193,7 +176,13 @@ export function progressionCandidates(
 ): Candidate[] {
   const out: Candidate[] = [];
   const free = (s: number) => !fixed.includes(s);
-  const keys = p.slots.map(slotText);
+  // (each slot's key, its chord as its heard notes read it, #913: a chord written in another order is the same chord)
+  const keys = p.slots.map((slot) =>
+    progressionNotes(p, [slot], 0)
+      .map((n) => `${n.at} ${n.key}`)
+      .sort()
+      .join(';'),
+  );
   const shifts = codeShifts(result);
   const at = (degree: number, alter = 0) => resolveIn(result, p.table, 0, degree, alter, shifts).position;
   for (const operator of operators) {

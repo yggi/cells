@@ -89,20 +89,13 @@ export function progressionNotes(p, slots, k) {
         return chord.map((t) => ({ at: step * p.stepWhole + h * length, key: `${length} chords#${k} ${p.table}:0:${t.degree}:${t.alter}:0` }));
     }));
 }
-export function progressionKey(p, slots) {
-    return slots
-        .map((slot, step) => slot
-        .map((chord, h) => `${step}.${h}/${slot.length}:${[...chord]
-        .map((t) => `${t.degree}${t.alter}`)
-        .sort()
-        .join(',')}`)
-        .join(' '))
-        .join('|');
-}
 export function progressionCandidates(p, operators, result, fixed = p.cadence, degrees = [-2, -1, 1, 2]) {
     const out = [];
     const free = (s) => !fixed.includes(s);
-    const keys = p.slots.map(slotText);
+    const keys = p.slots.map((slot) => progressionNotes(p, [slot], 0)
+        .map((n) => `${n.at} ${n.key}`)
+        .sort()
+        .join(';'));
     const shifts = codeShifts(result);
     const at = (degree, alter = 0) => resolveIn(result, p.table, 0, degree, alter, shifts).position;
     for (const operator of operators) {
