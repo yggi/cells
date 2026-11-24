@@ -32,9 +32,10 @@ const PLACES: readonly (readonly [string, string, string, string[]])[] = [
 ];
 
 describe('the places that fill a cell are the table’s', () => {
-  it('seven attributes, each with its field and the number it holds until compile fills it', () => {
-    const filling = Object.values(NUMBER_PLACES).flatMap((p) => (p.fills ? [p.fills.field] : []));
-    expect(filling.sort()).toEqual(PLACES.map((p) => p[0]).sort());
+  it('seven attributes and ten braid, rate and table places, each with the number it holds until compile fills it', () => {
+    const filling = Object.values(NUMBER_PLACES).flatMap((p) => (p.fills ? [p.fills.read] : []));
+    expect(filling.filter((r) => r.endsWith('=')).sort()).toEqual(PLACES.map((p) => `${p[0]}=`).sort());
+    expect(filling).toHaveLength(17);
   });
 });
 
@@ -47,8 +48,70 @@ describe.each(PLACES)('%s= reads a cell as it reads the number (decision 105)', 
 
   it('is a hole the scanner records, and the line holds its placeholder until compile fills it', () => {
     const d = parse(piece(cell, ...defs)).cells.find((c) => c.name === 't')!;
-    expect(d.holes).toHaveLength(1);
-    expect(d.holes![0]).toMatchObject({ field: _, ref: { name: 'k' } });
+    expect(d.built!.holes).toHaveLength(1);
+    expect(d.built!.holes[0]).toMatchObject({ ref: { name: 'k' } });
+    expect(d.built!.text.slice(d.built!.holes[0]!.from, d.built!.holes[0]!.to)).toBe('&k');
+  });
+});
+
+/** A cell as the compile resolves it, its spans out (a place's text is a different length, written as a cell or a number). */
+const resolved = (text: string, name: string) =>
+  JSON.stringify(compileSource(text).cells.get(name), (k, v) => (k === 'span' || k === 'paramSpans' || k === 'spans' || k === 'valueReads' ? undefined : v));
+
+/** The braid's, rate's and table's places (decision 106): a literal, the same read from a cell, the cells it needs, and what is compared. */
+const BRAID: readonly (readonly [string, string, string, string[], string])[] = [
+  ['x!n', '&t step=4 0!3 2', '&t step=4 0!&k 2', ['&k 3'], 'play'],
+  ['x@n', '&t step=4 0@3 2', '&t step=4 0@&k 2', ['&k 3'], 'play'],
+  ['x*n', '&t step=4 0*2 2', '&t step=4 0*&k 2', ['&k 2'], 'play'],
+  ['x/n', '&t step=4 0/2 2', '&t step=4 0/&k 2', ['&k 2'], 'play'],
+  ['x?p', '&t seed=3 step=4 0?.4 2?.4 4 5', '&t seed=3 step=4 0?&k 2?&k 4 5', ['&k .4'], 'play'],
+  ['x(k, n, r)', '&t step=1 0(3,8)', '&t step=1 0(&k,8)', ['&k 3'], 'play'],
+  ['x(k, n, r), k over n', '&t step=1 0(3,8)', '&t step=1 0(3,&k)', ['&k 8'], 'play'],
+  ['a pick', '&t step=2 &m[2] &m[1]', '&t step=2 &m[&k] &m[1]', ['&m 0 2 4 7', '&k 2'], 'play'],
+  ['a turn', '&t step=2 &m[<<2] &m[1]', '&t step=2 &m[<<&k] &m[1]', ['&m 0 2 4 7', '&k 2'], 'play'],
+  ['a move', '&t step=2 &m^2 &m[1]', '&t step=2 &m^&k &m[1]', ['&m 0 2 4 7', '&k 2'], 'play'],
+  ['degree(&m, n)', '&t step=2 degree(&m, 2) &m[1]', '&t step=2 degree(&m, &k) &m[1]', ['&m 0 2 4 7', '&k 2'], 'play'],
+  ['step=&clock*n', '&t step=&clock*2 0 2', '&t step=&clock*&k 0 2', ['&clock step=4n 0', '&k 2'], 'play'],
+  ['step=&clock/n', '&t step=&clock/2 0 2', '&t step=&clock/&k 0 2', ['&clock step=4n 0', '&k 2'], 'play'],
+  ['fifths(n)', '&c fifths(3)', '&c fifths(&k)', ['&k 3'], 'c'],
+  ['map=edo(n)', '&e map=edo(19)', '&e map=edo(&k)', ['&k 19'], 'e'],
+  ['map=ed(n, r)', '&e map=ed(13, 3)', '&e map=ed(13, &k)', ['&k 3'], 'e'],
+];
+
+describe.each(BRAID)('%s reads a cell as it reads the number (decision 106)', (_, literal, cell, defs, what) => {
+  const whole = (line: string, ...more: string[]) => lines('&bar meter("4/4") step=100bpm', '&v s=saw loop=C4', ...more, line, '&out map=sample [&t * &v]');
+  const full = (line: string, ...more: string[]) => (what === 'play' ? whole(line, ...more) : lines('&bar meter("4/4") step=100bpm', ...more, line));
+  it('plays what the number plays', () => {
+    expect(errors(full(cell, ...defs))).toEqual([]);
+    if (what === 'play') {
+      expect(soundsIdentical(full(literal, ...defs.filter((d) => !d.startsWith('&k '))), full(cell, ...defs), 6)).toBe(true);
+      expect(notes(full(cell, ...defs))).toEqual(notes(full(literal, ...defs.filter((d) => !d.startsWith('&k ')))));
+    } else expect(resolved(full(cell, ...defs), what)).toEqual(resolved(full(literal), what));
+  });
+});
+
+describe('a place refuses what it can’t take, said where the line is read again', () => {
+  const t = (line: string, ...defs: string[]) => lines('&bar meter("4/4") step=100bpm', '&v s=saw loop=C4', ...defs, line, '&out map=sample [&t * &v]');
+  it('a count of 0, a probability above 1, a k over its n: the reason, the line as filled', () => {
+    expect(errors(t('&t step=4 0!&k 2', '&k 0'))).toEqual(['&k is read as a count: it takes 1 to 4096, not 0 (x!n · x@n · x*n · x/n)']);
+    expect(errors(t('&t step=4 0?&k 2', '&k 2'))).toEqual(['&k is read as x?p: it takes 0 to 1, not 2 (x?p)']);
+    expect(errors(t('&t step=1 0(&k,8)', '&k 9'))[0]).toMatch(/^&t step=1 0\(&k,8\), filled as &t step=1 0\(9,8\): /);
+  });
+
+  it('a cell that is a table or a sound is no number, in a braid as in an attribute', () => {
+    expect(errors(t('&t step=4 0!&k 2', '&k 1 2'))).toEqual(['&k is read as a count: a cell that is one number, filled as the piece is built (&k 3)']);
+  });
+
+  it('where the first reading fails on the placeholder alone, the line is read again with the number, k over n', () => {
+    expect(errors(t('&t step=1 0(3,&k)', '&k 8'))).toEqual([]);
+    expect(errors(t('&t step=1 0(3,&k)', '&k 2'))[0]).toMatch(/filled as &t step=1 0\(3,2\)/);
+  });
+
+  it('spans stay where the line was written: a free() after a cell read as built points at its own text', () => {
+    const text = lines('&k 3', '&t seed=&k step=free(4, 1..8) 0 2');
+    const d = compileSource(text);
+    const free = d.cells.get('t')!.frees![0]!;
+    expect(text.split('\n')[1]!.slice(free.span.col - 1, free.span.col - 1 + free.span.len)).toBe('free(4, 1..8)');
   });
 });
 

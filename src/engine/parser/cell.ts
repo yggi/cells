@@ -1102,7 +1102,6 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     ...(fill ? { fill } : {}),
     ...(text !== null ? { text } : {}),
     frees: [...s.frees],
-    ...(s.holes.length ? { holes: [...s.holes] } : {}),
   };
 }
 

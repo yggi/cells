@@ -1,6 +1,15 @@
-import type { ParseResult } from '../ast';
+import type { BuiltLine, CellDecl, ParseResult } from '../ast';
 export { groupingOf, meterLevels } from './generators';
 export { readFrom, USE_RETIRED, type FromForm } from './use';
+/**
+ * A line that read cells as the piece is built, read again with their values written in (decision 106): its cell and the
+ * unnamed cells it declares. Warnings aren't said twice (the first reading said them); an error is the line's own, a
+ * `LineError` the caller says with the line as filled.
+ */
+export declare function rereadLine(built: BuiltLine, filled: string): {
+    readonly decl: CellDecl;
+    readonly lambdas: readonly CellDecl[];
+};
 /** A text, parsed. */
 export declare function parse(whole: string): ParseResult;
 /**

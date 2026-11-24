@@ -108,8 +108,6 @@ export class LineScanner {
    */
   /** free(…) found in this text. */
   frees: FreeSpec[] = [];
-  /** The numbers read from cells as the piece is built, found in this text (decision 105). */
-  holes: BuiltHole[] = [];
   constructor(
     readonly text: string,
     readonly line: number,
@@ -123,10 +121,12 @@ export class LineScanner {
     readonly depth = 0,
     /** Reads a cell's body (parser/cell.ts `parseBody`): what an unnamed cell &( … ) is. Given here, not imported, so the scanner and the cell parser don't import each other. */
     readonly body?: (s: LineScanner, head: Ref) => CellDecl,
+    /** The numbers read from cells as the piece is built, found in this line (decisions 105 and 106), shared with the unnamed cells inside, each at its place in the line. */
+    readonly holes: BuiltHole[] = [],
   ) {}
   /** A scanner over part of this text (from `start`, its `depth` unnamed cells in), sharing what is found so far. */
   within(text: string, start: number, depth = this.depth): LineScanner {
-    return new LineScanner(text, this.line, this.offset + start, this.lambdas, this.parts, this.warnings, depth, this.body);
+    return new LineScanner(text, this.line, this.offset + start, this.lambdas, this.parts, this.warnings, depth, this.body, this.holes);
   }
   warn(message: string, start: number, len: number): void {
     this.warnings.push({ severity: 'warning', message, span: { ...this.place(start), len } });
@@ -207,7 +207,7 @@ export class LineScanner {
     if (!m) return null;
     const at = this.i;
     this.i += m[0].length;
-    this.holes.push({ field: place.fills.field, ref: { name: m[1]!, pick: null, shift: 0, span: this.span(at) }, form: place.form });
+    this.holes.push({ from: this.offset + at, to: this.offset + this.i, ref: { name: m[1]!, pick: null, shift: 0, span: this.span(at) }, form: place.form });
     const value = place.fills.placeholder;
     return { key: 'param', value, unit: '', lo: value, hi: value, span: this.span(at) };
   }
