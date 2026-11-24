@@ -94,7 +94,7 @@ export const FORM_OPERATORS: readonly Operator[] = SLOT_OPERATORS;
 const REST = JSON.stringify([]);
 
 /** The slot operators a line takes beside its own, on its steps: whatever it strikes or plays, where a frontend asks. */
-const LINE_SLOT_OPERATORS: readonly Operator[] = ['swap', 'substitute'];
+const LINE_SLOT_OPERATORS: readonly Operator[] = ['swap', 'substitute', 'split'];
 
 /**
  * One slot moved n degrees of the table it reads, n each of `degrees` (#910): a note of a pitched line
@@ -105,7 +105,8 @@ export const SHIFT: Operator = 'shift';
 
 /**
  * One slot split in two halves (#912), the second filled by the level's rule: a pitched line's note and its neighbour n
- * degrees away, n each of `NEIGHBOURS` (`split &bass 2 1`: `0 ~ 1 2` to `0 ~ [1 2] 2`, an ornament); a progression's
+ * degrees away, n each of `NEIGHBOURS` (`split &bass 2 1`: `0 ~ 1 2` to `0 ~ [1 2] 2`, an ornament); a line of hits' hit
+ * struck twice at its level, on a line written step by step (`split &hat 0`: `&hh ~` to `[&hh &hh] ~`, a double); a progression's
  * chord and the next chord's secondary dominant (its `dominant` is this split); a form's letter on a grid and each other
  * letter of the form (`split &chorus 1 2`: `&a &a &b &a` to `&a [&a &b] &b &a`). Asked by name: no level's list holds it.
  */
@@ -474,7 +475,15 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
             null,
           );
         }
-      else if (operator === 'split')
+      else if (operator === 'split' && !line.pitched) {
+        // (a hit split in two halves, the second the same hit at its level: a double, on a line written step by step)
+        if (line.form === 'steps' && !line.struck && !line.hold)
+          for (const { slot } of shiftMoves(line.steps, fixedSteps, [1], (s) => onStep(s).length === 1)) {
+            const [x] = onStep(slot) as [LineNote];
+            const notes = inOrder([...line.notes.filter((n) => n !== x), { ...x, half: true }, { ...x, step: slot + 0.5, half: true }]);
+            offer(i, operator, notes, slot, written(line, notes, levels ?? undefined), `its ${x.voice} on step ${slot} split, struck twice`, null);
+          }
+      } else if (operator === 'split')
         // (a note split in two halves, the second its neighbour n degrees away: an ornament, #912)
         for (const { slot, by } of shiftMoves(line.steps, fixedSteps, NEIGHBOURS, (s) => onStep(s).length === 1 && !onStep(s)[0]!.hold)) {
           const [x] = onStep(slot) as [LineNote];
