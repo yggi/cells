@@ -1,5 +1,5 @@
 import { type Role } from '../attributes';
-import { type ShowPlugin } from '../plugins';
+import type { ShowPlugin } from '../plugins';
 import { type Clock, type ResolvedCell } from '../program';
 import type { Cells, Ctx } from './context';
 import type { Declared } from './declare';

@@ -6,7 +6,7 @@ export { backbeatOf, type Anchor } from './anchors';
 export type { Reference } from './reference';
 export { THIRDS, PHRASE_BARS } from './progression';
 /** The operators: the rhythm ones (rung 1), the pitched ones (rung 2) and the harmony's own (rung 3). */
-export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim' | 'third' | 'dominant' | 'swap' | 'substitute' | 'shift';
+export type Operator = 'rotate' | 'drop' | 'add' | 'transpose' | 'invert' | 'reverse' | 'bend' | 'trim' | 'third' | 'dominant' | 'swap' | 'substitute' | 'shift' | 'split';
 /** The operators a frontend gets where it names none, in their order: the rhythm ones. */
 export declare const RHYTHM_OPERATORS: readonly Operator[];
 /** The pitched operators, in their order: for a bass, a lead. */
@@ -29,6 +29,15 @@ export declare const FORM_OPERATORS: readonly Operator[];
  * a form on a grid (`&a` to `&a^1`, a sequence: `shift &chorus 1 2`). Asked by name: no list of a level's holds it.
  */
 export declare const SHIFT: Operator;
+/**
+ * One slot split in two halves (#912), the second filled by the level's rule: a pitched line's note and its neighbour n
+ * degrees away, n each of `NEIGHBOURS` (`split &bass 2 1`: `0 ~ 1 2` to `0 ~ [1 2] 2`, an ornament); a progression's
+ * chord and the next chord's secondary dominant (its `dominant` is this split); a form's letter on a grid and each other
+ * letter of the form (`split &chorus 1 2`: `&a &a &b &a` to `&a [&a &b] &b &a`). Asked by name: no level's list holds it.
+ */
+export declare const SPLIT: Operator;
+/** A split's neighbours on a pitched line, in degrees of its table: the one below and the one above. */
+export declare const NEIGHBOURS: readonly number[];
 /** Transposition's amounts where a frontend names none, in degrees of the table read. */
 export declare const DEGREES: readonly number[];
 /** A bend's amounts, in degrees of the table read from the note before the last: 1 or 2, either way (yggi/jambot#424). */
@@ -88,7 +97,7 @@ export declare const anchorsOf: (fragment: string, workbench?: string, resolve?:
 export declare function fixedStepsOf(fragment: string, options?: VaryOptions): {
     readonly [line: string]: readonly number[];
 };
-/** Every variation by one operator on one line, in Jambot's order, none playing the notes of its source or of one before it. */
+/** Every variation by one operator on one line, in Vary's order, none playing the notes of its source or of one before it. */
 export declare const variations: (fragment: string, options?: VaryOptions) => readonly Variation[];
 /**
  * One note as recognition compares it (#224, decision 055): its onset in whole notes from its lap's start (null where

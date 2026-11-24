@@ -1,5 +1,6 @@
-// Vary's rhythm operators (decision 052, rung 1; #208): on E31's eight drum bars they reproduce Jambot's variations hit
-// for hit and in order, play other notes than their source and each other, keep the anchors and the holes, and pick by a
+// Vary's rhythm operators (decision 052, rung 1; #208): on E31's eight drum bars, measured against Jambot's variations
+// (reproduced hit for hit and in order until #911 made drop and add slot operators: now 277 of Jambot's 284, 259 in the
+// same place), they play other notes than their source and each other, keep the anchors and the holes, and pick by a
 // draw as Jambot's `pick` does; the anchors are the kick's and the backbeat's lines, and the backbeat is Jambot's on every
 // meter of the seed library; and every variation of a bar costs one compile.
 import { describe, expect, it, vi } from 'vitest';
@@ -169,7 +170,7 @@ const ALL = BARS.map((b) => {
 });
 const texts = (b: (typeof ALL)[number]) => b.mine.map((v) => v.apply(b.fragment));
 
-describe("Jambot's variations on E31's eight drum bars, reproduced", () => {
+describe("Jambot's variations on E31's eight drum bars, measured (reproduced until #911)", () => {
   it('each bar, read as Jambot reads it, is E31’s hits: 144 in all', () => {
     for (const b of ALL)
       expect(
@@ -179,16 +180,32 @@ describe("Jambot's variations on E31's eight drum bars, reproduced", () => {
     expect(ALL.reduce((n, b) => n + b.read.length, 0)).toBe(144);
   });
 
-  it('as many as Jambot gives, bar by bar: 284 in all, 18 rotations, 81 drops and 185 adds', () => {
-    expect(ALL.map((b) => [b.preset, b.mine.length])).toEqual(ALL.map((b) => [b.preset, b.jambot.length]));
-    expect(ALL.map((b) => b.mine.length)).toEqual([29, 21, 29, 17, 46, 49, 46, 47]);
+  it('277 in all, bar by bar: 18 rotations, 81 drops and 178 adds', () => {
+    expect(ALL.map((b) => b.mine.length)).toEqual([29, 17, 29, 17, 46, 46, 46, 47]);
     const by = (rule: string) => ALL.reduce((n, b) => n + b.mine.filter((v) => v.rule === rule).length, 0);
-    expect([by('rotate'), by('drop'), by('add'), by('rotate') + by('drop') + by('add')]).toEqual([18, 81, 185, 284]);
+    expect([by('rotate'), by('drop'), by('add'), by('rotate') + by('drop') + by('add')]).toEqual([18, 81, 178, 277]);
   });
 
-  // (284 variations compiled and read, 15 s with the others running: its own timeout, #867)
-  it('each read back by Jambot’s reader as the hits Jambot’s gives, in the same order: role, note, step, velocity', () => {
-    for (const b of ALL) for (const [k, text] of texts(b).entries()) expect(readRhythm(text), `${b.preset}, ${b.mine[k]!.by}`).toEqual(b.jambot[k]);
+  // (277 variations compiled and read, 15 s with the others running: its own timeout, #867)
+  it('each read back by Jambot’s reader is one of Jambot’s, 259 in the same place; Jambot’s other 7 a closed hat on an open one', () => {
+    const key = (hits: readonly FragmentHit[] | null) => JSON.stringify(hits);
+    let place = 0;
+    const others: string[] = [];
+    for (const b of ALL) {
+      const mine = texts(b).map((text) => key(readRhythm(text)));
+      const theirs = b.jambot.map(key);
+      for (const [k, m] of mine.entries()) {
+        expect(theirs, `${b.preset}, ${b.mine[k]!.by}`).toContain(m);
+        if (m === theirs[k]) place++;
+      }
+      // (what Jambot's add gives that a slot's doesn't: a hit of the voice the line strikes first on a step another of
+      // its voices strikes, which is no empty slot)
+      for (const j of b.jambot.filter((j) => !mine.includes(key(j))))
+        for (const h of j.filter((h) => !b.read.some((r) => r.role === h.role && r.step === h.step && r.note === h.note)))
+          others.push(`${b.preset} ${h.role} ${h.note}@${h.step} on ${b.read.filter((r) => r.role === h.role && r.step === h.step).map((r) => r.note)}`);
+    }
+    expect(place).toBe(259);
+    expect(others).toEqual([...[2, 6, 10, 14].map((s) => `Techno hat 42@${s} on 46`), ...[2, 6, 14].map((s) => `Funk hat 42@${s} on 46`)]);
   }, 60_000);
 });
 
@@ -202,8 +219,8 @@ function notesOf(fragment: string): string {
 }
 
 describe('what a variation is', () => {
-  // (284 variations compiled and played, 10 s: its own timeout, #867)
-  it('none of the 284 plays the notes of its source or of another variation of it (S2)', () => {
+  // (277 variations compiled and played, 10 s: its own timeout, #867)
+  it('none of the 277 plays the notes of its source or of another variation of it (S2)', () => {
     for (const b of ALL) {
       const played = [b.fragment, ...texts(b)].map(notesOf);
       expect(new Set(played).size, b.preset).toBe(played.length);
@@ -303,7 +320,8 @@ describe('the anchors', () => {
     // (the seeds that keep their backbeat on a clap: before, only the kick was an anchor, and the clap line was varied)
     it.each([
       ['electro_swing_drums', 14, 18],
-      ['acid_drums', 7, 4],
+      // (its hat line strikes on every step, its closed and open hats in turn: no step is empty, so no add, #911)
+      ['acid_drums', 7, 3],
       ['happy_hardcore_drums', 4, 2],
     ])('%s keeps its clap as the backbeat: %i variations before, %i now', (id, _before, after) => {
       const text = resolveSeed(id)!;
@@ -328,21 +346,21 @@ describe('the anchors', () => {
     }
   });
 
-  it('the backbeat falls where Jambot’s backbeatOf has it, on each of the seed library’s 13 meters', () => {
+  it('the backbeat falls where Jambot’s backbeatOf has it, on each of the seed library’s 12 meters', () => {
     const eighths = METER_FRAGMENTS.map((f) => {
       const r = compileSource(`${f.text}\n&tempo step=120bpm`);
       return [f.id, backbeatOf(r.cells.get('bar')!.meter!).map((w) => w * 8)];
     });
     // (each of Jambot's meters by its name in cells: the five 4/4s are 4/4; 2/4 and the alla breve, which Jambot doesn't
     // name, are two beats a bar, the second its backbeat)
-    const jambot = (id: string) => {
-      const unnamed = ({ 'meter(grouping=meter("2/4"))': [2], 'meter(grouping=meter("2/2", 2))': [4] } as Record<string, number[]>)[id];
-      // (the meter's signature: its grouping's, or 4/4, the template's default)
-      const heights = JAMBOT_METERS[/grouping=meter\("([^"]+)"/.exec(id)?.[1] ?? '4/4']!;
+    const jambot = (id: string, text: string) => {
+      const unnamed = ({ 'bar(meter="2/4")': [2], 'bar(meter="4/4 in 2")': [4] } as Record<string, number[]>)[id];
+      // (the meter's signature, as its text writes it: meter("3/4"), or its text cell's, &meter "5/4", a template's default)
+      const heights = JAMBOT_METERS[/(?:meter\(|&meter )"([^" ]+)/.exec(text)?.[1] ?? '4/4']!;
       return unnamed ?? jambotBackbeatOf(heights).map((pulse) => heights[pulse]!);
     };
-    expect(eighths).toHaveLength(13);
-    expect(eighths).toEqual(METER_FRAGMENTS.map((f) => [f.id, jambot(f.id)]));
+    expect(eighths).toHaveLength(12);
+    expect(eighths).toEqual(METER_FRAGMENTS.map((f) => [f.id, jambot(f.id, f.text)]));
   });
 });
 

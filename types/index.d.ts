@@ -16,7 +16,7 @@
  */
 export { compileSource } from './engine/compile';
 export { parse, pieceMeta, type PieceMeta } from './engine/parser';
-export { chanceOf, eventsBetween, liveGains, outputPlays, outputSounds, plan, returnGains, swingOfBar, type Plan, type Played } from './engine/realize';
+export { chainMuted, chanceOf, droneEnd, endOf, eventsBetween, kitPickAt, liveGains, outputPlays, outputSounds, picksNow, plan, returnGains, swingOfBar, voiceFor, type Plan, type Played, } from './engine/realize';
 export { isPhysical, retime, tapeSpeeds, windowAt, type Window } from './engine/schedule';
 export { createHost, emptyWindow, grabIn, planOf, type ToEngine, type FromEngine } from './engine/host';
 export { keepBar, keepBeat, type KeptBar } from './engine/keepbeat';
@@ -38,7 +38,7 @@ export { EXAMPLES, type Example, type ExampleKey } from './engine/examples';
 export { isPieceFile, lockChanges, lockfileOf, readPiece, textLockfile, withLockfile, writePiece, type LockChange, type PieceFile, type PieceFileProblems, type PieceFrontmatter, } from './engine/piecefile';
 export { fileLine, readLiterate, rewrite, type CodeLine, type Layout, type Literate, type LiterateProblems } from './engine/literate';
 export { jacksOf, patch, unpatch, PatchError, type Jack } from './engine/patch';
-export { codeShifts } from './engine/program';
+export { codeShifts, pickedUnits } from './engine/program';
 export { resetPhysics } from './engine/physics';
 export type { AudioTape, CompileOptions, CompileResult, Env, Locked, Origin, Output, Performer, Resolve, ResolvedCell, Shifts, Take, Unit } from './engine/program';
 export { bodyOf, expand, fragmentHash, signatureOf } from './engine/use';

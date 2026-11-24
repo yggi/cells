@@ -88,6 +88,7 @@ const COUNTED: Readonly<Record<Kind, CellKind>> = {
   number: 'line',
   line: 'line',
   table: 'line',
+  text: 'line',
   blank: 'line',
   steps: 'line',
 };

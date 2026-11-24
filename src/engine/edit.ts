@@ -184,7 +184,7 @@ export function renameAttr(source: string, name: string, from: string, to: strin
   return editDecl(source, name, (code) => code.replace(new RegExp(`(\\s)${from}=`), `$1${to}=`));
 }
 
-/** Add or remove a bare flag (`off`) on &name; on a template's copy, its head's, before `from` (#686: `&bar off from meter &tempo`). */
+/** Add or remove a bare flag (`off`) on &name; on a template's copy, its head's, before `from` (#686: `&bar off from bar &tempo`). */
 function setFlag(source: string, name: string, flag: string, on: boolean): string {
   return editDecl(
     source,

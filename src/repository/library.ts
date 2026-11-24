@@ -77,7 +77,7 @@ export const LIBRARY: readonly Fragment[] = [...FOLDERS.flatMap((folder) => seed
 /** The library's fragments of a facet, read off their points (decision 046), wherever they are kept: a folder or a document. */
 export const ofFacet = (facet: string): Fragment[] => LIBRARY.filter((f) => f.association.some((p) => p.facet === facet));
 
-/** A part's id: its document's key, a slash, its head (`kinderlied/twinkle`); a template's arguments may hold a slash of their own (`meter(grouping=meter("2/2"))`). */
+/** A part's id: its document's key, a slash, its head (`kinderlied/twinkle`); a template's arguments may hold a slash of their own (`bar(meter="2/2")`). */
 const PART_ID = /^[^(/]+\/[^(]+$/;
 
 /** The id a `from` line writes for a fragment: a part's document (`kinderlied/twinkle` → `kinderlied`), any other's own. */

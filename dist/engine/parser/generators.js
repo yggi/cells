@@ -238,48 +238,82 @@ function parseMeter(s, start) {
         }
         const n = s.match(/[1-9][0-9]*(?:n\.?|t)(?![0-9A-Za-z])|[0-9]+/y);
         if (n === null)
-            s.fail(`${what}: in quotes ("4/4"), a number, a note value (16n) or free(…)`);
+            s.fail(`${what}: in quotes ("4/4"), a number, a note value (16n), a cell (&meter) or free(…)`);
         return n;
     };
     const sig = arg('the time signature');
-    const written = WRITTEN.test(sig);
-    const grouping = written ? null : groupingOf(sig);
     s.skipSpace();
-    let sub = 1;
-    let stepWhole = null;
+    let step = null;
     if (s.peek() === ',') {
         s.i++;
         s.skipSpace();
         const at = s.i;
-        const text = arg('the step: steps a pulse, or its note value');
-        const whole = noteValue(text);
-        if (whole !== null) {
-            if (grouping) {
-                const per = 1 / grouping.unit / whole;
-                if (!(Math.abs(per - Math.round(per)) < 1e-9 && Math.round(per) >= 1 && Math.round(per) <= 8))
-                    s.fail(`meter("${sig}", ${text}): the step divides the pulse, ${noteName(1 / grouping.unit) ?? `a 1/${grouping.unit}`}, into 1 to 8 steps`, at, text.length);
-                sub = Math.round(per);
-            }
-            else
-                stepWhole = whole;
-        }
-        else
-            sub = Math.max(1, Math.min(8, parseInt(text, 10) || 1));
+        step = { text: arg('the step: steps a pulse, or its note value'), at };
         s.skipSpace();
     }
     s.expect(')', `')' to close meter(…)`);
     const span = s.span(start);
     if (!s.atBoundary())
         s.fail(`Unexpected '${s.peek()}'`);
+    const built = meterBraid(sig, step?.text ?? null, span);
+    if (typeof built !== 'string')
+        return built;
+    if (step && built.startsWith(`meter("${sig}", ${step.text})`))
+        s.fail(built, step.at, step.text.length);
+    return s.fail(built, start, span.len);
+}
+export function meterCounts(g) {
+    const { tiers } = meterTiers(g, 1);
+    const out = new Map();
+    for (const t of [...new Set(tiers)].sort((a, b) => a - b)) {
+        const starts = tiers.flatMap((x, k) => (x <= t ? [k] : []));
+        if (!out.has(starts.length))
+            out.set(starts.length, starts.map((at, i) => (starts[i + 1] ?? g.pulses) - at));
+    }
+    return out;
+}
+const COUNTED = /^(.*\S)\s+in\s+([0-9]+)$/;
+function meterBraid(written_, stepText, span) {
+    const counted = COUNTED.exec(written_);
+    const sig = counted ? counted[1] : written_;
+    const written = WRITTEN.test(sig);
+    if (counted && written)
+        return `meter("${written_}"): levels say their beats by their marks (+ - : ;), so they are counted as written; "in ${counted[2]}" goes on a signature or sizes ("3/4 in 1")`;
+    const grouping = written ? null : groupingOf(sig);
+    let sub = 1;
+    let stepWhole = null;
+    if (stepText !== null) {
+        const whole = noteValue(stepText);
+        if (whole !== null) {
+            if (grouping) {
+                const per = 1 / grouping.unit / whole;
+                if (!(Math.abs(per - Math.round(per)) < 1e-9 && Math.round(per) >= 1 && Math.round(per) <= 8))
+                    return `meter("${sig}", ${stepText}): the step divides the pulse, ${noteName(1 / grouping.unit) ?? `a 1/${grouping.unit}`}, into 1 to 8 steps`;
+                sub = Math.round(per);
+            }
+            else
+                stepWhole = whole;
+        }
+        else
+            sub = Math.max(1, Math.min(8, parseInt(stepText, 10) || 1));
+    }
     const numbers = meterNumbers(sig, sub);
     if (!numbers.length)
-        s.fail(`meter("${sig}"): a time signature (x/2 x/4 x/8 x/16: 4/4, 6/8, 7/8, 2/2), groups as sizes ("2+2+3" of eighths, "2+2+3/4" of quarters; each 2, 3, 4 or 6), or levels like "*.-.+.-." (* the bar, + - : ; beats, the higher the stronger, . the eighth, , finer)`, start, span.len);
+        return `meter("${sig}"): a time signature (x/2 x/4 x/8 x/16: 4/4, 6/8, 7/8, 2/2), groups as sizes ("2+2+3" of eighths, "2+2+3/4" of quarters; each 2, 3, 4 or 6), or levels like "*.-.+.-." (* the bar, + - : ; beats, the higher the stronger, . the eighth, , finer)`;
     const tokens = numbers.map((value) => ({ atom: { kind: 'note', value, alter: 0 }, repeat: 1, subdivide: 1, elongate: 1, span }));
     const beatsOf = () => {
         const starts = [...sig].flatMap((ch, i) => (i === 0 || (ch !== '.' && ch !== ',') ? [i] : []));
         return starts.map((at, i) => (starts[i + 1] ?? sig.length) - at);
     };
-    const signature = grouping ? signatureOf(sig) : stepWhole !== null ? { pulses: sig.length, unit: 1 / stepWhole, beats: beatsOf() } : undefined;
+    let signature = grouping ? signatureOf(sig) : stepWhole !== null ? { pulses: sig.length, unit: 1 / stepWhole, beats: beatsOf() } : undefined;
+    if (counted && grouping && signature) {
+        const n = Number(counted[2]);
+        const counts = meterCounts(grouping);
+        const beats = counts.get(n);
+        if (!beats)
+            return `meter("${written_}"): ${sig} is counted in ${[...counts.keys()].join(', ')} (a tier of its tree: the bar, its beats, the levels between), not ${n}`;
+        signature = { ...signature, beats };
+    }
     const beats = signature ? signature.beats.length : beatsOf().length;
     return { kind: 'list', tokens, span, perBeat: numbers.length / Math.max(1, beats), ...(signature ? { signature } : {}) };
 }
@@ -565,7 +599,7 @@ export const GENERATORS = {
     },
     meter: {
         parse: parseMeter,
-        syntax: syntax('generator', 'meter("sig") · meter("sig", step) · meter("2+2+3") · meter("2+2+3/4") · meter("levels")', `A bar as levels, one per step, its numbers its tiers from the ends: 0 the downbeat, 1 a beat, 2 a half's beat (and any tier between), 3 the eighth, 4 finer. A time signature by rule (contracts/meter v2, decision 072): x/8 and x/16 grouped as the canonical even set of ⌈x/3⌉ groups (7/8 is 3+2+2, 8/8 3+3+2), x/4 and x/2 in beats of the denominator, or in threes where x is a multiple of 3 from 6 (6/4). Its step is a number a pulse or a note value (meter("6/8", 16n)). Groups written as sizes, of eighths or of the denominator after a slash (2+2+3, 2+2+3/4), each 2, 3, 4 or 6. Or levels written out (* the bar, + - : ; beats, . the eighth, , finer), with their step's note value. Of four groups or more, each half's start is the stronger: 4/4 is *.-.+.-. (#17). Its bpm counts beats, its groups. Each argument can be free(…).`, ['&bar meter("4/4", 2) step=100bpm', '&bar meter("6/8") step=60bpm', '&bar meter("2+2+3") step=90bpm', '&bar meter("2/2", 2) step=60bpm', '&bar meter("*.+.+..") step=90bpm'], 'time.md'),
+        syntax: syntax('generator', 'meter("sig") · meter("sig in n") · meter("sig", step) · meter("2+2+3") · meter("2+2+3/4") · meter("levels")', `A bar as levels, one per step, its numbers its tiers from the ends: 0 the downbeat, 1 a beat, 2 a half's beat (and any tier between), 3 the eighth, 4 finer. A time signature by rule (contracts/meter v2, decision 072): x/8 and x/16 grouped as the canonical even set of ⌈x/3⌉ groups (7/8 is 3+2+2, 8/8 3+3+2), x/4 and x/2 in beats of the denominator, or in threes where x is a multiple of 3 from 6 (6/4). Its step is a number a pulse or a note value (meter("6/8", 16n)). Groups written as sizes, of eighths or of the denominator after a slash (2+2+3, 2+2+3/4), each 2, 3, 4 or 6. Or levels written out (* the bar, + - : ; beats, . the eighth, , finer), with their step's note value. Of four groups or more, each half's start is the stronger: 4/4 is *.-.+.-. (#17). Its bpm counts beats, its groups. Each argument can be free(…).`, ['&bar meter("4/4", 2) step=100bpm', '&bar meter("6/8") step=60bpm', '&bar meter("2+2+3") step=90bpm', '&bar meter("2/2", 2) step=60bpm', '&bar meter("*.+.+..") step=90bpm'], 'time.md'),
     },
     spell: {
         parse: parseSpell,
@@ -583,4 +617,64 @@ const RETIRED_GENERATORS = {
 export const isGenerator = (word) => word in GENERATORS || word in RETIRED_GENERATORS;
 export function parseGenerator(s, name, start) {
     return (GENERATORS[name]?.parse ?? RETIRED_GENERATORS[name])(s, start);
+}
+export const VALUE_ARGS = {
+    euclid: { 0: 'number', 1: 'number', 2: 'number' },
+    sin: { 0: 'number' },
+    saw: { 0: 'number' },
+    tri: { 0: 'number' },
+    square: { 0: 'number' },
+    meter: { 0: 'text', 1: 'number' },
+    spell: { 0: 'text', 2: 'text' },
+};
+export function parseGeneratorCall(s, name, start) {
+    const values = VALUE_ARGS[name];
+    if (!values || s.peek() !== '(')
+        return parseGenerator(s, name, start);
+    const open = s.i;
+    const args = [];
+    let depth = 0;
+    let quoted = false;
+    let at = open + 1;
+    let close = -1;
+    for (let i = open + 1; i < s.text.length; i++) {
+        const c = s.text[i];
+        if (c === '"')
+            quoted = !quoted;
+        else if (quoted)
+            continue;
+        else if ('([{'.includes(c))
+            depth++;
+        else if (')]}'.includes(c) && depth > 0)
+            depth--;
+        else if ((c === ',' || c === ')') && depth === 0) {
+            args.push({ from: at, to: i });
+            at = i + 1;
+            if (c === ')') {
+                close = i;
+                break;
+            }
+        }
+    }
+    const reads = [];
+    args.forEach((a, k) => {
+        const kind = values[k];
+        const raw = s.text.slice(a.from, a.to);
+        const m = /^\s*&([A-Za-z_][A-Za-z0-9_]*)\s*$/.exec(raw);
+        if (!kind || !m)
+            return;
+        const from = a.from + raw.indexOf('&');
+        const to = from + 1 + m[1].length;
+        const back = s.i;
+        s.i = to;
+        reads.push({ ref: { name: m[1], span: s.place(from) }, kind, from: from - start, to: to - start });
+        s.i = back;
+    });
+    if (close < 0 || !reads.length)
+        return parseGenerator(s, name, start);
+    s.i = close + 1;
+    const span = s.span(start);
+    if (!s.atBoundary())
+        s.fail(`Unexpected '${s.peek()}'`);
+    return { kind: 'list', tokens: [], span, deferred: { generator: name, call: s.text.slice(start, close + 1), at: span, reads } };
 }

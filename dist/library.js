@@ -10,5 +10,6 @@ export { DRUM_ROLES, FEEL_PARTS, SECTION_TYPES } from "./engine/perform/feel.js"
 export { GM_KIT, kitVoiceOf } from "./engine/midi.js";
 export { backbeatOf } from "./engine/vary/index.js";
 export { bjorklund } from "./engine/parser/generators.js";
-export { midiOf, mod, modeBrightness, modeName, NOTE_NAMES, noteName, SCALES } from "./theory/modes.js";
+export { midiOf, mod, modeBrightness, modeName, NOTE_NAMES, noteName, pitchHue, SCALES } from "./theory/modes.js";
 export { TONAL_SCALES } from "./theory/tonal.js";
+export { SEED_FILES } from "./repository/seed.generated.js";

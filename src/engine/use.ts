@@ -454,7 +454,7 @@ function merge(own: readonly Line[], used: readonly Taken[], say: (i: number, me
       for (const n of lacking) say(i, `&${n} is not in ${quoted(id)}: it defines ${[...byName.keys()].map((m) => `&${m}`).join(', ')}`);
     }
     // (all of it, `*`: but a line the fragment's own lines read, where every one that reads it the level overrides, goes
-    // with them, as a helper of the overridden line: `use * from meter(swing=8n:2/3)` under the piece's own &bar takes no &swing;
+    // with them, as a helper of the overridden line: `use * swing=8n:2/3 from bar` under the piece's own &bar takes no &swing;
     // unless the level's own lines read it, as a line written in the overridden one's place does, word for word)
     const shadowed = new Set<string>();
     if (!names)

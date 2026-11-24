@@ -19,5 +19,6 @@ export { DRUM_ROLES, FEEL_PARTS, SECTION_TYPES } from './engine/perform/feel';
 export { GM_KIT, kitVoiceOf } from './engine/midi';
 export { backbeatOf } from './engine/vary';
 export { bjorklund } from './engine/parser/generators';
-export { midiOf, mod, modeBrightness, modeName, NOTE_NAMES, noteName, SCALES } from './theory/modes';
+export { midiOf, mod, modeBrightness, modeName, NOTE_NAMES, noteName, pitchHue, SCALES } from './theory/modes';
 export { TONAL_SCALES } from './theory/tonal';
+export { SEED_FILES } from './repository/seed.generated';

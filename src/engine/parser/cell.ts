@@ -9,7 +9,7 @@ import { IDENT, LineScanner } from './scanner';
 import { OPERATIONS, parseToken, pushStep } from './braid';
 import { FREE_BRAID_WHOLE } from './free';
 import { NUMBER_PLACES } from './numbers';
-import { isGenerator, parseFifths, parseGenerator, parseScale } from './generators';
+import { isGenerator, parseFifths, parseGeneratorCall, parseScale } from './generators';
 import { MODE_WORDS } from '../../theory/modes';
 import { atTap, parseMap, parseStep } from './values';
 import { syntax, type Syntax } from './syntax';
@@ -60,36 +60,6 @@ interface Key {
   readonly form: string;
   readonly examples: readonly string[];
 }
-
-/** How a cell is shown (never how it sounds); the default for everything below it. Meanings: layout/show.ts. */
-export const SHOWS = [
-  'braid',
-  'pattern',
-  'equal',
-  'notes',
-  'midi',
-  'do',
-  'degrees',
-  'table',
-  'scale',
-  'mode',
-  'key',
-  'grid',
-  'meter',
-  'spectrum',
-  'wave',
-  'levels',
-  'adsr',
-  'mix',
-  'note',
-  'petal',
-  'off',
-  'matrix',
-  'lfo',
-  'brightness',
-] as const;
-/** Naming conventions, after a colon: show=notes:flats. */
-export const SHOW_CONVENTIONS: Readonly<Record<string, readonly string[]>> = { notes: ['flats', 'sharps', 'german'], do: ['fixed', 'movable'] };
 
 const whole =
   (key: 'shift' | 'stride'): Reader =>
@@ -169,9 +139,9 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
     read: (s, b) => {
       const at2 = s.i;
       const w = s.match(/[a-z]+/y);
-      // (a word: whether it is one of SHOWS or a plugin the piece carries is compile's to say: it knows the plugins)
-      if (w === null) s.fail(`show= takes one of: ${SHOWS.join(' ')}, or a plugin of the piece`, at2, 1);
-      // a naming convention: notes:flats, notes:sharps, notes:german, do:fixed
+      // (a word the frontend draws: which words show= takes, and what each draws, is the frontend's, decision 086 §2)
+      if (w === null) s.fail("show= takes a word, what the cell is drawn as (show=notes, show=sun): which words is the frontend's", at2, 1);
+      // a naming convention after it, a word the frontend reads too: notes:flats, do:movable
       let conv = '';
       // a mix's colours: the grid it follows (show=mix:&edo19), whatever grids its voices are on
       if (w === 'mix' && s.peek() === ':' && !s.text.startsWith(':&', s.i))
@@ -186,9 +156,8 @@ export const KEYS: Readonly<Record<keyof typeof CORE, Key>> = {
       }
       if (s.peek() === ':') {
         s.i++;
-        const cw = s.match(/[a-z]+/y) ?? '';
-        const ok = SHOW_CONVENTIONS[w!]?.includes(cw);
-        if (!ok) s.fail(`show=${w}: takes ${w === 'notes' ? 'flats, sharps or german' : w === 'do' ? 'fixed or movable' : 'no convention'}`, at2, s.i - at2);
+        const cw = s.match(/[a-z]+/y);
+        if (cw === null) s.fail(`show=${w}: a word after the colon, its convention (show=notes:german)`, at2, s.i - at2);
         conv = `:${cw}`;
       }
       b.show = w + conv;
@@ -697,7 +666,7 @@ export const LINE_SYNTAX: readonly Syntax[] = [
     'line',
     '&x from id(name=…) … · &a, &b from id · * from id',
     "Where a line's cells come from (decision 065): a fragment by its id, the id a word or in double quotes, the host's resolver finding it. A template (a fragment with a signature) gives a copy, its head named as the line names it, its named arguments in parentheses and its main one the rest of the line; attributes before `from` are the head's. A collection gives the cells it names by their names, or every line (`*`). `&new=old` takes the fragment's `old` under the piece's name, a collection's cell or one of a template's heads (decision 075). With no id, a fragment's signature: its head, its optional parameters in parentheses, its main one after them. `use &a, &b from id` is retired: an error, which Migrate rewrites (#387).",
-    ['&key from harmonic_minor D', '&bar from meter(swing=8n:.64) 120bpm', '&bd, &sd from gm_kit', '&kick=bd, &snare=sd from gm_kit', '* from gm_kit', '&bar from (&swing) &tempo'],
+    ['&key from harmonic_minor D', '&bar swing=8n:.64 from bar 120bpm', '&bd, &sd from gm_kit', '&kick=bd, &snare=sd from gm_kit', '* from gm_kit', '&bar from (&swing) &tempo'],
     'use.md',
   ),
   syntax(
@@ -791,8 +760,18 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
   // an envelope's slots by name (attack=.3..0.01 * &style[bite]): its braid, in the slots' order, once the line is read
   const adsr = new Map<string, number>();
 
+  // a text cell (decision 101): its braid one text in quotes, `&meter "3/4"`
+  let text: string | null = null;
   while (!s.done()) {
     const at = s.i;
+    if (s.peek() === '"') {
+      const quoted = s.match(/"[^"]*"/y);
+      if (quoted === null) s.fail('A text in quotes ends with a quote: "3/4"', at, 1);
+      if (text !== null || generator || tokens.length) s.fail('A text cell is one text alone, &meter "3/4": a cell has one braid', at, quoted!.length);
+      if (!s.atBoundary()) s.fail(`Unexpected '${s.peek()}'`);
+      text = quoted!.slice(1, -1);
+      continue;
+    }
     const word = s.match(IDENT);
     if (word !== null && s.peek() === '=') {
       s.i++;
@@ -929,7 +908,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       continue;
     }
     if (word !== null && isGenerator(word) && s.peek() === '(') {
-      if (generator || tokens.length) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, word.length);
+      if (generator || tokens.length || text !== null) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, word.length);
       if (word === 'fifths') {
         // fifths(n): the circle, turned n fifths round (the cell's shift)
         const f = parseFifths(s, at);
@@ -940,7 +919,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
         const sc = parseScale(s, at);
         generator = { kind: 'scan', steps: sc.steps, span: sc.span, ...(sc.mode ? { mode: sc.mode } : {}), ...(sc.even ? { even: sc.even } : {}) };
         scaleKey = sc.key;
-      } else generator = parseGenerator(s, word, at);
+      } else generator = parseGeneratorCall(s, word, at);
       continue;
     }
     if (word !== null && (OPERATIONS as readonly string[]).includes(word) && s.peek() === '(') {
@@ -965,6 +944,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
       s.fail(`free(${freeSteps})${mod}: a modifier goes on its steps, inside the parentheses: free([${freeSteps}]${mod})`, at, mod.length);
     }
     if (generator) s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, 1);
+    if (text !== null) s.fail('A text cell is one text alone, &meter "3/4": a cell has one braid', at, 1);
     pushStep(s, tokens, parseToken(s));
   }
 
@@ -1120,6 +1100,7 @@ export function parseBody(s: LineScanner, head: Ref): CellDecl {
     ...(playMove ? { playMove } : {}),
     braid,
     ...(fill ? { fill } : {}),
+    ...(text !== null ? { text } : {}),
     frees: [...s.frees],
   };
 }

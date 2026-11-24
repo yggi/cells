@@ -1,4 +1,4 @@
-// Recognition (decision 055, #224): each of Jambot's 284 variations on E31's bars, each of the bass seeds' 48, and each of
+// Recognition (decision 055, #224): each of the 277 variations on E31's bars (Jambot's 284 until #911), each of the bass seeds' 48, and each of
 // the seed progressions' 789 but one (decision 052, points 8 and 10), is
 // recognised as its source's, by its operator, at distance 0, against the whole library; random bars of hits are
 // recognised as nothing; a recognition on a warmed recogniser compiles only the heard text (its milliseconds:
@@ -54,7 +54,7 @@ const linesAlone = (text: string) =>
 const recogniser = createRecogniser();
 
 describe('a variation is recognised as its source’s, by its operator, at distance 0', () => {
-  it('each of the 284 on E31’s eight bars; first for 282, and the other 2 also as the bar they play', () => {
+  it('each of the 277 on E31’s eight bars (284 until #911); first for 275, and the other 2 also as the bar they play', () => {
     let n = 0;
     const second: string[] = [];
     for (const b of BARS) {
@@ -74,15 +74,11 @@ describe('a variation is recognised as its source’s, by its operator, at dista
         n++;
       }
     }
-    expect(n).toBe(284);
-    // (Lo-fi hip hop's bar and Bossa nova's differ by one hat, and their levels: each one's variation plays the other's notes;
-    // and since swap reaches a line's steps (decision 052, point 11), Bossa nova's hat added beside step 4 is Lo-fi hip
-    // hop's moved there, `swap &hat 3` and `swap &hat 4`, found first by the library's order, at the same distance)
+    expect(n).toBe(277);
+    // (Lo-fi hip hop's bar and Bossa nova's differ by one hat, and their levels: each one's variation plays the other's notes)
     expect(second).toEqual([
       'lo_fi_hip_hop_drums, drop &hat 4: bossa_nova_drums 0 0; lo_fi_hip_hop_drums 1 0',
-      'bossa_nova_drums, add &hat 3: lo_fi_hip_hop_drums 1 0; bossa_nova_drums 1 0',
       'bossa_nova_drums, add &hat 4: lo_fi_hip_hop_drums 0 0; bossa_nova_drums 1 0',
-      'bossa_nova_drums, add &hat 5: lo_fi_hip_hop_drums 1 0; bossa_nova_drums 1 0',
     ]);
   });
 
@@ -120,13 +116,13 @@ describe('a variation is recognised as its source’s, by its operator, at dista
     expect(n).toBe(120);
   });
 
-  it('each of the seed progressions’ 789 (394 in C major, 395 in C minor), by its operator, at distance 0; one is a seed itself', () => {
+  it('each of the seed progressions’ 789 (394 in C major, 395 in C minor), by its operator asked, at distance 0; one is a seed itself', () => {
     let n = 0;
     for (const mode of ['major', 'minor']) {
       const workbench = `&bar meter("4/4") step=120bpm\n&key scale(${mode}, C)`;
       for (const f of HARMONY_FRAGMENTS)
         for (const v of variations(f.text, { workbench, operators: HARMONY_OPERATORS })) {
-          const [first] = recogniser.recognise(v.apply(f.text), LIBRARY, { workbench });
+          const [first] = recogniser.recognise(v.apply(f.text), LIBRARY, { workbench, operators: HARMONY_OPERATORS });
           // (the montuno's third bar given its second's chord is the vamp to the fourth, a seed: recognised as that seed)
           const as = f.id === 'montuno' && v.by === 'substitute &harm 2 1' ? ['vamp_to_the_fourth', [], 0] : [f.id, [v.by], 0];
           expect([first?.fragment.id, first?.path.map((s) => s.by), first?.distance], `${mode}: ${f.id}, ${v.by}`).toEqual(as);
@@ -211,11 +207,8 @@ describe('a pitched voice by its place, a bar of a longer fragment, and the lear
       'fifths_sequence [] bar 2 at 0',
       'axis_progression [] bar 3 at 0',
       'vamp_to_the_seventh [] bar 4 at 0',
-      // (and since shift joined recognition's default, #910, as a bar of two seeds with one chord moved a step onto it)
-      'dark_cadence [shift &harm 1 1] bar 1 at 0',
       'korobeiniki_changes [third &harm 2 2] bar 2 at 0',
       'montuno [third &harm 2 2] bar 2 at 0',
-      'vamp_to_the_sixth [shift &harm 4 1] bar 4 at 0',
       'vamp_to_the_fifth [third &harm 4 2] bar 4 at 0',
       'haunted_progression [third &harm 6 2] bar 6 at 0',
     ]);

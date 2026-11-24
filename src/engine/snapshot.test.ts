@@ -4,9 +4,8 @@
  * piece; when it is meant, refresh with `npx vitest run src/engine/snapshot.test.ts -u` (the flag after the
  * path) and say in the PR which pieces changed and why (docs/testing.md).
  *
- * The live view at a few moments (`liveAt`: which wires carry sound, what is dimmed, the state a workbench's
- * graph draws) is hashed apart, one line per piece in `live.snapshot.txt` (#325): a change to it alone is not a
- * change to what a piece plays, so it doesn't move `snapshot.txt`, the ladder's last rung (AGENTS.md).
+ * The live view (what the graph draws while a piece plays) is Cell studio's since decision 086: its snapshot is there,
+ * `src/layout/live.snapshot.test.ts`.
  *
  * Beside it, two promises about time that hold for every example: two plans are the same, and a plan's
  * events over two windows are its events over one.
@@ -18,7 +17,6 @@ import { codeShifts } from './program';
 import { eventsBetween, plan } from './realize';
 import { resolveSeed } from '../repository/library';
 import { notesAt, valuesAt } from './values';
-import { liveAt } from './live';
 import { EXAMPLES } from './examples';
 
 /** Plain data for hashing: maps and sets in a fixed order, numbers to 9 significant digits. */
@@ -55,7 +53,6 @@ function sorted<E extends { readonly at: number; readonly voice: string; readonl
 }
 
 const VALUE_TIMES = [0.5, 3.3, 11.7, 29.1];
-const LIVE_TIMES = [2.1, 13.3, 37.9];
 
 const pieces = Object.entries(EXAMPLES).map(([key, { source }]) => {
   const result = compileSource(source, undefined, { resolve: resolveSeed });
@@ -72,13 +69,6 @@ describe('every example plays what it played (snapshot.txt)', () => {
       return `${key}  ${events.length} notes  notes ${hash(notesOf(events))}  events ${hash(sorted(events))}  values ${hash(values)}`;
     });
     await expect(lines.join('\n') + '\n').toMatchFileSnapshot('./snapshot.txt');
-  });
-});
-
-describe('every example shows the live view it showed (live.snapshot.txt)', () => {
-  it('the live view at three moments, hashed per piece', async () => {
-    const lines = pieces.map(({ key, result, shifts }) => `${key}  live ${hash(LIVE_TIMES.map((t) => liveAt(result, shifts, new Set(), t)))}`);
-    await expect(lines.join('\n') + '\n').toMatchFileSnapshot('./live.snapshot.txt');
   });
 });
 

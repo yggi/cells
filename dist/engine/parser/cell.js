@@ -7,39 +7,12 @@ import { IDENT, LineScanner } from "./scanner.js";
 import { OPERATIONS, parseToken, pushStep } from "./braid.js";
 import { FREE_BRAID_WHOLE } from "./free.js";
 import { NUMBER_PLACES } from "./numbers.js";
-import { isGenerator, parseFifths, parseGenerator, parseScale } from "./generators.js";
+import { isGenerator, parseFifths, parseGeneratorCall, parseScale } from "./generators.js";
 import { MODE_WORDS } from "../../theory/modes.js";
 import { atTap, parseMap, parseStep } from "./values.js";
 import { syntax } from "./syntax.js";
 import { AXES, AXIS_NAMES, SLOTS } from "../style.js";
 const ADSR_SLOTS = SLOTS.adsr;
-export const SHOWS = [
-    'braid',
-    'pattern',
-    'equal',
-    'notes',
-    'midi',
-    'do',
-    'degrees',
-    'table',
-    'scale',
-    'mode',
-    'key',
-    'grid',
-    'meter',
-    'spectrum',
-    'wave',
-    'levels',
-    'adsr',
-    'mix',
-    'note',
-    'petal',
-    'off',
-    'matrix',
-    'lfo',
-    'brightness',
-];
-export const SHOW_CONVENTIONS = { notes: ['flats', 'sharps', 'german'], do: ['fixed', 'movable'] };
 const whole = (key) => (s, b, _word, at) => {
     b[key] = s.int(`a whole number after ${key}=`, NUMBER_PLACES[key]);
     b.paramSpans[key] = s.place(at);
@@ -111,7 +84,7 @@ export const KEYS = {
             const at2 = s.i;
             const w = s.match(/[a-z]+/y);
             if (w === null)
-                s.fail(`show= takes one of: ${SHOWS.join(' ')}, or a plugin of the piece`, at2, 1);
+                s.fail("show= takes a word, what the cell is drawn as (show=notes, show=sun): which words is the frontend's", at2, 1);
             let conv = '';
             if (w === 'mix' && s.peek() === ':' && !s.text.startsWith(':&', s.i))
                 s.fail('show=mix:&grid: the grid whose colours the mix wears, like show=mix:&edo19 (no space after the colon)', at2, s.i + 1 - at2);
@@ -126,10 +99,9 @@ export const KEYS = {
             }
             if (s.peek() === ':') {
                 s.i++;
-                const cw = s.match(/[a-z]+/y) ?? '';
-                const ok = SHOW_CONVENTIONS[w]?.includes(cw);
-                if (!ok)
-                    s.fail(`show=${w}: takes ${w === 'notes' ? 'flats, sharps or german' : w === 'do' ? 'fixed or movable' : 'no convention'}`, at2, s.i - at2);
+                const cw = s.match(/[a-z]+/y);
+                if (cw === null)
+                    s.fail(`show=${w}: a word after the colon, its convention (show=notes:german)`, at2, s.i - at2);
                 conv = `:${cw}`;
             }
             b.show = w + conv;
@@ -579,7 +551,7 @@ export const LINE_SYNTAX = [
     syntax('line', 'off', 'Switched off: it, and everything that reads through it or plays it, is silent (and hidden from the graph).', ['&drums off over=&kit step=&bar 0 1'], 'cell.md'),
     syntax('line', '# … · // …', 'A comment, to the end of the line: # at the start of a line or after a space (a # glued to a number is a sharp), // anywhere.', ['&tune step=2 0 2 4  # the opening'], 'cell.md'),
     syntax('line', '… + · … * · … , · … [', 'A line ending in +, *, a comma or [ continues on the next one (a long mix).', [], 'cell.md'),
-    syntax('line', '&x from id(name=…) … · &a, &b from id · * from id', "Where a line's cells come from (decision 065): a fragment by its id, the id a word or in double quotes, the host's resolver finding it. A template (a fragment with a signature) gives a copy, its head named as the line names it, its named arguments in parentheses and its main one the rest of the line; attributes before `from` are the head's. A collection gives the cells it names by their names, or every line (`*`). `&new=old` takes the fragment's `old` under the piece's name, a collection's cell or one of a template's heads (decision 075). With no id, a fragment's signature: its head, its optional parameters in parentheses, its main one after them. `use &a, &b from id` is retired: an error, which Migrate rewrites (#387).", ['&key from harmonic_minor D', '&bar from meter(swing=8n:.64) 120bpm', '&bd, &sd from gm_kit', '&kick=bd, &snare=sd from gm_kit', '* from gm_kit', '&bar from (&swing) &tempo'], 'use.md'),
+    syntax('line', '&x from id(name=…) … · &a, &b from id · * from id', "Where a line's cells come from (decision 065): a fragment by its id, the id a word or in double quotes, the host's resolver finding it. A template (a fragment with a signature) gives a copy, its head named as the line names it, its named arguments in parentheses and its main one the rest of the line; attributes before `from` are the head's. A collection gives the cells it names by their names, or every line (`*`). `&new=old` takes the fragment's `old` under the piece's name, a collection's cell or one of a template's heads (decision 075). With no id, a fragment's signature: its head, its optional parameters in parentheses, its main one after them. `use &a, &b from id` is retired: an error, which Migrate rewrites (#387).", ['&key from harmonic_minor D', '&bar swing=8n:.64 from bar 120bpm', '&bd, &sd from gm_kit', '&kick=bd, &snare=sd from gm_kit', '* from gm_kit', '&bar from (&swing) &tempo'], 'use.md'),
     syntax('line', '&sections step=&bar &a &b', 'Sections of an arrangement (decision 016): a stepped table of names declares them, each stepped as the table is. What a section steps plays while a selector reading the table picks it (`over=&sections`), from its top each time.', ['&sections step=&bar &verseBar &chorusBar'], 'time.md'),
 ];
 function parseFreeBraid(s) {
@@ -653,8 +625,20 @@ export function parseBody(s, head) {
     let freeSteps = '';
     const axes = new Map();
     const adsr = new Map();
+    let text = null;
     while (!s.done()) {
         const at = s.i;
+        if (s.peek() === '"') {
+            const quoted = s.match(/"[^"]*"/y);
+            if (quoted === null)
+                s.fail('A text in quotes ends with a quote: "3/4"', at, 1);
+            if (text !== null || generator || tokens.length)
+                s.fail('A text cell is one text alone, &meter "3/4": a cell has one braid', at, quoted.length);
+            if (!s.atBoundary())
+                s.fail(`Unexpected '${s.peek()}'`);
+            text = quoted.slice(1, -1);
+            continue;
+        }
         const word = s.match(IDENT);
         if (word !== null && s.peek() === '=') {
             s.i++;
@@ -789,7 +773,7 @@ export function parseBody(s, head) {
             continue;
         }
         if (word !== null && isGenerator(word) && s.peek() === '(') {
-            if (generator || tokens.length)
+            if (generator || tokens.length || text !== null)
                 s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, word.length);
             if (word === 'fifths') {
                 const f = parseFifths(s, at);
@@ -802,7 +786,7 @@ export function parseBody(s, head) {
                 scaleKey = sc.key;
             }
             else
-                generator = parseGenerator(s, word, at);
+                generator = parseGeneratorCall(s, word, at);
             continue;
         }
         if (word !== null && OPERATIONS.includes(word) && s.peek() === '(') {
@@ -830,6 +814,8 @@ export function parseBody(s, head) {
         }
         if (generator)
             s.fail(freeBraid ? FREE_BRAID_WHOLE : 'A cell has one braid: a generator or a list of steps', at, 1);
+        if (text !== null)
+            s.fail('A text cell is one text alone, &meter "3/4": a cell has one braid', at, 1);
         pushStep(s, tokens, parseToken(s));
     }
     if (axes.size) {
@@ -945,6 +931,7 @@ export function parseBody(s, head) {
         ...(playMove ? { playMove } : {}),
         braid,
         ...(fill ? { fill } : {}),
+        ...(text !== null ? { text } : {}),
         frees: [...s.frees],
     };
 }

@@ -2,7 +2,8 @@
 import { numberCellOf, valueSumOf } from '../valuesum';
 import { refLabel, type Atom, type CellDecl, type Expr, type Ref, type Span, type Token } from '../ast';
 import { MAX_SPLICE_DEPTH, ROOT } from '../program';
-import { evenProblem, evenSteps, SCALE_KEY } from '../parser/generators';
+import { evenProblem, evenSteps, parseGenerator, SCALE_KEY } from '../parser/generators';
+import { LineError, LineScanner } from '../parser/scanner';
 import { PLAYED_AS, VOICE_MAKERS } from '../attributes';
 import { IMPLICIT, isRootDecl, tableOf } from './tables';
 import { leaves } from '../subseq';
@@ -41,6 +42,8 @@ export function declare(ctx: Ctx): Declared {
     else decls.set(c.name, c);
   }
   const mainKey = mainKeyOf(decls);
+  // (a generator's arguments read from cells first, decision 101: a meter written meter(&m) is its meter before any pass reads it)
+  meters(ctx, decls);
   tonics(ctx, decls);
   modes(ctx, decls);
   evens(ctx, decls);
@@ -197,6 +200,71 @@ function modes(ctx: Ctx, decls: Map<string, CellDecl>): void {
       continue;
     }
     decls.set(name, { ...d, valueReads: [m.name], braid: { ...d.braid, steps: diatonicSteps(phase) } });
+  }
+}
+
+/**
+ * A generator's value arguments read from cells (decision 101, after 093): `meter(&meter)` with `&meter "3/4"`,
+ * `euclid(&k, 8)` with `&k 3`. Each cell is one value of the kind its argument takes, a number (088) or a text (a text
+ * cell, `&meter "3/4"`), filled as the piece is built: its value is written into the call, and the call parsed again, so
+ * the generator reads it as it reads the value written. A text read anywhere else (a braid's step, a cell's factor) is an
+ * error that says where a text is read.
+ */
+function meters(ctx: Ctx, decls: Map<string, CellDecl>): void {
+  for (const [name, d] of decls) {
+    if (d.braid.kind !== 'list' || !d.braid.deferred) continue;
+    const { generator, call, reads, at } = d.braid.deferred;
+    let filled = call;
+    let ok = true;
+    // (from the last, so each one's place in the call stays where it was written)
+    for (const r of [...reads].sort((a, b) => b.from - a.from)) {
+      const c = decls.get(r.ref.name);
+      if (!c) {
+        ctx.unknownCell(r.ref.name, r.ref.span);
+        ok = false;
+        continue;
+      }
+      // (a fill not answered yet, a fragment read alone: its plugin answers it in a piece, #792)
+      if (c.fill && c.braid.kind === 'blank') {
+        ok = false;
+        continue;
+      }
+      const value = c.step ? null : r.kind === 'text' ? (c.text === undefined ? null : JSON.stringify(c.text)) : c.text === undefined ? numberCellOf(c) : null;
+      if (value === null) {
+        ctx.error(
+          r.kind === 'text'
+            ? `&${c.name} is read as ${generator}(…)'s text: a text cell, filled as the piece is built (&${c.name} "3/4")`
+            : `&${c.name} is read as ${generator}(…)'s number: a cell that is one number, filled as the piece is built (&${c.name} 3)`,
+          c.span,
+        );
+        ok = false;
+        continue;
+      }
+      filled = filled.slice(0, r.from) + String(value) + filled.slice(r.to);
+    }
+    if (!ok) continue;
+    try {
+      // (read where the call is written, so the braid's steps point at it)
+      const again = new LineScanner(filled, at.line, at.col - 1);
+      again.i = generator.length; // (at its '(', as a cell's line hands it over)
+      const braid = parseGenerator(again, generator, 0);
+      decls.set(name, { ...d, valueReads: [...(d.valueReads ?? []), ...reads.map((r) => r.ref.name)], braid });
+    } catch (e) {
+      if (!(e instanceof LineError)) throw e;
+      ctx.error(`${call}, filled as ${filled}: ${e.message}`, at);
+    }
+  }
+  const texts = new Set([...decls.values()].flatMap((d) => (d.text !== undefined ? [d.name] : [])));
+  if (!texts.size) return;
+  const said = new Set<string>();
+  const elsewhere = (name: string, span: Span) => {
+    if (!texts.has(name) || said.has(`${name}@${span.line}:${span.col}`)) return;
+    said.add(`${name}@${span.line}:${span.col}`);
+    ctx.error(`&${name} is a text: a generator's argument reads it as the piece is built (meter(&${name})), nothing else`, span);
+  };
+  for (const d of decls.values()) {
+    if (d.braid.kind === 'list') for (const t of d.braid.tokens) for (const l of leaves(t.atom)) if (l.kind === 'ref') elsewhere(l.name, t.span ?? d.span);
+    for (const pc of Object.values(d.paramCells ?? {})) for (const f of pc.factors) elsewhere(f.name, f.span);
   }
 }
 

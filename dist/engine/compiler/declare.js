@@ -1,7 +1,8 @@
 import { numberCellOf, valueSumOf } from "../valuesum.js";
 import { refLabel } from "../ast.js";
 import { MAX_SPLICE_DEPTH, ROOT } from "../program.js";
-import { evenProblem, evenSteps, SCALE_KEY } from "../parser/generators.js";
+import { evenProblem, evenSteps, parseGenerator, SCALE_KEY } from "../parser/generators.js";
+import { LineError, LineScanner } from "../parser/scanner.js";
 import { PLAYED_AS, VOICE_MAKERS } from "../attributes.js";
 import { IMPLICIT, isRootDecl, tableOf } from "./tables.js";
 import { leaves } from "../subseq.js";
@@ -18,6 +19,7 @@ export function declare(ctx) {
             decls.set(c.name, c);
     }
     const mainKey = mainKeyOf(decls);
+    meters(ctx, decls);
     tonics(ctx, decls);
     modes(ctx, decls);
     evens(ctx, decls);
@@ -153,6 +155,69 @@ function modes(ctx, decls) {
             continue;
         }
         decls.set(name, { ...d, valueReads: [m.name], braid: { ...d.braid, steps: diatonicSteps(phase) } });
+    }
+}
+function meters(ctx, decls) {
+    for (const [name, d] of decls) {
+        if (d.braid.kind !== 'list' || !d.braid.deferred)
+            continue;
+        const { generator, call, reads, at } = d.braid.deferred;
+        let filled = call;
+        let ok = true;
+        for (const r of [...reads].sort((a, b) => b.from - a.from)) {
+            const c = decls.get(r.ref.name);
+            if (!c) {
+                ctx.unknownCell(r.ref.name, r.ref.span);
+                ok = false;
+                continue;
+            }
+            if (c.fill && c.braid.kind === 'blank') {
+                ok = false;
+                continue;
+            }
+            const value = c.step ? null : r.kind === 'text' ? (c.text === undefined ? null : JSON.stringify(c.text)) : c.text === undefined ? numberCellOf(c) : null;
+            if (value === null) {
+                ctx.error(r.kind === 'text'
+                    ? `&${c.name} is read as ${generator}(…)'s text: a text cell, filled as the piece is built (&${c.name} "3/4")`
+                    : `&${c.name} is read as ${generator}(…)'s number: a cell that is one number, filled as the piece is built (&${c.name} 3)`, c.span);
+                ok = false;
+                continue;
+            }
+            filled = filled.slice(0, r.from) + String(value) + filled.slice(r.to);
+        }
+        if (!ok)
+            continue;
+        try {
+            const again = new LineScanner(filled, at.line, at.col - 1);
+            again.i = generator.length;
+            const braid = parseGenerator(again, generator, 0);
+            decls.set(name, { ...d, valueReads: [...(d.valueReads ?? []), ...reads.map((r) => r.ref.name)], braid });
+        }
+        catch (e) {
+            if (!(e instanceof LineError))
+                throw e;
+            ctx.error(`${call}, filled as ${filled}: ${e.message}`, at);
+        }
+    }
+    const texts = new Set([...decls.values()].flatMap((d) => (d.text !== undefined ? [d.name] : [])));
+    if (!texts.size)
+        return;
+    const said = new Set();
+    const elsewhere = (name, span) => {
+        if (!texts.has(name) || said.has(`${name}@${span.line}:${span.col}`))
+            return;
+        said.add(`${name}@${span.line}:${span.col}`);
+        ctx.error(`&${name} is a text: a generator's argument reads it as the piece is built (meter(&${name})), nothing else`, span);
+    };
+    for (const d of decls.values()) {
+        if (d.braid.kind === 'list')
+            for (const t of d.braid.tokens)
+                for (const l of leaves(t.atom))
+                    if (l.kind === 'ref')
+                        elsewhere(l.name, t.span ?? d.span);
+        for (const pc of Object.values(d.paramCells ?? {}))
+            for (const f of pc.factors)
+                elsewhere(f.name, f.span);
     }
 }
 function evens(ctx, decls) {

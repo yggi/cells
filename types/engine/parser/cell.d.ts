@@ -61,10 +61,6 @@ interface Key {
     readonly form: string;
     readonly examples: readonly string[];
 }
-/** How a cell is shown (never how it sounds); the default for everything below it. Meanings: layout/show.ts. */
-export declare const SHOWS: readonly ["braid", "pattern", "equal", "notes", "midi", "do", "degrees", "table", "scale", "mode", "key", "grid", "meter", "spectrum", "wave", "levels", "adsr", "mix", "note", "petal", "off", "matrix", "lfo", "brightness"];
-/** Naming conventions, after a colon: show=notes:flats. */
-export declare const SHOW_CONVENTIONS: Readonly<Record<string, readonly string[]>>;
 /** The core attributes, each with a syntax of its own: the parser reads a cell's line through this table. */
 export declare const KEYS: Readonly<Record<keyof typeof CORE, Key>>;
 /** The lines' own syntax: what a line is, comments, continuing, off. */

@@ -32,6 +32,11 @@ export declare function signatureOf(sig: string): Signature;
 /** A meter's grades, one a step (contracts/meter v2): as written, or from its signature or sizes; '' where it is neither. */
 export declare function meterLevels(sig: string, sub: number): string;
 /**
+ * The counts a meter may be counted in (decision 102): for each tier of its tree at or above its pulse, how many nodes
+ * it has, with those nodes' sizes in pulses; the bar's 1 first. 4/4: 1, 2, 4; 3/4: 1, 3; 12/8: 1, 2, 4, 12; 7/8: 1, 2, 3, 7.
+ */
+export declare function meterCounts(g: Grouping): Map<number, number[]>;
+/**
  * What is wrong with even(k, n, phase), or null: k places in n (1 ≤ k ≤ n), its phase a mode, 0 to k − 1. The parser
  * asks it of numbers written, the compiler of numbers read from cells (decision 093).
  */
@@ -83,4 +88,16 @@ export declare const GENERATORS: Readonly<Record<string, {
 }>>;
 export declare const isGenerator: (word: string) => boolean;
 export declare function parseGenerator(s: LineScanner, name: string, start: number): Braid;
+/**
+ * The arguments of each generator that are values, by position, and the kind each takes (decision 101, after 093): a
+ * value argument may read a cell that is one value of its kind, filled as the piece is built. Not values: scan's list,
+ * spell's table (a cell it reads by reference), scale's mode and tonic (read by its cell), even's arguments (093's own
+ * path, its phase stepped at each bar line).
+ */
+export declare const VALUE_ARGS: Readonly<Record<string, Readonly<Record<number, 'number' | 'text'>>>>;
+/**
+ * A generator's call (the scanner at its '('): parsed, or, where a value argument reads a cell (decision 101), deferred,
+ * a placeholder braid with the call, which compile fills once the cells' values are known (declare.ts) and parses again.
+ */
+export declare function parseGeneratorCall(s: LineScanner, name: string, start: number): Braid;
 export {};

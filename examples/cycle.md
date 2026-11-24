@@ -12,7 +12,7 @@ Here two voices play one tune, each over a key of its own, and the shorter wheel
 ```cells
 &roundNote label="cycle=1: this key rises a tone a pass for one octave, six passes, and comes round to the start." about=&keyA
 &twoNote label="cycle=2: the same turn over two octaves, twelve passes before it comes round. The two voices part when the first comes home, and meet again when this one does." about=&keyB
-&bar from meter &tempo
+&bar from bar &tempo
 &tempo step=free(moderato)
 
 &theme step=4n 0 2 4 2

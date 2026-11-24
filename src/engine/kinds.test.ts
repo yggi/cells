@@ -42,36 +42,37 @@ describe('what a cell is: one table of kinds (#782)', () => {
     expect(count).toMatchInlineSnapshot(`
       {
         "band": 3,
-        "blank": 70,
-        "card": 95,
-        "envelope": 447,
+        "blank": 11,
+        "card": 94,
+        "envelope": 440,
         "fill": 10,
         "gate": 25,
         "grid": 12,
-        "groove": 76,
+        "groove": 74,
         "head": 15,
         "kit": 8,
-        "line": 396,
-        "meter": 95,
+        "line": 386,
+        "meter": 94,
         "midi card": 4,
         "mix": 31,
         "note": 208,
-        "number": 16,
+        "number": 15,
         "phrase": 3,
         "ramp": 51,
         "resonator": 15,
         "role": 21,
         "scope": 10,
-        "sections": 14,
-        "selector": 17,
-        "steps": 234,
+        "sections": 13,
+        "selector": 16,
+        "steps": 167,
         "style": 4,
         "sum": 20,
-        "table": 53,
+        "table": 52,
         "tape": 6,
-        "tempo": 81,
-        "voice": 398,
-        "volume": 54,
+        "tempo": 80,
+        "text": 66,
+        "voice": 392,
+        "volume": 53,
         "wave": 16,
       }
     `);
@@ -81,7 +82,7 @@ describe('what a cell is: one table of kinds (#782)', () => {
   it('a cell’s sort is its kind’s: what it is in a mix follows from what it is, for every cell of every example', () => {
     const said = KINDS.filter((k) => SORT_OF_KIND[k] !== null);
     // (four kinds don't say: a read head is its tape's, a fill what its fragment's code writes, and a card and a meter are never a mix's factor)
-    expect(KINDS.filter((k) => SORT_OF_KIND[k] === null)).toEqual(['card', 'midi card', 'fill', 'head', 'meter']);
+    expect(KINDS.filter((k) => SORT_OF_KIND[k] === null)).toEqual(['card', 'midi card', 'fill', 'head', 'meter', 'text']);
     let checked = 0;
     for (const [key, p] of Object.entries(EXAMPLES)) {
       const result = compileSource(p.source, undefined, { resolve: resolveSeed });

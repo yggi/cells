@@ -1,6 +1,6 @@
 export { compileSource } from "./engine/compile.js";
 export { parse, pieceMeta } from "./engine/parser/index.js";
-export { chanceOf, eventsBetween, liveGains, outputPlays, outputSounds, plan, returnGains, swingOfBar } from "./engine/realize.js";
+export { chainMuted, chanceOf, droneEnd, endOf, eventsBetween, kitPickAt, liveGains, outputPlays, outputSounds, picksNow, plan, returnGains, swingOfBar, voiceFor, } from "./engine/realize.js";
 export { isPhysical, retime, tapeSpeeds, windowAt } from "./engine/schedule.js";
 export { createHost, emptyWindow, grabIn, planOf } from "./engine/host.js";
 export { keepBar, keepBeat } from "./engine/keepbeat.js";
@@ -22,7 +22,7 @@ export { EXAMPLES } from "./engine/examples.js";
 export { isPieceFile, lockChanges, lockfileOf, readPiece, textLockfile, withLockfile, writePiece, } from "./engine/piecefile.js";
 export { fileLine, readLiterate, rewrite } from "./engine/literate.js";
 export { jacksOf, patch, unpatch, PatchError } from "./engine/patch.js";
-export { codeShifts } from "./engine/program.js";
+export { codeShifts, pickedUnits } from "./engine/program.js";
 export { resetPhysics } from "./engine/physics.js";
 export { bodyOf, expand, fragmentHash, signatureOf } from "./engine/use.js";
 export { fromLine, references } from "./engine/references.js";

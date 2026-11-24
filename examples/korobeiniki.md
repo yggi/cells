@@ -10,7 +10,7 @@ The Russian folk song a famous puzzle game made its own, as a 1980s console woul
 * from style=&chiptune
 &formNote label="&tetris picks the parts, eight bars a step." about=&tetris
 &sectionsNote label="A is the folk song; B, slower, in half notes, is our own." about=(&tune &chorale)
-&bar from meter &tempo
+&bar from bar &tempo
 &tempo step=free(144bpm, 100..200)
 
 &a tags="lead" 7@2 2 3 5@2 3 2 0@2 0 3 7@2 5 3                 # in A minor (A = 0); two bars

@@ -10,7 +10,7 @@ import { SEED } from './seed';
 import { argsOf } from './variants';
 
 const seed = catalogue();
-const meter = seed.find((e) => e.id === 'meter')!;
+const meter = seed.find((e) => e.id === 'bar')!;
 const layer: LearnedLayer = {
   filed: [
     {
@@ -39,7 +39,7 @@ describe('catalogue', () => {
   it('gives the ids a query answers with: its variants are the library, each once', () => {
     expect(seed.flatMap((e) => e.variants).sort()).toEqual(LIBRARY.map((f) => f.id).sort());
     expect(meter.variants.length).toBeGreaterThan(1);
-    expect(meter.variants.filter((v) => v.startsWith('meter(')).length).toBeGreaterThan(1);
+    expect(meter.variants.filter((v) => v.startsWith('bar(')).length).toBeGreaterThan(1);
   });
 
   it('reads a signature and what an entry takes, every id it takes in the seed', () => {
@@ -61,13 +61,13 @@ describe('catalogue', () => {
     const withLayer = catalogue(layer);
     expect(withLayer).toHaveLength(seed.length + 1);
     expect(withLayer.at(-1)).toMatchObject({ id: 'my riff', path: null, source: 'a person', facets: ['motif'], signature: { names: ['&riff'], main: '&key' } });
-    const m = withLayer.find((e) => e.id === 'meter')!;
+    const m = withLayer.find((e) => e.id === 'bar')!;
     expect(m.association).toHaveLength(meter.association.length + 1);
     expect(m.association.at(-1)).toEqual({
       point: { sync: 0.9 },
       weight: 0.2,
       facet: 'meter',
-      args: argsOf({ id: 'meter', text: meter.text, association: meter.association }, meter.variants[1]!),
+      args: argsOf({ id: 'bar', text: meter.text, association: meter.association }, meter.variants[1]!),
     });
     expect(m.association.at(-1)!.args).toBeDefined();
   });
@@ -97,7 +97,7 @@ describe('resolverOf', () => {
   it('reads the seed first, then the filed fragments, and is the seed alone for an empty layer', () => {
     const resolve = resolverOf(layer);
     expect(resolve('my riff')).toContain('&riff over=&key');
-    expect(resolve('meter')).toBe(resolveSeed('meter'));
+    expect(resolve('bar')).toBe(resolveSeed('bar'));
     expect(resolve('no such id')).toBeNull();
     expect(resolverOf(EMPTY_LAYER)).toBe(resolveSeed);
   });

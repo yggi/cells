@@ -1,6 +1,4 @@
-import { SHOWS } from "../parser/cell.js";
 import { ATTRIBUTES, rolesText, VOICE_PARAMS } from "../attributes.js";
-import { PLUGIN_SYNTAX } from "../plugins.js";
 import { isMidiCard } from "../program.js";
 import { kindsOf } from "../kinds.js";
 import { streamClockOf } from "../fills.js";
@@ -53,12 +51,6 @@ export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, pl
         const c = cells.get(d.name);
         if (!c || implicit.has(d.name))
             continue;
-        const show = d.show?.split(':')[0];
-        if (show && !SHOWS.includes(show) && !plugins.has(show))
-            ctx.error(`show=${show}: not a show (${SHOWS.join(' ')}), not one of the built-in plugins (${[...plugins.values()]
-                .filter((p) => p.builtin)
-                .map((p) => p.name)
-                .join(' ')}), and the piece carries no plugin of that name (${PLUGIN_SYNTAX})`, d.span);
         const has = roles(c);
         const written = [
             ...Object.keys(d.params).map((k) => [k, d.paramSpans[k] ?? d.span]),
@@ -101,6 +93,6 @@ export function checkRoles(ctx, { decls, implicit, sections }, cells, clocks, pl
     }
     const shown = new Set([...decls.values()].flatMap((d) => (d.show ? [d.show.split(':')[0]] : [])));
     for (const p of plugins.values())
-        if (!p.builtin && !shown.has(p.name))
+        if (!shown.has(p.name))
             warn(`the piece carries the plugin "${p.name}", but no cell says show=${p.name}`, { line: p.line, col: 1, len: `=== plugin ${p.name} ===`.length });
 }

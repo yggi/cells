@@ -4,6 +4,8 @@ import { fromLine } from "../engine/references.js";
 import { expansion, fragmentHash, signatureOf } from "../engine/use.js";
 import { parse, readFrom } from "../engine/parser/index.js";
 import { braidReadsOf } from "../engine/compiler/builtin.js";
+import { readsOf } from "../engine/reads.js";
+import { kindsOf } from "../engine/kinds.js";
 import { clockNeeds, holesOf, linesRead, meterMeets, readOnlyAsSound, standIn } from "./holes.js";
 const HEAD = /^\s*&([A-Za-z_][A-Za-z0-9_]*)(?=\s|$)/;
 const CONTINUES = /[+*,[]\s*$/;
@@ -224,10 +226,32 @@ function newDiagnostics(result, before) {
         return false;
     });
 }
-function mainOn(bench, id, heads, args, compiled, stand) {
+function mainOn(bench, id, heads, args, compiled, stand, resolve) {
     const alone = compiled([bench, ...stand].join('\n'));
     const standNames = new Set(stand.map((l) => l.split(' ')[0]));
-    const meets = (cell) => !newDiagnostics(compiled([bench, takeLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).filter((d) => !standNames.has(STAND_IN_SAID.exec(d.message)?.[1] ?? '')).length;
+    const compiles = (cell) => !newDiagnostics(compiled([bench, takeLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).filter((d) => !standNames.has(STAND_IN_SAID.exec(d.message)?.[1] ?? '')).length;
+    const seen = workbenchKinds.get(alone) ?? { written: new Map(parse(bench).cells.map((d) => [d.name, d])), kindOf: kindsOf(alone) };
+    workbenchKinds.set(alone, seen);
+    const { written, kindOf } = seen;
+    const kind = (name) => {
+        const d = written.get(name);
+        if ((name === alone.mainMeter && d?.step && !d.step.whole) || (d?.braid.kind === 'list' && d.braid.perBeat !== undefined))
+            return 'meter';
+        const k = kindOf(name);
+        return k === 'meter' ? 'table' : k;
+    };
+    let paths = null;
+    const readsOfMain = () => {
+        if (paths)
+            return paths;
+        const byResolve = mainReadsCache.get(resolve) ?? new Map();
+        mainReadsCache.set(resolve, byResolve);
+        const key = `${id}\u0000${JSON.stringify(args ?? null)}`;
+        paths = byResolve.get(key) ?? mainReads(takeLine(heads, id, args, `&${MAIN_STAND_IN}`), resolve);
+        byResolve.set(key, paths);
+        return paths;
+    };
+    const meets = (cell) => readAsItIs(kind(cell.slice(1)), alone.cells.get(cell.slice(1))?.steps ?? 0, readsOfMain) && compiles(cell);
     const offers = parse(bench).offers;
     const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
     const meeting = [];
@@ -235,6 +259,34 @@ function mainOn(bench, id, heads, args, compiled, stand) {
         if (!heads.includes(n) && meets(n) && meeting.push(n) > 1)
             return null;
     return meeting[0] ?? null;
+}
+const CLOCK = /^(step|paramClocks)(\.|$)/;
+const TABLE = /^over$/;
+const workbenchKinds = new WeakMap();
+const mainReadsCache = new WeakMap();
+const MAIN_STAND_IN = 'fitMainArgument';
+function mainReads(text, resolve) {
+    const own = new Set(parse(text).cells.map((d) => d.name));
+    const copy = parse(expansion(text, { resolve }).text).cells.filter((d) => !own.has(d.name));
+    const played = (d) => (typeof d.params.play === 'string' && /^&?([A-Za-z_]\w*)/.exec(d.params.play)?.[1] === MAIN_STAND_IN ? ['play'] : []);
+    return copy.flatMap((d) => [
+        ...readsOf(d)
+            .filter((r) => r.name === MAIN_STAND_IN)
+            .map((r) => r.path),
+        ...played(d),
+    ]);
+}
+function readAsItIs(kind, steps, paths) {
+    if (kind === 'text')
+        return false;
+    if (kind === 'table' || kind === 'line' || kind === 'blank' || (kind === 'steps' && steps > 1))
+        return true;
+    const read = paths();
+    if (kind === 'meter')
+        return read.length > 0 && read.every((p) => CLOCK.test(p) || p.includes('.exprs.'));
+    if (kind === 'steps' && steps === 1)
+        return read.every((p) => p === 'tonic');
+    return read.every((p) => !TABLE.test(p) && p !== 'play');
 }
 function clearOf(bench, name) {
     const taken = namesIn(bench);
@@ -265,7 +317,7 @@ function useById(bench, id, options) {
     const stand = holesOf(text, compiled, options.resolve)
         .sounds.filter((s) => !namesIn(bench).has(s.slice(1)))
         .map(standIn);
-    const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand) : null);
+    const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand, options.resolve) : null);
     const left = signature.names.length === 1 ? heads : heads.map((h, i) => (h === signature.names[i] ? h : `${h}=${signature.names[i].slice(1)}`));
     const line = takeLine(left, id, options.args, main);
     return { text: written(line), line, heads, main, used: usedBy(written(line)), resolve: options.resolve };

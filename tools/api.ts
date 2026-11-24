@@ -47,8 +47,9 @@ export const ENTRY_POINTS: readonly { readonly match: string; readonly entry: En
   { match: 'engine/fills', entry: '@yggi/cells/inspect' },
   { match: 'engine/parser/use', entry: '@yggi/cells/repository' },
   { match: 'engine/compiler/declare', entry: '@yggi/cells/library' },
-  // The view moves to Cell studio (decision 086, #731).
-  ...['routing', 'live', 'plugins', 'builtinPlugins', 'parser/showMeaning'].map((m): { match: string; entry: Entry } => ({ match: `engine/${m}`, entry: 'view' })),
+  // The view moved to Cell studio (decision 086, yggi/cell-studio#650): what is left of it here is graph.ts's layout. A
+  // piece's own plugin blocks are data of the piece (`CompileResult.plugins`), read with it.
+  { match: 'engine/plugins', entry: '@yggi/cells/inspect' },
   // Edit.
   ...['edit', 'patch', 'capture', 'held', 'shorten/', 'normalise/', 'migrate/', 'piecefile', 'literate', 'rewrite', 'outline', 'vary/', 'core/'].map(
     (m): { match: string; entry: Entry } => ({ match: `engine/${m}`, entry: '@yggi/cells/edit' }),
@@ -85,12 +86,26 @@ export const ENTRY_POINTS: readonly { readonly match: string; readonly entry: En
   // Time.
   { match: 'engine/time/', entry: '@yggi/cells/time' },
   // Repository: fragments, their fit and learning, and a fragment read as cells means it (reading/*, ruled 2026-11-16).
-  ...['fragments', 'learned', 'lineage', 'fit', 'holes', 'files', 'decompose', 'recognise', 'extract', 'audition', 'catalogue', 'corefragment', 'hits', 'answered'].map(
-    (m): { match: string; entry: Entry } => ({
-      match: `repository/${m}`,
-      entry: '@yggi/cells/repository',
-    }),
-  ),
+  ...[
+    'fragments',
+    'learned',
+    'lineage',
+    'fit',
+    'holes',
+    'files',
+    'decompose',
+    'recognise',
+    'extract',
+    'audition',
+    'catalogue',
+    'corefragment',
+    'hits',
+    'answered',
+    'declarations',
+  ].map((m): { match: string; entry: Entry } => ({
+    match: `repository/${m}`,
+    entry: '@yggi/cells/repository',
+  })),
   ...['takein', 'references', 'use', 'renamed', 'reading/'].map((m): { match: string; entry: Entry } => ({ match: `engine/${m}`, entry: '@yggi/cells/repository' })),
   // Library: the seed, styles, the kit and roles, modes, the band.
   ...['library', 'seed', 'styles', 'band'].map((m): { match: string; entry: Entry } => ({ match: `repository/${m}`, entry: '@yggi/cells/library' })),
@@ -117,10 +132,9 @@ export const SYMBOL_ENTRY: Readonly<Record<string, Entry>> = {
       'engine/midi:GM_KIT',
       'engine/midi:kitVoiceOf',
       'engine/vary/index:backbeatOf',
+      // (the seed's files as the library holds them: a generated module, which no rule matches)
+      'repository/seed.generated:SEED_FILES',
     ].map((k) => [k, '@yggi/cells/library' as Entry]),
-  ),
-  ...Object.fromEntries(
-    ['engine/helix:positionHue', 'engine/helix:positionOctave', 'engine/helix:freqHue', 'theory/modes:pitchHue', 'engine/parser/index:SHOWS'].map((k) => [k, 'view' as Entry]),
   ),
 };
 

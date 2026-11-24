@@ -81,11 +81,11 @@ const WITH = ALL.filter(({ v }) => v.reference);
 const byOperator = (list: typeof ALL) => Object.fromEntries([...new Set(ALL.map(({ v }) => v.rule))].map((op) => [op, list.filter(({ v }) => v.rule === op).length]));
 
 describe("the seeds' variations by reference", () => {
-  it('gives 682 of the 817 a reference: every operator has a form, but on a Euclid, a last run, or where the line written out is shorter (#572 and #542: the twelve new beats and ten bass lines among the seeds; #646: the beats for 7/8 and 12/8; #531: the even claves struck as Euclids, `&claves(even(5,16,2))@16`, the cinquillo and the two-bar clave on their eighths)', () => {
-    expect(ALL.length).toBe(817);
-    expect(WITH.length).toBe(682);
-    expect(byOperator(ALL)).toEqual({ rotate: 41, drop: 174, add: 362, transpose: 120, reverse: 12, bend: 76, trim: 18, invert: 14 });
-    expect(byOperator(WITH)).toEqual({ rotate: 26, drop: 127, add: 301, transpose: 120, reverse: 8, bend: 76, trim: 18, invert: 6 });
+  it('gives 672 of the 806 a reference (since #911 an add fills only an empty step: 11 fewer, 10 of them with a reference): every operator has a form, but on a Euclid, a last run, or where the line written out is shorter (#572 and #542: the twelve new beats and ten bass lines among the seeds; #646: the beats for 7/8 and 12/8; #531: the even claves struck as Euclids, `&claves(even(5,16,2))@16`, the cinquillo and the two-bar clave on their eighths)', () => {
+    expect(ALL.length).toBe(806);
+    expect(WITH.length).toBe(672);
+    expect(byOperator(ALL)).toEqual({ rotate: 41, drop: 174, add: 351, transpose: 120, reverse: 12, bend: 76, trim: 18, invert: 14 });
+    expect(byOperator(WITH)).toEqual({ rotate: 26, drop: 127, add: 291, transpose: 120, reverse: 8, bend: 76, trim: 18, invert: 6 });
     // (the four operators with a form before #293: 160 of their 187; #542's six new inversions, the tumbao's, the oom-pah's
     // and the dub bass's over each harmony, are written out shorter than their forms)
     expect(['rotate', 'transpose', 'invert', 'reverse'].reduce((n, op) => n + byOperator(WITH)[op]!, 0)).toBe(160);
@@ -98,13 +98,13 @@ describe("the seeds' variations by reference", () => {
     expect(playsSameNotes(varied, reference, seconds, KIT)).toBe(true);
   });
 
-  it('each is no longer than its line written out by `bare`, and all but 4 shorter', () => {
+  it('each is no longer than its line written out by `bare`, and all but 4 shorter (668)', () => {
     const sizes = WITH.map(({ fragment, v }) => {
       const written = declWords(v.apply(fragment), v.line.slice(1))!;
       return [bare(v.reference!.line(v.line.slice(1))), bare([...written.head, ...written.attrs, ...written.braid].join(' '))] as const;
     });
     expect(sizes.filter(([ref, line]) => ref > line)).toEqual([]);
-    expect(sizes.filter(([ref, line]) => ref < line).length).toBe(678);
+    expect(sizes.filter(([ref, line]) => ref < line).length).toBe(668);
   });
 
   it('writes each operator in a form the language has', () => {
@@ -192,6 +192,25 @@ describe('a line’s note shifted, by reference (#910)', () => {
 
   it.each(REFERRED.filter((_, k) => k % 5 === 0).map((c) => [`${c.id}: ${c.v.by}`, c] as const))(
     '%s plays the notes of its variation (S2), every 5th (all 504 once, 2026-11-23)',
+    (_, { fragment, bench, v, seconds }) => {
+      const varied = unionOf(v.apply(fragment), bench).text;
+      const reference = referred(unionOf(fragment, bench).text, v);
+      expect(compileSource(reference, undefined, KIT).diagnostics.map((d) => d.message)).toEqual([]);
+      expect(playsSameNotes(varied, reference, seconds, KIT)).toBe(true);
+    },
+  );
+});
+
+describe('a line’s note split, by reference (#912)', () => {
+  const SPLIT_ = CASES.filter((c) => c.options.operators).flatMap((c) => variations(c.fragment, { ...c.options, operators: ['split'] }).map((v) => ({ ...c, v })));
+  const REFERRED = SPLIT_.filter(({ v }) => v.reference);
+
+  it('gives the bass seeds 236 splits over both harmonies, each with a reference', () => {
+    expect([SPLIT_.length, REFERRED.length]).toEqual([236, 236]);
+  });
+
+  it.each(REFERRED.filter((_, k) => k % 5 === 0).map((c) => [`${c.id}: ${c.v.by}`, c] as const))(
+    '%s plays the notes of its variation (S2), every 5th (all 236 once, 2026-11-23)',
     (_, { fragment, bench, v, seconds }) => {
       const varied = unionOf(v.apply(fragment), bench).text;
       const reference = referred(unionOf(fragment, bench).text, v);

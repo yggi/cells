@@ -148,7 +148,7 @@ export const NUMBER_PLACES = {
     form: 'euclid(k, n, r) · sin(n) …',
     name: 'arg',
     whole: true,
-    cell: BUILT,
+    cell: '`&k`, a cell that is one number, filled as the piece is built (decisions 093, 101)',
     example: '&hits euclid(free(3, 0..8), 8) step=8',
   }),
   evenArg: place({
@@ -160,7 +160,13 @@ export const NUMBER_PLACES = {
     example: '&key scale(even(7, 12, free(3, 0..6)), D)',
   }),
   fifths: place({ form: 'fifths(n)', name: 'fifths', whole: true, cell: BUILT, example: '&circle fifths(free(1, 0..11))' }),
-  meter: place({ form: 'meter(n, n)', name: 'meter', key: 'choice', cell: BUILT, example: '&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm' }),
+  meter: place({
+    form: 'meter(n, n)',
+    name: 'meter',
+    key: 'choice',
+    cell: '`&k`, filled as the piece is built (decision 101): a text cell for its signature (`&meter "3/4"`), a cell that is one number for its step',
+    example: '&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm',
+  }),
   grid: place({ form: 'map=edo(n) · map=ed(n, r) · map=midi(c, p)', name: 'grid', whole: true, min: 1, cell: BUILT, example: '&edo map=edo(free(19, 5..31))' }),
   ratio: place({ form: 'map=ed(r)', name: 'ratio', cell: BUILT, example: '&bp map=ed(13, free(3, 1.5..4))' }),
   step: place({

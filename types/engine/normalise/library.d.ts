@@ -24,7 +24,7 @@ export declare function libraryCells(source: string, library: readonly LibraryFr
 export declare function takenArguments(source: string): Rewrite<'library'>[];
 /**
  * A line that is a template's head line with its parameters filled in, as a `from` line of the template with those
- * arguments (#524): `&bar meter("7/8") step=&tempo swing=8n:2/3` is `&bar from meter(grouping=meter("7/8"), swing=8n:2/3)
+ * arguments (#524): `&bar meter("7/8") step=&tempo swing=8n:2/3` is `&bar swing=8n:2/3 from bar(meter="7/8")
  * &tempo`, `&key scale(minor, &tonic)` is `&key from diatonic(mode=minor) &tonic`. The line's attributes are the
  * template's, by key, each binding the parameter the template writes there (`base=&p` binds the line's own braid, as a
  * copy of &p is &p's braid); its braid matches the template's, a parameter where the template has one; a parameter it

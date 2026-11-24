@@ -14,7 +14,7 @@ const repo = createRepository(LIBRARY);
 /** Each style's own parts, by facet: one id, or the ids that tie (two instruments of one style). */
 const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly string[]>>>> = {
   spooky: {
-    meter: 'meter(grouping=meter("5/4"))',
+    meter: 'odd_meter',
     rhythm: 'spooky_drums',
     bass: 'creeping_bass',
     harmony: 'dark_cadence',
@@ -24,7 +24,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     instrument: ['celesta', 'organ'],
   },
   kinderlied: {
-    meter: 'meter',
+    meter: 'bar',
     rhythm: 'kinderlied_drums',
     bass: 'root_bass',
     harmony: 'vamp_to_the_fifth',
@@ -34,9 +34,9 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     // (and the kit, at the styles a drummer plays an acoustic kit in, #540)
     instrument: ['gm_kit', 'recorder', 'sine_bass'],
   },
-  acid: { meter: 'meter', rhythm: 'acid_drums', bass: 'acid_bass', harmony: 'tonic_vamp', mode: 'diatonic(mode=aeolian)', instrument: 'tb303' },
+  acid: { meter: 'bar', rhythm: 'acid_drums', bass: 'acid_bass', harmony: 'tonic_vamp', mode: 'diatonic(mode=aeolian)', instrument: 'tb303' },
   happyHardcore: {
-    meter: 'meter',
+    meter: 'bar',
     rhythm: 'happy_hardcore_drums',
     bass: 'pumping_bass',
     harmony: 'axis_progression',
@@ -46,7 +46,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     instrument: 'rave_lead',
   },
   darkAmbient: {
-    meter: 'meter',
+    meter: 'bar',
     rhythm: 'industrial_drums',
     bass: 'drone_bass',
     harmony: 'tonic_vamp',
@@ -55,7 +55,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     instrument: ['drone_pad', 'prepared_piano'],
   },
   baroque: {
-    meter: 'meter',
+    meter: 'bar',
     rhythm: 'quiet_pulse',
     bass: 'continuo_bass',
     harmony: 'fifths_sequence',
@@ -65,7 +65,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     instrument: ['celesta', 'moog'],
   },
   bluesShuffle: {
-    meter: 'meter(swing=8n:2/3)',
+    meter: 'swing_meter',
     rhythm: 'ride_shuffle',
     bass: 'blues_walk',
     harmony: 'twelve_bar',
@@ -74,7 +74,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     instrument: 'blues_horn',
   },
   seaShanty: {
-    meter: 'meter',
+    meter: 'bar',
     rhythm: 'shanty_drums',
     bass: 'quarter_bass',
     harmony: 'vamp_to_the_seventh',
@@ -83,7 +83,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     instrument: 'fiddle',
   },
   chiptune: {
-    meter: 'meter',
+    meter: 'bar',
     rhythm: 'chip_drums',
     bass: 'octave_bass',
     harmony: 'korobeiniki_changes',
@@ -92,7 +92,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     instrument: 'pulse_lead',
   },
   elektro: {
-    meter: 'meter',
+    meter: 'bar',
     rhythm: 'elektro_drums',
     bass: 'octave_bass',
     harmony: 'axis_progression',
@@ -101,7 +101,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     instrument: 'square_bass',
   },
   salsa: {
-    meter: 'meter',
+    meter: 'bar',
     rhythm: 'salsa_drums',
     bass: 'tumbao_bass',
     harmony: 'montuno',
@@ -111,7 +111,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     instrument: ['brass_stab', 'gm_kit', 'montuno_piano'],
   },
   waltz: {
-    meter: 'meter(grouping=meter("3/4"))',
+    meter: 'bar(meter="3/4")',
     rhythm: 'waltz_drums',
     bass: 'waltz_bass',
     harmony: 'vamp_to_the_fifth',
@@ -120,7 +120,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     instrument: 'accordion',
   },
   march: {
-    meter: 'meter(grouping=meter("2/4"))',
+    meter: 'bar(meter="2/4")',
     rhythm: 'march_drums',
     bass: 'oom_pah_bass',
     harmony: 'vamp_to_the_fifth',
@@ -129,7 +129,7 @@ const PARTS: Readonly<Record<string, Readonly<Record<string, string | readonly s
     instrument: 'brass_band',
   },
   tripHop: {
-    meter: 'meter',
+    meter: 'bar',
     rhythm: 'trip_hop_drums',
     bass: 'dub_bass',
     harmony: 'vamp_to_the_sixth',

@@ -126,7 +126,8 @@ describe('the structure measure never grows: no step of Normalise or Shorten rai
   });
 
   it('Normalise’s naming of the tempo is what grows, where it does: breve’s &tempo, a cell and a reference', () => {
-    const steps = normaliseSteps(source('breve')).filter((s) => measure(s.to) > measure(s.from));
+    // (breve's bar written as bar's template writes it, meter("2/2"), a text: its own meter("2/2", 2) is no template's line, decision 103)
+    const steps = normaliseSteps(source('breve').replace('meter("2/2", 2)', 'meter("2/2")')).filter((s) => measure(s.to) > measure(s.from));
     expect(steps.map((s) => [s.rule, measure(s.to) - measure(s.from)])).toEqual([['tempo', 2]]);
   });
 

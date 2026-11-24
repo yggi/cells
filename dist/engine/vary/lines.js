@@ -28,6 +28,7 @@ const EUCLID_EVEN = /^&([A-Za-z_][A-Za-z0-9_]*)\(even\((\d+),\s*(\d+)(?:,\s*(\d+
 const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
 const DEGREE = /^(-?\d+)[#b]?(?:!(\d+))?$/;
 const HELD = /^(-?\d+)[#b]?@(\d+)$/;
+const HALVES = /^\[(-?\d+[#b]?|~) (-?\d+[#b]?|~)\]$/;
 const REF = String.raw `&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?`;
 const SPLICE = new RegExp(String.raw `^(?:${REF}|inverse\(${REF}\)|degree\((?:${REF}|inverse\(${REF}\)),\s*-?\d+\))$`);
 function hitOf(token) {
@@ -242,6 +243,10 @@ function pitchedLineOf(source, result, trigger, voice, card) {
         }
         else if (SPLICE.test(token))
             written.push(token);
+        else if (HALVES.test(token)) {
+            const [, a, b] = HALVES.exec(token);
+            written.push({ halves: [a, b].map((h) => (h === '~' ? null : parseInt(h))) });
+        }
         else
             return null;
     }
@@ -250,6 +255,19 @@ function pitchedLineOf(source, result, trigger, voice, card) {
     const events = flatten(result, trigger, codeShifts(result));
     const notes = [];
     for (const [step, w] of written.entries()) {
+        if (w !== null && typeof w === 'object') {
+            for (const [h, value] of w.halves.entries()) {
+                const at = events.filter((e) => Math.abs(e.step - (step + h / 2)) < 1e-9);
+                if (value === null ? at.length : at.length !== 1 || Math.abs(at[0].duration - 0.5) > 1e-9)
+                    return null;
+                if (value === null)
+                    continue;
+                const e = at[0];
+                const pitch = { written: value, sign: 1, by: 0, table: `${e.table}:${e.tableShift}`, value: e.value, alter: e.alter, transpose: e.transpose ?? 0 };
+                notes.push({ step: step + h / 2, voice: voice === null ? '' : `&${voice}`, own: null, level: 1, pitch, half: true });
+            }
+            continue;
+        }
         const at = events.filter((e) => Math.abs(e.step - step) < 1e-9);
         const length = holds.get(step) ?? 1;
         if (w === null || w === HOLDING ? at.length : at.length !== 1 || Math.abs(at[0].duration - length) > 1e-9)
@@ -278,7 +296,15 @@ const hitText = (n) => (n.own === null ? n.voice : `${n.voice}:0:${n.own}`);
 export function stepTokens(line, notes) {
     const out = Array(line.steps).fill('~');
     const hits = new Map();
+    const halves = new Map();
     for (const n of notes) {
+        if (n.half) {
+            const step = Math.floor(n.step);
+            const pair = halves.get(step) ?? ['~', '~'];
+            pair[n.step === step ? 0 : 1] = n.pitch ? pitchText(n.pitch) : hitText(n);
+            halves.set(step, pair);
+            continue;
+        }
         if (!Number.isInteger(n.step))
             continue;
         for (let k = 1; k < (n.hold ?? 1); k++)
@@ -294,6 +320,9 @@ export function stepTokens(line, notes) {
     for (const [step, at] of hits)
         if (step >= 0 && step < line.steps && out[step] !== null)
             out[step] = at.length === 1 ? at[0] : `[${at.join(',')}]`;
+    for (const [step, [a, b]] of halves)
+        if (step >= 0 && step < line.steps)
+            out[step] = `[${a} ${b}]`;
     return out;
 }
 export function written(line, notes, levels, rotated = false) {

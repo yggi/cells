@@ -20,7 +20,7 @@
  *
  * **A repository's query** asks `cachedFit` (#587): `fitsAs` over the repository's own fragments, cached by text.
  */
-import type { Diagnostic } from '../engine/ast';
+import type { CellDecl, Diagnostic } from '../engine/ast';
 import { compileSource } from '../engine/compile';
 import { renameCell, splitComment } from '../engine/edit';
 import { fromLine } from '../engine/references';
@@ -28,6 +28,8 @@ import type { CompileResult, Resolve, Take } from '../engine/program';
 import { expansion, fragmentHash, signatureOf } from '../engine/use';
 import { parse, readFrom } from '../engine/parser';
 import { braidReadsOf } from '../engine/compiler/builtin';
+import { readsOf } from '../engine/reads';
+import { kindsOf, type Kind } from '../engine/kinds';
 import { clockNeeds, holesOf, linesRead, meterMeets, readOnlyAsSound, standIn, type ClockNeed, type TappedNeed } from './holes';
 
 /** A collection's lines added to a workbench: the text, and what became of the fragment's names there. */
@@ -326,7 +328,7 @@ const ID_ARGS = /^([^(]*)\((.*)\)$/;
 /** A document's part's id: its key and its head (`kinderlied/twinkle`); a template's arguments may hold a slash of their own. */
 const PART = /^([^(/]+)\/([^(]+)$/;
 
-/** A `from` line: names, the id with its arguments (the id's own, `meter(swing=8n:2/3)`, then the line's), the main argument. */
+/** A `from` line: names, the id with its arguments (the id's own, `bar(meter="3/4")`, then the line's), the main argument. */
 function takeLine(given: readonly string[], whole: string, args: Readonly<Record<string, string>> | undefined, main: string | null): string {
   // (a document's part, `kinderlied/twinkle`, is taken from its document by its head, renamed where it is named
   // otherwise, `&twinkle2=twinkle from kinderlied`: in a document the head picks the part, decision 082)
@@ -395,19 +397,96 @@ function mainOn(
   args: UseOnOptions['args'],
   compiled: (text: string) => CompileResult,
   stand: readonly string[],
+  resolve: Resolve,
 ): string | null {
   const alone = compiled([bench, ...stand].join('\n'));
   const standNames = new Set(stand.map((l) => l.split(' ')[0]!));
-  const meets = (cell: string) =>
+  const compiles = (cell: string) =>
     !newDiagnostics(compiled([bench, takeLine(heads, id, args, cell), ...stand].join('\n')), alone.diagnostics).filter(
       (d) => !standNames.has(STAND_IN_SAID.exec(d.message)?.[1] ?? ''),
     ).length;
+  // (a cell meets a parameter only where the copy reads it as what it is, decision 104: its kind against each read)
+  // (the workbench's lines and kinds, once a compiled workbench: every template a query tries reads the same)
+  const seen = workbenchKinds.get(alone) ?? { written: new Map(parse(bench).cells.map((d) => [d.name, d] as const)), kindOf: kindsOf(alone) };
+  workbenchKinds.set(alone, seen);
+  const { written, kindOf } = seen;
+  const kind = (name: string): Kind | null => {
+    const d = written.get(name);
+    // (a meter: the root meter, the one with a tempo, decision 095, or a braid written meter(…); not a scale, whose scan reads
+    // as a meter too, nor a clock of the wall, a law's day)
+    if ((name === alone.mainMeter && d?.step && !d.step.whole) || (d?.braid.kind === 'list' && d.braid.perBeat !== undefined)) return 'meter';
+    const k = kindOf(name);
+    return k === 'meter' ? 'table' : k;
+  };
+  // (how the template's copy reads its main argument, once: the same reads whichever cell fills it)
+  let paths: readonly string[] | null = null;
+  const readsOfMain = () => {
+    if (paths) return paths;
+    // (and across queries: the reads are the template's and its arguments', whatever the workbench, by the library's resolver)
+    const byResolve = mainReadsCache.get(resolve) ?? new Map<string, readonly string[]>();
+    mainReadsCache.set(resolve, byResolve);
+    const key = `${id}\u0000${JSON.stringify(args ?? null)}`;
+    paths = byResolve.get(key) ?? mainReads(takeLine(heads, id, args, `&${MAIN_STAND_IN}`), resolve);
+    byResolve.set(key, paths);
+    return paths;
+  };
+  // (the reading first: it is the template's, found once, where a compile is the copy's over each cell)
+  const meets = (cell: string) => readAsItIs(kind(cell.slice(1)), alone.cells.get(cell.slice(1))?.steps ?? 0, readsOfMain) && compiles(cell);
   const offers = parse(bench).offers;
   const named = offers?.length ? offers.map((n) => `&${n}`) : declarations(bench).map((l) => `&${l.name}`);
   // (two that meet are already none: the rest isn't compiled)
   const meeting: string[] = [];
   for (const n of named) if (!heads.includes(n) && meets(n) && meeting.push(n) > 1) return null;
   return meeting[0] ?? null;
+}
+
+/** How a template's copy reads a cell, by the path of each read (`reads.ts`): as a clock, as a table. */
+const CLOCK = /^(step|paramClocks)(\.|$)/;
+const TABLE = /^over$/;
+
+/** A compiled workbench's lines by name and its cells' kinds (decision 104), kept with the compile the fit's cache holds. */
+const workbenchKinds = new WeakMap<CompileResult, { readonly written: ReadonlyMap<string, CellDecl>; readonly kindOf: (name: string) => Kind | null }>();
+
+/** How each template reads its main argument (`mainReads`), by the library's resolver and the template with its arguments. */
+const mainReadsCache = new WeakMap<Resolve, Map<string, readonly string[]>>();
+
+/** The name the main argument is read under while its reads are found: no workbench writes it. */
+const MAIN_STAND_IN = 'fitMainArgument';
+
+/**
+ * How a template's copy, in `text`, reads its main argument, given as `MAIN_STAND_IN`: the path of each read
+ * (`reads.ts`), and `play` for a gate's part (`play=&part^$-12`, a parameter `reads.ts` doesn't list yet, #825). The
+ * copy's lines are those the expansion adds; the workbench's own aren't counted.
+ */
+function mainReads(text: string, resolve: Resolve): readonly string[] {
+  const own = new Set(parse(text).cells.map((d) => d.name));
+  const copy = parse(expansion(text, { resolve }).text).cells.filter((d) => !own.has(d.name));
+  const played = (d: (typeof copy)[number]) => (typeof d.params.play === 'string' && /^&?([A-Za-z_]\w*)/.exec(d.params.play)?.[1] === MAIN_STAND_IN ? ['play'] : []);
+  return copy.flatMap((d) => [
+    ...readsOf(d)
+      .filter((r) => r.name === MAIN_STAND_IN)
+      .map((r) => r.path),
+    ...played(d),
+  ]);
+}
+
+/**
+ * Whether a template reads its main argument, a cell of this kind, as what it is wherever it reads it (decision 104):
+ * - **a meter** only as a clock (`step=&bar`, `&bar:beat`) or its levels as values in an expression (a count's
+ *   `[.9 + &bar * -.3]`), and somewhere: not as a key, a phrase or a part, nor read nowhere;
+ * - **a text** never: a generator's argument alone (decision 101);
+ * - **a lone note** (`&tonic D`, steps of one) only as a tonic: no key, phrase, part or value;
+ * - as **a table** (`over=`): a table, a line (a harmony), a blank (a key turned), or steps;
+ * - as **a part** (a gate's `play=`): a line or steps.
+ * The reads are found only where the kind could refuse one (`paths`, lazily): a table, a line or a blank meets every read.
+ */
+function readAsItIs(kind: Kind | null, steps: number, paths: () => readonly string[]): boolean {
+  if (kind === 'text') return false;
+  if (kind === 'table' || kind === 'line' || kind === 'blank' || (kind === 'steps' && steps > 1)) return true;
+  const read = paths();
+  if (kind === 'meter') return read.length > 0 && read.every((p) => CLOCK.test(p) || p.includes('.exprs.'));
+  if (kind === 'steps' && steps === 1) return read.every((p) => p === 'tonic');
+  return read.every((p) => !TABLE.test(p) && p !== 'play');
 }
 
 /** A name clear of the workbench's: the name, else the first `name<n>`, n from 2, that the workbench doesn't write. */
@@ -448,7 +527,7 @@ function useById(bench: string, id: string, options: UseOnOptions): UseOn {
   const stand = holesOf(text, compiled, options.resolve)
     .sounds.filter((s) => !namesIn(bench).has(s.slice(1)))
     .map(standIn);
-  const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand) : null);
+  const main = options.main ?? (signature.main ? mainOn(bench, id, heads, options.args, compiled, stand, options.resolve) : null);
   const left = signature.names.length === 1 ? heads : heads.map((h, i) => (h === signature.names[i] ? h : `${h}=${signature.names[i]!.slice(1)}`));
   const line = takeLine(left, id, options.args, main);
   return { text: written(line), line, heads, main, used: usedBy(written(line)), resolve: options.resolve };

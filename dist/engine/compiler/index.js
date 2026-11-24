@@ -1,4 +1,3 @@
-import { BUILTIN_PLUGINS } from "../builtinPlugins.js";
 import { context } from "./context.js";
 import { declare } from "./declare.js";
 import { builtinCard } from "./builtin.js";
@@ -16,7 +15,7 @@ import { banded, bandsOf, checkBands, performersOf } from "./band.js";
 import { readSlots } from "./slots.js";
 import { restingParts, unplayed } from "./parts.js";
 import { instrumentParams, instrumentsOf } from "./instruments.js";
-const pluginsOf = (parsed) => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
+const pluginsOf = (parsed) => new Map((parsed.plugins ?? []).map((p) => [p.name, p]));
 export function compile(written, env, used = new Set()) {
     const { parsed, rested } = restingParts(readSlots(written));
     const ctx = context(parsed, env);
