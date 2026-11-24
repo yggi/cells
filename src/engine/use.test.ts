@@ -383,9 +383,7 @@ describe('the tools keep from', () => {
     const text = '* from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh note=42 s=white cutoff=8000';
     const out = normalise(text, seed).source;
     // (the kit's cells the piece reads, &hh its own, #27)
-    // (and the noise voice, `&hh`, written with the seed its place is: #932)
-    expect(out.replace(/ seed=\d+/, '')).toBe(text.replace('cutoff=', 'lpf=').replace('* from gm_kit', '&bd, &sd from gm_kit'));
-    expect(out).toMatch(/^&hh seed=\d+ note=42/m);
+    expect(out).toBe(text.replace('cutoff=', 'lpf=').replace('* from gm_kit', '&bd, &sd from gm_kit'));
   });
 
   it('the measure counts a use line as one leaf', () => {

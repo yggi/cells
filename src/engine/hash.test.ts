@@ -56,7 +56,7 @@ describe('e3: a fragment as a piece receives it (decision 089, 106)', () => {
     const resolve = (id: string) => (id === 'kit' ? KIT : null);
     const r = compileSource(piece, undefined, { resolve, locked: [{ id: 'kit', hash: fragmentHashE2(KIT) }] });
     expect(r.diagnostics.filter((d) => /changed since/.test(d.message))).toEqual([]);
-    expect(r.takes[0]?.hash).toBe(fragmentHashE2(KIT));
+    expect(r.takes?.[0]?.hash).toBe(fragmentHashE2(KIT));
   });
 
   it('still checks a recorded e1: as e1:, so no lockfile written before it warns', () => {
