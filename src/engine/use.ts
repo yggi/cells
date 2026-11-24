@@ -944,46 +944,59 @@ function instantiate(
     }
     return { args };
   };
+  // (a plugin-fragment's fills, decision 085: each asked once, in the order its manifest names them, before the copy is
+  // written, so a solver whose one search answers several may keep its last answer (085 §8.1, #747); one the manifest
+  // doesn't name after them, as written)
+  const plugin = run.plugins.get(id);
+  const copied = (l: Line) => !byReference.has(l.name!) && reached.has(l.name!) && !overridden.includes(l.name!);
+  const filled = own.filter((l) => copied(l) && FILL.test(l.code)).map((l) => l.name!);
+  const named = plugin ? Object.keys(plugin.fills).filter((n) => filled.includes(n)) : [];
+  const asked = new Map<string, { readonly braid?: string | Refusal | null; readonly first?: string }>();
+  for (const p of [...named, ...filled.filter((n) => !named.includes(n))]) {
+    const fill = plugin?.fills[p];
+    // (a braid fill, no lap: answered here, once, its text in place of fill(), so everything after reads steps, 085 §4;
+    // refused, it says why on the from line and stays unanswered, playing nothing, 085 §8)
+    // (the lockfile's answer for these arguments plays as recorded, with or without the code, 085 §8.2: a host
+    // verifies it when it can; one it answers anew is recorded)
+    if (plugin ? fill && fill.lap === undefined : run.locked.some((x) => x.id === id && x.fill === p)) {
+      const given = argsOf();
+      let answer: string | Refusal | null = 'args' in given ? null : given;
+      if ('args' in given) {
+        const key = argsHash(given.args);
+        const kept = run.locked.find((x) => x.id === id && x.fill === p && x.args === key);
+        answer = kept
+          ? kept.text
+          : plugin && fill
+            ? answered(
+                id,
+                p,
+                () => (fill.fuel === undefined ? { refused: `its fill ${p} declares no fuel, and a braid fill must (decision 085 §8)` } : plugin.fill(p, 0, given.args, fill.fuel)),
+                say,
+              )
+            : null;
+        if (typeof answer === 'string') run.made.push({ id, fill: p, args: key, text: answer });
+      }
+      if (answer && typeof answer !== 'string') run.warn(`${quoted(id)} refused: ${answer.refused}`);
+      asked.set(p, { braid: answer });
+    } else if (plugin && fill?.lap !== undefined) {
+      // (a stream fill: its answer its braid, its first lap's, so every reader sees steps, realize the rest, #792 6a)
+      const first = answered(id, p, () => plugin.fill(p, 0, {}), say);
+      asked.set(p, { first: typeof first === 'string' ? first : '' });
+    }
+  }
   const copy: Line[] = [];
   for (const l of own) {
     const p = l.name!;
-    if (byReference.has(p) || !reached.has(p) || overridden.includes(p)) continue;
+    if (!copied(l)) continue;
     let code = renamed(l.code, names);
-    // (a plugin-fragment's fill, decision 085: stamped with its fragment, its name there, and the clock the call site gave)
+    // (a fill written in with its answer: a braid's in place of fill(), a stream's after its marker; one unanswered, its
+    // marker alone)
     if (FILL.test(code)) {
-      const plugin = run.plugins.get(id);
-      const fill = plugin?.fills[p];
-      // (a braid fill, no lap: answered here, once, its text in place of fill(), so everything after reads steps, 085 §4;
-      // refused, it says why on the from line and stays unanswered, playing nothing, 085 §8)
-      // (the lockfile's answer for these arguments plays as recorded, with or without the code, 085 §8.2: a host
-      // verifies it when it can; one it answers anew is recorded)
-      if (plugin ? fill && fill.lap === undefined : run.locked.some((x) => x.id === id && x.fill === p)) {
-        const given = argsOf();
-        let answer: string | Refusal | null = 'args' in given ? null : given;
-        if ('args' in given) {
-          const key = argsHash(given.args);
-          const kept = run.locked.find((x) => x.id === id && x.fill === p && x.args === key);
-          answer = kept
-            ? kept.text
-            : plugin && fill
-              ? answered(
-                  id,
-                  p,
-                  () =>
-                    fill.fuel === undefined ? { refused: `its fill ${p} declares no fuel, and a braid fill must (decision 085 §8)` } : plugin.fill(p, 0, given.args, fill.fuel),
-                  say,
-                )
-              : null;
-          if (typeof answer === 'string') run.made.push({ id, fill: p, args: key, text: answer });
-        }
-        if (typeof answer === 'string') code = code.replace(FILL, `$1${answer}`);
-        else if (answer) run.warn(`${quoted(id)} refused: ${answer.refused}`);
-      }
-      // (a stream fill: its answer its braid, its first lap's, so every reader sees steps, realize the rest, #792 6a)
-      if (FILL.test(code)) {
-        const first = plugin && fill?.lap !== undefined ? answered(id, p, () => plugin.fill(p, 0, {}), say) : null;
-        const answer = typeof first === 'string' ? first : '';
-        code = code.replace(FILL, `$1fill(${id}, ${p}${main && names.has(main) ? `, &${names.get(main)}` : ''})${answer ? ` ${answer}` : ''}`);
+      const answer = asked.get(p);
+      if (typeof answer?.braid === 'string') code = code.replace(FILL, `$1${answer.braid}`);
+      else {
+        const first = answer?.first ?? '';
+        code = code.replace(FILL, `$1fill(${id}, ${p}${main && names.has(main) ? `, &${names.get(main)}` : ''})${first ? ` ${first}` : ''}`);
       }
     }
     if (values.has(p)) code = inherited(names.get(p)!, code, asCell(values.get(p)!, p, own));
