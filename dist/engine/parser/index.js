@@ -87,7 +87,11 @@ export function parse(whole) {
                 s.i = start;
                 const decl = parseCell(s);
                 if (s.holes.length && decl.base) {
-                    diagnostics.push({ severity: 'error', message: 'base= and a cell read as the piece is built (seed=&s, 0!&n) are not yet one line: write the number, or the cell without base=', span: decl.base.span });
+                    diagnostics.push({
+                        severity: 'error',
+                        message: 'base= and a cell read as the piece is built (seed=&s, 0!&n) are not yet one line: write the number, or the cell without base=',
+                        span: decl.base.span,
+                    });
                     return;
                 }
                 const built = s.holes.length ? { text, line: lineNo, parts, lambdas: s.lambdas.map((l) => l.name), holes: [...s.holes] } : undefined;
