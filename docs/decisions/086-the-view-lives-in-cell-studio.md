@@ -1,6 +1,6 @@
 # 086 · The view lives in Cell studio: cells is text in, events out
 
-**Date:** 2026-11-11 · **Status:** accepted (the owner on #731's thread, 2026-11-12: "086 accepted"), its table measured by #724's audit (2026-11-12). The direction was ruled first: the owner on #691, 2026-11-11, "view moves to studio. it will handle an eventual split into a separate ui lib on its own". Which module goes where is proposed, and rung 2 of #691 confirms it. · Issues: #691, #724 (the API a frontend calls: its Cell studio half is this decision's audit)
+**Date:** 2026-11-11 · **Status:** accepted (the owner on #731's thread, 2026-11-12: "086 accepted"), its table measured by #724's audit (2026-11-12). The direction was ruled first: the owner on #691, 2026-11-11, "view moves to studio. it will handle an eventual split into a separate ui lib on its own". Which module goes where is proposed, and rung 2 of #691 confirms it. **Amended 2026-11-23** (the owner, starting the move, yggi/cell-studio#650): "hue-note mapping remains with cells, jambot also uses it and it should be consistent. it might even move up to commons": the hues stay (§1). · Issues: #691, #724 (the API a frontend calls: its Cell studio half is this decision's audit)
 
 *Read with 085 (plugin-fragments, #694), Cell studio's [011](https://github.com/yggi/cell-studio/blob/main/docs/decisions/011-plugins.md) (show plugins) and its [architecture page](https://github.com/yggi/cell-studio/blob/main/docs/architecture.md) (the app imports cells' modules by path).*
 
@@ -29,8 +29,8 @@ Sorted by what each module is *for*:
 - **Cell studio takes** what is only drawing:
   - `routing.ts` and `live.ts`;
   - the show plugins (`builtinPlugins.ts`, the show half of `plugins.ts`, `showMeaning.ts`, `SHOWS`);
-  - `graph.ts`'s layout (its depth rings, petals and turntables), split from its written graph;
-  - the hues (`positionHue`, `positionOctave`, `freqHue`, `pitchHue`).
+  - `graph.ts`'s layout (its depth rings, petals and turntables), split from its written graph.
+- **The hues stay** (amended 2026-11-23): `positionHue`, `positionOctave`, `freqHue` and `pitchHue` map a pitch to a colour, and every frontend that colours a pitch (Jambot as well as Cell studio) should agree on it. They are on `@yggi/cells/inspect` and `@yggi/cells/library`, and may move up to yggi/music-commons.
 - **Cells keeps** what any frontend of the language may need:
   - parse, compile, realize, time, what sounds and where it goes (`flows`, `plays`, `outs`);
   - the tools over a text (Migrate, Normalise, Shorten, the folder, edit and patch);

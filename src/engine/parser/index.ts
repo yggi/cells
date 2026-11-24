@@ -17,13 +17,11 @@ import { isNote } from '../ast';
 import { isPieceFile, readPiece } from '../piecefile';
 import type { CellDecl, Diagnostic, ParseResult, TakeLine } from '../ast';
 import { IDENT, LineError, LineScanner, placeIn, stripComment } from './scanner';
-import { parseBody, parseCell, SHOWS } from './cell';
+import { parseBody, parseCell } from './cell';
 import { splitPlugins } from '../plugins';
-import { BUILTIN_PLUGINS } from '../builtinPlugins';
 import { FROM_FORM, isUse, readFrom, USE_RETIRED } from './use';
 
 export { groupingOf, meterLevels } from './generators';
-export { SHOWS } from './cell';
 export { readFrom, USE_RETIRED, type FromForm } from './use';
 
 /** A text, parsed. */
@@ -32,7 +30,7 @@ export function parse(whole: string): ParseResult {
   const takes: TakeLine[] = [];
   const offers: string[] = [];
   // (plugin blocks are not cells: split off and blanked, so the lines keep their numbers)
-  const { text: source, plugins, diagnostics: pluginDiagnostics } = splitPlugins(whole, [...SHOWS, ...BUILTIN_PLUGINS.map((p) => p.name)]);
+  const { text: source, plugins, diagnostics: pluginDiagnostics } = splitPlugins(whole);
   const diagnostics: Diagnostic[] = [...pluginDiagnostics];
   const broken: string[] = [];
   // a line ending in + * , or [ (outside comments) continues on the next one

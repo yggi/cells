@@ -5,8 +5,6 @@ import { eventsBetween, HELD, plan, type Played } from './realize';
 import { windowAt } from './schedule';
 import { pieceTime } from './duration';
 import { pieceMidi } from './midiexport';
-import { liveAt } from './live';
-import { routing } from './routing';
 import { writtenGraph } from './graph';
 import { setAttr } from './edit';
 import { cellId } from './ids';
@@ -186,12 +184,5 @@ describe('a drone in time', () => {
     expect(all[0]).toMatchObject({ key: 69, tick: 0 });
     // (60 s at 120 bpm, 480 ticks a quarter)
     expect(all[0].end).toBe(60 * 2 * 480);
-  });
-  it('lights its voice and the way out while it plays', () => {
-    const alone = compileSource('&a loop=A4');
-    const live = liveAt(alone, codeShifts(alone), new Set(), 12.3);
-    expect([...live.voices]).toEqual([cellId('a')]);
-    expect([...live.edges]).toEqual([...routing(alone, new Set()).edges]);
-    expect(live.nodes.has(cellId('a'))).toBe(true);
   });
 });

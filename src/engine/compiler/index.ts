@@ -6,7 +6,6 @@
  */
 import type { ParseResult, Span } from '../ast';
 import type { AudioTape, CompileResult, Env, ResolvedCell } from '../program';
-import { BUILTIN_PLUGINS } from '../builtinPlugins';
 import type { ShowPlugin } from '../plugins';
 import { context } from './context';
 import { declare } from './declare';
@@ -26,8 +25,8 @@ import { readSlots } from './slots';
 import { restingParts, unplayed } from './parts';
 import { instrumentParams, instrumentsOf } from './instruments';
 
-/** The plugins a piece can name: the app's own, then the piece's (it can't take a built-in's name: the parser says). */
-const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new Map([...BUILTIN_PLUGINS, ...(parsed.plugins ?? [])].map((p) => [p.name, p]));
+/** The plugins a piece carries, its own blocks (decision 011): a frontend's own plugins are the frontend's (decision 086). */
+const pluginsOf = (parsed: ParseResult): ReadonlyMap<string, ShowPlugin> => new Map((parsed.plugins ?? []).map((p) => [p.name, p]));
 
 /** A parsed piece, compiled; `used` names the cells a `from` line gave it (decision 054), which the built-in card doesn't hear. */
 export function compile(written: ParseResult, env: Env, used: ReadonlySet<string> = new Set()): CompileResult {

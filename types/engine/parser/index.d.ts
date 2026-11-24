@@ -1,6 +1,5 @@
 import type { ParseResult } from '../ast';
 export { groupingOf, meterLevels } from './generators';
-export { SHOWS } from './cell';
 export { readFrom, USE_RETIRED, type FromForm } from './use';
 /** A text, parsed. */
 export declare function parse(whole: string): ParseResult;

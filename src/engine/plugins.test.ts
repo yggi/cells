@@ -3,7 +3,6 @@
 // src/layout/physics.test.ts, src/layout/show.test.ts and src/ui/plugin.test.ts @ 23a5972 (#326), where these were
 // the only tests of them.
 import { describe, expect, it } from 'vitest';
-import { BUILTIN_PLUGINS } from './builtinPlugins';
 import { compileSource } from './compile';
 import { parse } from './parser';
 
@@ -29,37 +28,28 @@ describe('size=: how large a cell is drawn', () => {
   });
 });
 
-describe('show=: one of the shows, or a plugin', () => {
-  it('reads one of the shows; says which when it isn’t', () => {
+describe('show=: a word the frontend draws (decision 086 §2)', () => {
+  it('keeps any word, and gives it no meaning: which words a frontend draws is its own', () => {
     expect(compileSource('&t show=do 0').cells.get('t')!.show).toBe('do');
-    expect(errors('&t show=fancy 0')[0]).toMatch(/show=fancy: not a show \(braid pattern equal notes midi do.*no plugin of that name/);
+    expect(compileSource('&t show=fancy 0').cells.get('t')!.show).toBe('fancy');
+    expect(errors('&t show=fancy 0')).toEqual([]);
   });
-  it('show=notes: takes a spelling, and says which', () => {
-    expect(compileSource('&t show=notes:klingon 0').diagnostics[0]!.message).toMatch(/flats, sharps or german/);
+  it('keeps a convention after the colon, any word; says what it takes where there is none', () => {
+    expect(compileSource('&t show=notes:klingon 0').cells.get('t')!.show).toBe('notes:klingon');
+    expect(parse('&t show=notes: 0').diagnostics[0]!.message).toMatch(/a word after the colon, its convention/);
+    expect(parse('&t show=1 0').diagnostics[0]!.message).toMatch(/show= takes a word/);
   });
   it('a plugin block is blanked in the cells’ text: the cells keep their line numbers', () => {
-    const r = compileSource(['=== plugin ring ===', '{ "fits": ["meter"] }', 'function draw() { return []; }', '=== end ===', '&bar scan(1 1) step=60bpm show=nope'].join('\n'));
+    const r = compileSource(
+      ['=== plugin ring ===', '{ "fits": ["meter"] }', 'function draw() { return []; }', '=== end ===', '&bar scan(1 1) step=60bpm show=ring size=9'].join('\n'),
+    );
     expect(r.diagnostics.find((d) => d.severity === 'error')!.span.line).toBe(5);
+    expect(r.plugins.get('ring')?.fits).toEqual(['meter']);
   });
 });
 
 describe('label=: a cell’s name in words', () => {
   it('takes a text in quotes', () => {
     expect(compileSource('&a label=hello').diagnostics[0]!.message).toMatch(/label= takes a text in quotes/);
-  });
-});
-
-describe('the built-in plugins (builtinPlugins.ts)', () => {
-  const sun = BUILTIN_PLUGINS.find((p) => p.name === 'sun')!;
-  const own = (name: string) => `&bar scan(1 1) step=60bpm show=${name}\n=== plugin ${name} ===\n{ "fits": ["meter"] }\nfunction draw() { return []; }\n=== end ===`;
-  it('is there for any piece, and a piece cannot write another of its name', () => {
-    expect(compileSource('&day scan(1!24) loop=1d show=sun').plugins.get('sun')?.builtin).toBe(true);
-    expect(errors(own('sun'))[0]).toMatch(/sun is a show of its own/);
-    expect(errors('&day scan(1!24) loop=1d show=moon')[0]).toMatch(/not one of the built-in plugins \(sun\)/);
-  });
-  it('is not what a piece’s copy of a built-in’s text and manifest can earn: its name is taken, the plugin the app’s', () => {
-    const copy = `&bar scan(1 1) step=60bpm show=sun\n=== plugin sun ===\n{ "fits": ["meter"] }\n${sun.code}\n=== end ===`;
-    expect(errors(copy).join()).toMatch(/sun is a show of its own/);
-    expect(compileSource(copy).plugins.get('sun')).toBe(sun);
   });
 });
