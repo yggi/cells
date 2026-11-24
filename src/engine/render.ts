@@ -13,7 +13,7 @@
 import { DOUGH_SOURCES } from './dough-params';
 import { filterModel } from './attributes';
 import { cellId } from './ids';
-import { grainOffset, noise, NOISE_SECONDS } from './noise';
+import { grainKeyOf, grainOffset, noise, NOISE_SECONDS } from './noise';
 import type { CompileResult, Shifts } from './program';
 import { outputSounds, type Played } from './realize';
 import type { ParamTrack } from './series';
@@ -825,10 +825,10 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
   const heard = heardVoices(result, muted);
   // the sound card's master: postgain= on the (first) sound card, linear; below 0 it inverts what the card plays
   const card = [...result.cells.values()].find((c) => c.sink);
-  // (where a noise note starts in its noise is keyed on its voice's place among the noise voices, in the order the text
-  // declares them, not on its name: a text renamed or respelled starts every noise where it did, and a send changed
-  // leaves it, #481; S1 hears a noise by its colour and level, not its samples, decision 070)
-  const noisePlace = new Map([...result.cells.values()].filter((c) => ['white', 'pink', 'brown'].includes(String(c.params.s))).map((c, i) => [c.name, `noise#${i}`] as const));
+  // (where a noise note starts in its noise is keyed on the seed its voice writes, else on its place among the noise voices, not on
+  // its name: a text renamed or respelled starts every noise where it did, and an edit that adds a noise voice leaves the others',
+  // #481, #932; S1 hears a noise by its colour and level, not its samples, decision 070)
+  const grainKey = grainKeyOf(result);
   const master = typeof card?.params.postgain === 'number' ? card.params.postgain : 1;
   const diagnostics: RenderDiagnostic[] = [];
   const said = new Set<string>();
@@ -1134,7 +1134,7 @@ export function createRenderer(result: CompileResult, shifts: Shifts, options: R
           freq: e.freq,
           semis: semis(),
           cents: cents(),
-          grain: v.noise ? Math.floor(grainOffset(v.seed, noisePlace.get(e.voice) ?? e.voice, e.code ?? e.at, NOISE_SECONDS) * rate) : 0,
+          grain: v.noise ? Math.floor(grainOffset(grainKey(e.voice).seed, grainKey(e.voice).place, e.code ?? e.at, NOISE_SECONDS) * rate) : 0,
           fm: v.noise ? null : fmOf(e.voice, e.freq, 0, params.index, e.at, end - e.at),
           phase: 0,
         };

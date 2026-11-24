@@ -1,7 +1,7 @@
 import { DOUGH_SOURCES } from "./dough-params.js";
 import { filterModel } from "./attributes.js";
 import { cellId } from "./ids.js";
-import { grainOffset, noise, NOISE_SECONDS } from "./noise.js";
+import { grainKeyOf, grainOffset, noise, NOISE_SECONDS } from "./noise.js";
 import { outputSounds } from "./realize.js";
 import { harmonics, waveform } from "./wave.js";
 export const DEFAULT_RATE = 48000;
@@ -503,7 +503,7 @@ export function createRenderer(result, shifts, options = {}) {
     const tracks = options.tracks ?? 'mix';
     const heard = heardVoices(result, muted);
     const card = [...result.cells.values()].find((c) => c.sink);
-    const noisePlace = new Map([...result.cells.values()].filter((c) => ['white', 'pink', 'brown'].includes(String(c.params.s))).map((c, i) => [c.name, `noise#${i}`]));
+    const grainKey = grainKeyOf(result);
     const master = typeof card?.params.postgain === 'number' ? card.params.postgain : 1;
     const diagnostics = [];
     const said = new Set();
@@ -814,7 +814,7 @@ export function createRenderer(result, shifts, options = {}) {
                     freq: e.freq,
                     semis: semis(),
                     cents: cents(),
-                    grain: v.noise ? Math.floor(grainOffset(v.seed, noisePlace.get(e.voice) ?? e.voice, e.code ?? e.at, NOISE_SECONDS) * rate) : 0,
+                    grain: v.noise ? Math.floor(grainOffset(grainKey(e.voice).seed, grainKey(e.voice).place, e.code ?? e.at, NOISE_SECONDS) * rate) : 0,
                     fm: v.noise ? null : fmOf(e.voice, e.freq, 0, params.index, e.at, end - e.at),
                     phase: 0,
                 };

@@ -30,7 +30,7 @@ description: "A 12-bar blues with swung eighths: the blues scale and the minor p
 &horn s=saw loop=C4 lpf=1600 room=.3 env=&(map=adsr .02 .15 .6 .12)
 &bass s=tri loop=C2 env=&pluck
 &keys s=sine loop=C4 env=&(map=adsr .005 .3 .2 .2)
-&cym gain=.25 s=white hpf=8000 env=&snap
+&cym seed=0 gain=.25 s=white hpf=8000 env=&snap
 
 &mix postgain=2.03 map=sample [&lick * &horn * .5,
                                   (&walk + &changes) * &bass * .8,

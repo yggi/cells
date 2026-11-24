@@ -23,8 +23,8 @@ description: "Where notes become sound, named: a gate plays its voices with each
 &bell s=sine loop=C6 env=&(map=adsr 0 .6 0 .3)
 &bass s=square loop=C2 lpf=500 env=&strike
 &bd note=36 s=sine loop=A1 env=&(map=adsr 0 .3 0 .1)
-&sd note=38 s=white env=&snap
-&hh note=42 s=white hpf=7000 env=&click
+&sd seed=0 note=38 s=white env=&snap
+&hh seed=1 note=42 s=white hpf=7000 env=&click
 &kit &bd &sd &hh
 &beat step=8n 0 2 1 2
 

@@ -33,6 +33,12 @@ import { narrowestFroms } from './narrowest';
 import { interfaceNames } from './names';
 import { evenScan, swingClock } from './meter';
 import { seeds } from './seeds';
+
+/** The rewrites of the second phase: a seed a cell writes (decision 098), once no other rule has anything left, so no rule's order changes the text (law L15) and a seed is the place its cell has when it is written. */
+export { seeds };
+
+/** How many seeds a text may be written in: one a round. */
+export const SEED_ROUNDS = 400;
 import { migrations } from '../migrate';
 
 /** What Normalise reads besides the text: the compile's options, and the library whose lines a piece takes by `use`. */
@@ -66,11 +72,15 @@ export const normalisations =
       ...takenArguments(source),
       ...libraryCells(source, options.library),
       ...narrowestFroms(source, options.resolve),
-      ...seeds(source, result),
     ];
   };
 
 /** A text in the canonical spelling, one rewrite at a time, each playing the same notes; the steps are what each did. */
 export const normalise = (source: string, options?: NormaliseOptions): { source: string; steps: string[] } => {
-  return rewriteAll(source, normalisations(options), ROUNDS, options);
+  // (it writes Migrate's rule before its own: a `from` line is read the old way)
+  const old = { ...options, old: true };
+  const first = rewriteAll(source, normalisations(old), ROUNDS, old);
+  // (then the seeds, once nothing else is left to move a cell's place or its content: decision 098)
+  const then = rewriteAll(first.source, seeds, SEED_ROUNDS, old);
+  return { source: then.source, steps: [...first.steps, ...then.steps] };
 };

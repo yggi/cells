@@ -21,7 +21,7 @@ description: "A clockwork music box: wound, it spins up from rest, plays its tun
 &m s=sine ratio=7.1
 &comb oneshot=1 pan=.36 s=sine loop=C5 fm=&m index=.2..1.6 * &(map=adsr .001 .06 .1 .1) room=.35 env=&(map=adsr .001 1.1 0 1)
 &combLow oneshot=1 pan=.61 s=sine loop=C5 fm=&m index=.1...8 * &(map=adsr .001 .06 .1 .1) env=&(map=adsr .001 1.4 0 1.2)
-&tickv s=white hpf=6500 env=&(map=adsr 0 .012 0 .01)
+&tickv seed=0 s=white hpf=6500 env=&(map=adsr 0 .012 0 .01)
 
 &out postgain=5.47 map=sample [&tune * &comb * .22, &low * &combLow * .18, &tick * &tickv * .05]
 ```

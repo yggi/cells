@@ -121,7 +121,7 @@ In giving the bass its sound the piece gives it its register too, which is the i
 &keysV from brass_stab
 &leadV from clarinet
 &trumpetV s=saw loop=C4 lpf=1400 lpq=6 env=&(map=adsr .03 .1 .6 .12) pitch=&(map=lin loop=4.5 0 .08 0 -.08 0)
-&vinyl s=white hpf=2500 env=&(map=adsr 0 .004 0 .004)
+&vinyl seed=0 s=white hpf=2500 env=&(map=adsr 0 .004 0 .004)
 
 &out map=sample postgain=1.96 [&drumsOut,
                          &crackle * &vinyl * .04, &bassOut, &stabOut * .4, &leadOut * .5, &lead2 * .5]

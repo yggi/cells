@@ -4,6 +4,7 @@
  * is thrown (decision 031).
  * Lifted from yggi/cell-studio src/audio/voice/noise.ts @ f18aa7a.
  */
+import type { CompileResult } from './program';
 import { chanceOf } from './realize';
 
 /** A small seeded generator (mulberry32): numbers in [0, 1), the same sequence for the same seed. */
@@ -14,6 +15,28 @@ function seeded(seed: number): () => number {
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * The noise voices of a program (`s=white`, `pink` or `brown`) by name, each its place among them in the order the compile lists
+ * the cells, `noise#<i>`: what a voice's grains are thrown from where it writes no seed (#481: its place, not its name, so a text
+ * renamed or respelled starts every noise where it did).
+ */
+export function noisePlaces(result: Pick<CompileResult, 'cells'>): ReadonlyMap<string, string> {
+  return new Map([...result.cells.values()].filter((c) => ['white', 'pink', 'brown'].includes(String(c.params.s))).map((c, i) => [c.name, `noise#${i}`] as const));
+}
+
+/**
+ * What a voice's grains are thrown from (#932, decision 098): the seed it writes alone, as its place (`noise#<n>`), so no edit to
+ * the text moves them; or, where it writes none, its place among the noise voices and its seed, 0. Normalise writes `seed=<i>`,
+ * the place it has, so the grains are the very ones thrown before.
+ */
+export function grainKeyOf(result: Pick<CompileResult, 'cells'>): (voice: string) => { readonly seed: number; readonly place: string } {
+  const places = noisePlaces(result);
+  return (voice) => {
+    const c = result.cells.get(voice);
+    return c?.seeded ? { seed: 0, place: `noise#${c.seed}` } : { seed: c?.seed ?? 0, place: places.get(voice) ?? voice };
   };
 }
 

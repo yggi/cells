@@ -22,7 +22,7 @@ description: "The changes of Giant Steps: three keys a major third apart, B, G a
 &sax s=saw loop=C4 lpf=1800 room=.25 env=&(map=adsr .02 .12 .6 .1)
 &bass s=tri loop=C2 env=&pluck
 &keys s=sine loop=C4 env=&(map=adsr .005 .3 .3 .2)
-&cym gain=.22 s=white hpf=8000 env=&snap
+&cym seed=0 gain=.22 s=white hpf=8000 env=&snap
 
 &mix postgain=2.16 map=sample [&line * &sax * .4, &walk * &bass * .8, &comp * &keys * .3, &ride]
 ```

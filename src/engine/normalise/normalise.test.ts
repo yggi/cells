@@ -36,6 +36,8 @@ const structure = (src: string) =>
     .map((c) => `${c.name} ${c.units.length} ${c.units.flatMap((u) => (u.atom.kind === 'ref' ? [u.atom.name] : [])).join(',')}`)
     .sort();
 
+const NOISE_SEED = /its noise starts where its place/;
+
 describe('Normalise: valid spellings into the canonical one (decision 049, #28)', () => {
   it.each([
     ['s=saw cutoff=800', 's=saw lpf=800', 1],
@@ -119,7 +121,8 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
       // (a form is a braid of splices, its head no sound until a voice plays it: #294)
       const form = f.association.some((wp) => wp.facet === 'form') ? `\n&formV loop=C4\n&formOut [&${/^&(\w+)/.exec(f.text)![1]} * &formV]` : '';
       const text = `${compiled(f.text).ok ? f.text : unionOf(f.text, bench).text}${kit.join('')}${part.join('')}${form}`;
-      expect([f.id, compiled(text).ok, normalise(text).steps]).toEqual([f.id, true, []]);
+      // (but for the seed of a noise voice a fragment holds, or the kit's lines it is read with: a voice's place is its piece's, #932)
+      expect([f.id, compiled(text).ok, normalise(text).steps.filter((step) => !NOISE_SEED.test(step))]).toEqual([f.id, true, []]);
     }
   });
 
@@ -267,7 +270,10 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     const kit = LIBRARY.find((f) => f.id === 'gm_kit')!.text.split('\n');
     const line = (name: string) => kit.find((l) => l.startsWith(`&${name} `))!;
     const written = `&bar meter("4/4") step=&tempo  # four beats\n&tempo step=100bpm\n${line('bd')}\n${line('sd')}\n${line('hh')}\n${beat}`;
-    const { source, steps } = normalise(written, seed);
+    const normalised = normalise(written, seed);
+    // (the noise voice a text writes is written with its seed, #932: not what this test is about)
+    const source = normalised.source.replace(/ seed=\d+/g, '');
+    const steps = normalised.steps.filter((step) => !NOISE_SEED.test(step));
     // (written as a from line, decision 065, in one step; and the bar as the meter template with its defaults, #524)
     expect(source).toBe(`&bar from bar &tempo           # four beats\n&tempo step=100bpm\n&bd, &sd, &hh from gm_kit\n${beat}`);
     expect(steps).toHaveLength(2);
@@ -279,8 +285,8 @@ describe('Normalise: valid spellings into the canonical one (decision 049, #28)'
     );
     // (a line that differs by a word stays the piece's; with no library given, nothing is taken)
     const own = written.replace(line('hh'), line('hh').replace('hpf=8000', 'hpf=7000'));
-    expect(normalise(own, seed).source).toContain(line('hh').replace('hpf=8000', 'hpf=7000'));
-    expect(normalise(written, { resolve: resolveSeed }).steps).toEqual([]);
+    expect(normalise(own, seed).source.replace(/ seed=\d+/g, '')).toContain(line('hh').replace('hpf=8000', 'hpf=7000'));
+    expect(normalise(written, { resolve: resolveSeed }).steps.filter((step) => !NOISE_SEED.test(step))).toEqual([]);
   });
 
   it('writes a fragment cell written inline as the cell by name, and a from line of it (#196): every place, once', () => {

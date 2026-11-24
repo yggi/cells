@@ -18,7 +18,7 @@ description: "A line that is never quite the same twice round: steps that may no
 &ghosts chance=.75 seed=3 step=16n 0?!8
 
 &lead s=tri loop=C5 env=&(map=adsr .005 .2 .3 .2)
-&hh s=white hpf=8000 env=&click
-&sd s=white hpf=1500 env=&tap
+&hh seed=0 s=white hpf=8000 env=&click
+&sd seed=1 s=white hpf=1500 env=&tap
 &out map=sample postgain=10.1 [&tune * &lead * .3, &hats * &hh * .1, &ghosts * &sd * .1]
 ```

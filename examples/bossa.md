@@ -23,8 +23,8 @@ description: A bossa nova whose guitar strums on the clave's five strokes, over 
 &guitar s=tri loop=D3 lpf=2200 env=&(map=adsr .003 .5 .15 .3)
 &bass s=sine loop=D2 env=&(map=adsr .01 .4 .5 .2)
 &flute glide=.08 s=sine loop=D4 env=&(map=adsr .06 .2 .7 .4) pitch=&vibrato
-&click gain=.3 s=white hpf=2500 env=&(map=adsr 0 .03 0 .02)
-&shh gain=.12 s=white hpf=6000 env=&(map=adsr 0 .03 0 .02)
+&click seed=0 gain=.3 s=white hpf=2500 env=&(map=adsr 0 .03 0 .02)
+&shh seed=1 gain=.12 s=white hpf=6000 env=&(map=adsr 0 .03 0 .02)
 
 &mix postgain=1.58 map=sample [&strum * &guitar * .25, &bassline * &bass * .7, &melody * &flute * .4,
                                   &rim, &shaker]

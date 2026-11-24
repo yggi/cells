@@ -23,7 +23,8 @@ describe('Normalise: the narrowest from (#27, #157)', () => {
 
   it('a cell the piece defines is its own: not taken', () => {
     const src = piece('* from gm_kit', '&hh note=42 s=white hpf=9000 env=&(map=adsr 0 .03 0 0)\n');
-    expect(normalise(src, SEED).source).toBe(piece('&bd from gm_kit', '&hh note=42 s=white hpf=9000 env=&(map=adsr 0 .03 0 0)\n'));
+    // (the noise voice is written with the seed its place is, #932)
+    expect(normalise(src, SEED).source.replace(/ seed=\d+/, '')).toBe(piece('&bd from gm_kit', '&hh note=42 s=white hpf=9000 env=&(map=adsr 0 .03 0 0)\n'));
   });
 
   it('a `*` the piece reads nothing of is left as it is', () => {

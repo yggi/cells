@@ -30,7 +30,7 @@ A modular synthesizer's patch, each module a line and each cable a reference. Tw
 &vca from amp(eg=&(map=adsr .002 .3 .5 .06)) &vcf
 
 &kick note=36 oneshot=1 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&thump gain=.8
-&hat oneshot=1 s=white hpf=7500 env=&click gain=.25
+&hat seed=0 oneshot=1 s=white hpf=7500 env=&click gain=.25
 &beat step=16n &kick &hat &hat &hat [&kick,&hat] &hat &hat &hat:0:.5
 
 &out map=sample postgain=2.85 [(&seq + &changes) * &accent * &vca * .35, &beat]

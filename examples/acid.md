@@ -29,9 +29,9 @@ An original acid line: a saw through a resonant low-pass whose envelope opens on
 
 &tb303 s=saw loop=A2 lpf=110..3800 * &fenv * &accent * &knob lpq=&res delaytime=&bar*4/3 delay=.22 delayfeedback=.35 env=&strike
 &bd note=36 gain=.8 oneshot=1 s=sine loop=A1 pitch=0..30 * &(map=adsr 0 .04 0 0) env=&thump
-&cp note=39 gain=.35 oneshot=1 s=white hpf=1500 env=&snap room=.2
-&hh note=42 gain=.25 s=white hpf=8000 env=&click
-&oh note=46 gain=.2 oneshot=1 s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)
+&cp seed=0 note=39 gain=.35 oneshot=1 s=white hpf=1500 env=&snap room=.2
+&hh seed=1 note=42 gain=.25 s=white hpf=8000 env=&click
+&oh seed=2 note=46 gain=.2 oneshot=1 s=white hpf=7000 env=&(map=adsr 0 .2 0 .1)
 
 &mix postgain=2.83 map=sample [&line * &accent * &tb303 * .45, &beat]
 ```
