@@ -58,7 +58,7 @@ describe.each(PLACES)('%s= reads a cell as it reads the number (decision 105)', 
 const resolved = (text: string, name: string) =>
   JSON.stringify(compileSource(text).cells.get(name), (k, v) => (k === 'span' || k === 'paramSpans' || k === 'spans' || k === 'valueReads' ? undefined : v));
 
-/** The braid's, rate's and table's places (decision 106): a literal, the same read from a cell, the cells it needs, and what is compared. */
+/** The braid's, rate's and table's places (decision 107): a literal, the same read from a cell, the cells it needs, and what is compared. */
 const BRAID: readonly (readonly [string, string, string, string[], string])[] = [
   ['x!n', '&t step=4 0!3 2', '&t step=4 0!&k 2', ['&k 3'], 'play'],
   ['x@n', '&t step=4 0@3 2', '&t step=4 0@&k 2', ['&k 3'], 'play'],
@@ -78,7 +78,7 @@ const BRAID: readonly (readonly [string, string, string, string[], string])[] = 
   ['map=ed(n, r)', '&e map=ed(13, 3)', '&e map=ed(13, &k)', ['&k 3'], 'e'],
 ];
 
-describe.each(BRAID)('%s reads a cell as it reads the number (decision 106)', (_, literal, cell, defs, what) => {
+describe.each(BRAID)('%s reads a cell as it reads the number (decision 107)', (_, literal, cell, defs, what) => {
   const whole = (line: string, ...more: string[]) => lines('&bar meter("4/4") step=100bpm', '&v s=saw loop=C4', ...more, line, '&out map=sample [&t * &v]');
   const full = (line: string, ...more: string[]) => (what === 'play' ? whole(line, ...more) : lines('&bar meter("4/4") step=100bpm', ...more, line));
   it('plays what the number plays', () => {

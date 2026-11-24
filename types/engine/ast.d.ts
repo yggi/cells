@@ -445,7 +445,7 @@ export type MapSpec = {
  * free(adagio) etc.: a tempo marking's range, its middle the default.
  */
 /**
- * A number read as the piece is built where the text wrote a cell (decisions 105 and 106, after 093): `seed=&s`,
+ * A number read as the piece is built where the text wrote a cell (decisions 105 and 107, after 093): `seed=&s`,
  * `0!&n`, `&x[&i]`. The scanner reads the place with a placeholder and records where the cell's name is in the line;
  * compile (`compiler/built.ts`) reads the cell's value, a cell that is one number or a sum of numbers alone, writes it
  * into the line and reads the line again, so a place reads a cell exactly as it reads the number written.
@@ -537,7 +537,7 @@ export interface CellDecl {
     /** A cell `readStyles` made for a style's slot read, `lpf=… * &style[bite]`: the style it reads and the slot's position (decision 063). */
     /** Cells whose one number compile read into this cell's table and left no reference to (`scale(&mode, …)`, `even(&k, &n, &mode)`): what a reader of the text still names. */
     readonly valueReads?: readonly string[];
-    /** The numbers this line reads from cells as the piece is built (`seed=&s`, `0!&n`), filled by compile (decisions 105 and 106). */
+    /** The numbers this line reads from cells as the piece is built (`seed=&s`, `0!&n`), filled by compile (decisions 105 and 107). */
     readonly built?: BuiltLine;
     readonly readsSlot?: {
         readonly cell: string;

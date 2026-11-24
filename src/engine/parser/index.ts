@@ -25,7 +25,7 @@ export { groupingOf, meterLevels } from './generators';
 export { readFrom, USE_RETIRED, type FromForm } from './use';
 
 /**
- * A line that read cells as the piece is built, read again with their values written in (decision 106): its cell and the
+ * A line that read cells as the piece is built, read again with their values written in (decision 107): its cell and the
  * unnamed cells it declares. Warnings aren't said twice (the first reading said them); an error is the line's own, a
  * `LineError` the caller says with the line as filled.
  */
@@ -105,7 +105,7 @@ export function parse(whole: string): ParseResult {
       else if (word === null) {
         s.i = start;
         const decl = parseCell(s);
-        // (a line that reads cells as the piece is built keeps its text: compile writes their values in and reads it again, decision 106)
+        // (a line that reads cells as the piece is built keeps its text: compile writes their values in and reads it again, decision 107)
         if (s.holes.length && decl.base) {
           diagnostics.push({
             severity: 'error',
@@ -120,7 +120,7 @@ export function parse(whole: string): ParseResult {
     } catch (e) {
       if (!(e instanceof LineError)) throw e;
       // (a line that read a cell as the piece is built may fail on the placeholder alone, euclid's k over its n: kept as a
-      // blank cell with its text, and read again with the cell's value in; if it still fails, it says so then, decision 106)
+      // blank cell with its text, and read again with the cell's value in; if it still fails, it says so then, decision 107)
       const head = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(text);
       if (s.holes.length && head) {
         const at = text.indexOf('&');

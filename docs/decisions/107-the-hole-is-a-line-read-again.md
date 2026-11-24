@@ -1,4 +1,4 @@
-# 106 · The hole is a line read again: every place that reads a number as the piece is built may read a cell
+# 107 · The hole is a line read again: every place that reads a number as the piece is built may read a cell
 
 **Date:** 2026-11-24 · **Status:** accepted (the owner on #936, 2026-11-24: "go ahead with 936"; and on #930, "clean and consistent handling of literal values and ones referenced/generated through cells everywhere, with one general mechanism behind it") · Issues: #936, #930, #782 · Amends [105](105-a-number-read-as-the-piece-is-built-may-be-a-cell.md) (its fourth point, done here, and its setter, replaced)
 

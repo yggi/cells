@@ -1,5 +1,5 @@
 /**
- * A number read from a cell as the piece is built (decisions 105 and 106, after 093 and 101): the one reader of a cell's
+ * A number read from a cell as the piece is built (decisions 105 and 107, after 093 and 101): the one reader of a cell's
  * value where a text reads one before it plays, and the one phase that fills every place that reads one. A place that
  * fills cells (`NUMBER_PLACES`, `fills`) reads `&k` with a placeholder and the scanner records where the cell's name
  * stands in its line (`BuiltHole`); `fillBuilt` reads each cell, a cell that is one number or a sum of numbers alone
