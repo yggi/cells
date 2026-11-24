@@ -356,16 +356,11 @@ describe('a query given the workbench', () => {
     // which fit any workbench: they use no name, or read what they take in as a sound; a filter module's input is its main
     // argument, `&in`, which a workbench of a meter alone has no cell for, #587; and the band, which declares every input
     // it reads, each a tacet or the centre by default, #560)
-    // (and the song forms, which take the bar as their intensity: a meter read as a value, as a count reads its levels, is one
-    // decision 104 lets meet; a workbench that offers its &song, or a host that names it, says otherwise; #920 keeps it)
-    const open = [
-      ...INSTRUMENT_FRAGMENTS,
-      ...EXPRESSION_FRAGMENTS,
-      ...STYLE_FRAGMENTS,
-      ...BAND_FRAGMENTS,
-      ...SONG_FRAGMENTS,
-      ...MODULE_FRAGMENTS.filter((f) => !signatureOf(f.text)?.main),
-    ].map((f) => f.id);
+    // (not the song forms: their kinds read the main argument in a sum a section plan splices, a value held a section long,
+    // which a meter's levels, a value a step of the meter, are not: #920)
+    const open = [...INSTRUMENT_FRAGMENTS, ...EXPRESSION_FRAGMENTS, ...STYLE_FRAGMENTS, ...BAND_FRAGMENTS, ...MODULE_FRAGMENTS.filter((f) => !signatureOf(f.text)?.main)].map(
+      (f) => f.id,
+    );
     // (and a melodic scale that leaves the key reads its tonic too, the blues, #719)
     const modes = [...MODE_FRAGMENTS, ...MELODIC_FRAGMENTS.filter((f) => signatureOf(f.text)?.main === '&tonic')].map((f) => f.id);
     // (the rhythms that fit 4/4: all but the waltz's, #542, whose lines lap three beats)
@@ -397,6 +392,18 @@ describe('a query given the workbench', () => {
     expect(r.query(BOSSA_NOVA, 2, {}, { facet: 'rhythm', workbench: bench('bar') }).map((f) => f.fragment.id)).toEqual(
       fitting.filter((id) => RHYTHM_FRAGMENTS.some((f) => f.id === id) && isRhythm(id)).slice(0, 2),
     );
+  });
+
+  it('a meter meets a song form’s intensity nowhere, a count’s levels still (#920): a section plan holds a value a section, a meter’s levels a step', () => {
+    const r = createRepository(LIBRARY);
+    const songs = SONG_FRAGMENTS.map((f) => f.id);
+    const fit = (bench: string) => r.query(BOSSA_NOVA, LIBRARY.length, {}, { workbench: bench }).map((f) => f.fragment.id);
+    const onBar = fit(bench('bar'));
+    expect(onBar.filter((id) => songs.includes(id))).toEqual([]);
+    expect(onBar).toEqual(expect.arrayContaining(['click', 'stick_count']));
+    // (a song's intensity, a cell that is one number, is what a song form takes)
+    const onSong = fit(`${bench('bar')}\n&song .55`);
+    expect(songs.every((id) => onSong.includes(id))).toBe(true);
   });
 
   it('without a workbench, every query is what it was', () => {

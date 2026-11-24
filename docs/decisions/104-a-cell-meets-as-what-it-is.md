@@ -12,7 +12,7 @@ A fit with no argument named takes, as a template's main argument, the one cell 
 ## Decision
 
 1. **A cell meets a parameter only where the copy reads it as what it is:** its kind (`kinds.ts`) against each read of it (`reads.ts`, its path), in `readAsItIs` (`repository/fit.ts`).
-   - **A meter** only as a clock (`step=&bar`, `&bar:beat`) or its levels as values in an expression (a count's `[.9 + &bar * -.3]`), and somewhere. Not as a key, a phrase or a part, nor read nowhere. A meter here is the root meter (a tempo of its own, 095), or a braid written `meter(…)`: not a scale (a scan reads as a meter too), nor a clock of the wall (a law's day).
+   - **A meter** only as a clock (`step=&bar`, `&bar:beat`) or its levels as values in an expression (a count's `[.9 + &bar * -.3]`), and somewhere. Its levels are values only at its own steps: not in an expression a splice holds a step long (decision 097), as a section plan holds its kinds' sums a section each, to any depth of sums (#920, below). Not as a key, a phrase or a part, nor read nowhere. A meter here is the root meter (a tempo of its own, 095), or a braid written `meter(…)`: not a scale (a scan reads as a meter too), nor a clock of the wall (a law's day).
    - **A lone note** (steps of one, `&tonic D`) only as a tonic: no key, phrase, part or value.
    - **A text cell** never: a generator's argument alone (101).
    - **As a table** (`over=`): a table, a line, a blank or steps.
@@ -29,8 +29,8 @@ A fit with no argument named takes, as a template's main argument, the one cell 
 
 ## Consequences
 
-- **A plain meter line fits 75 fragments at Bossa nova's point, not 165:** the rhythms, the layers, the open fragments, the counts and the song forms.
-- **The song forms still take the bar as their intensity:** they read it as a value in a sum, as a count reads its levels, so no kind tells them apart. A workbench that offers its `&song`, or a host that names it, settles it (#920 keeps it).
+- **A plain meter line fits 75 fragments at Bossa nova's point, not 165:** the rhythms, the layers, the open fragments, the counts and the song forms (68 since #920: not the song forms, below).
+- **The song forms no longer take the bar as their intensity** (#920, amended 2026-11-24): their section kinds read the main argument in a sum, and the song form splices those sums as its plan's steps, so each holds one value a section; a meter's levels are a value a step of the meter, so they meet only an expression no splice holds (a count's, multiplied into its clicks). A plain meter line fits 68 fragments at Bossa nova's point. A workbench that offers its `&song`, or a host that names it, still names it outright.
 - **Jambot's bench** of a meter, a key and a harmony: the meter no longer meets a walking bass's `&harm`. The key and the harmony still do, so one is offered or named, as before.
 - **Its cost is the reading's, found once a template:** how a template reads its main argument is the template's and its arguments', whatever the workbench, so it is kept across queries and asked before the copy is compiled over a cell. `timing.slow.test.ts`'s three fitting queries take what they took before it (6.1–6.4 s here against `main`'s 6.4 s; 9.1 s when it read each cell's copy anew).
 - `firstguess.ts` judges a part's clock with a harmony standing in for its main argument, where the bar stood in by accident.
