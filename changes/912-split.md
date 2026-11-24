@@ -1,3 +1,0 @@
-### Added
-
-- **`split`, a slot in two halves at every scale** (#912, decision 052, point 11.4; `SPLIT`, asked by name): a pitched line's note and its neighbour a degree away, an ornament (`split &bass 2 1`: `0 ~ 1 2` to `0 ~ [1 2] 2`); a progression's chord and the next chord's secondary dominant (its `dominant` is this split); a form's letter on a grid and another of its letters (`split &chorus 1 2`: `&a [&a &b] &b &a`). The line reader reads a step in two halves (`[0 1]`, `[0 ~]`) and writes it back, so a split line is varied again. **What a frontend sees at its next pin:** nothing it doesn't ask for.

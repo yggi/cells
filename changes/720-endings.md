@@ -1,9 +1,0 @@
-### Added
-
-- **Five more endings, each found by its style** (#720): beside `finale`, Jambot's, which keeps its ten presets and Waltz and March, the facet `ending` holds `stop` (the band on the one, then nothing: Acid, Happy hardcore, Elektro, Chiptune, Salsa's cierre), `picardy` (the dominant seventh, then a major tonic over a minor key: Baroque), `plagal` (the amen, IV–I: Sea shanty, Kinderlied), `blues_ending` (the dominant seventh, then the tonic's seventh chord left hanging: Blues shuffle) and `drone_out` (the tonic held, no cadence: Dark ambient, Trip-hop). Each has `finale`'s heads and signature (`&cadence, &finaleBass, &finalePad, &finaleLead, &finaleDrums from (&half, …) &key`), so a score changes its ending by its name. Every style finds an ending at distance 0, none tied.
-- **The example `ending`**: eight bars of a minor song, then `finale` by its section's clock, the tonic left to ring.
-- **Section kinds of a style's own, through the song forms that take them**: `solo` (the lead blowing, the rhythm section comping, the pad out), `coro` (salsa's montuno section, everyone, +0.2) and `mambo` (the horns' section: drums, bass and stab, +0.25). `head_solos_head` takes `solo` for its three choruses of solos (it took `groove`), and a new song form, `son_montuno` (intro, verse, verse, coro, mambo, coro, outro), is Salsa's; `vamp` is Funk's alone.
-
-### Changed
-
-- **What Jambot's Swing jazz and Bossa nova play in their solos**: their song form, `head_solos_head`, now rests the pad in its three choruses of solos and plays them 0.05 hotter (the kind `solo` in place of `groove`). **What a frontend sees at its next pin:** a band playing `head_solos_head` plays its solos without the pad; Salsa finds `son_montuno` where it found `vamp`. `SECTION_KINDS` gains `solo`, `coro` and `mambo`; `LIBRARY` nine more fragments. No example's events move (none plays these song forms).
