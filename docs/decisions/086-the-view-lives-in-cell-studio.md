@@ -64,7 +64,7 @@ Sorted by what each module is *for*:
 
 ## Consequences
 
-- **#691 rung 2 is this audit** (#724, 2026-11-12). **Rung 8** is the move: a cells pull request and its twin in yggi/cell-studio, with the pin. `graph.ts` is split in it: its written graph stays, its layout goes.
+- **#691 rung 2 is this audit** (#724, 2026-11-12). **Rung 8** is the move: a cells pull request and its twin in yggi/cell-studio, with the pin. `graph.ts` is split in it (yggi/cell-studio#708, the owner on 2026-11-24: "keep netsOf in cells, potentially generalized to other nets … bulbs moves to studio"): its written graph and its nets stay, its layout goes.
 - **#724's API work** names the entry points the rest is reached through (the types; `edit`; `inspect`; `midi`; `time`; `library`). Nothing moved by this decision is among them.
 - **Cell studio's decision 011** and its architecture page are amended by the move: the show plugins are wholly the workbench's.
 - **`docs/language/display.md`** keeps `label=`, sentences, the card and scopes (language). Its `show=` section shrinks to "a word the frontend draws", with a link to Studio's list.

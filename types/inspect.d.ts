@@ -14,9 +14,9 @@ export { anchoredAt, clockText, durationText, mainLength, mainTempo, pieceTime, 
 export { flatten, stepsOf, tapped, unitsFor } from './engine/flatten';
 export { flows, type Flow } from './engine/flows';
 export { fmLines, fmWave } from './engine/fm';
-export { feeds, isCellNode, isTurntable, netsOf, structureKey, writtenGraph, type GraphEdge, type GraphModel, type GraphNode, type WrittenGraph } from './engine/graph';
+export { feeds, isCellNode, netsOf, writtenGraph, type GraphEdge, type GraphNet, type GraphNode, type NetOptions, type WrittenGraph } from './engine/graph';
 export { entries, freqHue, gridName, isPicked, lookup, period, positionHue, positionOctave, positionOf, resolveIn, resolvePitch, semitones, shiftedUnits, tableChain, } from './engine/helix';
-export { pluginKey, type ShowPlugin } from './engine/plugins';
+export { PLUGIN_SYNTAX, pluginKey, splitPlugins, type ShowPlugin } from './engine/plugins';
 export { cellId, clockTapId, edgeId, isJunction, stepEdgeId } from './engine/ids';
 export { beatCount, meterOfFrame, noteValue, swungPlace, tapShare, writtenPlace, type Meter, type SwingLevel } from './engine/meter';
 export { outs, soundRole } from './engine/outs';

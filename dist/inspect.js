@@ -4,9 +4,9 @@ export { anchoredAt, clockText, durationText, mainLength, mainTempo, pieceTime, 
 export { flatten, stepsOf, tapped, unitsFor } from "./engine/flatten.js";
 export { flows } from "./engine/flows.js";
 export { fmLines, fmWave } from "./engine/fm.js";
-export { feeds, isCellNode, isTurntable, netsOf, structureKey, writtenGraph } from "./engine/graph.js";
+export { feeds, isCellNode, netsOf, writtenGraph } from "./engine/graph.js";
 export { entries, freqHue, gridName, isPicked, lookup, period, positionHue, positionOctave, positionOf, resolveIn, resolvePitch, semitones, shiftedUnits, tableChain, } from "./engine/helix.js";
-export { pluginKey } from "./engine/plugins.js";
+export { PLUGIN_SYNTAX, pluginKey, splitPlugins } from "./engine/plugins.js";
 export { cellId, clockTapId, edgeId, isJunction, stepEdgeId } from "./engine/ids.js";
 export { beatCount, meterOfFrame, noteValue, swungPlace, tapShare, writtenPlace } from "./engine/meter.js";
 export { outs, soundRole } from "./engine/outs.js";

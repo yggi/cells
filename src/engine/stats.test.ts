@@ -28,7 +28,7 @@ describe('a piece’s numbers (pieceStats)', () => {
   const r = compileSource(text);
   // (the graph as written, not as a workbench draws it: its wires and nets are the drawing's, counted in Cell studio's
   // stats.drawn.test.ts; a meter's node is the same in both, and the rest counts the text and its cells)
-  const s = pieceStats(r, { ...writtenGraph(r), nets: [], alias: new Map(), bulbs: new Map() }, text);
+  const s = pieceStats(r, { ...writtenGraph(r), nets: [] }, text);
 
   it('counts the cells written by kind, not the implicit grid nor a built-in card', () => {
     expect(s.cells).toBe(7);
@@ -55,7 +55,7 @@ describe('the cells counted by kind, over every example (#782)', () => {
     const sum: Record<string, number> = {};
     for (const p of Object.values(EXAMPLES)) {
       const r = compileSource(p.source, undefined, { resolve: resolveSeed });
-      const s = pieceStats(r, { ...writtenGraph(r), nets: [], alias: new Map(), bulbs: new Map() }, p.source);
+      const s = pieceStats(r, { ...writtenGraph(r), nets: [] }, p.source);
       for (const [k, n] of Object.entries(s.kinds)) sum[k] = (sum[k] ?? 0) + n;
     }
     expect(sum).toMatchInlineSnapshot(`
