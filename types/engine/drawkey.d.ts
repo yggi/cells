@@ -8,6 +8,8 @@
  * and two cells that play alike draw alike. Pure.
  */
 import type { CompileResult } from './program';
+/** A number for a text, the same for the same text: cyrb53 written in base 36 (a key, not a chance). */
+export declare function hashOf(text: string): string;
 /**
  * The seed a cell's draws are thrown from (#779, decision 098): the one it writes, `seed=n`, alone: a cell that writes one
  * draws the same under any edit to what it carries (a `role=`, a `part=`, a label, its steps), and two that write one number
@@ -16,7 +18,5 @@ import type { CompileResult } from './program';
  * the dice it threw.
  */
 export declare function drawSeedOf(result: CompileResult): (cell: string) => string;
-/** A cell's content key as the number a `seed=` writes: the same dice, thrown from the seed (`drawSeedOf`). */
-export declare const keyAsSeed: (key: string) => number;
 /** What a program's cells draw on, by name (see the module's comment); a name the program doesn't hold is its own key. */
 export declare function drawKeyOf(result: CompileResult): (cell: string) => string;

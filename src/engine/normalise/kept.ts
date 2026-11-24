@@ -7,15 +7,10 @@
  *    (#524, #668): every rewrite of it hides one;
  *  - daytime: a tutorial of clock time, `loop=1min`, `1h`, `1d`, `1wk`, its clocks the lesson (#668): its week too, which a
  *    chained tap would fold, `1m/1440` (#722);
- *  - voice, drums, rhythm: the tutorial's tiers 2 and 4, which teach no `seed` (tier 5, `ladder.ts`): their noise voices are
- *    thrown from their places, as every noise voice was before a seed was written (decision 098, #932);
  *  - spooky: its stab line is "the piece's own", its prose says, beside the library's band and tune (#524).
  */
 export const KEPT: Readonly<Record<string, RegExp>> = {
   breve: /./,
   daytime: /^&(hour|week)'s ticks are/,
   spooky: /^&stabline is "spooky_stabs"'s/,
-  voice: /^&\w+: its noise starts where its place/,
-  drums: /^&\w+: its noise starts where its place/,
-  rhythm: /^&\w+: its noise starts where its place/,
 };

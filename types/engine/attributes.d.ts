@@ -69,6 +69,12 @@ export declare const LINE_PARAMS: ReadonlySet<string>;
 /** What a line is played as by the default performer (part= role=, decision 075): a word about the line, which makes it no kit's member and keeps a stack a stack (#708). */
 export declare const PLAYED_AS: ReadonlySet<string>;
 /**
+ * The attributes no listener hears, and no identity reads (#945, decision 098/099): how a cell is drawn (`label=` `show=` `size=`
+ * `about=` `tags=`) and what it is played as (`part=` `role=`). One list: the core cuts them (`toCore`), a measure of structure
+ * counts them free, and a cell's identity (its draws, its fragment's hash) leaves them out.
+ */
+export declare const NOT_HEARD: ReadonlySet<string>;
+/**
  * Does a cell's line give it a parameter of a kit's member: any but a line's own (legato= on a part makes it no voice, so
  * a braid splicing it, or a gate playing it moved, &bassline^$-12, is no kit: #282), or what it is played as (part=bass
  * on that line, #708).

@@ -20,6 +20,7 @@ import { isNote } from './ast';
 import { normalise } from './normalise/index';
 import { parse } from './parser';
 import type { Resolve } from './program';
+import { NOT_HEARD } from './attributes';
 
 /** What a text's structure is made of, and their sum (decision 049's measure). */
 export interface Structure {
@@ -35,7 +36,7 @@ export interface CellStructure extends Structure {
 }
 
 /** The attributes that only show or name a cell: they cost nothing. */
-const FREE = new Set(['label', 'show', 'tags', 'about', 'size']);
+const FREE = NOT_HEARD;
 
 const exprLeaves = (e: Expr): number =>
   e.k === 'ref' || e.k === 'num' ? 1 : e.k === 'sum' ? e.items.reduce((n, i) => n + exprLeaves(i.e), 0) : e.factors.reduce((n, f) => n + exprLeaves(f), 0);

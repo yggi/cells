@@ -1,0 +1,5 @@
+### Changed
+
+- **A cell's identity leaves out what no listener hears** (#945, decision 098): `label=` `show=` `size=` `about=` `tags=` `part=` `role=` are no part of a cell's draw key, so an unseeded chancy cell throws the dice it threw under any of them (0 of the 96 unseeded examples move). `toCore` cuts `part=` and `role=` from a line that is no performer, and the measure of structure counts them free (BWV 847's measure is 1,113, was 1,114).
+- **Normalise writes no seed** (#945): a chancy cell and a noise voice that write none stay as written; the seeds already written (examples, fragments) stay, as pins. `SEED_ROUNDS` and the `seeds` rewrite are gone from `@yggi/cells/engine/normalise`; the `kept.ts` seed exceptions (`voice`, `drums`, `rhythm`) too.
+- **A noise voice that writes no seed is thrown from its identity**, not from its place among the noise voices: no edit elsewhere moves its grains. **The grains of every unseeded noise voice move once** (the tutorial's `voice`, `drums`, `rhythm`, the library's fragments, the General MIDI kit), so a render's samples do; no event moves. A voice that writes a seed throws as before.

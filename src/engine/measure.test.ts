@@ -31,6 +31,6 @@ describe("the structure measure: decision 049's (leaves, attribute values, cells
   });
   it('BWV 847: the generator wrote 1,396, by hand 1,114 (#181, #182; its vibrato and its envelopes the library’s since #196; 1,397 while Migrate wrote its bass’s part= from its name, #560, which it no longer does, #643)', () => {
     expect(structureOf(readFileSync('fixtures/bwv847-generated.cells', 'utf8')).total).toBe(1396);
-    expect(structureOf(EXAMPLES.bwv847!.source).total).toBe(1114);
+    expect(structureOf(EXAMPLES.bwv847!.source).total).toBe(1113);
   });
 });
