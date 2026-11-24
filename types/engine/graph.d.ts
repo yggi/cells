@@ -3,36 +3,23 @@
  * (the implicit default grid stays hidden), with exactly the links written:
  * over=, &refs, step= and a mix's entries. Voice cells are drawn as voices; a product in a mix
  * (`&theme * &flute * .4`) is a junction, an unnamed node of its own (docs/notes/nets.md, decision 2).
- * Depth grows outward from the roots: a cell sits one ring beyond the table
- * it reads through and the cells it splices in; voices sit beyond what they play.
+ * How it is drawn (a cell's ring, petals, bulbs, belts) is the frontend's (decision 086: Cell studio's `layout/graph.ts`).
  */
 import { type CompileResult, type ResolvedCell } from './program';
 import type { Transform } from './transform';
 export type GraphNode = {
     readonly id: string;
     readonly kind: 'cell';
-    readonly depth: number;
     readonly cell: ResolvedCell;
     /** A meter: its bar keeps time, written meter(…) or scan(…) (`keepsTime`, #123); drawn as ground, with its net. */
     readonly isMeter: boolean;
-    readonly petalOf?: string;
-    /**
-     * A braid's bulbs (#221), at its size in the graph: how far they reach past its wheel (px, the layout's room for
-     * them), and below it (where its name goes).
-     */
-    readonly reach?: {
-        readonly room: number;
-        readonly below: number;
-    };
     /** An instrument's place in stereo and in the mix (as for voices). */
     readonly pan?: number;
     readonly order?: number;
 } | {
     readonly id: string;
     readonly kind: 'voice';
-    readonly depth: number;
     readonly cell: ResolvedCell;
-    readonly petalOf?: string;
     /** Where it sits in stereo: −1 left … 1 right (from its levels in each channel). */
     readonly pan?: number;
     /** Its place in the mix, as written (first = 0). */
@@ -46,7 +33,6 @@ export type GraphNode = {
      */
     readonly id: string;
     readonly kind: 'junction';
-    readonly depth: number;
     /** The mix whose line writes it, and its place among that mix's entries (first = 0). */
     readonly mix: string;
     readonly entry: number;
@@ -59,7 +45,6 @@ export type GraphNode = {
     readonly levels: readonly string[];
     readonly gain: number;
     readonly cell?: undefined;
-    readonly petalOf?: undefined;
     readonly pan?: undefined;
     readonly order?: undefined;
 };
@@ -92,11 +77,6 @@ interface Wire {
 }
 export interface GraphEdge extends Wire {
     readonly id: string;
-    /**
-     * A step drawn as a belt between two turntables: `spring` when the driven cell says `belt=` (it lags and swings),
-     * `rigid` when both are turntables anyway (a tape on its motor's capstan).
-     */
-    readonly belt?: 'spring' | 'rigid';
     readonly source: string;
     readonly target: string;
     /** How many slots of the source play the target (refs). */
@@ -119,17 +99,6 @@ export interface GraphEdge extends Wire {
      * voice, the voice into the mix): it is routed (and live) when, of each group, one of these is (`drawn`).
      */
     readonly routes?: readonly (readonly string[])[];
-    /**
-     * The bulb on its source's wheel it leaves from (a cell's name): a section drawn on its table (decision 016), what it
-     * steps a sub-net from there.
-     */
-    readonly bulb?: string;
-    /** Where that bulb's hub is from its wheel's centre (px, the wheel at its size in the graph), and its disc's radius. */
-    readonly bulbAt?: {
-        readonly x: number;
-        readonly y: number;
-        readonly r: number;
-    };
 }
 /**
  * A wire into what plays it: a melody into its voice, its envelope, levels, pitch, parameters, FM, what excites, couples,
@@ -144,7 +113,7 @@ export declare const feeds: (e: {
  * (over=), a melody's (voice) and a voice's (mix) leave it once and go on from reader to reader; a meter's (step=, sync) is its ground: no edge of
  * its own is drawn, its traces join it and its cells through each other. The layout lays each as a tree (a ratsnest).
  */
-interface GraphNet {
+export interface GraphNet {
     readonly id: string;
     /** The cell it leaves (its node id), and the port its readers read it through. */
     readonly owner: string;
@@ -158,35 +127,12 @@ interface GraphNet {
      * never from another reader, where its label would read as a delay from there.
      */
     readonly delayed: boolean;
-    /** The bulb on the owner's wheel it leaves from (GraphEdge.bulb): a section's sub-net, from its place on its table. */
-    readonly bulb?: string;
-    /** Where that bulb's hub is from the owner's centre, and its disc's radius (GraphEdge.bulbAt). */
-    readonly bulbAt?: {
-        readonly x: number;
-        readonly y: number;
-        readonly r: number;
-    };
+    /** The part of the owner its readers read it from, where the caller cuts the net in parts (`netsOf`'s `part`): a section's sub-net, from its place on its table. */
+    readonly part?: string;
 }
-export interface GraphModel {
-    readonly nodes: readonly GraphNode[];
-    readonly edges: readonly GraphEdge[];
-    readonly nets: readonly GraphNet[];
-    /**
-     * An edge drawn under another id (through a petal: to its parent), by its own id; undefined: not drawn (hidden, or a
-     * written pair drawn through a product's junction: its wires say so, `routes`).
-     */
-    readonly alias: ReadonlyMap<string, string | undefined>;
-    /**
-     * The cells drawn as bulbs on another's track, by name: each to the cell that splices it (#221). A cell spliced into
-     * one braid only, and read nowhere else, has no node of its own; its edges are drawn from that braid.
-     */
-    readonly bulbs: ReadonlyMap<string, string>;
-}
-/** A cell drawn as a turntable: a motor, a belted cell, a tape, a resonator's body. */
-export declare const isTurntable: (c: ResolvedCell) => boolean;
 /**
- * The graph of what is written, before it is drawn (layout/drawn.ts `buildGraph` makes the graph as drawn from it: petals,
- * bulbs, show=off): every cell its own node, every written link its wire. `through`: the written pairs drawn through a
+ * The graph of what is written, before it is drawn (a frontend draws it: Cell studio's `layout/drawn.ts` hangs petals and
+ * bulbs, leaves out show=off, rings its nodes): every cell its own node, every written link its wire. `through`: the written pairs drawn through a
  * product's junction (not drawn themselves: their wires at the junction stand for them).
  */
 export interface WrittenGraph {
@@ -202,13 +148,22 @@ export interface WrittenGraph {
 export declare function writtenGraph(result: CompileResult, { card }?: {
     readonly card?: boolean;
 }): WrittenGraph;
+/** How a caller cuts the nets (`netsOf`): what is drawn of them is a frontend's. */
+export interface NetOptions<E extends GraphEdge> {
+    /**
+     * The part of its source an edge leaves from, where the caller draws parts (a section drawn on its table, Cell studio's
+     * bulb: decision 016): its readers make a sub-net of their own, and a step from a part is a meter's tick.
+     */
+    readonly part?: (e: E) => string | undefined;
+    /** An edge no net holds (a step drawn as a belt, a body of its own). */
+    readonly apart?: (e: E) => boolean;
+}
 /**
  * The nets among the edges: a table read by two or more (over=), a melody or a voice by two or more, a cell read at
  * delays (a canon's copies, a tape's heads: docs/decisions/010-canon-copies.md), and each meter's ticks to every cell
- * it steps or that takes a time from it (a step or a parameter's clock into a meter, `delaytime=&bar*4/3`; not through
- * a belt: a belt is a body, drawn). A meter's net is its `step` net, whichever port each reader reads it through.
+ * it steps or that takes a time from it (a step or a parameter's clock into a meter, `delaytime=&bar*4/3`). A meter's
+ * net is its `step` net, whichever port each reader reads it through. A caller that draws parts of a cell or keeps an
+ * edge apart says so (`NetOptions`): the owner on 2026-11-24, the nets stay the language's, their bulbs the frontend's.
  */
-export declare function netsOf(nodes: readonly GraphNode[], edges: readonly GraphEdge[]): GraphNet[];
-/** Changes only when the set of nodes or edges changes — not when contents do. */
-export declare function structureKey(model: GraphModel): string;
+export declare function netsOf<E extends GraphEdge>(nodes: readonly GraphNode[], edges: readonly E[], { part, apart }?: NetOptions<E>): GraphNet[];
 export {};

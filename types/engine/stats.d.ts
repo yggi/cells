@@ -4,7 +4,6 @@
  * compiled piece, its graph and its text in, numbers out.
  */
 import type { CompileResult } from './program';
-import type { GraphModel } from './graph';
 /** What a cell is, for counting: the first that fits, in this order. */
 export type CellKind = 'card' | 'mix' | 'gate' | 'voice' | 'meter' | 'table' | 'envelope' | 'note' | 'line';
 /** The kinds in the order they're shown. */
@@ -37,4 +36,7 @@ export interface PieceStats {
 /** min, max, mean, median. */
 export declare function spread(xs: readonly number[]): Spread;
 /** The piece's numbers: from its compiled cells, its graph (the wires and nets as drawn) and its text. */
-export declare function pieceStats(result: CompileResult, graph: GraphModel, text: string): PieceStats;
+export declare function pieceStats(result: CompileResult, graph: {
+    readonly edges: readonly unknown[];
+    readonly nets: readonly unknown[];
+}, text: string): PieceStats;

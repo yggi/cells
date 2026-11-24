@@ -27,10 +27,13 @@ export interface Out {
 }
 /**
  * The outs of a compiled piece, in the graph's order. `model`: the graph they are read from, when the caller has it
- * (its edges into cards: it must hold the built-in card, `writtenGraph(result, { card: true })`).
+ * (its edges into cards: it must hold the built-in card, `writtenGraph(result, { card: true })`); a drawn graph's edge
+ * may say the bulb it leaves from (a read head drawn on its tape), which is then what sounds.
  */
 export declare function outs(result: CompileResult, model?: {
-    readonly edges: readonly GraphEdge[];
+    readonly edges: readonly (GraphEdge & {
+        readonly bulb?: string;
+    })[];
 }): Out[];
 /** A cell's part in making sound: it makes it, gates it (plays a maker), mixes it, or is a card it goes into. */
 export type SoundRole = 'maker' | 'gate' | 'mixer' | 'card';

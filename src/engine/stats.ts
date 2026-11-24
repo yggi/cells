@@ -5,7 +5,6 @@
  */
 import type { CompileResult } from './program';
 import { kindsOf, type Kind } from './kinds';
-import type { GraphModel } from './graph';
 
 /** What a cell is, for counting: the first that fits, in this order. */
 export type CellKind = 'card' | 'mix' | 'gate' | 'voice' | 'meter' | 'table' | 'envelope' | 'note' | 'line';
@@ -97,7 +96,7 @@ const COUNTED: Readonly<Record<Kind, CellKind>> = {
 const kindOf = (kind: Kind, readThrough: boolean): CellKind => (COUNTED[kind] === 'line' && readThrough ? 'table' : COUNTED[kind]);
 
 /** The piece's numbers: from its compiled cells, its graph (the wires and nets as drawn) and its text. */
-export function pieceStats(result: CompileResult, graph: GraphModel, text: string): PieceStats {
+export function pieceStats(result: CompileResult, graph: { readonly edges: readonly unknown[]; readonly nets: readonly unknown[] }, text: string): PieceStats {
   const written = [...result.cells.values()].filter((c) => !c.implicit && c.name !== result.builtinCard);
   const tables = new Set(written.flatMap((c) => (c.over ? [c.over] : [])));
   const kind = kindsOf(result);
