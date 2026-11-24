@@ -123,7 +123,8 @@ describe('a name written in a form that reads it is one wire (#737, #618)', () =
   it('the radio and twelve draw what they write: the drift, the style, the bend', () => {
     const graph = (key: string) => writtenGraph(compileSource(EXAMPLES[key as keyof typeof EXAMPLES].source, undefined, { resolve: resolveSeed }), { card: true }).edges;
     const has = (key: string, from: string, to: string, port: string) => graph(key).some((e) => e.from === cellId(from) && e.to === cellId(to) && e.port === port);
-    for (const term of ['section', 'song', 'set']) expect(has('radio', term, 'drift', 'braid'), term).toBe(true);
+    // (the drift is the seed's wander module: its six octaves, each a term of the sum)
+    for (let k = 0; k < 6; k++) expect(has('radio', `drift_o${k}`, 'drift', 'braid'), `octave ${k}`).toBe(true);
     expect(has('radio', 'mine', 'style', 'style')).toBe(true);
     expect(has('twelve', 'lean', 'bar', 'bend')).toBe(true);
   });

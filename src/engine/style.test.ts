@@ -166,26 +166,21 @@ describe('style= and the note &style, read by a voice (#390, step 2)', () => {
     expect(frees(slid('free(.2, .1..0.8)'))).toEqual([['param', 'bite', 0.2, 0.1, 0.8]]);
   });
 
-  it('the radio example drifts: articulation moves by a sample-and-hold once a section, the bass’s cutoff with it (#576)', () => {
-    const r = compileSource(EXAMPLES.radio.source);
+  it('the radio example wanders: bite moves a little each bar through the seed’s wander module, the bass’s cutoff with it (#576)', () => {
+    const r = compileSource(EXAMPLES.radio.source, undefined, { resolve: resolveSeed });
     expect(r.diagnostics.filter((d) => d.severity !== 'info')).toEqual([]);
     // (the bass's cutoff, 450..900 Hz * &style[bite], at each of its notes over 32 bars of 104 bpm)
     const barSeconds = (4 * 60) / 104;
-    const bySection = new Map<number, Set<number>>();
+    const cutoffs: number[] = [];
     for (const e of eventsBetween(plan(r, codeShifts(r)), 0, 32 * barSeconds)) {
       const lpf = e.params?.lpf?.kind === 'points' ? e.params.lpf.points[0]!.value : NaN;
-      if (!(lpf < 1000)) continue;
-      const section = Math.floor(e.at / barSeconds / 8 + 1e-9);
-      if (!bySection.has(section)) bySection.set(section, new Set());
-      bySection.get(section)!.add(Math.round(lpf));
+      if (lpf < 1000) cutoffs.push(lpf);
     }
-    // (held through each section of 8 bars, within articulation's range .2..0.9: 540 to 855 Hz; and it moves)
-    expect(bySection.size).toBe(4);
-    for (const cutoffs of bySection.values()) {
-      expect(cutoffs.size).toBe(1);
-      for (const v of cutoffs) expect(v >= 540 && v <= 855).toBe(true);
-    }
-    expect(new Set([...bySection.values()].map((c) => [...c][0])).size).toBeGreaterThan(1);
+    // (within bite's window, .2 to .9: 540 to 855 Hz; moving, and a little at a time, as a ramp does)
+    expect(cutoffs.length).toBeGreaterThan(30);
+    for (const v of cutoffs) expect(v >= 540 - 1e-6 && v <= 855 + 1e-6).toBe(true);
+    expect(new Set(cutoffs.map(Math.round)).size).toBeGreaterThan(3);
+    for (let i = 1; i < cutoffs.length; i++) expect(Math.abs(cutoffs[i]! - cutoffs[i - 1]!)).toBeLessThan(10);
   });
 
   it('an axis that moves, sync=0..1 * &walk: what reads it reads the cell that moves it, laid within the range, on its clock (#576)', () => {
