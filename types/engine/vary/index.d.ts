@@ -31,7 +31,8 @@ export declare const FORM_OPERATORS: readonly Operator[];
 export declare const SHIFT: Operator;
 /**
  * One slot split in two halves (#912), the second filled by the level's rule: a pitched line's note and its neighbour n
- * degrees away, n each of `NEIGHBOURS` (`split &bass 2 1`: `0 ~ 1 2` to `0 ~ [1 2] 2`, an ornament); a progression's
+ * degrees away, n each of `NEIGHBOURS` (`split &bass 2 1`: `0 ~ 1 2` to `0 ~ [1 2] 2`, an ornament); a line of hits' hit
+ * struck twice at its level, on a line written step by step (`split &hat 0`: `&hh ~` to `[&hh &hh] ~`, a double); a progression's
  * chord and the next chord's secondary dominant (its `dominant` is this split); a form's letter on a grid and each other
  * letter of the form (`split &chorus 1 2`: `&a &a &b &a` to `&a [&a &b] &b &a`). Asked by name: no level's list holds it.
  */

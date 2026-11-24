@@ -3,7 +3,8 @@
  * on one grid, `&euclid * &euclidLevel`), its notes on its own grid, and how a changed set of notes is written back into
  * the line's own braid as plain steps on that grid. Rung 1 reads the lines a drum part writes: steps that are rests or
  * hits of a voice (`&hh`, `&hh:0:.25`, `~!5`, a chord of hits `[&bd,&hh]`), a subsequence of them on one step
- * (`step=1m [&rim ~ ~ &rim …]`), or a Euclid of a voice (`&rim(5,16,4)`), each times at most one `map=amp` cell of
+ * (`step=1m [&rim ~ ~ &rim …]`), or a Euclid of a voice (`&rim(5,16,4)`), a step of them in two halves (`[&hh &hh]`,
+ * `[&hh ~]`, #912), each times at most one `map=amp` cell of
  * levels, one a step. Rung 2 reads the lines a pitched part writes: a cell of degrees of the table it reads (`over=&harm`)
  * times one voice (`&bass * &bassV`), or alone where nothing reads it (a bass line's `&bassline`, which the workbench
  * plays, #291), its steps rests, whole numbers with at most one accidental (`0`, `-1`, `0!8`, `4b`,
@@ -129,6 +130,8 @@ const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
 const DEGREE = /^(-?\d+)[#b]?(?:!(\d+))?$/;
 /** A degree held for n steps (`7@2`, `4b@3`): one note, n steps long. */
 const HELD = /^(-?\d+)[#b]?@(\d+)$/;
+/** A step of hits split in two (#912): two halves, each a hit or a rest, `[&hh &hh]`, `[&hh:0:.3 ~]`. */
+const HIT_HALVES = /^\[(&[A-Za-z_][A-Za-z0-9_]*(?::0(?::[0-9]*\.?[0-9]+)?)?|~) (&[A-Za-z_][A-Za-z0-9_]*(?::0(?::[0-9]*\.?[0-9]+)?)?|~)\]$/;
 /** A step split in two (#912): two halves, each a degree or a rest, `[0 1]`, `[0 ~]`. */
 const HALVES = /^\[(-?\d+[#b]?|~) (-?\d+[#b]?|~)\]$/;
 const REF = String.raw`&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?`;
@@ -136,7 +139,7 @@ const REF = String.raw`&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?`;
 const SPLICE = new RegExp(String.raw`^(?:${REF}|inverse\(${REF}\)|degree\((?:${REF}|inverse\(${REF}\)),\s*-?\d+\))$`);
 
 /** A step as read: the hits it strikes (none: a rest), each its voice and own level. */
-type Step = readonly { readonly voice: string; readonly own: string | null }[];
+type Step = readonly { readonly voice: string; readonly own: string | null; readonly half?: 0 | 1 }[];
 
 /** One hit's text, `&hh` or `&hh:0:.25`, as its voice and own level; null where it is no hit. */
 function hitOf(token: string): { voice: string; own: string | null } | null {
@@ -157,6 +160,12 @@ function stepsOf(tokens: readonly string[]): Step[] | null {
       const hits = chord[1]!.split(',').map((t) => hitOf(t.trim()));
       if (hits.some((h) => !h)) return null;
       out.push(hits as Step);
+    } else if (HIT_HALVES.test(token)) {
+      // (a step in two halves, #912: each half a hit or a rest, `[&hh &hh]`, `[&hh ~]`)
+      const [first, second] = HIT_HALVES.exec(token)!
+        .slice(1, 3)
+        .map((t) => (t === '~' ? null : hitOf(t!)));
+      out.push([...(first ? [{ ...first, half: 0 as const }] : []), ...(second ? [{ ...second, half: 1 as const }] : [])]);
     } else return null;
   }
   return out;
@@ -307,7 +316,15 @@ function lineOf(source: string, result: CompileResult, trigger: string, levelCel
     levels = { cell: levelCell, tokens };
   }
   const notes = steps
-    .flatMap((hits, step) => hits.map((h) => ({ step, voice: h.voice, own: h.own, level: Number(h.own ?? 1) * Number(levels?.tokens[step] ?? 1) })))
+    .flatMap((hits, step) =>
+      hits.map((h) => ({
+        step: step + (h.half ?? 0) / 2,
+        voice: h.voice,
+        own: h.own,
+        level: Number(h.own ?? 1) * Number(levels?.tokens[step] ?? 1),
+        ...(h.half === undefined ? {} : { half: true as const }),
+      })),
+    )
     .filter((n) => n.level > 0)
     .sort((a, b) => a.step - b.step || pitchOf(result, a.voice) - pitchOf(result, b.voice));
   return {

@@ -1,5 +1,5 @@
 // One slot split in two halves, the split every level shares (#912, decision 052 point 11): a pitched line's note and its
-// neighbour (an ornament, `0 [1 2] 2`), a progression's chord and the next chord's secondary dominant (its `dominant` is
+// neighbour (an ornament, `0 [1 2] 2`), a line of hits' hit struck twice (a double, `[&hh &hh]`), a progression's chord and the next chord's secondary dominant (its `dominant` is
 // this split), a form's letter on a grid and another letter of the form (`&a [&a &b] &b &a`). Asked by name. Each
 // compiles, plays other notes than its source and the others, keeps the level's fixed slots, is given back by its `by:`,
 // and a line split reads back: a step in halves is read, varied again, and written as it was.
@@ -9,6 +9,7 @@ import { flatten } from '../flatten';
 import { codeShifts } from '../program';
 import { resolveSeed } from '../../repository/library';
 import { seedFragments } from '../../repository/seed';
+import { expand } from '../use';
 import { fixedStepsOf, NEIGHBOURS, SPLIT, variationBy, variations, type Variation, type VaryOptions } from '.';
 
 const KEY = (mode = 'major') => `&bar meter("4/4") step=120bpm\n&key scale(${mode}, C)`;
@@ -76,6 +77,60 @@ describe('a line’s note split: an ornament', () => {
     expect(steps).not.toContain('0');
     expect(steps).not.toContain('4');
     expect(NEIGHBOURS).toEqual([-1, 1]);
+  });
+});
+
+describe('a hit split: a double', () => {
+  const DRUMS = `&bar meter("4/4") step=120bpm\n${expand('&bd, &rim, &sd, &cp, &lt, &hh, &ph, &mt, &oh, &ht, &cr, &rd, &claves from gm_kit', resolveSeed).trim()}`;
+  const OPTIONS = { workbench: DRUMS, keep: ['&fill'], fewest: 3, resolve: resolveSeed, ...SPLITS };
+  const RHYTHMS = seedFragments('rhythms');
+
+  it('gives the 33 seed rhythms 144, never on a fixed step (a kick’s or a backbeat’s line, every step), each with a reference', () => {
+    let n = 0;
+    for (const f of RHYTHMS)
+      for (const v of variations(f.text, OPTIONS)) {
+        n++;
+        expect(fixedStepsOf(f.text, OPTIONS)[v.line] ?? [], v.by).not.toContain(Number(v.by.split(' ')[2]));
+        expect(v.reference, v.by).toBeDefined();
+      }
+    expect(n).toBe(144);
+  });
+
+  it.each(RHYTHMS.map((f) => [f.id, f] as const))('%s: each strikes its hit twice in halves of its step, plays other notes, is given back, and reads back', (_, { text }) => {
+    const all = variations(text, OPTIONS);
+    distinctAndReplayed(text, all, OPTIONS, DRUMS, (v) => v.line.slice(1));
+    for (const v of all) {
+      const step = Number(v.by.split(' ')[2]);
+      const events = (t: string) => {
+        const r = compileSource(`${DRUMS}\n${t}`, undefined, { resolve: resolveSeed });
+        return flatten(r, v.line.slice(1), codeShifts(r)).filter((e) => Math.floor(e.step + 1e-9) === step);
+      };
+      const [before, after] = [events(text), events(v.apply(text))];
+      expect(
+        before.map((e) => e.duration),
+        v.by,
+      ).toEqual([1]);
+      expect(
+        after.map((e) => [e.step, e.duration]),
+        v.by,
+      ).toEqual([
+        [step, 0.5],
+        [step + 0.5, 0.5],
+      ]);
+      expect(
+        after.map((e) => e.value),
+        v.by,
+      ).toEqual([before[0]!.value, before[0]!.value]);
+      // (a groove with a step in halves reads back: varied again by the rhythm operators, its halves kept or moved whole)
+      expect(variations(v.apply(text), { ...OPTIONS, operators: ['rotate', 'drop', 'add'] }).length, v.by).toBeGreaterThan(0);
+    }
+  });
+
+  it('funk’s hat: its first hit struck twice, its reference a copy changed on that step', () => {
+    const funk = RHYTHMS.find((f) => f.id === 'funk_drums')!;
+    const v = variationBy(funk.text, 'split &hat 0', OPTIONS)!;
+    expect(v.after).toMatch(/^&hat role=hat step=16n \[&hh:0:\.348751 &hh:0:\.348751\] ~ /);
+    expect(v.reference?.form).toBe('base=&hat [&hh:0:.348751 &hh:0:.348751]');
   });
 });
 

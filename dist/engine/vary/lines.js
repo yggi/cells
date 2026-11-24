@@ -28,6 +28,7 @@ const EUCLID_EVEN = /^&([A-Za-z_][A-Za-z0-9_]*)\(even\((\d+),\s*(\d+)(?:,\s*(\d+
 const NUMBER = /^([0-9]*\.?[0-9]+)(?:!(\d+))?$/;
 const DEGREE = /^(-?\d+)[#b]?(?:!(\d+))?$/;
 const HELD = /^(-?\d+)[#b]?@(\d+)$/;
+const HIT_HALVES = /^\[(&[A-Za-z_][A-Za-z0-9_]*(?::0(?::[0-9]*\.?[0-9]+)?)?|~) (&[A-Za-z_][A-Za-z0-9_]*(?::0(?::[0-9]*\.?[0-9]+)?)?|~)\]$/;
 const HALVES = /^\[(-?\d+[#b]?|~) (-?\d+[#b]?|~)\]$/;
 const REF = String.raw `&[A-Za-z_][A-Za-z0-9_]*(?:\^\$?-?\d+)?`;
 const SPLICE = new RegExp(String.raw `^(?:${REF}|inverse\(${REF}\)|degree\((?:${REF}|inverse\(${REF}\)),\s*-?\d+\))$`);
@@ -52,6 +53,12 @@ function stepsOf(tokens) {
             if (hits.some((h) => !h))
                 return null;
             out.push(hits);
+        }
+        else if (HIT_HALVES.test(token)) {
+            const [first, second] = HIT_HALVES.exec(token)
+                .slice(1, 3)
+                .map((t) => (t === '~' ? null : hitOf(t)));
+            out.push([...(first ? [{ ...first, half: 0 }] : []), ...(second ? [{ ...second, half: 1 }] : [])]);
         }
         else
             return null;
@@ -200,7 +207,13 @@ function lineOf(source, result, trigger, levelCell, card) {
         levels = { cell: levelCell, tokens };
     }
     const notes = steps
-        .flatMap((hits, step) => hits.map((h) => ({ step, voice: h.voice, own: h.own, level: Number(h.own ?? 1) * Number(levels?.tokens[step] ?? 1) })))
+        .flatMap((hits, step) => hits.map((h) => ({
+        step: step + (h.half ?? 0) / 2,
+        voice: h.voice,
+        own: h.own,
+        level: Number(h.own ?? 1) * Number(levels?.tokens[step] ?? 1),
+        ...(h.half === undefined ? {} : { half: true }),
+    })))
         .filter((n) => n.level > 0)
         .sort((a, b) => a.step - b.step || pitchOf(result, a.voice) - pitchOf(result, b.voice));
     return {

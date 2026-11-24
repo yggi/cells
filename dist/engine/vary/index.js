@@ -17,7 +17,7 @@ export const PITCHED_OPERATORS = ['transpose', 'invert', 'reverse', 'bend', 'tri
 export const HARMONY_OPERATORS = ['rotate', 'reverse', 'third', 'dominant', 'swap', 'substitute'];
 export const FORM_OPERATORS = SLOT_OPERATORS;
 const REST = JSON.stringify([]);
-const LINE_SLOT_OPERATORS = ['swap', 'substitute'];
+const LINE_SLOT_OPERATORS = ['swap', 'substitute', 'split'];
 export const SHIFT = 'shift';
 export const SPLIT = 'split';
 export const NEIGHBOURS = [-1, 1];
@@ -234,6 +234,14 @@ function readSome(fragment, options, only) {
                     const notes = line.notes.map((x) => (Math.floor(x.step) === slot ? { ...x, pitch: moved(x.pitch, 1, by) } : x));
                     offer(i, operator, notes, `${slot} ${by}`, written(line, notes), `its note on step ${slot} ${by > 0 ? 'up' : 'down'} ${Math.abs(by)} degree${Math.abs(by) === 1 ? '' : 's'}`, null);
                 }
+            else if (operator === 'split' && !line.pitched) {
+                if (line.form === 'steps' && !line.struck && !line.hold)
+                    for (const { slot } of shiftMoves(line.steps, fixedSteps, [1], (s) => onStep(s).length === 1)) {
+                        const [x] = onStep(slot);
+                        const notes = inOrder([...line.notes.filter((n) => n !== x), { ...x, half: true }, { ...x, step: slot + 0.5, half: true }]);
+                        offer(i, operator, notes, slot, written(line, notes, levels ?? undefined), `its ${x.voice} on step ${slot} split, struck twice`, null);
+                    }
+            }
             else if (operator === 'split')
                 for (const { slot, by } of shiftMoves(line.steps, fixedSteps, NEIGHBOURS, (s) => onStep(s).length === 1 && !onStep(s)[0].hold)) {
                     const [x] = onStep(slot);
