@@ -1,6 +1,6 @@
 # 106 · A style is a point and a breadth: a genre's area, and a sub-genre within it
 
-**Date:** 2026-11-24 · **Status:** points 1–4 accepted (the owner on #947, 2026-11-24: "a new pop style … genres and sub-genres as styles with a range and offsets … synth-pop sits 'within' pop"); point 5 proposed, for the owner · Issues: #947, #946, #644, yggi/jambot#760 · Amends [089](089-the-association-in-the-text.md) §6 (what a reach on a style of the library means)
+**Date:** 2026-11-24 · **Status:** accepted (the owner on #947, 2026-11-24: "a new pop style … genres and sub-genres as styles with a range and offsets … synth-pop sits 'within' pop"; #952 approved, 2026-11-24) · Issues: #947, #946, #644, yggi/jambot#760 · Amends [089](089-the-association-in-the-text.md) §6 (what a reach on a style of the library means)
 
 *Read with [063](063-the-score-and-the-band.md) §3 (the library of styles) and [100](100-an-offset-from-a-style-is-a-sum.md) (an offset from a style is a sum).*
 
@@ -24,10 +24,6 @@ The owner, on #947, asked for Pop as a style, and for genres and sub-genres as s
    - Its tempo, 116 bpm, is a pop song's middle.
 4. **Synth-pop is its first sub-genre:** its point stays where it was, and it gains a breadth of ± .1 on each axis, inside Pop's.
    Of the other styles, which are points, Deep house also lies within Pop's area; Sea shanty, at sync .1, does not.
-5. **Proposed, not built: a sub-genre written as its genre plus an offset,** decision 100's sum in a library style:
-   `&synthPop map=style label="Synth-pop" step=108bpm [&pop + &(map=style harm=.05 bite=.05 mood=-.2)] ± .1`.
-   Its point would be where it is now, to 1e-9, and it would follow Pop where Pop moves.
-   It is a new form of a style cell, so it waits for the owner's word.
 
 ## Why
 
@@ -36,7 +32,7 @@ The owner, on #947, asked for Pop as a style, and for genres and sub-genres as s
 - **Within is a box on each axis,** the simplest reading of a reach, and the one `window` measures in #644's note.
 - **Pop at the end** keeps every preset's index, so a frontend that offers them in order (Jambot's preset buttons) changes only by one more.
 
-**Why not** the offset now (point 5): a library style's point is four numbers in its braid today, read so by `STYLES`, by `styleNamesIn` and by the compile, and the parser's style cell has no sum. The spelling is the owner's to rule on, and nothing in points 1–4 waits on it.
+**Why not** a sub-genre written as its genre plus an offset (`[&pop + &(map=style harm=.05 bite=.05 mood=-.2)] ± .1`, decision 100's sum): a library style's point is four numbers in its braid, read so by `STYLES`, by `styleNamesIn` and by the compile, and the parser's style cell has no sum. It would be a new form of a style cell, so it is an issue of its own (#954), and nothing here waits on it.
 **Why not** a `genre=` attribute naming Synth-pop's genre: `within` reads it off the areas, so the text would say it twice and could disagree.
 
 ## Consequences
@@ -46,4 +42,4 @@ The owner, on #947, asked for Pop as a style, and for genres and sub-genres as s
 - Pop's progressions are seeds at Pop (#947): `authentic_cadence`, I–IV–V–I, its first harmony, and `four_chord_pop`, I–V–vi–IV, beside it.
 - Pop finds its own parts where every style does, at distance 0: it is added to the points of `finale` (its ending), `synth_pop_drums`' fill, `stick_count` and `plain`. Its form is `sentence`, Synth-pop's, found beside it. Of every other style, only Ambient's second count moves (`stick_count`, 0.370 to 0.301).
 - Tests: `styles.test.ts` (the breadth, within, and which styles lie within Pop).
-- Open: a query that reads the breadth (#644); the offset spelling (point 5).
+- Open: a query that reads the breadth (#644); a sub-genre written as its genre plus an offset (#954).
