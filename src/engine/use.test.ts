@@ -370,8 +370,8 @@ describe('the lockfile', () => {
     expect(lockfileOf(withLockfile(had, uses))).toEqual([{ id: 'gm_kit', hash: 'e1:1' }]);
   });
 
-  it('the hash is the text as a piece receives it, e2:, its rung written first (decision 089)', () => {
-    expect(fragmentHash(KIT)).toMatch(/^e2:[0-9a-f]{16}$/);
+  it('the hash is the text as a piece receives it, e3:, its rung written first (decision 089)', () => {
+    expect(fragmentHash(KIT)).toMatch(/^e3:[0-9a-f]{16}$/);
     expect(fragmentHash('&a  s=sine # a comment\n\n&b s=saw')).toBe(fragmentHash('&a s=sine\n&b s=saw'));
     expect(fragmentHash('&a s=sine')).not.toBe(fragmentHash('&a s=saw'));
     expect(new Set(LIBRARY.map((f) => fragmentHash(f.text))).size).toBe(LIBRARY.length);
@@ -383,9 +383,7 @@ describe('the tools keep from', () => {
     const text = '* from gm_kit\n&bar meter("4/4") step=&tempo\n&tempo step=100bpm\n&beat step=8n &bd ~ &hh ~ &sd ~ &hh ~\n&hh note=42 s=white cutoff=8000';
     const out = normalise(text, seed).source;
     // (the kit's cells the piece reads, &hh its own, #27)
-    // (and the noise voice, `&hh`, written with the seed its place is: #932)
-    expect(out.replace(/ seed=\d+/, '')).toBe(text.replace('cutoff=', 'lpf=').replace('* from gm_kit', '&bd, &sd from gm_kit'));
-    expect(out).toMatch(/^&hh seed=\d+ note=42/m);
+    expect(out).toBe(text.replace('cutoff=', 'lpf=').replace('* from gm_kit', '&bd, &sd from gm_kit'));
   });
 
   it('the measure counts a use line as one leaf', () => {

@@ -1,4 +1,5 @@
 import { chanceOf } from "./realize.js";
+import { drawKeyOf, hashOf } from "./drawkey.js";
 function seeded(seed) {
     let a = seed >>> 0;
     return () => {
@@ -9,7 +10,18 @@ function seeded(seed) {
     };
 }
 export function noisePlaces(result) {
-    return new Map([...result.cells.values()].filter((c) => ['white', 'pink', 'brown'].includes(String(c.params.s))).map((c, i) => [c.name, `noise#${i}`]));
+    const key = drawKeyOf(result);
+    const taken = new Map();
+    const out = new Map();
+    for (const c of result.cells.values()) {
+        if (!['white', 'pink', 'brown'].includes(String(c.params.s)) || c.seeded)
+            continue;
+        const h = key(c.name);
+        const k = taken.get(h) ?? 0;
+        taken.set(h, k + 1);
+        out.set(c.name, `noise#${k ? hashOf(`${h}|${k}`) : h}`);
+    }
+    return out;
 }
 export function grainKeyOf(result) {
     const places = noisePlaces(result);

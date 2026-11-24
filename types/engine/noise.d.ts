@@ -6,17 +6,18 @@
  */
 import type { CompileResult } from './program';
 /**
- * The noise voices of a program (`s=white`, `pink` or `brown`) by name, each its place among them in the order the compile lists
- * the cells, `noise#<i>`: what a voice's grains are thrown from where it writes no seed (#481: its place, not its name, so a text
- * renamed or respelled starts every noise where it did).
+ * The noise voices of a program (`s=white`, `pink` or `brown`) that write no seed, by name, each the place its grains are thrown
+ * from, `noise#<identity>` (#945, decision 098): the identity of the cell (`drawKeyOf`: what it plays and is heard as, no name, no
+ * spelling, no label, role or part), so a text renamed, respelled or edited elsewhere starts every noise where it did. Voices of
+ * one identity would stack: the k-th of them (k from 1, in the compile's order of the cells, the voices being alike whichever it
+ * is) takes the identity hashed with k, so they never throw alike, whatever order the lines are in.
  */
-export declare function noisePlaces(result: Pick<CompileResult, 'cells'>): ReadonlyMap<string, string>;
+export declare function noisePlaces(result: CompileResult): ReadonlyMap<string, string>;
 /**
- * What a voice's grains are thrown from (#932, decision 098): the seed it writes alone, as its place (`noise#<n>`), so no edit to
- * the text moves them; or, where it writes none, its place among the noise voices and its seed, 0. Normalise writes `seed=<i>`,
- * the place it has, so the grains are the very ones thrown before.
+ * What a voice's grains are thrown from (#932, #945, decision 098): the seed it writes alone, as its place (`noise#<n>`), or,
+ * where it writes none, its place (`noisePlaces`) and its seed, 0.
  */
-export declare function grainKeyOf(result: Pick<CompileResult, 'cells'>): (voice: string) => {
+export declare function grainKeyOf(result: CompileResult): (voice: string) => {
     readonly seed: number;
     readonly place: string;
 };

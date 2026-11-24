@@ -31,6 +31,7 @@
  * `expand` writes the expansion out (Cell studio's "write out"); `expansion` is what `compileSource` reads. Pure.
  */
 import { splitComment } from './edit';
+import { NOT_HEARD } from './attributes';
 import { FROM_FORM, HEAD_FLAGS, isAttribute, readFrom, topTokens, type FromForm } from './parser/use';
 import { counts } from './core/desugar';
 import type { Diagnostic, Span } from './ast';
@@ -396,6 +397,70 @@ export function identityText(text: string): string {
     .join('\n');
 }
 
+/**
+ * A line without what no listener hears (`NOT_HEARD`: a label, a show, a size, an about, tags, a part, a role), its
+ * attributes read at the top level; a `map=role` line keeps its `part=`, which is its interface (decision 077 §2).
+ */
+function withoutMetadata(code: string): string {
+  const tokens = topTokens(code);
+  const role = tokens.some((t) => t.text === 'map=role');
+  const kept = tokens.filter((t) => !(isAttribute(t.text) && NOT_HEARD.has(keyOf(t.text)) && !(role && /^(?:part|role)=/.test(t.text))));
+  return kept.length === tokens.length ? code : kept.map((t) => t.text).join(' ');
+}
+
+/** What a fragment is, cell by cell (#945, decision 106). */
+export interface Identity {
+  /** `e3:` and the hash of its cells' identities, sorted. */
+  readonly hash: string;
+  /** Each name it defines that is no part of its interface, bare, with its cell's identity. */
+  readonly cells: ReadonlyMap<string, string>;
+}
+
+/**
+ * A fragment as the identity reads it (decision 106, E4's reading of #49): each declaration's code as a piece receives it
+ * (`identityText`: association out, runs counted), without what no listener hears (`withoutMetadata`), and each cell of its
+ * own (a template's private names; a collection's and a signature's stay by name, as a piece takes them) as the hash of its
+ * code with every name it reads of its own replaced by that cell's identity, in turn: no name, no order, no label. The
+ * fragment's hash is its lines' codes, so read, sorted. A cycle reads as `↺`. With `names: 'free'` a collection's cells are
+ * no one's interface either (the learned layer files a kit renamed as the kit: `sameText`).
+ */
+export function identityOf(text: string, names: 'interface' | 'free' = 'interface'): Identity {
+  const seen = new Set<string>();
+  const lines = linesOf(text).flatMap((l) => {
+    const code = withoutAssociation(l.code);
+    if (code === null) return [];
+    if (readFrom(code) !== undefined && seen.has(code)) return [];
+    seen.add(code);
+    return [{ code: withoutMetadata(code), name: l.name }];
+  });
+  const signature = signatureOf(lines.map((l) => l.code).join('\n'));
+  const kept = new Set(signature ? [...signature.names, ...signature.optional, ...(signature.main ? [signature.main] : [])].map((n) => n.slice(1)) : []);
+  const own = new Set(lines.flatMap((l) => ((signature || names === 'free') && l.name && !kept.has(l.name) ? [l.name] : [])));
+  const codes = counts(lines.map((l) => l.code).join('\n')).split('\n');
+  const rows = lines.map((l, i) => ({ name: l.name, code: codes[i]! }));
+  const memo = new Map<string, string>();
+  const read = (code: string, head: string | null, inner: ReadonlySet<string>): string =>
+    code.replace(WRITTEN, (written, name: string) => (own.has(name) ? `&#${name === head ? '' : idOf(name, inner)}` : written));
+  const idOf = (name: string, inner: ReadonlySet<string>): string => {
+    const known = memo.get(name);
+    if (known !== undefined) return known;
+    if (inner.has(name)) return '↺';
+    const next = new Set([...inner, name]);
+    const id = hash64(
+      rows
+        .filter((r) => r.name === name)
+        .map((r) => read(r.code, name, next))
+        .sort()
+        .join('\n'),
+    );
+    if (!inner.size) memo.set(name, id);
+    return id;
+  };
+  const cells = new Map([...own].map((name) => [name, idOf(name, new Set())] as const));
+  const final = rows.map((r) => read(r.code, r.name, new Set())).sort();
+  return { hash: `e3:${hash64(final.join('\n'))}`, cells };
+}
+
 /** A fragment's hash: `e2:` and the hash of its text as a piece receives it (`identityText`, decision 089 §8). */
 /**
  * Hashes already taken, by text: a hash is read each time a `from` line is expanded and each time a query tries a
@@ -405,17 +470,22 @@ export function identityText(text: string): string {
 const hashes = new Map<string, string>();
 const HASHES = 4096;
 
+/** A fragment's `e2:` hash (decision 089 §8): what a lockfile recorded until `e3:`, still checked as it was, and what the fit's ids are named from. */
+export const fragmentHashE2 = (text: string): string => `e2:${hash64(identityText(text))}`;
+
+/** A fragment's hash, `e3:` (decision 106): the hash of its cells' identities (`identityOf`). */
 export const fragmentHash = (text: string): string => {
   const known = hashes.get(text);
   if (known !== undefined) return known;
-  const hash = `e2:${hash64(identityText(text))}`;
+  const hash = identityOf(text).hash;
   if (hashes.size >= HASHES) hashes.clear();
   hashes.set(text, hash);
   return hash;
 };
 
-/** Whether a recorded hash is a text's: an `e1:` read as `e1:` (what a lockfile wrote before decision 089), any other as `e2:`. */
-export const hashIs = (recorded: string, text: string): boolean => recorded === (recorded.startsWith('e1:') ? fragmentHashE1(text) : fragmentHash(text));
+/** Whether a recorded hash is a text's: an `e1:` read as `e1:` (what a lockfile wrote before decision 089), an `e2:` as `e2:` (before decision 106), any other as `e3:`. */
+export const hashIs = (recorded: string, text: string): boolean =>
+  recorded === (recorded.startsWith('e1:') ? fragmentHashE1(text) : recorded.startsWith('e2:') ? fragmentHashE2(text) : fragmentHash(text));
 
 const quoted = (id: string) => JSON.stringify(id);
 const pathOf = (path: readonly string[]) => path.map(quoted).join(' → ');
@@ -1045,7 +1115,8 @@ export function expansion(text: string, { resolve, locked = [], plugins: theirs 
       args[i] = undefined;
       return { id, names, lines: [], resolved: false };
     }
-    const hash = fragmentHash(theirs);
+    // (a recorded hash that still checks stays the take's, as recorded: `e1:` and `e2:` locks are no change, decision 106)
+    const hash = recorded && hashIs(recorded, theirs) ? recorded : fragmentHash(theirs);
     hashes[i] = hash;
     if (recorded && !hashIs(recorded, theirs))
       diagnostics.push({ severity: 'warning', message: `${quoted(id)} has changed since this piece was saved: its current version plays`, span });

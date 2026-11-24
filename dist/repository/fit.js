@@ -1,7 +1,7 @@
 import { compileSource } from "../engine/compile.js";
 import { renameCell, splitComment } from "../engine/edit.js";
 import { fromLine } from "../engine/references.js";
-import { expansion, fragmentHash, signatureOf } from "../engine/use.js";
+import { expansion, fragmentHashE2, signatureOf } from "../engine/use.js";
 import { parse, readFrom } from "../engine/parser/index.js";
 import { braidReadsOf } from "../engine/compiler/builtin.js";
 import { readsOf } from "../engine/reads.js";
@@ -165,7 +165,7 @@ export function cachedFit(resolve, limit = 512) {
         return fitsAs(id, workbench, { resolve: resolving, compiled, ...(main === null ? {} : { main }) });
     });
     return (text, workbench, main) => {
-        const id = `fit_${fragmentHash(text).slice(3)}`;
+        const id = `fit_${fragmentHashE2(text).slice(3)}`;
         own.set(id, text);
         return fit(JSON.stringify({ id, workbench, main: main ?? null }));
     };
@@ -173,7 +173,7 @@ export function cachedFit(resolve, limit = 512) {
 function refOf(ref, options) {
     if (typeof ref === 'string')
         return { id: ref, options };
-    const id = `fit_${fragmentHash(ref.text).slice(3)}`;
+    const id = `fit_${fragmentHashE2(ref.text).slice(3)}`;
     const resolve = (other, hash) => (other === id ? ref.text : options.resolve(other, hash));
     return { id, options: { ...options, resolve, ...(ref.head === undefined ? {} : { head: ref.head }) } };
 }
@@ -269,13 +269,25 @@ function mainReads(text, resolve) {
     const own = new Set(parse(text).cells.map((d) => d.name));
     const copy = parse(expansion(text, { resolve }).text).cells.filter((d) => !own.has(d.name));
     const played = (d) => (typeof d.params.play === 'string' && /^&?([A-Za-z_]\w*)/.exec(d.params.play)?.[1] === MAIN_STAND_IN ? ['play'] : []);
+    const readers = new Map();
+    for (const d of copy)
+        for (const r of readsOf(d))
+            if (r.path.startsWith('braid.'))
+                readers.set(r.name, [...(readers.get(r.name) ?? []), { by: d.name, spliced: !r.path.includes('.exprs.') }]);
+    const held = (name, seen = new Set()) => {
+        if (seen.has(name))
+            return false;
+        seen.add(name);
+        return (readers.get(name) ?? []).some((r) => r.spliced || held(r.by, seen));
+    };
     return copy.flatMap((d) => [
         ...readsOf(d)
             .filter((r) => r.name === MAIN_STAND_IN)
-            .map((r) => r.path),
+            .map((r) => (r.path.includes('.exprs.') && held(d.name) ? `${r.path}${HELD}` : r.path)),
         ...played(d),
     ]);
 }
+const HELD = '#held';
 function readAsItIs(kind, steps, paths) {
     if (kind === 'text')
         return false;
@@ -283,7 +295,7 @@ function readAsItIs(kind, steps, paths) {
         return true;
     const read = paths();
     if (kind === 'meter')
-        return read.length > 0 && read.every((p) => CLOCK.test(p) || p.includes('.exprs.'));
+        return read.length > 0 && read.every((p) => CLOCK.test(p) || (p.includes('.exprs.') && !p.endsWith(HELD)));
     if (kind === 'steps' && steps === 1)
         return read.every((p) => p === 'tonic');
     return read.every((p) => !TABLE.test(p) && p !== 'play');

@@ -226,7 +226,7 @@ describe('the arguments', () => {
         id: 'swung',
         names: ['&bar'],
         span: { line: 2, col: 1, len: 31 },
-        hash: expect.stringMatching(/^e2:/),
+        hash: expect.stringMatching(/^e3:/),
         gave: ['&bar', '&bar_swing'],
         overrode: [],
         args: { swing: '8n:.6', tempo: '&t' },

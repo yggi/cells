@@ -4,9 +4,6 @@ import { libraryCells, libraryLines, libraryTemplates, takenArguments } from "./
 import { narrowestFroms } from "./narrowest.js";
 import { interfaceNames } from "./names.js";
 import { evenScan, swingClock } from "./meter.js";
-import { seeds } from "./seeds.js";
-export { seeds };
-export const SEED_ROUNDS = 400;
 import { migrations } from "../migrate/index.js";
 export const normalisations = (options = {}) => (source, result) => {
     const names = interfaceNames(source, result);
@@ -31,6 +28,5 @@ export const normalisations = (options = {}) => (source, result) => {
 export const normalise = (source, options) => {
     const old = { ...options, old: true };
     const first = rewriteAll(source, normalisations(old), ROUNDS, old);
-    const then = rewriteAll(first.source, seeds, SEED_ROUNDS, old);
-    return { source: then.source, steps: [...first.steps, ...then.steps] };
+    return { source: first.source, steps: first.steps };
 };
