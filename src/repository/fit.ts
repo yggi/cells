@@ -462,18 +462,34 @@ function mainReads(text: string, resolve: Resolve): readonly string[] {
   const own = new Set(parse(text).cells.map((d) => d.name));
   const copy = parse(expansion(text, { resolve }).text).cells.filter((d) => !own.has(d.name));
   const played = (d: (typeof copy)[number]) => (typeof d.params.play === 'string' && /^&?([A-Za-z_]\w*)/.exec(d.params.play)?.[1] === MAIN_STAND_IN ? ['play'] : []);
+  // (who reads each cell of the copy, and how: spliced as a step of a line, or a term of another's expression)
+  const readers = new Map<string, { by: string; spliced: boolean }[]>();
+  for (const d of copy)
+    for (const r of readsOf(d)) if (r.path.startsWith('braid.')) readers.set(r.name, [...(readers.get(r.name) ?? []), { by: d.name, spliced: !r.path.includes('.exprs.') }]);
+  /** Whether a cell's value is held a step of a line: it is spliced, or a sum that reads it is, to any depth (decision 097). */
+  const held = (name: string, seen = new Set<string>()): boolean => {
+    if (seen.has(name)) return false;
+    seen.add(name);
+    return (readers.get(name) ?? []).some((r) => r.spliced || held(r.by, seen));
+  };
   return copy.flatMap((d) => [
     ...readsOf(d)
       .filter((r) => r.name === MAIN_STAND_IN)
-      .map((r) => r.path),
+      // (a value read in an expression whose cell is held a step of a line, a section plan's, is marked: #920)
+      .map((r) => (r.path.includes('.exprs.') && held(d.name) ? `${r.path}${HELD}` : r.path)),
     ...played(d),
   ]);
 }
 
+/** The mark on a value read whose expression is held a step of a line (a splice, decision 097): a section plan's. */
+const HELD = '#held';
+
 /**
  * Whether a template reads its main argument, a cell of this kind, as what it is wherever it reads it (decision 104):
  * - **a meter** only as a clock (`step=&bar`, `&bar:beat`) or its levels as values in an expression (a count's
- *   `[.9 + &bar * -.3]`), and somewhere: not as a key, a phrase or a part, nor read nowhere;
+ *   `[.9 + &bar * -.3]`), and somewhere: not as a key, a phrase or a part, nor read nowhere; and its levels only at its
+ *   own steps, so not in an expression a splice holds a step long (a section plan's `&intro &chorus …`, whose kinds read
+ *   their main argument in a sum: a song's intensity, #920), at any depth of sums;
  * - **a text** never: a generator's argument alone (decision 101);
  * - **a lone note** (`&tonic D`, steps of one) only as a tonic: no key, phrase, part or value;
  * - as **a table** (`over=`): a table, a line (a harmony), a blank (a key turned), or steps;
@@ -484,7 +500,8 @@ function readAsItIs(kind: Kind | null, steps: number, paths: () => readonly stri
   if (kind === 'text') return false;
   if (kind === 'table' || kind === 'line' || kind === 'blank' || (kind === 'steps' && steps > 1)) return true;
   const read = paths();
-  if (kind === 'meter') return read.length > 0 && read.every((p) => CLOCK.test(p) || p.includes('.exprs.'));
+  // (a meter's levels as values only at its own steps: in an expression no splice holds a step long, #920)
+  if (kind === 'meter') return read.length > 0 && read.every((p) => CLOCK.test(p) || (p.includes('.exprs.') && !p.endsWith(HELD)));
   if (kind === 'steps' && steps === 1) return read.every((p) => p === 'tonic');
   return read.every((p) => !TABLE.test(p) && p !== 'play');
 }
