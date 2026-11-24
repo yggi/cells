@@ -1,4 +1,4 @@
-# 107 · A style is a point and a breadth: a genre's area, and a sub-genre within it
+# 108 · A style is a point and a breadth: a genre's area, and a sub-genre within it
 
 **Date:** 2026-11-24 · **Status:** accepted (the owner on #947, 2026-11-24: "a new pop style … genres and sub-genres as styles with a range and offsets … synth-pop sits 'within' pop"; #952 approved, 2026-11-24) · Issues: #947, #946, #644, yggi/jambot#760 · Amends [089](089-the-association-in-the-text.md) §6 (what a reach on a style of the library means)
 

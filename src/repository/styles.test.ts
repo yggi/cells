@@ -64,7 +64,7 @@ const PRESETS = {
   waltz: stylePoint('waltz'),
   march: stylePoint('march'),
   tripHop: stylePoint('tripHop'),
-  // (a genre with a breadth, decision 107, #947)
+  // (a genre with a breadth, decision 108, #947)
   pop: POP,
 };
 const styles = STYLE_FRAGMENTS.find((f) => f.id === 'styles')!;
@@ -166,7 +166,7 @@ describe('STYLES, the presets a frontend takes', () => {
   });
 });
 
-describe('a style’s breadth (decision 107, #947)', () => {
+describe('a style’s breadth (decision 108, #947)', () => {
   const style = (id: string) => STYLES.find((s) => s.id === id)!;
 
   it('is its reach on each axis, as written; a style written with none is a point', () => {

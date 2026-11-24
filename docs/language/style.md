@@ -174,7 +174,7 @@ A score takes one by name where its section sits exactly on it, and writes its n
 
 The collection is associated at each of the twenty-four points as the facet `style`, so the style nearest a point is a query too.
 
-A style may have a breadth: a reach on each axis, how far a genre spreads around its centre ([decision 107](https://github.com/yggi/cells/blob/main/docs/decisions/107-a-style-is-a-point-and-a-breadth.md)).
+A style may have a breadth: a reach on each axis, how far a genre spreads around its centre ([decision 108](https://github.com/yggi/cells/blob/main/docs/decisions/108-a-style-is-a-point-and-a-breadth.md)).
 Pop is wide, and Synth-pop, its sub-genre, is narrower and lies within it: `within(synthPop, pop)`, its area inside Pop's on every axis.
 The point is the centre, and a query reads only the point (#644).
 
