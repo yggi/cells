@@ -87,8 +87,10 @@ describe('what a query costs', () => {
     expect((performance.now() - t0) / n).toBeLessThan(1);
   });
 
-  // (the queries `fit.test.ts` counts the compiles of, on its workbench of five: ten seconds for the three)
-  it('three fitting queries on a workbench of five take under 10 s', () => {
+  // (the queries `fit.test.ts` counts the compiles of, on its workbench of five: twenty seconds for the three. CI's
+  // runner read 11.2 s and 12.0 s on 2026-11-23 and 24, where a quiet machine reads 3.8 to 4.1 s; ten seconds was
+  // twice that machine's reading at most and under CI's, and twenty still catches CI's cost doubled)
+  it('three fitting queries on a workbench of five take under 20 s', () => {
     const rhythm = (id: string) => RHYTHM_FRAGMENTS.find((f) => f.id === id)!.text;
     // (the meter's lines, its signature aside: a workbench's own signature is what it offers, #587)
     const bench = (bpm: number) => setTiming(bodyOf(METER_FRAGMENTS.find((f) => f.id === 'bar')!.text), 'bar', 'step', `${bpm}bpm`);
@@ -101,6 +103,6 @@ describe('what a query costs', () => {
     expect(r.query(FUNK, LIBRARY.length, {}, { workbench, ...named }).length).toBeGreaterThan(30);
     r.query(FUNK, LIBRARY.length, {}, { workbench, chosen: ['funk_drums'], ...named });
     expect(r.query(FUNK, 1, {}, { workbench: `${workbench}\n&more loop=A4`, ...named })).toHaveLength(1);
-    expect(performance.now() - t0).toBeLessThan(10_000);
+    expect(performance.now() - t0).toBeLessThan(20_000);
   });
 });
