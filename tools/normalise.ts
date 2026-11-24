@@ -9,7 +9,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { readLiterate, renderFile, rewrite } from '../src/engine/literate.ts';
-import { normalisations, type NormaliseOptions } from '../src/engine/normalise/index.ts';
+import { normalisations, SEED_ROUNDS, seeds, type NormaliseOptions } from '../src/engine/normalise/index.ts';
 import { rewriteAll, ROUNDS } from '../src/engine/rewrite.ts';
 import { LIBRARY, resolveSeed } from '../src/repository/library.ts';
 
@@ -25,7 +25,10 @@ export interface FileOptions {
 /** Normalise (src/engine/normalise's `normalise`), its rewrites kept to `rules` when given. */
 function normaliseText(source: string, options: NormaliseOptions, rules?: ReadonlySet<string>): { source: string; steps: string[] } {
   const find = normalisations(options);
-  return rewriteAll(source, rules ? (src, result) => find(src, result).filter((r) => rules.has(r.rule)) : find, ROUNDS, options);
+  const first = rewriteAll(source, rules ? (src, result) => find(src, result).filter((r) => rules.has(r.rule)) : find, ROUNDS, options);
+  // (then the seeds a cell writes, once no other rule has anything left, decision 098)
+  const then = rewriteAll(first.source, rules ? (src, result) => seeds(src, result).filter((r) => rules.has(r.rule)) : seeds, SEED_ROUNDS, options);
+  return { source: then.source, steps: [...first.steps, ...then.steps] };
 }
 
 /** A file's text in the canonical spelling, and what each rewrite did. */

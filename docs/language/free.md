@@ -9,7 +9,9 @@ A number left to the performer: a slider on the node, and moving it rewrites the
 - **A whole place** (a count, an index, a turn) takes a whole range, and its value is rounded; its slider moves by ones.
 - **A range stays within the place's**: a count's at 1 or more, a probability's within 0 to 1.
 
-**A cell is the playing's.** A cell (`&k`) or a range moved by cells (`lo..hi * &k`) moves only a number read while the piece plays: a sound's parameters, an envelope's slots, a gain. Where the number shapes the piece, a cell is an error that says so. Changing the program's shape while it plays is a selector's work.
+**A cell is the playing's, or fills a place.** A cell (`&k`) or a range moved by cells (`lo..hi * &k`) moves a number read while the piece plays: a sound's parameters, an envelope's slots, a gain. Where the number shapes the piece, a range moved by cells is an error that says so: changing the program's shape while it plays is a selector's work.
+
+**A cell may fill a place read as the piece is built** ([decision 105](https://github.com/yggi/cells/blob/main/docs/decisions/105-a-number-read-as-the-piece-is-built-may-be-a-cell.md)): `seed=&s`, `shift=&k`, `stride=`, `cycle=`, `laps=`, `chance=`, `size=`, each read once, as the number written. The cell is one number or a sum of numbers alone, so a number may be generated through cells (`&seed2 [&seed + 1]`), and a template takes one as it takes a jack (`ticks(seed=&a)`, `ticks(seed=&b)`: two copies that draw apart). A generator's value arguments read cells the same way ([decision 101](https://github.com/yggi/cells/blob/main/docs/decisions/101-a-text-cell.md)); the braid's places (`x!n`, a pick, a turn) are the next rung. A table or a stepped cell has no one value, and is an error that says what is read.
 
 The places, from the parser's own table:
 
@@ -30,13 +32,13 @@ The places, from the parser's own table:
 | scale(name, n) (a tonic) | ✓ whole | `&k` (a note); a tonic is a pitch class, never a range | `&key scale(dorian, free(2, 0..11))` |
 | step=n · loop=n (a rate) | ✓ | a clock (`step=&bar`): another meaning | `&bar meter("4/4") step=free(90bpm, 60..240)` |
 | step=&bar*n · step=&bar/n | ✓ | ✗ read as the piece is built | `&fast step=&bar*free(2, 1..4) 0 2` |
-| shift=n | ✓ whole | ✗ read as the piece is built | `&key step=cycle(&theme) shift=free(0, 0..11)` |
-| stride=n | ✓ whole | ✗ read as the piece is built | `&key step=cycle(&theme) stride=free(0, 0..7)` |
-| cycle=n | ✓ whole | ✗ read as the piece is built | `&wheel cycle=free(1, 0..4) 0 4 7` |
-| laps=n | ✓ whole | ✗ read as the piece is built | `&bar meter("4/4") step=84bpm laps=free(30, 1..60)` |
-| chance=p | ✓ | ✗ read as the piece is built | `&ghost chance=free(.7, 0..1) step=4 0? 0?` |
-| seed=n | ✓ whole | ✗ read as the piece is built | `&ghost seed=free(7, 0..99) step=4 0? 0? 0? 0?` |
-| size=x | ✓ | ✗ read as the piece is built | `&theme size=free(2, .25..4) step=2 0 2 4` |
+| shift=n | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&key step=cycle(&theme) shift=free(0, 0..11)` |
+| stride=n | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&key step=cycle(&theme) stride=free(0, 0..7)` |
+| cycle=n | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&wheel cycle=free(1, 0..4) 0 4 7` |
+| laps=n | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&bar meter("4/4") step=84bpm laps=free(30, 1..60)` |
+| chance=p | ✓ | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&ghost chance=free(.7, 0..1) step=4 0? 0?` |
+| seed=n | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&ghost seed=free(7, 0..99) step=4 0? 0? 0? 0?` |
+| size=x | ✓ | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&theme size=free(2, .25..4) step=2 0 2 4` |
 | scan(n …) (an interval) | ✓ | ✗ read as the piece is built | `&mode scan(2 2 free(1, 1..2) 2 2 2 1)` |
 | scan(n!k …) (an interval’s repeat) | ✓ whole | ✗ read as the piece is built | `&map scan(1!free(4, 1..8) 2)` |
 | geo(r, n, k …) | ✓ | ✗ read as the piece is built | `&series scan(geo(free(5, 2..8), 25, 0 10 5))` |

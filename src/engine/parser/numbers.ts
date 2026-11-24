@@ -5,6 +5,7 @@
  * this table; `docs/language/free.md`'s table is generated from it (`npm run reference`), so the two can't drift.
  */
 import type { FreeSpec } from '../ast';
+import { MAX_EVENTS } from '../program';
 
 /** One place a number is written. */
 export interface NumberPlace {
@@ -27,6 +28,8 @@ export interface NumberPlace {
   readonly fixed?: string;
   /** What a cell does here: it moves the number (read while the piece plays), or why it doesn't. */
   readonly cell: string;
+  /** The attribute a cell read here sets (a place whose cell is `FILLED`), and the number the line holds until compile fills it. */
+  readonly fills?: { readonly field: 'seed' | 'shift' | 'stride' | 'cycle' | 'laps' | 'chance' | 'size'; readonly placeholder: number };
   /** Moved by a cell: a text where only a number may stand refuses one with the rule; this place reads its cells itself. */
   readonly moves?: true;
   /** A text with a free(…) here (or, for a fixed place, its number), parsed by the tests and shown in the table. */
@@ -35,6 +38,11 @@ export interface NumberPlace {
 
 /** A cell where the number is read as the piece is built (decision 078): the shape would change while it plays, a selector's work (#51). */
 export const BUILT = 'no: read as the piece is built';
+/**
+ * A cell that is one number, or a sum of numbers alone, read as the piece is built and set where the number stands
+ * (decision 105, after 093): the one mechanism for every place whose cell is filled, `compiler/built.ts`.
+ */
+export const FILLED = '`&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105)';
 const NOT_YET = (what: string) => `not yet: ${what}`;
 const MOVES = '`&k`, `lo..hi * &k`';
 
@@ -134,13 +142,57 @@ export const NUMBER_PLACES = {
     example: '&bar meter("4/4") step=free(90bpm, 60..240)',
   }),
   by: place({ form: 'step=&bar*n · step=&bar/n', name: 'by', min: 0, cell: BUILT, example: '&fast step=&bar*free(2, 1..4) 0 2' }),
-  shift: place({ form: 'shift=n', name: 'shift', key: 'shift', whole: true, rounds: true, cell: BUILT, example: '&key step=cycle(&theme) shift=free(0, 0..11)' }),
-  stride: place({ form: 'stride=n', name: 'stride', key: 'stride', whole: true, rounds: true, cell: BUILT, example: '&key step=cycle(&theme) stride=free(0, 0..7)' }),
-  cycle: place({ form: 'cycle=n', name: 'cycle', whole: true, min: 0, cell: BUILT, example: '&wheel cycle=free(1, 0..4) 0 4 7' }),
-  laps: place({ form: 'laps=n', name: 'laps', whole: true, min: 1, cell: BUILT, example: '&bar meter("4/4") step=84bpm laps=free(30, 1..60)' }),
-  chance: place({ form: 'chance=p', name: 'chance', key: 'chance', cell: BUILT, example: '&ghost chance=free(.7, 0..1) step=4 0? 0?' }),
-  seed: place({ form: 'seed=n', name: 'seed', whole: true, cell: BUILT, example: '&ghost seed=free(7, 0..99) step=4 0? 0? 0? 0?' }),
-  size: place({ form: 'size=x', name: 'size', min: 0.25, max: 4, cell: BUILT, example: '&theme size=free(2, .25..4) step=2 0 2 4' }),
+  shift: place({
+    form: 'shift=n',
+    name: 'shift',
+    key: 'shift',
+    whole: true,
+    rounds: true,
+    cell: FILLED,
+    fills: { field: 'shift', placeholder: 0 },
+    example: '&key step=cycle(&theme) shift=free(0, 0..11)',
+  }),
+  stride: place({
+    form: 'stride=n',
+    name: 'stride',
+    key: 'stride',
+    whole: true,
+    rounds: true,
+    cell: FILLED,
+    fills: { field: 'stride', placeholder: 0 },
+    example: '&key step=cycle(&theme) stride=free(0, 0..7)',
+  }),
+  cycle: place({
+    form: 'cycle=n',
+    name: 'cycle',
+    whole: true,
+    min: 0,
+    max: MAX_EVENTS,
+    cell: FILLED,
+    fills: { field: 'cycle', placeholder: 0 },
+    example: '&wheel cycle=free(1, 0..4) 0 4 7',
+  }),
+  laps: place({
+    form: 'laps=n',
+    name: 'laps',
+    whole: true,
+    min: 1,
+    cell: FILLED,
+    fills: { field: 'laps', placeholder: 1 },
+    example: '&bar meter("4/4") step=84bpm laps=free(30, 1..60)',
+  }),
+  chance: place({
+    form: 'chance=p',
+    name: 'chance',
+    key: 'chance',
+    min: 0,
+    max: 1,
+    cell: FILLED,
+    fills: { field: 'chance', placeholder: 0 },
+    example: '&ghost chance=free(.7, 0..1) step=4 0? 0?',
+  }),
+  seed: place({ form: 'seed=n', name: 'seed', whole: true, cell: FILLED, fills: { field: 'seed', placeholder: 0 }, example: '&ghost seed=free(7, 0..99) step=4 0? 0? 0? 0?' }),
+  size: place({ form: 'size=x', name: 'size', min: 0.25, max: 4, cell: FILLED, fills: { field: 'size', placeholder: 1 }, example: '&theme size=free(2, .25..4) step=2 0 2 4' }),
   interval: place({ form: 'scan(n …) (an interval)', name: 'interval', key: 'interval', cell: BUILT, example: '&mode scan(2 2 free(1, 1..2) 2 2 2 1)' }),
   intervals: place({ form: 'scan(n!k …) (an interval’s repeat)', name: 'repeat', whole: true, min: 1, cell: BUILT, example: '&map scan(1!free(4, 1..8) 2)' }),
   geo: place({ form: 'geo(r, n, k …)', name: 'geo', cell: BUILT, example: '&series scan(geo(free(5, 2..8), 25, 0 10 5))' }),

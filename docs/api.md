@@ -36,7 +36,7 @@ Each step of the plan moves a count in the ledger: the symbols a frontend reache
 | `@yggi/cells/repository` | repository | query, fit and learn; a fragment read as cells means it | 25 |
 | `@yggi/cells/library` | library | the seed, styles, kit, roles, modes, the band; every vocabulary as values | 13 |
 | (leaves for Cell studio, decision 086) | | the view: drawing only | 0 |
-| (internal) | | named by no entry point | 51 |
+| (internal) | | named by no entry point | 52 |
 
 #### `@yggi/cells`
 

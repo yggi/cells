@@ -53,7 +53,7 @@ export declare const fragmentHashE1: (text: string) => string;
  * Normalise's respellings (E3) are a later rung: they need the fragment compiled, and a hash is read while one compiles.
  */
 export declare function identityText(text: string): string;
-/** What a fragment is, cell by cell (#945, decision 099). */
+/** What a fragment is, cell by cell (#945, decision 106). */
 export interface Identity {
     /** `e3:` and the hash of its cells' identities, sorted. */
     readonly hash: string;
@@ -61,7 +61,7 @@ export interface Identity {
     readonly cells: ReadonlyMap<string, string>;
 }
 /**
- * A fragment as the identity reads it (decision 099, E4's reading of #49): each declaration's code as a piece receives it
+ * A fragment as the identity reads it (decision 106, E4's reading of #49): each declaration's code as a piece receives it
  * (`identityText`: association out, runs counted), without what no listener hears (`withoutMetadata`), and each cell of its
  * own (a template's private names; a collection's and a signature's stay by name, as a piece takes them) as the hash of its
  * code with every name it reads of its own replaced by that cell's identity, in turn: no name, no order, no label. The
@@ -71,9 +71,9 @@ export interface Identity {
 export declare function identityOf(text: string, names?: 'interface' | 'free'): Identity;
 /** A fragment's `e2:` hash (decision 089 §8): what a lockfile recorded until `e3:`, still checked as it was, and what the fit's ids are named from. */
 export declare const fragmentHashE2: (text: string) => string;
-/** A fragment's hash, `e3:` (decision 099): the hash of its cells' identities (`identityOf`). */
+/** A fragment's hash, `e3:` (decision 106): the hash of its cells' identities (`identityOf`). */
 export declare const fragmentHash: (text: string) => string;
-/** Whether a recorded hash is a text's: an `e1:` read as `e1:` (what a lockfile wrote before decision 089), an `e2:` as `e2:` (before decision 099), any other as `e3:`. */
+/** Whether a recorded hash is a text's: an `e1:` read as `e1:` (what a lockfile wrote before decision 089), an `e2:` as `e2:` (before decision 106), any other as `e3:`. */
 export declare const hashIs: (recorded: string, text: string) => boolean;
 /**
  * Does a line read this name as a value, not as a sound: in an attribute (`over=&key`, `step=&tempo`), a generator's or

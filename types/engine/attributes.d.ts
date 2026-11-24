@@ -69,7 +69,7 @@ export declare const LINE_PARAMS: ReadonlySet<string>;
 /** What a line is played as by the default performer (part= role=, decision 075): a word about the line, which makes it no kit's member and keeps a stack a stack (#708). */
 export declare const PLAYED_AS: ReadonlySet<string>;
 /**
- * The attributes no listener hears, and no identity reads (#945, decision 098/099): how a cell is drawn (`label=` `show=` `size=`
+ * The attributes no listener hears, and no identity reads (#945, decisions 098, 106): how a cell is drawn (`label=` `show=` `size=`
  * `about=` `tags=`) and what it is played as (`part=` `role=`). One list: the core cuts them (`toCore`), a measure of structure
  * counts them free, and a cell's identity (its draws, its fragment's hash) leaves them out.
  */

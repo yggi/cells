@@ -190,6 +190,28 @@ export function numberCellOf(d: CellDecl | undefined): number | null {
 }
 
 /**
+ * A cell's value where the piece is built (decision 105, after 093 and 096): the one number it is (088), or the value of
+ * a sum of numbers alone, whatever it names, `[&seed + 1]` with `&seed 7` is 8 (a number may be generated through cells).
+ * Null for anything else: a stepped cell, a table, a sound, a sum with a cell that is not a constant, a cell in a cycle.
+ */
+export function constantOf(decls: ReadonlyMap<string, CellDecl>, name: string, seen: ReadonlySet<string> = new Set()): number | null {
+  const d = decls.get(name);
+  if (!d || d.step || seen.has(name)) return null;
+  const n = numberCellOf(d);
+  if (n !== null) return n;
+  const sum = valueSumOf(name, decls);
+  if (!sum) return null;
+  const inner = new Set([...seen, name]);
+  let total = sum.constant;
+  for (const t of sum.terms) {
+    const v = constantOf(decls, t.cell, inner);
+    if (v === null) return null;
+    total += t.weight * v;
+  }
+  return Math.round(total * 1e9) / 1e9;
+}
+
+/**
  * A mix's expression with every bare reference to a cell that is one number written as that number (decision 088):
  * naming a number plays as the number. A reference that picks or moves it stays a reference, read as it was.
  */
