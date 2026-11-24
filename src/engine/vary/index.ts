@@ -61,7 +61,7 @@ import { referenceOf, type Reference } from './reference';
 import { answeredIn } from '../use';
 import { formsOf, FORM_FIXED, type Form } from './form';
 import { EMPTY, fixedOf, shiftMoves, SLOT_OPERATORS, slotMoves, slotReference } from './slots';
-import { progressionBraid, progressionCandidates, progressionKey, progressionNotes, progressionReference, progressionsOf, type Progression } from './progression';
+import { progressionBraid, progressionCandidates, progressionNotes, progressionReference, progressionsOf, type Progression } from './progression';
 
 export { backbeatOf, type Anchor } from './anchors';
 export type { Reference } from './reference';
@@ -90,8 +90,11 @@ export const HARMONY_OPERATORS: readonly Operator[] = ['rotate', 'reverse', 'thi
  */
 export const FORM_OPERATORS: readonly Operator[] = SLOT_OPERATORS;
 
-/** A line's step that strikes nothing, as `stepKeys` writes it: an empty slot (#911). */
-const REST = JSON.stringify([]);
+/** A heard note as one key: its onset (none where its line's grid is none of the meter's) and what it is (#913). */
+const heardKey = (h: HeardNote) => `${h.at === null ? '' : h.at.toFixed(9)} ${h.key}`;
+
+/** A line's step that strikes nothing, as a slot's key reads it: an empty slot (#911). */
+const REST = '';
 
 /** The slot operators a line takes beside its own, on its steps: whatever it strikes or plays, where a frontend asks. */
 const LINE_SLOT_OPERATORS: readonly Operator[] = ['swap', 'substitute', 'split'];
@@ -297,19 +300,37 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   };
   const sound = (voice: string) => String(drumNoteOf(result, voice) ?? voice);
   const pitch = (n: LineNote) => (n.pitch ? ` ${pitchKey(n.pitch)}` : '');
-  // (a half of a step in two, #912, is half its step long)
-  const length = (i: number, n: LineNote) => `${lines[i]!.stepWhole ?? i}${n.half ? '/2' : ''}`;
-  const keysOf = (i: number, notes: readonly LineNote[]) => notes.map((n) => `${onset(i, n.step)} ${length(i, n)} ${n.voice}${pitch(n)}`);
   const strikesOf = (i: number, notes: readonly LineNote[]) => notes.map((n) => `${onset(i, n.step)} ${sound(n.voice)}${pitch(n)}`);
   const places = new Map([...new Set(lines.flatMap((l) => (l.pitched ? [l.pitched.voice] : [])))].map((v, k) => [v, `voice#${k}`]));
+  // (a voice's sound, looked up once: a drum's note, else its name)
+  const sounds = new Map<string, string>();
+  const soundOf = (voice: string) => {
+    let known = sounds.get(voice);
+    if (known === undefined) sounds.set(voice, (known = sound(voice)));
+    return known;
+  };
+  /** What a note is, its onset aside: its length, and its sound or a pitched voice's place and its pitch. */
+  const whatOf = (i: number, n: LineNote) =>
+    `${lines[i]!.stepWhole ?? lines[i]!.name}${n.half ? '/2' : ''} ${n.pitch ? `${places.get(n.voice)} ${pitchKey(n.pitch)}` : soundOf(n.voice)}`;
   const heardOf = (i: number, notes: readonly LineNote[]): HeardNote[] => {
     const { stepWhole, name } = lines[i]!;
-    return notes.map((n) => {
-      const what = `${stepWhole ?? name}${n.half ? '/2' : ''} ${n.pitch ? `${places.get(n.voice)} ${pitchKey(n.pitch)}` : sound(n.voice)}`;
-      return stepWhole === null ? { at: null, key: `${name}@${n.step} ${what}` } : { at: n.step * stepWhole, key: what };
-    });
+    return notes.map((n) => (stepWhole === null ? { at: null, key: `${name}@${n.step} ${whatOf(i, n)}` } : { at: n.step * stepWhole, key: whatOf(i, n) }));
+  };
+  /** A note's heard key as `heardKey` writes it, with no heard note made: the dedupe's key, read `offset` steps earlier. */
+  const noteKey = (i: number, n: LineNote, offset = 0) => {
+    const { stepWhole, name } = lines[i]!;
+    const step = n.step - offset;
+    return stepWhole === null ? ` ${name}@${step} ${whatOf(i, n)}` : `${(step * stepWhole).toFixed(9)} ${whatOf(i, n)}`;
   };
   const heardKeys = lines.map((l, i) => heardOf(i, l.notes));
+  // (one key for what a note plays at every level, #913: its heard note, its onset and what it is; a line's notes keyed
+  // so for the dedupe as for recognition, and a slot's contents keyed so for the slot operators, relative to the slot)
+  const lineKeys = (i: number, notes: readonly LineNote[]) => notes.map((n) => noteKey(i, n));
+  const stepKey = (i: number, notes: readonly LineNote[], step: number) =>
+    notes
+      .map((n) => noteKey(i, n, step))
+      .sort()
+      .join(';');
   const chords = harmoniesOf(result, own, lines, progressions);
   const laps = [...lines.map((l) => (l.stepWhole === null ? null : l.steps * l.stepWhole)), ...chords.map((h) => h.lap)];
   const meter = lines.find((l) => l.meter)?.meter ?? chords.find((h) => h.meter)?.meter ?? null;
@@ -327,7 +348,9 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
     ...chords.flatMap((h) => (h.name === name ? notes : h.notes)),
     ...forms.flatMap((f, k) => (f.name.slice(1) === name ? notes : formNotes(f, asWritten(f), k))),
   ];
-  const noteKeys = lines.map((l, i) => keysOf(i, l.notes));
+  const keysOfHeard = (notes: readonly HeardNote[]) => notes.map(heardKey).sort().join('|');
+  const fixedKey = keysOfHeard(fixed);
+  const noteKeys = heardKeys.map((notes) => notes.map(heardKey));
   const strikeKeys = lines.map((l, i) => strikesOf(i, l.notes));
   const total = lines.reduce((sum, l) => sum + l.notes.length, 0);
   // (the other lines' keys sorted, and their strikes, once for each line: a candidate's signature merges its line's keys
@@ -345,12 +368,12 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   };
   const signature = (i: number, notes: readonly LineNote[]) => {
     const a = othersOf(i).keys;
-    const b = i < 0 ? [] : keysOf(i, notes).sort();
+    const b = i < 0 ? [] : lineKeys(i, notes).sort();
     const merged: string[] = [];
     let x = 0;
     let y = 0;
     while (x < a.length || y < b.length) merged.push(y >= b.length || (x < a.length && a[x]! <= b[y]!) ? a[x++]! : b[y++]!);
-    return merged.join('|');
+    return `${merged.join('|')}#${fixedKey}`;
   };
   /** Whether a candidate on line `i` strikes no sound twice at an onset. */
   const struckOnce = (i: number, notes: readonly LineNote[]) => {
@@ -363,6 +386,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
     }
     return true;
   };
+  const lineSignature = noteKeys.flat().sort().join('|');
   const seen = new Set([signature(-1, [])]);
 
   const out: { variation: Variation; notes: HeardNote[] }[] = [];
@@ -432,7 +456,7 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
     // (the line's steps as slots, rests among them, for the slot operators every level shares, `slots.ts`: each step's
     // notes as written, and the steps fixed, the frontend's mask or else the anchored notes')
     const onStep = (s: number) => line.notes.filter((n) => Math.floor(n.step) === s);
-    const stepKeys = Array.from({ length: line.steps }, (_, s) => JSON.stringify(onStep(s).map((n) => ({ ...n, step: n.step - s }))));
+    const stepKeys = Array.from({ length: line.steps }, (_, s) => stepKey(i, onStep(s), s));
     const fixedSteps = fixedOfLine(line);
     const movedFrom = (from: readonly number[]) => inOrder(from.flatMap((src, t) => onStep(src).map((n) => ({ ...n, step: t + (n.step - src) }))));
     const levelsFrom = (from: readonly number[]) => levels && levels.map((own, t) => (from[t] === EMPTY ? own : levels[from[t]!]!));
@@ -540,25 +564,34 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
   // (then each line of slots, after every line, each progression and then each form: by the operators of its level, where
   // one of the slot levels' own is asked; S2 against the source and every variation before it, a progression's chords keyed
   // as they sound, a form's slots as they splice)
-  const base = signature(-1, []);
   const slotLevel = !!only || operators.some((o) => SLOT_LEVEL.includes(o));
-  const formKey = (g: Form, after: FormSlots) => after.main.map((t, i) => `${played(g, t)}${g.partner ? `/${played(g.partner, after.partner![i]!)}` : ''}`).join(' ');
-  const keyOf = (p: Progression | null, slots: Progression['slots'] | null, f: Form | null, after: FormSlots | null) =>
-    [base, ...progressions.map((q) => (q === p ? progressionKey(q, slots!) : progressionKey(q, q.slots))), ...forms.map((g) => formKey(g, g === f ? after! : asWritten(g)))].join(
-      '#',
-    );
-  if (progressions.length || forms.length) seen.add(keyOf(null, null, null, null));
+  // (each structure's source as S2 reads it: a variation that plays it again is none)
+  progressions.forEach((p) =>
+    seen.add(
+      `${lineSignature}#${p.name}:${keysOfHeard(
+        progressionNotes(
+          p,
+          p.slots,
+          chords.findIndex((h) => h.name === p.name.slice(1)),
+        ),
+      )}`,
+    ),
+  );
+  forms.forEach((f, k) => seen.add(`${lineSignature}#${f.name}:${keysOfHeard(formNotes(f, asWritten(f), k))}`));
   const offerSlots = (
     name: string,
     rule: Operator,
     amounts: readonly number[],
     what: string,
     braids: ReadonlyMap<string, readonly string[]>,
-    sig: string,
-    notes: readonly HeardNote[],
+    mine: readonly HeardNote[],
     reference: Reference | null,
   ) => {
+    // (S2 as a line's, one multiset of heard notes: every line's and every level's as they are, but this structure's, which
+    // is all a variation of it changes; so its own heard notes, beside its name, tell it from the source and the others)
+    const sig = `${lineSignature}#${name}:${keysOfHeard(mine)}`;
     if (seen.has(sig)) return;
+    const notes = fixedBut(name.slice(1), mine);
     seen.add(sig);
     const code = (cell: string, braid?: readonly string[]) => {
       const w = wordsOf(cell);
@@ -586,26 +619,18 @@ function readSome(fragment: string, options: VaryOptions, only?: { line: string;
       const braid = progressionBraid(c.slots);
       const w = wordsOf(p.name.slice(1));
       const reference = w && progressionReference(p, c.slots, [...w.head, ...w.attrs, ...braid]);
-      offerSlots(
-        p.name,
-        c.operator,
-        c.amounts,
-        c.what,
-        new Map([[p.name.slice(1), braid]]),
-        keyOf(p, c.slots, null, null),
-        fixedBut(p.name.slice(1), progressionNotes(p, c.slots, k)),
-        reference || null,
-      );
+      offerSlots(p.name, c.operator, c.amounts, c.what, new Map([[p.name.slice(1), braid]]), progressionNotes(p, c.slots, k), reference || null);
     }
   }
   for (const [k, f] of forms.entries()) {
     if (!slotLevel || (only && only.line !== f.name)) continue;
+    // (each slot's key, what it plays as its heard note reads it, `formNotes`: its splice played, its partner's beside it)
     const keys = f.slots.map((t, i) => `${played(f, t)}${f.partner ? `/${played(f.partner, f.partner.slots[i]!)}` : ''}`);
     const fixedSlots = fixedFor(f.name, f.slots.length, FORM_FIXED);
     const offerForm = (operator: Operator, amounts: readonly number[], what: string, after: FormSlots) => {
       const braids = new Map([[f.name.slice(1), after.main]]);
       if (f.partner && after.partner) braids.set(f.partner.name.slice(1), after.partner);
-      offerSlots(f.name, operator, amounts, what, braids, keyOf(null, null, f, after), fixedBut(f.name.slice(1), formNotes(f, after, k)), formReference(f, after));
+      offerSlots(f.name, operator, amounts, what, braids, formNotes(f, after, k), formReference(f, after));
     };
     for (const operator of operators) {
       if (operator === 'shift') {

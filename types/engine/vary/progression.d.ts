@@ -46,8 +46,6 @@ export declare function progressionNotes(p: Progression, slots: readonly Slot[],
     at: number;
     key: string;
 }[];
-/** What a progression plays, for S2: each chord's onset and length, its tones sorted as they sound. */
-export declare function progressionKey(p: Progression, slots: readonly Slot[]): string;
 /**
  * Every candidate variation of a progression by the operators asked, in their order: for each, its rotation, its
  * retrograde, its swaps, its substitutions (`slots.ts`), its thirds by step and then by `THIRDS`, its dominants by
