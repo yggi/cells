@@ -656,7 +656,7 @@ function instantiate(from, id, signature, path, text, resolve, run, say, taken, 
                 level.warn(`The piece defines &${o}, and ${quoted(id)} takes its &${o} from a collection by default: pass yours, ${from.id}(${o}=&${o}), or rename it`);
     const sharing = shared.filter((l) => reached.has(l.name) && !byReference.has(l.name) && !sharedValued.includes(l.name));
     const given = { id, names: new Set(sharing.map((l) => l.name)), lines: sharing, resolved: true };
-    return { taken: given, copy, args: Object.fromEntries(values) };
+    return { taken: given, copy, args: Object.fromEntries(values), overrode: overridden.map((h) => `&${h}`) };
 }
 function answered(id, fill, call, say) {
     try {
@@ -721,6 +721,7 @@ export function expansion(text, { resolve, locked = [], plugins: theirs = [], an
     const hashes = [];
     const copies = [];
     const args = [];
+    const overrodes = [];
     const parts = [];
     const answers = uses.map(() => []);
     const taken = new Set(own.flatMap((l) => (l.name ? [l.name] : [])));
@@ -766,6 +767,7 @@ export function expansion(text, { resolve, locked = [], plugins: theirs = [], an
         const step = { id: null, line: u.line.line };
         copies[i] = via(g.copy, step);
         args[i] = g.args;
+        overrodes[i] = g.overrode ?? [];
         copiedSoFar.push(...g.copy.map((l) => l.code));
         return { ...g.taken, lines: via(g.taken.lines, step) };
     };
@@ -806,7 +808,7 @@ export function expansion(text, { resolve, locked = [], plugins: theirs = [], an
                 span: spanOf(u.line),
                 hash: hashes[i] ?? null,
                 gave: args[i] ? [...new Set([...visible, ...copied, ...merged.per[i].gave])] : merged.per[i].gave,
-                overrode: merged.per[i].overrode,
+                overrode: [...new Set([...merged.per[i].overrode, ...(overrodes[i] ?? [])])],
                 ...(args[i] ? { args: args[i] } : {}),
                 ...(parts[i] ? { part: parts[i] } : {}),
                 ...(answers[i].length ? { answers: answers[i] } : {}),

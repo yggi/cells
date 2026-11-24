@@ -1,3 +1,4 @@
+import { spoken } from "./spoken.js";
 import { parse } from "./parser/index.js";
 import { compile as compileIn } from "./compiler/index.js";
 import { readSlots } from "./compiler/slots.js";
@@ -30,6 +31,14 @@ function scopeOf(result) {
     return Math.abs(bars - Math.round(bars)) < 1e-6 && Math.round(bars) > 0 ? { bars: Math.round(bars) } : { seconds };
 }
 export function compileSource(written, env = DEFAULT_ENV, options = {}) {
+    return said(compiled(written, env, options));
+}
+function said(result) {
+    if (!result.diagnostics.some((d) => d.message.includes('λ')))
+        return result;
+    return { ...result, diagnostics: result.diagnostics.map((d) => ({ ...d, message: spoken(d.message) })) };
+}
+function compiled(written, env, options) {
     const source = written;
     if (!hasFrom(source))
         return withCodes(compile(parse(source), env), source, options.plugins);
