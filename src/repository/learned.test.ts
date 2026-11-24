@@ -8,7 +8,10 @@ import { chanceOf } from '../engine/realize';
 import { readFragment, writeFragment } from './files';
 import { byId, createRepository, EMPTY_LAYER, layerProblems, type Fragment, type LearnedLayer, type QueryOptions, type StylePoint } from './fragments';
 import { canonicalText, FILING_WEIGHT, fileFragment, sameText, USE_CAP, USE_STEP, usedTogether, useFragments, type Filing } from './learned';
-import { LIBRARY } from './library';
+import { LIBRARY, resolveSeed } from './library';
+import { EXAMPLES } from '../engine/examples';
+import { identityOf } from '../engine/use';
+import { extract } from './extract';
 import { AMBIENT, BOSSA_NOVA, DEEP_HOUSE, FUNK, LO_FI, SWING_JAZZ, SYNTH_POP, TECHNO } from './styles';
 import { seedFragments } from './seed';
 
@@ -161,6 +164,26 @@ describe('canonicalText is kept per text (#867)', () => {
     // (4,096 texts fill it: it is cleared and the first is read afresh, the same)
     for (let i = 0; i < 4_200; i++) canonicalText(`&bar meter("${i}/4")`);
     expect(LIBRARY.slice(0, 20).map((f) => canonicalText(f.text))).toEqual(first);
+  });
+});
+
+describe('a text of from lines alone (#941)', () => {
+  it('is no library fragment: the vamp and bass of Kinderlied, extracted, match none of the 245 (stick_count, hat_count, clave_count before)', () => {
+    const k = EXAMPLES.kinderlied!.source;
+    const at = (head: string) => k.split('\n').findIndex((l) => l.startsWith(head)) + 1;
+    const r = extract(k, [at('&harm '), at('&bassline ')], { id: 'my_vamp_bass', resolve: resolveSeed });
+    if (!('fragment' in r)) throw new Error('no extraction');
+    expect(LIBRARY.filter((f) => sameText(r.fragment, f.text)).map((f) => f.id)).toEqual([]);
+  });
+
+  it('and no two fragments of the library share an identity, the names free', () => {
+    const ids = new Map<string, string[]>();
+    for (const f of LIBRARY) {
+      const hash = identityOf(f.text, 'free').hash;
+      ids.set(hash, [...(ids.get(hash) ?? []), f.id]);
+    }
+    expect(LIBRARY).toHaveLength(245);
+    expect([...ids.values()].filter((v) => v.length > 1)).toEqual([]);
   });
 });
 
