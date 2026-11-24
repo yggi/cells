@@ -101,7 +101,7 @@ describe('what it says where it can’t read one', () => {
 describe('a template with chance can be taken twice with independent dice (#930)', () => {
   // (a part that draws, its seed an argument: the module `wander` is one, #576)
   const TICKS = lines('&ticks from (&seed)', '&ticks seed=&seed step=8n [0|1|2|3|4]!16', '&seed 1');
-  const resolve = (id: string) => (id === 'ticks' ? TICKS : undefined);
+  const resolve = (id: string) => (id === 'ticks' ? TICKS : null);
   const twice = (a: string, b: string) =>
     lines(
       '&bar meter("4/4") step=100bpm',
