@@ -364,17 +364,31 @@ export type MapSpec =
  * free(adagio) etc.: a tempo marking's range, its middle the default.
  */
 /**
- * A number read as the piece is built where the text wrote a cell (decision 105, after 093): `seed=&s`, `cycle=&n`. The
- * scanner reads the place with a placeholder and records the cell; compile (`compiler/built.ts`) reads the cell's value,
- * a cell that is one number or a sum of numbers alone, and sets the attribute.
+ * A number read as the piece is built where the text wrote a cell (decisions 105 and 107, after 093): `seed=&s`,
+ * `0!&n`, `&x[&i]`. The scanner reads the place with a placeholder and records where the cell's name is in the line;
+ * compile (`compiler/built.ts`) reads the cell's value, a cell that is one number or a sum of numbers alone, writes it
+ * into the line and reads the line again, so a place reads a cell exactly as it reads the number written.
  */
 export interface BuiltHole {
-  /** The attribute it sets (a field of the declaration): `seed`, `shift`, `stride`, `cycle`, `laps`, `chance`, `size`. */
-  readonly field: 'seed' | 'shift' | 'stride' | 'cycle' | 'laps' | 'chance' | 'size';
+  /** Where the cell's name (`&n`) stands in the line's text: from and to. */
+  readonly from: number;
+  readonly to: number;
   /** The cell it reads. */
   readonly ref: Ref;
-  /** The place it fills, as the table of places writes it: `seed=n`. */
+  /** The place it fills, as the table of places writes it (`NUMBER_PLACES`' `form`): `seed=n`. */
   readonly form: string;
+}
+
+/** A line that reads cells as the piece is built: its text, where it stands, the unnamed cells it declared, and each hole. */
+export interface BuiltLine {
+  /** The line as the parser read it (continued lines joined, the comment gone). */
+  readonly text: string;
+  readonly line: number;
+  /** Where each written line starts in the joined text, to place a span in the source. */
+  readonly parts: readonly { readonly line: number; readonly start: number }[];
+  /** The names of the unnamed cells this line declared (`&( … )`, `over=scale(…)`): read again with it. */
+  readonly lambdas: readonly string[];
+  readonly holes: readonly BuiltHole[];
 }
 
 export interface FreeSpec {
@@ -438,8 +452,8 @@ export interface CellDecl {
   /** A cell `readStyles` made for a style's slot read, `lpf=… * &style[bite]`: the style it reads and the slot's position (decision 063). */
   /** Cells whose one number compile read into this cell's table and left no reference to (`scale(&mode, …)`, `even(&k, &n, &mode)`): what a reader of the text still names. */
   readonly valueReads?: readonly string[];
-  /** The numbers this line reads from cells as the piece is built (`seed=&s`), filled by compile (decision 105). */
-  readonly holes?: readonly BuiltHole[];
+  /** The numbers this line reads from cells as the piece is built (`seed=&s`, `0!&n`), filled by compile (decisions 105 and 107). */
+  readonly built?: BuiltLine;
   readonly readsSlot?: { readonly cell: string; readonly slot: number; readonly named?: string };
   /** `off`: switched off — silences it and everything that reads through it or plays it. */
   readonly off: boolean;

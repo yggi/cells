@@ -45,6 +45,8 @@ export declare class LineScanner {
     readonly depth: number;
     /** Reads a cell's body (parser/cell.ts `parseBody`): what an unnamed cell &( … ) is. Given here, not imported, so the scanner and the cell parser don't import each other. */
     readonly body?: ((s: LineScanner, head: Ref) => CellDecl) | undefined;
+    /** The numbers read from cells as the piece is built, found in this line (decisions 105 and 107), shared with the unnamed cells inside, each at its place in the line. */
+    readonly holes: BuiltHole[];
     i: number;
     /**
      * `offset`: where this text starts in its line (unnamed cells are parsed from
@@ -52,8 +54,6 @@ export declare class LineScanner {
      */
     /** free(…) found in this text. */
     frees: FreeSpec[];
-    /** The numbers read from cells as the piece is built, found in this text (decision 105). */
-    holes: BuiltHole[];
     constructor(text: string, line: number, offset?: number, lambdas?: CellDecl[], 
     /** Where each original line starts in a joined (continued) line: to place a span in the source. */
     parts?: readonly {
@@ -65,7 +65,9 @@ export declare class LineScanner {
     /** How many unnamed cells &( … ) this text is inside. */
     depth?: number, 
     /** Reads a cell's body (parser/cell.ts `parseBody`): what an unnamed cell &( … ) is. Given here, not imported, so the scanner and the cell parser don't import each other. */
-    body?: ((s: LineScanner, head: Ref) => CellDecl) | undefined);
+    body?: ((s: LineScanner, head: Ref) => CellDecl) | undefined, 
+    /** The numbers read from cells as the piece is built, found in this line (decisions 105 and 107), shared with the unnamed cells inside, each at its place in the line. */
+    holes?: BuiltHole[]);
     /** A scanner over part of this text (from `start`, its `depth` unnamed cells in), sharing what is found so far. */
     within(text: string, start: number, depth?: number): LineScanner;
     warn(message: string, start: number, len: number): void;

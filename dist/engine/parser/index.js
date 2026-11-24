@@ -7,6 +7,11 @@ import { splitPlugins } from "../plugins.js";
 import { FROM_FORM, isUse, readFrom, USE_RETIRED } from "./use.js";
 export { groupingOf, meterLevels } from "./generators.js";
 export { readFrom, USE_RETIRED } from "./use.js";
+export function rereadLine(built, filled) {
+    const s = new LineScanner(filled, built.line, 0, [], built.parts, [], 0, parseBody);
+    const decl = parseCell(s);
+    return { decl, lambdas: s.lambdas };
+}
 export function parse(whole) {
     const cells = [];
     const takes = [];
@@ -81,7 +86,16 @@ export function parse(whole) {
             else if (word === null) {
                 s.i = start;
                 const decl = parseCell(s);
-                cells.push(decl, ...s.lambdas);
+                if (s.holes.length && decl.base) {
+                    diagnostics.push({
+                        severity: 'error',
+                        message: 'base= and a cell read as the piece is built (seed=&s, 0!&n) are not yet one line: write the number, or the cell without base=',
+                        span: decl.base.span,
+                    });
+                    return;
+                }
+                const built = s.holes.length ? { text, line: lineNo, parts, lambdas: s.lambdas.map((l) => l.name), holes: [...s.holes] } : undefined;
+                cells.push(built ? { ...decl, built } : decl, ...s.lambdas);
             }
             else
                 s.fail(`A line declares a cell: &name …`, start, word.length);
@@ -89,6 +103,13 @@ export function parse(whole) {
         catch (e) {
             if (!(e instanceof LineError))
                 throw e;
+            const head = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(text);
+            if (s.holes.length && head) {
+                const at = text.indexOf('&');
+                const ref = { name: head[1], pick: null, shift: 0, span: { ...placeIn(parts, at), len: head[0].length - head[0].indexOf('&') } };
+                cells.push({ ...parseBody(new LineScanner('', lineNo, 0, [], parts, [], 0, parseBody), ref), built: { text, line: lineNo, parts, lambdas: [], holes: [...s.holes] } });
+                return;
+            }
             diagnostics.push({ severity: 'error', message: e.message, span: { ...placeIn(parts, e.col), len: e.len } });
             const name = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(text)?.[1];
             if (name)

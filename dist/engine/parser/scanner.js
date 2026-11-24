@@ -44,10 +44,10 @@ export class LineScanner {
     warnings;
     depth;
     body;
+    holes;
     i = 0;
     frees = [];
-    holes = [];
-    constructor(text, line, offset = 0, lambdas = [], parts = [{ line, start: 0 }], warnings = [], depth = 0, body) {
+    constructor(text, line, offset = 0, lambdas = [], parts = [{ line, start: 0 }], warnings = [], depth = 0, body, holes = []) {
         this.text = text;
         this.line = line;
         this.offset = offset;
@@ -56,9 +56,10 @@ export class LineScanner {
         this.warnings = warnings;
         this.depth = depth;
         this.body = body;
+        this.holes = holes;
     }
     within(text, start, depth = this.depth) {
-        return new LineScanner(text, this.line, this.offset + start, this.lambdas, this.parts, this.warnings, depth, this.body);
+        return new LineScanner(text, this.line, this.offset + start, this.lambdas, this.parts, this.warnings, depth, this.body, this.holes);
     }
     warn(message, start, len) {
         this.warnings.push({ severity: 'warning', message, span: { ...this.place(start), len } });
@@ -127,7 +128,7 @@ export class LineScanner {
             return null;
         const at = this.i;
         this.i += m[0].length;
-        this.holes.push({ field: place.fills.field, ref: { name: m[1], pick: null, shift: 0, span: this.span(at) }, form: place.form });
+        this.holes.push({ from: this.offset + at, to: this.offset + this.i, ref: { name: m[1], pick: null, shift: 0, span: this.span(at) }, form: place.form });
         const value = place.fills.placeholder;
         return { key: 'param', value, unit: '', lo: value, hi: value, span: this.span(at) };
     }

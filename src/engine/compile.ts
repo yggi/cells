@@ -3,6 +3,7 @@ import { spoken } from './spoken';
 import type { ParseResult } from './ast';
 import { parse } from './parser';
 import { compile as compileIn } from './compiler';
+import { fillBuilt } from './compiler/built';
 import { readSlots } from './compiler/slots';
 import { clocking } from './clocking';
 import { mainLength, pieceTime } from './duration';
@@ -14,7 +15,8 @@ import { splitComment } from './edit';
 /** A parsed piece, compiled: the phases are in compiler/ (index.ts says their order). */
 function compile(parsed: ParseResult, env: Env = DEFAULT_ENV, used?: ReadonlySet<string>): CompileResult {
   // a style a voice reads by axis (decision 063, styles.ts): its picks read first, then a cell for each
-  const slotted = readSlots(parsed);
+  // (a number read from a cell as the piece is built is written into its line first, decision 107)
+  const slotted = readSlots(fillBuilt(parsed));
   const held = readStyles(slotted, null);
   const first = compileIn(held.parsed, env, used);
   if (!held.glides) return first;

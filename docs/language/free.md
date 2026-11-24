@@ -31,7 +31,7 @@ The places, from the parser's own table:
 | style=[&a * n, …] (a weight) | ✓ | ✗ a weight is a number; a crossfade is `style=&a..&b * &curve` | `&s style=[&funk * free(.8, 0..1), &bossa * .2]` |
 | scale(name, n) (a tonic) | ✓ whole | `&k` (a note); a tonic is a pitch class, never a range | `&key scale(dorian, free(2, 0..11))` |
 | step=n · loop=n (a rate) | ✓ | a clock (`step=&bar`): another meaning | `&bar meter("4/4") step=free(90bpm, 60..240)` |
-| step=&bar*n · step=&bar/n | ✓ | ✗ read as the piece is built | `&fast step=&bar*free(2, 1..4) 0 2` |
+| step=&bar*n · step=&bar/n | ✓ | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&fast step=&bar*free(2, 1..4) 0 2` |
 | shift=n | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&key step=cycle(&theme) shift=free(0, 0..11)` |
 | stride=n | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&key step=cycle(&theme) stride=free(0, 0..7)` |
 | cycle=n | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&wheel cycle=free(1, 0..4) 0 4 7` |
@@ -44,17 +44,17 @@ The places, from the parser's own table:
 | geo(r, n, k …) | ✓ | ✗ read as the piece is built | `&series scan(geo(free(5, 2..8), 25, 0 10 5))` |
 | euclid(k, n, r) · sin(n) … | ✓ whole | `&k`, a cell that is one number, filled as the piece is built (decisions 093, 101) | `&hits euclid(free(3, 0..8), 8) step=8` |
 | even(k, n, phase) (an argument) | ✓ whole | `&k`, a cell that is one number, filled as the piece is built (decision 093); a mode’s name only as even(7, 12)’s phase; a key’s phase may step, read at each bar line | `&key scale(even(7, 12, free(3, 0..6)), D)` |
-| fifths(n) | ✓ whole | ✗ read as the piece is built | `&circle fifths(free(1, 0..11))` |
+| fifths(n) | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&circle fifths(free(1, 0..11))` |
 | meter(n, n) | ✓ | `&k`, filled as the piece is built (decision 101): a text cell for its signature (`&meter "3/4"`), a cell that is one number for its step | `&bar meter(free(2, 0..3, "2/4 3/4 4/4 6/8")) step=90bpm` |
-| map=edo(n) · map=ed(n, r) · map=midi(c, p) | ✓ whole | ✗ read as the piece is built | `&edo map=edo(free(19, 5..31))` |
-| map=ed(r) | ✓ | ✗ read as the piece is built | `&bp map=ed(13, free(3, 1.5..4))` |
+| map=edo(n) · map=ed(n, r) · map=midi(c, p) | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&edo map=edo(free(19, 5..31))` |
+| map=ed(r) | ✓ | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&bp map=ed(13, free(3, 1.5..4))` |
 | 0 2 4 (a step of a braid) | ✓ | a cell plays there (`&k`, spliced) | `&tune step=2 0 free(2, 0..7) 4` |
-| x!n · x@n · x*n · x/n | ✓ whole | ✗ read as the piece is built | `&beat step=4 0!free(4, 1..8) 2` |
-| x?p | ✓ | ✗ read as the piece is built | `&hats step=4 0 0?free(.3, 0..1)` |
-| x(k, n, r) | ✓ whole | ✗ read as the piece is built | `&groove step=1 0(free(3, 0..8),8)` |
-| &x[i] · &x[a:b:s] · &x[$i] | ✓ whole | ✗ read as the piece is built: picking while it plays is a selector's (#51) | `&tune step=2 &motif[free(0, 0..3)]` |
-| &x[<<n] · &x[>>n] | ✓ whole | ✗ read as the piece is built | `&canon step=2 &theme[>>free(4, 0..7)]` |
-| &x^n · &x^$n · degree(&x, n) | ✓ whole | ✗ read as the piece is built | `&tune step=2 &motif &motif^free(1, -7..7)` |
+| x!n · x@n · x*n · x/n | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&beat step=4 0!free(4, 1..8) 2` |
+| x?p | ✓ | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&hats step=4 0 0?free(.3, 0..1)` |
+| x(k, n, r) | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&groove step=1 0(free(3, 0..8),8)` |
+| &x[i] · &x[a:b:s] · &x[$i] | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&tune step=2 &motif[free(0, 0..3)]` |
+| &x[<<n] · &x[>>n] | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&canon step=2 &theme[>>free(4, 0..7)]` |
+| &x^n · &x^$n · degree(&x, n) | ✓ whole | `&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105) | `&tune step=2 &motif &motif^free(1, -7..7)` |
 | &x:n (a hit’s number) | ✗ a pitched hit is not yet: it is 0 | ✗ read as the piece is built | `&beat step=8 &bd:0` |
 <!-- places:end -->
 
