@@ -47,9 +47,11 @@ const VAMP_FRAGMENTS = HARMONY_FRAGMENTS.filter(
       'turnaround',
       'ii_v_i',
       'minor_swing',
-      // (#947: Pop's)
+      // (#947: Pop's, and two beside Baroque and Swing jazz)
       'authentic_cadence',
       'four_chord_pop',
+      'pachelbel_canon',
+      'bebop_ii_v_i',
     ].includes(f.id),
 );
 
@@ -152,6 +154,8 @@ describe('the harmonies', () => {
       'minor_swing',
       'authentic_cadence',
       'four_chord_pop',
+      'pachelbel_canon',
+      'bebop_ii_v_i',
     ]);
     expect(VAMP_FRAGMENTS.map((f) => degreesOf(f.text))).toEqual([[0], [0, 6], [0, 3], [0, 5], [0, 4]].map((chords) => layout(chords, 0)));
   });

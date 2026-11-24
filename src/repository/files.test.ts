@@ -78,8 +78,8 @@ const good = (change: (lines: string[]) => void = () => {}) => {
 
 describe('the seed files', () => {
   const files = Object.entries(SEED_FILES);
-  it('are the seed files (the law five_to_twelve, #772; the seven mode files one, diatonic, #387; the nine modules, #457, decision 074, and the wander, #576; the thirteen meters one, meter, #507, then bar and three style meters and the odd ones, #902; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; #540’s five harmonies; #646’s two drum bars, for 7/8 and 12/8; and Kinderlied’s six tunes its own parts since decision 082; the nine section kinds and the seven song forms, #810; the built-in braid fill metric_accent and the breathing pulse that takes it, #799; the four melodic scales, #719; the eight fills and the four counts, #718 and #720; the ending, #720: two hundred and twenty-seven, with #720’s five more endings, the solo, the coro, the mambo and son_montuno, and Pop’s two harmonies, #947)', () =>
-    expect(files).toHaveLength(227));
+  it('are the seed files (the law five_to_twelve, #772; the seven mode files one, diatonic, #387; the nine modules, #457, decision 074, and the wander, #576; the thirteen meters one, meter, #507, then bar and three style meters and the odd ones, #902; the cinquillo, #507; the twenty-one read from the examples for Spooky, Kinderlied, Acid, Happy hardcore, Elektro and Dark ambient, #572; and #542’s; #540’s five harmonies; #646’s two drum bars, for 7/8 and 12/8; and Kinderlied’s six tunes its own parts since decision 082; the nine section kinds and the seven song forms, #810; the built-in braid fill metric_accent and the breathing pulse that takes it, #799; the four melodic scales, #719; the eight fills and the four counts, #718 and #720; the ending, #720: two hundred and twenty-nine, with #720’s five more endings, the solo, the coro, the mambo and son_montuno, and #947’s four harmonies)', () =>
+    expect(files).toHaveLength(229));
 
   it.each(files)('%s writes back byte for byte', (path, markdown) => {
     expect(writeFragment(read(markdown, optionsAt(path)), optionsAt(path))).toBe(markdown);
@@ -212,6 +212,9 @@ describe('the seed files', () => {
     // (#947: Pop's two progressions, written for it, lifted from no example)
     'authentic_cadence',
     'four_chord_pop',
+    // (#947: Pachelbel's canon and bebop's ii–V–I, written beside Baroque and Swing jazz)
+    'pachelbel_canon',
+    'bebop_ii_v_i',
     // (#540: the harmonies written for the presets whose first harmony missed, lifted from no example)
     'ninth_vamp',
     'ninth_loop',

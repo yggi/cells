@@ -47,10 +47,10 @@ describe('a progression’s third is its shift by a third', () => {
       expect(variationBy(text, v.by.replace(/^third /, 'shift '), { workbench: KEY, ...SHIFTS })?.after, v.by).toBe(v.after);
   });
 
-  it('gives 356 shifts of the 19 seeds in C major alone, and 137 beside the harmony operators (its ±2 are their thirds)', () => {
+  it('gives 392 shifts of the 21 seeds in C major alone, and 146 beside the harmony operators (its ±2 are their thirds)', () => {
     const count = (operators: VaryOptions['operators']) => seedFragments('harmony').reduce((n, f) => n + variations(f.text, { workbench: KEY, operators }).length, 0);
-    expect(count([SHIFT])).toBe(356);
-    expect(count([...HARMONY_OPERATORS, SHIFT]) - count(HARMONY_OPERATORS)).toBe(137);
+    expect(count([SHIFT])).toBe(392);
+    expect(count([...HARMONY_OPERATORS, SHIFT]) - count(HARMONY_OPERATORS)).toBe(146);
   });
 });
 
