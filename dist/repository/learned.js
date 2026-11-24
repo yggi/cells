@@ -1,6 +1,6 @@
 import { declarations } from "./fit.js";
 import { byId, fragmentProblems, pointDistance, pointsOf } from "./fragments.js";
-import { signatureOf } from "../engine/use.js";
+import { identityOf, signatureOf } from "../engine/use.js";
 import { readFrom } from "../engine/parser/use.js";
 import { counts } from "../engine/core/desugar.js";
 import { splitComment } from "../engine/edit.js";
@@ -46,10 +46,17 @@ const linesAlone = (text) => answered(text)
 export function sameText(a, b) {
     if (!signatureOf(a) && signatureOf(b))
         return sameText(a, linesAlone(b));
-    if (canonicalText(a) !== canonicalText(b))
+    const x = identityOf(a, 'free');
+    const y = identityOf(b, 'free');
+    if (x.hash !== y.hash)
         return null;
-    const bs = ownNames(b);
-    return new Map(ownNames(a).flatMap((name, i) => (name === bs[i] ? [] : [[`&${name}`, `&${bs[i]}`]])));
+    const left = new Map();
+    for (const [name, id] of y.cells)
+        left.set(id, [...(left.get(id) ?? []), name]);
+    return new Map([...x.cells].flatMap(([name, id]) => {
+        const held = left.get(id)?.shift();
+        return held === undefined || held === name ? [] : [[`&${name}`, `&${held}`]];
+    }));
 }
 export function usedTogether(layer, a, b) {
     if (a === b)

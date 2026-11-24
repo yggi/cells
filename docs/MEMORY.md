@@ -4,7 +4,7 @@ Entrypoint for humans and agents: slow-change, shared knowledge about the cells 
 
 ## The project
 
-The cells language: a minimal language for music where everything is a **cell**, a helix (pitch classes over octaves, beats over bars) with a **braid** sitting in its grid, on top of Strudel's mini-notation. This repository is the language as a pure TypeScript package, `@yggi/cells`: text in, events out, with no host of its own. Its frontends consume it at a tag: [Cell studio](https://github.com/yggi/cell-studio), the workbench (editor, graph, audio), and [Jambot](https://github.com/yggi/jambot), the interactive, multi-user frontend (the composer, the Muse, sessions). It came out of Cell studio ([#1](https://github.com/yggi/cells/issues/1)), and holds the repository of cell fragments with its seed library in `fragments/` (decisions 041, 046–048); a fragment's canonical form and hash are not built ([#49](https://github.com/yggi/cells/issues/49)).
+The cells language: a minimal language for music where everything is a **cell**, a helix (pitch classes over octaves, beats over bars) with a **braid** sitting in its grid, on top of Strudel's mini-notation. This repository is the language as a pure TypeScript package, `@yggi/cells`: text in, events out, with no host of its own. Its frontends consume it at a tag: [Cell studio](https://github.com/yggi/cell-studio), the workbench (editor, graph, audio), and [Jambot](https://github.com/yggi/jambot), the interactive, multi-user frontend (the composer, the Muse, sessions). It came out of Cell studio ([#1](https://github.com/yggi/cells/issues/1)), and holds the repository of cell fragments with its seed library in `fragments/` (decisions 041, 046–048); a fragment's hash is `e3:`, the hash of its cells' identities (decision 106, [#49](https://github.com/yggi/cells/issues/49), #945).
 
 ## The family
 
@@ -80,4 +80,5 @@ Every decision, its substance in a line, is in [decisions/README.md](decisions/R
 - 077 · The core is sound only, cored up to a named interface (a fragment's signature, a piece's tempo, a score's gates); `x!n` is core, a count · → decisions/077-the-core-is-sound-up-to-an-interface.md
 - 079 · A voiceless mix of cells is the sum of their values; a moving range's ends may be sliders, centre ± reach its sugar · → decisions/079-a-sum-of-cells-and-a-window.md
 - 078 · Every number may be a `free()`, read by one reader over the table of places; a cell moves only a number read while the piece plays · → decisions/078-every-number-may-be-free.md
+- 106 · One identity: a cell's, a fragment's the hash of its cells' (E4) · → decisions/106-one-identity-the-cells.md
 - 080 · A meter is a tree placed through a time map: `bend=4n:&table` bends a level's nodes, a tempo map where it spans bars; a meter scan is its sugar · → decisions/080-a-meter-is-a-tree-placed-through-a-time-map.md

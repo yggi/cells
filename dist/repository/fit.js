@@ -1,7 +1,7 @@
 import { compileSource } from "../engine/compile.js";
 import { renameCell, splitComment } from "../engine/edit.js";
 import { fromLine } from "../engine/references.js";
-import { expansion, fragmentHash, signatureOf } from "../engine/use.js";
+import { expansion, fragmentHashE2, signatureOf } from "../engine/use.js";
 import { parse, readFrom } from "../engine/parser/index.js";
 import { braidReadsOf } from "../engine/compiler/builtin.js";
 import { readsOf } from "../engine/reads.js";
@@ -165,7 +165,7 @@ export function cachedFit(resolve, limit = 512) {
         return fitsAs(id, workbench, { resolve: resolving, compiled, ...(main === null ? {} : { main }) });
     });
     return (text, workbench, main) => {
-        const id = `fit_${fragmentHash(text).slice(3)}`;
+        const id = `fit_${fragmentHashE2(text).slice(3)}`;
         own.set(id, text);
         return fit(JSON.stringify({ id, workbench, main: main ?? null }));
     };
@@ -173,7 +173,7 @@ export function cachedFit(resolve, limit = 512) {
 function refOf(ref, options) {
     if (typeof ref === 'string')
         return { id: ref, options };
-    const id = `fit_${fragmentHash(ref.text).slice(3)}`;
+    const id = `fit_${fragmentHashE2(ref.text).slice(3)}`;
     const resolve = (other, hash) => (other === id ? ref.text : options.resolve(other, hash));
     return { id, options: { ...options, resolve, ...(ref.head === undefined ? {} : { head: ref.head }) } };
 }

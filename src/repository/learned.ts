@@ -22,7 +22,7 @@
 import type { FragmentFile, Meta } from './files';
 import { declarations } from './fit';
 import { byId, fragmentProblems, pointDistance, pointsOf, type LearnedLayer, type Repository, type StylePoint, type UsedPair, type WeightedPoint } from './fragments';
-import { signatureOf } from '../engine/use';
+import { identityOf, signatureOf } from '../engine/use';
 import { readFrom } from '../engine/parser/use';
 import { counts } from '../engine/core/desugar';
 import { splitComment } from '../engine/edit';
@@ -158,9 +158,18 @@ const linesAlone = (text: string): string =>
  */
 export function sameText(a: string, b: string): ReadonlyMap<string, string> | null {
   if (!signatureOf(a) && signatureOf(b)) return sameText(a, linesAlone(b));
-  if (canonicalText(a) !== canonicalText(b)) return null;
-  const bs = ownNames(b);
-  return new Map(ownNames(a).flatMap((name, i) => (name === bs[i] ? [] : [[`&${name}`, `&${bs[i]}`] as const])));
+  const x = identityOf(a, 'free');
+  const y = identityOf(b, 'free');
+  if (x.hash !== y.hash) return null;
+  // (the cells paired by their identities, in the order each text declares them; those alike are one whichever is which)
+  const left = new Map<string, string[]>();
+  for (const [name, id] of y.cells) left.set(id, [...(left.get(id) ?? []), name]);
+  return new Map(
+    [...x.cells].flatMap(([name, id]) => {
+      const held = left.get(id)?.shift();
+      return held === undefined || held === name ? [] : [[`&${name}`, `&${held}`] as const];
+    }),
+  );
 }
 
 /** How often two fragments were used together, in a layer (0 for a fragment with itself). */

@@ -357,7 +357,7 @@ export const LINE_PARAMS: ReadonlySet<string> = new Set(
 export const PLAYED_AS: ReadonlySet<string> = new Set(['part', 'role']);
 
 /**
- * The attributes no listener hears, and no identity reads (#945, decision 098/099): how a cell is drawn (`label=` `show=` `size=`
+ * The attributes no listener hears, and no identity reads (#945, decisions 098, 106): how a cell is drawn (`label=` `show=` `size=`
  * `about=` `tags=`) and what it is played as (`part=` `role=`). One list: the core cuts them (`toCore`), a measure of structure
  * counts them free, and a cell's identity (its draws, its fragment's hash) leaves them out.
  */

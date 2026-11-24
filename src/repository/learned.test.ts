@@ -265,7 +265,8 @@ describe('identity, until the hash', () => {
     expect(sameText('&b meter("3/4")', '&bar meter("3/4")')).toEqual(new Map([['&b', '&bar']]));
     expect(sameText('&b from (&s) &t\n&b meter("3/4") step=&t swing=&s\n&s 8n:.6', '&bar from (&s) &t\n&bar meter("3/4") step=&t swing=&s\n&s 8n:.6')).toBeNull();
     expect(sameText('&x step=16n &harm', '&x step=16n &chord')).toBeNull();
-    expect(sameText('&a step=16n 0 2\n&b step=16n 4', '&b step=16n 4\n&a step=16n 0 2')).toBeNull();
+    // (the order of the lines is no part of a text's identity, L19, #945)
+    expect(sameText('&a step=16n 0 2\n&b step=16n 4', '&b step=16n 4\n&a step=16n 0 2')?.size).toBe(0);
   });
 
   it('a filed text held already adds a point to the fragment that holds it, not a second fragment', () => {
