@@ -4,6 +4,7 @@
  * small rewrite of the cell's own line, keeping its comment and the rest of
  * the line as written. Pure string → string, so the code view stays 1:1.
  */
+import { spoken } from './spoken';
 import { readFrom } from './parser/use';
 
 /** Split a line into code and its trailing comment (`//`, or `#` at start / after a space; neither inside quotes). */
@@ -238,10 +239,12 @@ export function offProblem(source: string, name: string): string | null {
     const form = readFrom(splitComment(raw)[0]);
     if (form?.kind !== 'use' || !(form.names?.includes(`&${name}`) ?? true)) continue;
     if (form.names && form.names.length > 1)
-      return `&${name} is one of ${form.names.join(', ')}, which one line takes from ${form.id}: off before from would be every head's, so take &${name} in first (its own line) and switch that off`;
-    return `&${name} is ${form.id}'s cell, given by a from line: take it in first (its own line) and switch that off`;
+      return spoken(
+        `&${name} is one of ${form.names.join(', ')}, which one line takes from ${form.id}: off before from would be every head's, so take &${name} in first (its own line) and switch that off`,
+      );
+    return spoken(`&${name} is ${form.id}'s cell, given by a from line: take it in first (its own line) and switch that off`);
   }
-  return `&${name} is no cell of this piece's to switch off`;
+  return spoken(`&${name} is no cell of this piece's to switch off`);
 }
 
 // ------------------------------------------------------------------ whole-line edits

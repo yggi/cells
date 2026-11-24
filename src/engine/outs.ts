@@ -33,9 +33,10 @@ const nameOf = (id: string) => id.slice('cell:'.length);
 
 /**
  * The outs of a compiled piece, in the graph's order. `model`: the graph they are read from, when the caller has it
- * (its edges into cards: it must hold the built-in card, `writtenGraph(result, { card: true })`).
+ * (its edges into cards: it must hold the built-in card, `writtenGraph(result, { card: true })`); a drawn graph's edge
+ * may say the bulb it leaves from (a read head drawn on its tape), which is then what sounds.
  */
-export function outs(result: CompileResult, model: { readonly edges: readonly GraphEdge[] } = writtenGraph(result, { card: true })): Out[] {
+export function outs(result: CompileResult, model: { readonly edges: readonly (GraphEdge & { readonly bulb?: string })[] } = writtenGraph(result, { card: true })): Out[] {
   const cardOf = (id: string) => {
     const c = result.cells.get(nameOf(id));
     return c && (c.sink || isMidiCard(c)) ? c : undefined;

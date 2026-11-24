@@ -3,8 +3,7 @@
  * (the implicit default grid stays hidden), with exactly the links written:
  * over=, &refs, step= and a mix's entries. Voice cells are drawn as voices; a product in a mix
  * (`&theme * &flute * .4`) is a junction, an unnamed node of its own (docs/notes/nets.md, decision 2).
- * Depth grows outward from the roots: a cell sits one ring beyond the table
- * it reads through and the cells it splices in; voices sit beyond what they play.
+ * How it is drawn (a cell's ring, petals, bulbs, belts) is the frontend's (decision 086: Cell studio's `layout/graph.ts`).
  */
 import { isMidiCard, keepsTime, type CompileResult, type Output, type ResolvedCell } from './program';
 import type { Atom, Binding, Expr, Pick, ValueMap } from './ast';
@@ -19,16 +18,9 @@ export type GraphNode =
   | {
       readonly id: string;
       readonly kind: 'cell';
-      readonly depth: number;
       readonly cell: ResolvedCell;
       /** A meter: its bar keeps time, written meter(…) or scan(…) (`keepsTime`, #123); drawn as ground, with its net. */
       readonly isMeter: boolean;
-      readonly petalOf?: string;
-      /**
-       * A braid's bulbs (#221), at its size in the graph: how far they reach past its wheel (px, the layout's room for
-       * them), and below it (where its name goes).
-       */
-      readonly reach?: { readonly room: number; readonly below: number };
       /** An instrument's place in stereo and in the mix (as for voices). */
       readonly pan?: number;
       readonly order?: number;
@@ -36,9 +28,7 @@ export type GraphNode =
   | {
       readonly id: string;
       readonly kind: 'voice';
-      readonly depth: number;
       readonly cell: ResolvedCell;
-      readonly petalOf?: string;
       /** Where it sits in stereo: −1 left … 1 right (from its levels in each channel). */
       readonly pan?: number;
       /** Its place in the mix, as written (first = 0). */
@@ -53,7 +43,6 @@ export type GraphNode =
        */
       readonly id: string;
       readonly kind: 'junction';
-      readonly depth: number;
       /** The mix whose line writes it, and its place among that mix's entries (first = 0). */
       readonly mix: string;
       readonly entry: number;
@@ -66,7 +55,6 @@ export type GraphNode =
       readonly levels: readonly string[];
       readonly gain: number;
       readonly cell?: undefined;
-      readonly petalOf?: undefined;
       readonly pan?: undefined;
       readonly order?: undefined;
     };
@@ -101,11 +89,6 @@ interface Wire {
 
 export interface GraphEdge extends Wire {
   readonly id: string;
-  /**
-   * A step drawn as a belt between two turntables: `spring` when the driven cell says `belt=` (it lags and swings),
-   * `rigid` when both are turntables anyway (a tape on its motor's capstan).
-   */
-  readonly belt?: 'spring' | 'rigid';
   readonly source: string;
   readonly target: string;
   /** How many slots of the source play the target (refs). */
@@ -128,13 +111,6 @@ export interface GraphEdge extends Wire {
    * voice, the voice into the mix): it is routed (and live) when, of each group, one of these is (`drawn`).
    */
   readonly routes?: readonly (readonly string[])[];
-  /**
-   * The bulb on its source's wheel it leaves from (a cell's name): a section drawn on its table (decision 016), what it
-   * steps a sub-net from there.
-   */
-  readonly bulb?: string;
-  /** Where that bulb's hub is from its wheel's centre (px, the wheel at its size in the graph), and its disc's radius. */
-  readonly bulbAt?: { readonly x: number; readonly y: number; readonly r: number };
 }
 
 /**
@@ -176,7 +152,7 @@ function refTransform(r: {
  * (over=), a melody's (voice) and a voice's (mix) leave it once and go on from reader to reader; a meter's (step=, sync) is its ground: no edge of
  * its own is drawn, its traces join it and its cells through each other. The layout lays each as a tree (a ratsnest).
  */
-interface GraphNet {
+export interface GraphNet {
   readonly id: string;
   /** The cell it leaves (its node id), and the port its readers read it through. */
   readonly owner: string;
@@ -190,35 +166,13 @@ interface GraphNet {
    * never from another reader, where its label would read as a delay from there.
    */
   readonly delayed: boolean;
-  /** The bulb on the owner's wheel it leaves from (GraphEdge.bulb): a section's sub-net, from its place on its table. */
-  readonly bulb?: string;
-  /** Where that bulb's hub is from the owner's centre, and its disc's radius (GraphEdge.bulbAt). */
-  readonly bulbAt?: { readonly x: number; readonly y: number; readonly r: number };
+  /** The part of the owner its readers read it from, where the caller cuts the net in parts (`netsOf`'s `part`): a section's sub-net, from its place on its table. */
+  readonly part?: string;
 }
-
-export interface GraphModel {
-  readonly nodes: readonly GraphNode[];
-  readonly edges: readonly GraphEdge[];
-  readonly nets: readonly GraphNet[];
-  /**
-   * An edge drawn under another id (through a petal: to its parent), by its own id; undefined: not drawn (hidden, or a
-   * written pair drawn through a product's junction: its wires say so, `routes`).
-   */
-  readonly alias: ReadonlyMap<string, string | undefined>;
-  /**
-   * The cells drawn as bulbs on another's track, by name: each to the cell that splices it (#221). A cell spliced into
-   * one braid only, and read nowhere else, has no node of its own; its edges are drawn from that braid.
-   */
-  readonly bulbs: ReadonlyMap<string, string>;
-}
-
-/** A cell drawn as a turntable: a motor, a belted cell, a tape, a resonator's body. */
-export const isTurntable = (c: ResolvedCell) =>
-  typeof c.params.motor === 'number' || typeof c.params.belt === 'number' || typeof c.params.write === 'string' || typeof c.params.body === 'string';
 
 /**
- * The graph of what is written, before it is drawn (layout/drawn.ts `buildGraph` makes the graph as drawn from it: petals,
- * bulbs, show=off): every cell its own node, every written link its wire. `through`: the written pairs drawn through a
+ * The graph of what is written, before it is drawn (a frontend draws it: Cell studio's `layout/drawn.ts` hangs petals and
+ * bulbs, leaves out show=off, rings its nodes): every cell its own node, every written link its wire. `through`: the written pairs drawn through a
  * product's junction (not drawn themselves: their wires at the junction stand for them).
  */
 export interface WrittenGraph {
@@ -234,45 +188,8 @@ export interface WrittenGraph {
  */
 export function writtenGraph(result: CompileResult, { card = false }: { readonly card?: boolean } = {}): WrittenGraph {
   const edges: GraphEdge[] = [];
-  const depth = new Map<string, number>();
   // meters: cells whose bar keeps time, meter(…) or scan(…) alike (#123) — not a vibrato looping at a rate
   const meters = new Set([...result.clocks.keys()].filter((name) => keepsTime(result, name)));
-  const playedBy = new Map<string, string[]>();
-  // (an output played off a tape comes from its read head, not the tape's source)
-  const from = (o: (typeof result.outputs)[number]) => (o.tape ? o.tape.head : o.cell);
-  // (a drone plays its voice alone: nothing plays it)
-  for (const o of result.outputs) if (!o.drone) playedBy.set(o.voice, [...(playedBy.get(o.voice) ?? []), from(o)]);
-
-  const depthOf = (name: string, guard = 0): number => {
-    const hit = depth.get(name);
-    if (hit !== undefined) return hit;
-    const c = result.cells.get(name);
-    let d = 1;
-    if (c && guard < 64) {
-      if (c.root) d = 0;
-      else if (c.mix) {
-        for (const b of c.mix) d = Math.max(d, depthOf(b.voice.name, guard + 1) + 1);
-      } else if (c.chords) {
-        // (a MIDI card: past what it sends, as a sound card is past what it hears)
-        for (const b of c.chords.flatMap((x) => x ?? [])) d = Math.max(d, depthOf(b.voice.name, guard + 1) + 1);
-        for (const k of c.children.keys()) d = Math.max(d, depthOf(k, guard + 1) + 1);
-      } else if (c.voice || c.kit) {
-        for (const p of playedBy.get(name) ?? []) d = Math.max(d, depthOf(p, guard + 1) + 1);
-        for (const o of result.outputs)
-          if (o.voice === name) {
-            for (const m of [...o.mods, ...o.levels]) d = Math.max(d, depthOf(m.cell, guard + 1) + 1);
-            if (o.envelopeCell) d = Math.max(d, depthOf(o.envelopeCell, guard + 1) + 1);
-          }
-        for (const k of c.children.keys()) d = Math.max(d, depthOf(k, guard + 1) + 1);
-      } else {
-        d = depthOf(c.over ?? c.context, guard + 1) + 1;
-        for (const k of c.children.keys()) d = Math.max(d, depthOf(k, guard + 1) + 1);
-      }
-    }
-    depth.set(name, d);
-    return d;
-  };
-
   // (the implicit cells stay hidden, but for the kit the grooves read: drawn as the piece's drum kit, the voices only
   // grooves play its pieces, each name a groove writes a wire into its piece; decision 021; docs/ui/graph.md)
   // — unless a gate's own kit holds them and every one of them is played through such a gate: then that kit is the
@@ -339,8 +256,8 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
   for (const c of result.cells.values()) {
     if (!shown(c.name)) continue;
     const id = cellId(c.name);
-    if (c.voice) nodes.push({ id, kind: 'voice', depth: depthOf(c.name), cell: c });
-    else nodes.push({ id, kind: 'cell', depth: depthOf(c.name), cell: c, isMeter: meters.has(c.name) });
+    if (c.voice) nodes.push({ id, kind: 'voice', cell: c });
+    else nodes.push({ id, kind: 'cell', cell: c, isMeter: meters.has(c.name) });
     // (a groove reads the drums' kit, but writes no over=: its wires are the names it writes, below)
     if (c.over && c.over !== VOICE_KIT)
       link({
@@ -566,14 +483,12 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
         ...wire('step', 'sync', cellId(table), cellId(c.step.driver), 1, true),
       });
     } else if (c.step && !table)
-      // (a belt says so: the cell follows through a spring, not rigidly)
       link({
         id: stepEdgeId(id, cellId(c.step.driver)),
         source: id,
         target: cellId(c.step.driver),
         count: 1,
         transforms: [rateOf(c)],
-        ...beltOf(c, result.cells.get(c.step.driver)),
         ...wire('step', 'sync', id, cellId(c.step.driver), 1, true),
       });
     // a parameter given as a clock (delaytime=&bar*4/3, length=, at=): a tap of the clock's ticks, at its rate as written;
@@ -740,7 +655,6 @@ export function writtenGraph(result: CompileResult, { card = false }: { readonly
     junctions.push({
       id: j,
       kind: 'junction',
-      depth: depthOf(b.voice.name),
       mix: c.name,
       entry,
       voice: b.voice.name,
@@ -857,12 +771,6 @@ function rateTransform(s: NonNullable<ResolvedCell['step']>, belt?: number): Tra
   return [{ kind: 'rate', by: s.chain, per: s.cycle ? 'cycle' : 'step', whole: s.whole, ...(belt !== undefined ? { belt } : {}), ...(tap ? { tap } : {}) }];
 }
 
-/** A step's belt, if it is one (GraphEdge.belt). */
-function beltOf(driven: ResolvedCell, driver: ResolvedCell | undefined): { belt?: 'spring' | 'rigid' } {
-  if (typeof driven.params.belt === 'number') return { belt: 'spring' };
-  return driver && isTurntable(driven) && isTurntable(driver) ? { belt: 'rigid' } : {};
-}
-
 /** A resonator's tines (its exciters, when it has more than one): a note into it picks one, so the edge is that wide. */
 const tines = (result: CompileResult, name: string) => {
   const c = result.cells.get(name);
@@ -919,43 +827,46 @@ const DELAY_PORTS = new Set(['braid', 'play']);
 /** A reader that reads at a delay: a copy (`[<<n]`, steps) or a tape's head (`at=`, seconds). */
 const isDelayed = (e: GraphEdge) => e.transforms.some((t) => t.some((s) => s.kind === 'delay'));
 
+/** How a caller cuts the nets (`netsOf`): what is drawn of them is a frontend's. */
+export interface NetOptions<E extends GraphEdge> {
+  /**
+   * The part of its source an edge leaves from, where the caller draws parts (a section drawn on its table, Cell studio's
+   * bulb: decision 016): its readers make a sub-net of their own, and a step from a part is a meter's tick.
+   */
+  readonly part?: (e: E) => string | undefined;
+  /** An edge no net holds (a step drawn as a belt, a body of its own). */
+  readonly apart?: (e: E) => boolean;
+}
+
 /**
  * The nets among the edges: a table read by two or more (over=), a melody or a voice by two or more, a cell read at
  * delays (a canon's copies, a tape's heads: docs/decisions/010-canon-copies.md), and each meter's ticks to every cell
- * it steps or that takes a time from it (a step or a parameter's clock into a meter, `delaytime=&bar*4/3`; not through
- * a belt: a belt is a body, drawn). A meter's net is its `step` net, whichever port each reader reads it through.
+ * it steps or that takes a time from it (a step or a parameter's clock into a meter, `delaytime=&bar*4/3`). A meter's
+ * net is its `step` net, whichever port each reader reads it through. A caller that draws parts of a cell or keeps an
+ * edge apart says so (`NetOptions`): the owner on 2026-11-24, the nets stay the language's, their bulbs the frontend's.
  */
-export function netsOf(nodes: readonly GraphNode[], edges: readonly GraphEdge[]): GraphNet[] {
+export function netsOf<E extends GraphEdge>(nodes: readonly GraphNode[], edges: readonly E[], { part = () => undefined, apart = () => false }: NetOptions<E> = {}): GraphNet[] {
   const meters = new Set(nodes.flatMap((n) => (n.kind === 'cell' && n.isMeter ? [n.id] : [])));
-  const groups = new Map<string, { port: string; readers: GraphEdge[] }>();
+  const groups = new Map<string, { port: string; part: string | undefined; readers: E[] }>();
   for (const e of edges) {
-    // (a section's steps, from its bulb on its table: a sub-net of the meter's bus, decision 016)
-    const port =
-      BUS_PORTS.has(e.port) || DELAY_PORTS.has(e.port) ? e.port : e.band === 'sync' && !e.belt && (meters.has(e.target) || (e.bulb && e.port === 'step')) ? 'step' : null;
+    const at = part(e);
+    // (a part's steps: a sub-net of the meter's bus, decision 016)
+    const port = BUS_PORTS.has(e.port) || DELAY_PORTS.has(e.port) ? e.port : e.band === 'sync' && !apart(e) && (meters.has(e.target) || (at && e.port === 'step')) ? 'step' : null;
     if (!port) continue;
-    const at = `${e.from}|${port}|${e.bulb ?? ''}`;
-    const g = groups.get(at) ?? { port, readers: [] };
+    const key = `${e.from}|${port}|${at ?? ''}`;
+    const g = groups.get(key) ?? { port, part: at, readers: [] };
     g.readers.push(e);
-    groups.set(at, g);
+    groups.set(key, g);
   }
   return [...groups.values()]
     .filter(({ port, readers }) => (readers.length > 1 || port === 'step') && (!DELAY_PORTS.has(port) || readers.some(isDelayed)))
-    .map(({ port, readers }) => {
-      const { bulb, bulbAt } = readers[0];
-      return {
-        id: `net:${readers[0].from}:${port}${bulb ? `:${bulb}` : ''}`,
-        owner: readers[0].from,
-        port,
-        band: readers[0].band,
-        readers: readers.map((e) => e.id),
-        delayed: readers.some(isDelayed),
-        ...(bulb ? { bulb } : {}),
-        ...(bulbAt ? { bulbAt } : {}),
-      };
-    });
-}
-
-/** Changes only when the set of nodes or edges changes — not when contents do. */
-export function structureKey(model: GraphModel): string {
-  return [...model.nodes.map((n) => n.id).sort(), '|', ...model.edges.map((e) => e.id).sort()].join(' ');
+    .map(({ port, part: at, readers }) => ({
+      id: `net:${readers[0]!.from}:${port}${at ? `:${at}` : ''}`,
+      owner: readers[0]!.from,
+      port,
+      band: readers[0]!.band,
+      readers: readers.map((e) => e.id),
+      delayed: readers.some(isDelayed),
+      ...(at ? { part: at } : {}),
+    }));
 }

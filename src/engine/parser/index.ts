@@ -15,7 +15,7 @@
 import { applyBases } from './base';
 import { isNote } from '../ast';
 import { isPieceFile, readPiece } from '../piecefile';
-import type { CellDecl, Diagnostic, ParseResult, TakeLine } from '../ast';
+import type { BuiltLine, CellDecl, Diagnostic, ParseResult, TakeLine } from '../ast';
 import { IDENT, LineError, LineScanner, placeIn, stripComment } from './scanner';
 import { parseBody, parseCell } from './cell';
 import { splitPlugins } from '../plugins';
@@ -23,6 +23,17 @@ import { FROM_FORM, isUse, readFrom, USE_RETIRED } from './use';
 
 export { groupingOf, meterLevels } from './generators';
 export { readFrom, USE_RETIRED, type FromForm } from './use';
+
+/**
+ * A line that read cells as the piece is built, read again with their values written in (decision 107): its cell and the
+ * unnamed cells it declares. Warnings aren't said twice (the first reading said them); an error is the line's own, a
+ * `LineError` the caller says with the line as filled.
+ */
+export function rereadLine(built: BuiltLine, filled: string): { readonly decl: CellDecl; readonly lambdas: readonly CellDecl[] } {
+  const s = new LineScanner(filled, built.line, 0, [], built.parts, [], 0, parseBody);
+  const decl = parseCell(s);
+  return { decl, lambdas: s.lambdas };
+}
 
 /** A text, parsed. */
 export function parse(whole: string): ParseResult {
@@ -94,10 +105,29 @@ export function parse(whole: string): ParseResult {
       else if (word === null) {
         s.i = start;
         const decl = parseCell(s);
-        cells.push(decl, ...s.lambdas);
+        // (a line that reads cells as the piece is built keeps its text: compile writes their values in and reads it again, decision 107)
+        if (s.holes.length && decl.base) {
+          diagnostics.push({
+            severity: 'error',
+            message: 'base= and a cell read as the piece is built (seed=&s, 0!&n) are not yet one line: write the number, or the cell without base=',
+            span: decl.base.span,
+          });
+          return;
+        }
+        const built = s.holes.length ? { text, line: lineNo, parts, lambdas: s.lambdas.map((l) => l.name), holes: [...s.holes] } : undefined;
+        cells.push(built ? { ...decl, built } : decl, ...s.lambdas);
       } else s.fail(`A line declares a cell: &name …`, start, word.length);
     } catch (e) {
       if (!(e instanceof LineError)) throw e;
+      // (a line that read a cell as the piece is built may fail on the placeholder alone, euclid's k over its n: kept as a
+      // blank cell with its text, and read again with the cell's value in; if it still fails, it says so then, decision 107)
+      const head = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(text);
+      if (s.holes.length && head) {
+        const at = text.indexOf('&');
+        const ref = { name: head[1]!, pick: null, shift: 0, span: { ...placeIn(parts, at), len: head[0].length - head[0].indexOf('&') } };
+        cells.push({ ...parseBody(new LineScanner('', lineNo, 0, [], parts, [], 0, parseBody), ref), built: { text, line: lineNo, parts, lambdas: [], holes: [...s.holes] } });
+        return;
+      }
       diagnostics.push({ severity: 'error', message: e.message, span: { ...placeIn(parts, e.col), len: e.len } });
       const name = /^\s*&([A-Za-z_][A-Za-z0-9_]*)/.exec(text)?.[1];
       if (name) broken.push(name);

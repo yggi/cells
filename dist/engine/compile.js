@@ -1,5 +1,7 @@
+import { spoken } from "./spoken.js";
 import { parse } from "./parser/index.js";
 import { compile as compileIn } from "./compiler/index.js";
+import { fillBuilt } from "./compiler/built.js";
 import { readSlots } from "./compiler/slots.js";
 import { clocking } from "./clocking.js";
 import { mainLength, pieceTime } from "./duration.js";
@@ -8,7 +10,7 @@ import { readStyles } from "./styles.js";
 import { expansion, hasFrom } from "./use.js";
 import { splitComment } from "./edit.js";
 function compile(parsed, env = DEFAULT_ENV, used) {
-    const slotted = readSlots(parsed);
+    const slotted = readSlots(fillBuilt(parsed));
     const held = readStyles(slotted, null);
     const first = compileIn(held.parsed, env, used);
     if (!held.glides)
@@ -30,6 +32,14 @@ function scopeOf(result) {
     return Math.abs(bars - Math.round(bars)) < 1e-6 && Math.round(bars) > 0 ? { bars: Math.round(bars) } : { seconds };
 }
 export function compileSource(written, env = DEFAULT_ENV, options = {}) {
+    return said(compiled(written, env, options));
+}
+function said(result) {
+    if (!result.diagnostics.some((d) => d.message.includes('λ')))
+        return result;
+    return { ...result, diagnostics: result.diagnostics.map((d) => ({ ...d, message: spoken(d.message) })) };
+}
+function compiled(written, env, options) {
     const source = written;
     if (!hasFrom(source))
         return withCodes(compile(parse(source), env), source, options.plugins);

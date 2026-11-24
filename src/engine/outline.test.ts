@@ -122,6 +122,25 @@ describe('outlineOf', () => {
     expect(own.parts.find((p) => p.key === '2')).toMatchObject({ id: null, heads: ['sd'].map((h) => `&${h}`) });
   });
 
+  it('says what the piece overrides in a template taken whole, with *: the heads it writes itself (#885)', () => {
+    const text = [
+      '&bar meter("4/4") step=120bpm',
+      '&key scale(minor, A)',
+      '&harm over=&key step=1m [0,2,4]',
+      '* from funk_bass &harm',
+      '&bassline over=&harm step=4n 0 0 0 0',
+      '&v s=saw loop=C2',
+      '&out [&bassline * &v]',
+    ].join('\n');
+    const r = compiled(text);
+    expect(r.diagnostics).toEqual([]);
+    expect(r.takes!.find((t) => t.id === 'funk_bass')).toMatchObject({ overrode: ['&bassline'], gave: [] });
+    expect(outlineOf(r).parts.find((p) => p.id === 'funk_bass')).toMatchObject({ overrode: ['&bassline'] });
+    // (a head the piece doesn't write is given, not overridden: the same template taken whole on a bench without its own line)
+    const given = compiled(text.replace('&bassline over=&harm step=4n 0 0 0 0\n', ''));
+    expect(given.takes!.find((t) => t.id === 'funk_bass')).toMatchObject({ overrode: [] });
+  });
+
   it("over every example: each take's heads once, each line the piece writes a part, every part once in each tree", () => {
     let takes = 0;
     for (const [key, example] of Object.entries(EXAMPLES)) {

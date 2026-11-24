@@ -18,57 +18,9 @@ function refTransform(r) {
         ...(r.sign === -1 ? [{ kind: 'negate' }] : []),
     ];
 }
-export const isTurntable = (c) => typeof c.params.motor === 'number' || typeof c.params.belt === 'number' || typeof c.params.write === 'string' || typeof c.params.body === 'string';
 export function writtenGraph(result, { card = false } = {}) {
     const edges = [];
-    const depth = new Map();
     const meters = new Set([...result.clocks.keys()].filter((name) => keepsTime(result, name)));
-    const playedBy = new Map();
-    const from = (o) => (o.tape ? o.tape.head : o.cell);
-    for (const o of result.outputs)
-        if (!o.drone)
-            playedBy.set(o.voice, [...(playedBy.get(o.voice) ?? []), from(o)]);
-    const depthOf = (name, guard = 0) => {
-        const hit = depth.get(name);
-        if (hit !== undefined)
-            return hit;
-        const c = result.cells.get(name);
-        let d = 1;
-        if (c && guard < 64) {
-            if (c.root)
-                d = 0;
-            else if (c.mix) {
-                for (const b of c.mix)
-                    d = Math.max(d, depthOf(b.voice.name, guard + 1) + 1);
-            }
-            else if (c.chords) {
-                for (const b of c.chords.flatMap((x) => x ?? []))
-                    d = Math.max(d, depthOf(b.voice.name, guard + 1) + 1);
-                for (const k of c.children.keys())
-                    d = Math.max(d, depthOf(k, guard + 1) + 1);
-            }
-            else if (c.voice || c.kit) {
-                for (const p of playedBy.get(name) ?? [])
-                    d = Math.max(d, depthOf(p, guard + 1) + 1);
-                for (const o of result.outputs)
-                    if (o.voice === name) {
-                        for (const m of [...o.mods, ...o.levels])
-                            d = Math.max(d, depthOf(m.cell, guard + 1) + 1);
-                        if (o.envelopeCell)
-                            d = Math.max(d, depthOf(o.envelopeCell, guard + 1) + 1);
-                    }
-                for (const k of c.children.keys())
-                    d = Math.max(d, depthOf(k, guard + 1) + 1);
-            }
-            else {
-                d = depthOf(c.over ?? c.context, guard + 1) + 1;
-                for (const k of c.children.keys())
-                    d = Math.max(d, depthOf(k, guard + 1) + 1);
-            }
-        }
-        depth.set(name, d);
-        return d;
-    };
     const kitOfGate = (o) => o.through.some((m) => result.cells.get(m)?.gate?.receivers.some((r) => result.cells.get(r)?.kit));
     const voiceKitPlayed = result.outputs.filter((o) => o.voice === VOICE_KIT);
     const voiceKitShown = !voiceKitPlayed.length || !voiceKitPlayed.every(kitOfGate);
@@ -129,9 +81,9 @@ export function writtenGraph(result, { card = false } = {}) {
             continue;
         const id = cellId(c.name);
         if (c.voice)
-            nodes.push({ id, kind: 'voice', depth: depthOf(c.name), cell: c });
+            nodes.push({ id, kind: 'voice', cell: c });
         else
-            nodes.push({ id, kind: 'cell', depth: depthOf(c.name), cell: c, isMeter: meters.has(c.name) });
+            nodes.push({ id, kind: 'cell', cell: c, isMeter: meters.has(c.name) });
         if (c.over && c.over !== VOICE_KIT)
             link({
                 id: edgeId(id, cellId(c.over)),
@@ -336,7 +288,6 @@ export function writtenGraph(result, { card = false } = {}) {
                 target: cellId(c.step.driver),
                 count: 1,
                 transforms: [rateOf(c)],
-                ...beltOf(c, result.cells.get(c.step.driver)),
                 ...wire('step', 'sync', id, cellId(c.step.driver), 1, true),
             });
         for (const [key, k] of Object.entries(c.paramClocks).filter(([k]) => !c.inherited?.[k]))
@@ -481,7 +432,6 @@ export function writtenGraph(result, { card = false } = {}) {
         junctions.push({
             id: j,
             kind: 'junction',
-            depth: depthOf(b.voice.name),
             mix: c.name,
             entry,
             voice: b.voice.name,
@@ -578,11 +528,6 @@ function rateTransform(s, belt) {
     const tap = belt !== undefined ? s.tap : undefined;
     return [{ kind: 'rate', by: s.chain, per: s.cycle ? 'cycle' : 'step', whole: s.whole, ...(belt !== undefined ? { belt } : {}), ...(tap ? { tap } : {}) }];
 }
-function beltOf(driven, driver) {
-    if (typeof driven.params.belt === 'number')
-        return { belt: 'spring' };
-    return driver && isTurntable(driven) && isTurntable(driver) ? { belt: 'rigid' } : {};
-}
 const tines = (result, name) => {
     const c = result.cells.get(name);
     return typeof c?.params.body === 'string' && (c.exciters?.length ?? 0) > 1 ? c.exciters.length : 0;
@@ -619,34 +564,28 @@ const isWave = (result, name) => {
 const BUS_PORTS = new Set(['over', 'voice', 'mix']);
 const DELAY_PORTS = new Set(['braid', 'play']);
 const isDelayed = (e) => e.transforms.some((t) => t.some((s) => s.kind === 'delay'));
-export function netsOf(nodes, edges) {
+export function netsOf(nodes, edges, { part = () => undefined, apart = () => false } = {}) {
     const meters = new Set(nodes.flatMap((n) => (n.kind === 'cell' && n.isMeter ? [n.id] : [])));
     const groups = new Map();
     for (const e of edges) {
-        const port = BUS_PORTS.has(e.port) || DELAY_PORTS.has(e.port) ? e.port : e.band === 'sync' && !e.belt && (meters.has(e.target) || (e.bulb && e.port === 'step')) ? 'step' : null;
+        const at = part(e);
+        const port = BUS_PORTS.has(e.port) || DELAY_PORTS.has(e.port) ? e.port : e.band === 'sync' && !apart(e) && (meters.has(e.target) || (at && e.port === 'step')) ? 'step' : null;
         if (!port)
             continue;
-        const at = `${e.from}|${port}|${e.bulb ?? ''}`;
-        const g = groups.get(at) ?? { port, readers: [] };
+        const key = `${e.from}|${port}|${at ?? ''}`;
+        const g = groups.get(key) ?? { port, part: at, readers: [] };
         g.readers.push(e);
-        groups.set(at, g);
+        groups.set(key, g);
     }
     return [...groups.values()]
         .filter(({ port, readers }) => (readers.length > 1 || port === 'step') && (!DELAY_PORTS.has(port) || readers.some(isDelayed)))
-        .map(({ port, readers }) => {
-        const { bulb, bulbAt } = readers[0];
-        return {
-            id: `net:${readers[0].from}:${port}${bulb ? `:${bulb}` : ''}`,
-            owner: readers[0].from,
-            port,
-            band: readers[0].band,
-            readers: readers.map((e) => e.id),
-            delayed: readers.some(isDelayed),
-            ...(bulb ? { bulb } : {}),
-            ...(bulbAt ? { bulbAt } : {}),
-        };
-    });
-}
-export function structureKey(model) {
-    return [...model.nodes.map((n) => n.id).sort(), '|', ...model.edges.map((e) => e.id).sort()].join(' ');
+        .map(({ port, part: at, readers }) => ({
+        id: `net:${readers[0].from}:${port}${at ? `:${at}` : ''}`,
+        owner: readers[0].from,
+        port,
+        band: readers[0].band,
+        readers: readers.map((e) => e.id),
+        delayed: readers.some(isDelayed),
+        ...(at ? { part: at } : {}),
+    }));
 }

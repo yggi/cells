@@ -1,5 +1,5 @@
 import { valueSumOf } from "../valuesum.js";
-import { builtHoles, builtNumber } from "./built.js";
+import { builtNumber, unreadHoles } from "./built.js";
 import { refLabel } from "../ast.js";
 import { MAX_SPLICE_DEPTH, ROOT } from "../program.js";
 import { evenProblem, evenSteps, parseGenerator, SCALE_KEY } from "../parser/generators.js";
@@ -20,7 +20,7 @@ export function declare(ctx) {
             decls.set(c.name, c);
     }
     const mainKey = mainKeyOf(decls);
-    builtHoles(ctx, decls);
+    unreadHoles(ctx, decls);
     meters(ctx, decls);
     tonics(ctx, decls);
     modes(ctx, decls);

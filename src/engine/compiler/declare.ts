@@ -1,6 +1,6 @@
 /** Phase 1: the declarations — one per name, the default grid and scale() tables added, over= chains known and acyclic. */
 import { valueSumOf } from '../valuesum';
-import { builtHoles, builtNumber } from './built';
+import { builtNumber, unreadHoles } from './built';
 import { refLabel, type Atom, type CellDecl, type Expr, type Ref, type Span, type Token } from '../ast';
 import { MAX_SPLICE_DEPTH, ROOT } from '../program';
 import { evenProblem, evenSteps, parseGenerator, SCALE_KEY } from '../parser/generators';
@@ -44,7 +44,7 @@ export function declare(ctx: Ctx): Declared {
   }
   const mainKey = mainKeyOf(decls);
   // (a generator's arguments read from cells first, decision 101: a meter written meter(&m) is its meter before any pass reads it)
-  builtHoles(ctx, decls);
+  unreadHoles(ctx, decls);
   meters(ctx, decls);
   tonics(ctx, decls);
   modes(ctx, decls);

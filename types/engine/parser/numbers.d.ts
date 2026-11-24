@@ -26,10 +26,10 @@ export interface NumberPlace {
     readonly fixed?: string;
     /** What a cell does here: it moves the number (read while the piece plays), or why it doesn't. */
     readonly cell: string;
-    /** The attribute a cell read here sets (a place whose cell is `FILLED`), and the number the line holds until compile fills it. */
+    /** A place whose cell is `FILLED`: the number the line holds until compile fills it, and how a message names the place. */
     readonly fills?: {
-        readonly field: 'seed' | 'shift' | 'stride' | 'cycle' | 'laps' | 'chance' | 'size';
         readonly placeholder: number;
+        readonly read: string;
     };
     /** Moved by a cell: a text where only a number may stand refuses one with the rule; this place reads its cells itself. */
     readonly moves?: true;
