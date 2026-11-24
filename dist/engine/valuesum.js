@@ -134,6 +134,26 @@ export function numberCellOf(d) {
         return null;
     return t.atom.value;
 }
+export function constantOf(decls, name, seen = new Set()) {
+    const d = decls.get(name);
+    if (!d || d.step || seen.has(name))
+        return null;
+    const n = numberCellOf(d);
+    if (n !== null)
+        return n;
+    const sum = valueSumOf(name, decls);
+    if (!sum)
+        return null;
+    const inner = new Set([...seen, name]);
+    let total = sum.constant;
+    for (const t of sum.terms) {
+        const v = constantOf(decls, t.cell, inner);
+        if (v === null)
+            return null;
+        total += t.weight * v;
+    }
+    return Math.round(total * 1e9) / 1e9;
+}
 export function inlineNumbers(e, decls) {
     if (e.k === 'num')
         return e;

@@ -46,6 +46,7 @@ export class LineScanner {
     body;
     i = 0;
     frees = [];
+    holes = [];
     constructor(text, line, offset = 0, lambdas = [], parts = [{ line, start: 0 }], warnings = [], depth = 0, body) {
         this.text = text;
         this.line = line;
@@ -98,6 +99,9 @@ export class LineScanner {
     }
     free(place, name = place.name) {
         if (!this.text.startsWith('free(', this.i)) {
+            const hole = this.builtHole(place);
+            if (hole)
+                return hole;
             this.refuseCell(place);
             return null;
         }
@@ -115,6 +119,18 @@ export class LineScanner {
             this.fail(`${place.form}: free(…) moves within ${place.min ?? '…'}..${place.max ?? '…'} — free(${f.value}, ${Math.max(f.lo, place.min ?? f.lo)}..${Math.min(f.hi, place.max ?? f.hi)})`, start, len);
         return f;
     }
+    builtHole(place) {
+        if (!place.fills || this.peek() !== '&')
+            return null;
+        const m = /^&([A-Za-z_][A-Za-z0-9_]*)(?![A-Za-z0-9_[:^<>$.*/(])/.exec(this.text.slice(this.i));
+        if (!m)
+            return null;
+        const at = this.i;
+        this.i += m[0].length;
+        this.holes.push({ field: place.fills.field, ref: { name: m[1], pick: null, shift: 0, span: this.span(at) }, form: place.form });
+        const value = place.fills.placeholder;
+        return { key: 'param', value, unit: '', lo: value, hi: value, span: this.span(at) };
+    }
     freeNumber(place, name) {
         const f = this.free(place, name);
         return f === null ? null : place.whole ? Math.round(f.value) : f.value;
@@ -126,9 +142,11 @@ export class LineScanner {
             return;
         const len = Math.max(1, /^[^\s,)\]]*/.exec(this.text.slice(this.i))[0].length);
         const how = ranged ? 'a range moved by cells' : 'a cell';
-        this.fail(place.cell.startsWith(BUILT)
-            ? `${place.form} is read as the piece is built: a number, or free(v, lo..hi), whose slider compiles it again — ${how} moves only a number read while the piece plays (decision 078)`
-            : `${place.form} takes a number, or free(v, lo..hi), and ${how} isn't read here: ${place.cell.replace(/^no: /, '')} (decision 078)`, this.i, len);
+        this.fail(place.fills
+            ? `${place.form} is read as the piece is built: a number, a cell that is one number, or free(v, lo..hi), whose slider compiles it again — ${how} moves only a number read while the piece plays (decision 078)`
+            : place.cell.startsWith(BUILT)
+                ? `${place.form} is read as the piece is built: a number, or free(v, lo..hi), whose slider compiles it again — ${how} moves only a number read while the piece plays (decision 078)`
+                : `${place.form} takes a number, or free(v, lo..hi), and ${how} isn't read here: ${place.cell.replace(/^no: /, '')} (decision 078)`, this.i, len);
     }
     int(what, place, name) {
         const f = this.freeNumber(place, name);

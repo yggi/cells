@@ -26,6 +26,11 @@ export interface NumberPlace {
     readonly fixed?: string;
     /** What a cell does here: it moves the number (read while the piece plays), or why it doesn't. */
     readonly cell: string;
+    /** The attribute a cell read here sets (a place whose cell is `FILLED`), and the number the line holds until compile fills it. */
+    readonly fills?: {
+        readonly field: 'seed' | 'shift' | 'stride' | 'cycle' | 'laps' | 'chance' | 'size';
+        readonly placeholder: number;
+    };
     /** Moved by a cell: a text where only a number may stand refuses one with the rule; this place reads its cells itself. */
     readonly moves?: true;
     /** A text with a free(…) here (or, for a fixed place, its number), parsed by the tests and shown in the table. */
@@ -33,6 +38,11 @@ export interface NumberPlace {
 }
 /** A cell where the number is read as the piece is built (decision 078): the shape would change while it plays, a selector's work (#51). */
 export declare const BUILT = "no: read as the piece is built";
+/**
+ * A cell that is one number, or a sum of numbers alone, read as the piece is built and set where the number stands
+ * (decision 105, after 093): the one mechanism for every place whose cell is filled, `compiler/built.ts`.
+ */
+export declare const FILLED = "`&k`, a cell that is one number, or a sum of numbers alone, filled as the piece is built (decision 105)";
 /** The places, in the order free.md shows them. */
 export declare const NUMBER_PLACES: {
     readonly param: NumberPlace;

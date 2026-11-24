@@ -1,5 +1,5 @@
 /** The scanner: one line of a piece (continued lines joined), read left to right. */
-import type { CellDecl, Diagnostic, FreeSpec, Pick, Ref, Span } from '../ast';
+import type { BuiltHole, CellDecl, Diagnostic, FreeSpec, Pick, Ref, Span } from '../ast';
 import { syntax, type Syntax } from './syntax';
 import { pitchOfName } from '../../theory/modes';
 import { parseFree } from './free';
@@ -108,6 +108,8 @@ export class LineScanner {
    */
   /** free(…) found in this text. */
   frees: FreeSpec[] = [];
+  /** The numbers read from cells as the piece is built, found in this text (decision 105). */
+  holes: BuiltHole[] = [];
   constructor(
     readonly text: string,
     readonly line: number,
@@ -172,6 +174,8 @@ export class LineScanner {
    */
   free(place: NumberPlace, name: string = place.name): FreeSpec | null {
     if (!this.text.startsWith('free(', this.i)) {
+      const hole = this.builtHole(place);
+      if (hole) return hole;
       this.refuseCell(place);
       return null;
     }
@@ -192,6 +196,21 @@ export class LineScanner {
       );
     return f;
   }
+  /**
+   * A cell where a number is read as the piece is built and the place fills cells (decision 105): its name is recorded
+   * and the place holds its placeholder until compile reads the cell's value. Null where the text isn't a plain cell, or
+   * the place fills none, and then the place says what else may stand (`refuseCell`).
+   */
+  builtHole(place: NumberPlace): FreeSpec | null {
+    if (!place.fills || this.peek() !== '&') return null;
+    const m = /^&([A-Za-z_][A-Za-z0-9_]*)(?![A-Za-z0-9_[:^<>$.*/(])/.exec(this.text.slice(this.i));
+    if (!m) return null;
+    const at = this.i;
+    this.i += m[0].length;
+    this.holes.push({ field: place.fills.field, ref: { name: m[1]!, pick: null, shift: 0, span: this.span(at) }, form: place.form });
+    const value = place.fills.placeholder;
+    return { key: 'param', value, unit: '', lo: value, hi: value, span: this.span(at) };
+  }
   /** `free(place)`'s number: a whole place's rounded (a count, a turn). */
   freeNumber(place: NumberPlace, name?: string): number | null {
     const f = this.free(place, name);
@@ -208,9 +227,11 @@ export class LineScanner {
     const len = Math.max(1, /^[^\s,)\]]*/.exec(this.text.slice(this.i))![0].length);
     const how = ranged ? 'a range moved by cells' : 'a cell';
     this.fail(
-      place.cell.startsWith(BUILT)
-        ? `${place.form} is read as the piece is built: a number, or free(v, lo..hi), whose slider compiles it again — ${how} moves only a number read while the piece plays (decision 078)`
-        : `${place.form} takes a number, or free(v, lo..hi), and ${how} isn't read here: ${place.cell.replace(/^no: /, '')} (decision 078)`,
+      place.fills
+        ? `${place.form} is read as the piece is built: a number, a cell that is one number, or free(v, lo..hi), whose slider compiles it again — ${how} moves only a number read while the piece plays (decision 078)`
+        : place.cell.startsWith(BUILT)
+          ? `${place.form} is read as the piece is built: a number, or free(v, lo..hi), whose slider compiles it again — ${how} moves only a number read while the piece plays (decision 078)`
+          : `${place.form} takes a number, or free(v, lo..hi), and ${how} isn't read here: ${place.cell.replace(/^no: /, '')} (decision 078)`,
       this.i,
       len,
     );

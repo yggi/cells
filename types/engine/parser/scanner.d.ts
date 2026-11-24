@@ -1,5 +1,5 @@
 /** The scanner: one line of a piece (continued lines joined), read left to right. */
-import type { CellDecl, Diagnostic, FreeSpec, Ref, Span } from '../ast';
+import type { BuiltHole, CellDecl, Diagnostic, FreeSpec, Ref, Span } from '../ast';
 import { type Syntax } from './syntax';
 import { type NumberPlace } from './numbers';
 /** References to a cell, and how they pick from it, turn it and transpose it. */
@@ -52,6 +52,8 @@ export declare class LineScanner {
      */
     /** free(…) found in this text. */
     frees: FreeSpec[];
+    /** The numbers read from cells as the piece is built, found in this text (decision 105). */
+    holes: BuiltHole[];
     constructor(text: string, line: number, offset?: number, lambdas?: CellDecl[], 
     /** Where each original line starts in a joined (continued) line: to place a span in the source. */
     parts?: readonly {
@@ -85,6 +87,12 @@ export declare class LineScanner {
      * reads cells reads them first).
      */
     free(place: NumberPlace, name?: string): FreeSpec | null;
+    /**
+     * A cell where a number is read as the piece is built and the place fills cells (decision 105): its name is recorded
+     * and the place holds its placeholder until compile reads the cell's value. Null where the text isn't a plain cell, or
+     * the place fills none, and then the place says what else may stand (`refuseCell`).
+     */
+    builtHole(place: NumberPlace): FreeSpec | null;
     /** `free(place)`'s number: a whole place's rounded (a count, a turn). */
     freeNumber(place: NumberPlace, name?: string): number | null;
     /**
