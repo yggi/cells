@@ -126,19 +126,46 @@ describe('alpha substitution: every name a text defines renamed, it plays, says 
     });
   });
 
+  // (what a name gave, the value gives: wherever a line's name was a role or a part, its declared value is the same one.
+  // A value may say more than a name did, a role on a line whose name says none: a taken fragment's inner line, renamed
+  // after the head that needs it (`finaleDrums_kick`, #944), or a line named for what it plays (`clap`, `hats`, #715))
+  const givenByName = (r: ReturnType<typeof compileSource>) => {
+    const byName = readerByName(r);
+    return r.outputs.map((o) => o.id).flatMap((id) => (byName(id) === null ? [] : [[id, byName(id)] as const]));
+  };
+  const asValues = (r: ReturnType<typeof compileSource>, ids: readonly string[]) => ids.map((id) => [id, readerOf(r)(id)] as const);
+
   it('the default performer reads every example as it read by names before: the values the names gave are written (feel v3, #560 rung 2)', () => {
     for (const [key, p] of Object.entries(EXAMPLES)) {
       const r = compileSource(p.source, undefined, O);
-      const outputs = r.outputs.map((o) => o.id);
-      // (the exception, only shrinking: electroswing takes its beat from Electro swing drums, whose lines write roles since #715: the
-      // clap the backbeat, the hats and the ticks the hat, the ghosts of the snare a ghost, which no name of theirs said)
-      if (key === 'electroswing') continue;
-      expect(outputs.map(readerOf(r)), key).toEqual(outputs.map(readerByName(r)));
+      const named = givenByName(r);
+      expect(
+        asValues(
+          r,
+          named.map(([id]) => id),
+        ),
+        key,
+      ).toEqual(named);
     }
+    // (and where a value says more: Electro swing drums' lines write roles no name of theirs says, #715)
     const r = compileSource(EXAMPLES.electroswing.source, undefined, O);
     const read = readerOf(r);
     const kit = r.outputs.filter((o) => o.id.startsWith('kit:voices:'));
     expect(Object.fromEntries(kit.map((o) => [o.id.split(':')[2], read(o.id)?.role]))).toEqual({ kick: 'kick', clap: 'backbeat', hats: 'hat', ticks: 'hat', ghosts: 'ghost' });
+  });
+
+  it('a taken fragment’s inner drum lines keep their roles by value, renamed after the head that needs them (#944)', () => {
+    const text = ['&bar meter("4/4") step=120bpm', '&key scale(minor, D)', '&finaleDrums from finale &key', '&out map=sample [&finaleDrums]'].join('\n');
+    const r = compileSource(text, undefined, O);
+    expect(r.diagnostics).toEqual([]);
+    const kit = r.outputs.filter((o) => o.id.startsWith('kit:voices:'));
+    expect(kit.map((o) => [o.id.split(':')[2], readerOf(r)(o.id)?.role])).toEqual([
+      ['finaleDrums_kick', 'kick'],
+      ['finaleDrums_backbeat', 'backbeat'],
+      ['finaleDrums_hat', 'hat'],
+    ]);
+    // (no name of theirs gives a role, so nothing a name gave is lost)
+    expect(givenByName(r).filter(([id]) => id.startsWith('kit:voices:'))).toEqual([]);
   });
 
   it('the meter, the key, the tempo, the tonic and the harmony have no names of their own', () => {

@@ -416,14 +416,19 @@ export function voiceGrooves(decls) {
                 continue;
             if (a.kind === 'ref' && isVoiceDecl(a.name) && plain(a))
                 voiced = true;
-            else if (a.kind === 'ref' && !a.shift && !a.transpose && !a.values && motif(a.name, [...seen, d.name]))
-                voiced = true;
+            else if (a.kind === 'ref' && !a.shift && !a.transpose && !a.values) {
+                const m = motif(a.name, [...seen, d.name]);
+                if (!m)
+                    return false;
+                if (m === 'voiced')
+                    voiced = true;
+            }
             else if (a.kind === 'mix' && a.exprs.every((e) => e.k === 'ref' && isVoiceDecl(e.ref.name) && plain(e.ref)))
                 voiced = true;
             else
                 return false;
         }
-        return voiced;
+        return voiced ? 'voiced' : 'silent';
     };
     const motifs = new Map();
     const motif = (name, seen) => {
@@ -431,12 +436,12 @@ export function voiceGrooves(decls) {
             return motifs.get(name);
         const d = decls.get(name);
         const mix = d?.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
-        const is = !!d && !d.step && !mix && !asTable.has(name) && shape(d, seen);
+        const is = !!d && !mix && !asTable.has(name) ? shape(d, seen) : false;
         if (seen.length === 0 || is)
             motifs.set(name, is);
         return is;
     };
-    const grooves = [...decls.values()].filter((d) => d.step && shape(d, []));
+    const grooves = [...decls.values()].filter((d) => d.step && shape(d, []) === 'voiced');
     if (!grooves.length)
         return null;
     const voices = [];

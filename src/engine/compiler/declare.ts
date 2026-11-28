@@ -498,8 +498,9 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
   const isVoiceDecl = (n: string) => sounds(decls.get(n));
   const plain = (r: { pick: unknown; shift: number; transpose?: number; degree?: number; values?: unknown }) => !r.pick && !r.shift && !r.transpose && !r.degree && !r.values;
   const asTable = new Set([...decls.values()].flatMap((d) => (d.over ? [d.over.name] : [])));
-  // what a cell may hold to be a groove or a motif: rests, voices, chords of voices, and references to motifs
-  const shape = (d: CellDecl | undefined, seen: readonly string[]): boolean => {
+  // what a cell may hold to be a groove or a motif: rests, voices, chords of voices, and references to motifs; 'voiced'
+  // where it strikes a voice, 'silent' where it holds rests alone (a bar of rest, spliced: #342), else false
+  const shape = (d: CellDecl | undefined, seen: readonly string[]): 'voiced' | 'silent' | false => {
     // (no deeper than a splice may go: past that it is an error of its own, and no groove)
     if (!d || d.over || d.map || sounds(d) || d.braid.kind !== 'list' || d.braid.tokens.length === 0 || seen.length > MAX_SPLICE_DEPTH || seen.includes(d.name)) return false;
     let voiced = false;
@@ -507,24 +508,30 @@ export function voiceGrooves(decls: ReadonlyMap<string, CellDecl>): { voices: Re
     for (const a of d.braid.tokens.flatMap((t) => leaves(t.atom))) {
       if (a.kind === 'rest') continue;
       if (a.kind === 'ref' && isVoiceDecl(a.name) && plain(a)) voiced = true;
-      else if (a.kind === 'ref' && !a.shift && !a.transpose && !a.values && motif(a.name, [...seen, d.name])) voiced = true;
-      else if (a.kind === 'mix' && a.exprs.every((e) => e.k === 'ref' && isVoiceDecl(e.ref.name) && plain(e.ref))) voiced = true;
+      else if (a.kind === 'ref' && !a.shift && !a.transpose && !a.values) {
+        const m = motif(a.name, [...seen, d.name]);
+        if (!m) return false;
+        if (m === 'voiced') voiced = true;
+      } else if (a.kind === 'mix' && a.exprs.every((e) => e.k === 'ref' && isVoiceDecl(e.ref.name) && plain(e.ref))) voiced = true;
       else return false;
     }
-    return voiced;
+    return voiced ? 'voiced' : 'silent';
   };
-  const motifs = new Map<string, boolean>();
-  const motif = (name: string, seen: readonly string[]): boolean => {
+  const motifs = new Map<string, 'voiced' | 'silent' | false>();
+  // (a drum motif: a cell of voices a groove splices, stepped or not, decision 097: a splice plays what the cell spliced
+  // is, in its step, a line of hits its hits, #318; and a cell of rests alone, its rests, #342)
+  const motif = (name: string, seen: readonly string[]): 'voiced' | 'silent' | false => {
     if (motifs.has(name)) return motifs.get(name)!;
     const d = decls.get(name);
     // (one chord of voices and nothing else is a mix: &organ [&a, &b])
     const mix = d?.braid.kind === 'list' && d.braid.tokens.length === 1 && d.braid.tokens[0].atom.kind === 'mix';
-    const is = !!d && !d.step && !mix && !asTable.has(name) && shape(d, seen);
+    const is = !!d && !mix && !asTable.has(name) ? shape(d, seen) : false;
     // (only a settled answer is kept: one cut short by a loop or the depth may differ from elsewhere)
     if (seen.length === 0 || is) motifs.set(name, is);
     return is;
   };
-  const grooves = [...decls.values()].filter((d) => d.step && shape(d, []));
+  // (a groove strikes a voice: a stepped line of rests alone stays what it was, a line of nothing)
+  const grooves = [...decls.values()].filter((d) => d.step && shape(d, []) === 'voiced');
   if (!grooves.length) return null;
   const voices: Ref[] = [];
   const index = (name: string, span: Ref['span']) => {

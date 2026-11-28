@@ -3,6 +3,10 @@ import { compileSource } from './compile';
 import { eventsBetween, plan } from './realize';
 import { codeShifts } from './program';
 import { shorten } from './shorten';
+import { planOf } from './host';
+import { windowAt } from './schedule';
+import { channelTable, midiNote, router, routesOf } from './midi';
+import { resolveSeed } from '../repository/library';
 
 const voices =
   '&bar scan(1 1 1 1) step=120bpm\n&bd note=36 s=sine loop=A1 env=&(map=adsr 0 .3 0 .05)\n&hh note=42 s=white hpf=8000 env=&(map=adsr 0 .04 0 .02)\n&sd note=38 s=white hpf=1500 env=&(map=adsr 0 .1 0 .04)\n';
@@ -39,6 +43,44 @@ describe('a stepped braid of voices plays them (#10 F4)', () => {
       voices + '&kit &sd &hh &bd\n&fill 0 0*2 ~ 1\n&bar2 2 ~ &fill\n&a over=&kit step=16n &bar2 &fill[::-1]\n&b over=&kit step=8n [2,1] &fill\n&out map=sample [&a * .6, &b * .3]',
     );
     expect(grooves).toEqual(kit);
+  });
+  it('a line of hits a groove splices, stepped itself, plays its hits as written out, whole or sliced (#318, decision 097)', () => {
+    const hat = '&hat step=16n ~ ~ &hh:0:.2 ~ &hh ~ ~ ~ &hh ~ ~ ~ &hh ~ ~ ~\n';
+    const out = (cell: string) => `&out map=sample [&${cell}]`;
+    const written = '~ ~ &hh:0:.2 ~ &hh ~ ~ ~ &hh ~ ~ ~ &hh ~ ~ ~';
+    // (the plain splice, the two slices around a rest, and a hit of its own before a slice)
+    expect(plays(voices + hat + '&ref step=16n &hat\n' + out('ref'))).toEqual(plays(voices + `&ref step=16n ${written}\n` + out('ref')));
+    expect(plays(voices + hat + '&ref step=16n &hat[:4] ~ &hat[5:]\n' + out('ref'))).toEqual(
+      plays(voices + '&ref step=16n ~ ~ &hh:0:.2 ~ ~ ~ ~ ~ &hh ~ ~ ~ &hh ~ ~ ~\n' + out('ref')),
+    );
+    expect(plays(voices + hat + '&ref step=16n &hh &hat[1:]\n' + out('ref'))).toEqual(
+      plays(voices + '&ref step=16n &hh ~ &hh:0:.2 ~ &hh ~ ~ ~ &hh ~ ~ ~ &hh ~ ~ ~\n' + out('ref')),
+    );
+    // (and the line it splices plays as it did, beside it)
+    expect(plays(voices + hat + '&ref step=16n &hat\n' + '&out map=sample [&ref, &hat]').length).toBe(2 * plays(voices + hat + out('hat')).length);
+  });
+  it('a cell of rests alone, spliced first, is rests: the hits after it play as written, never picks of a kit (#342)', () => {
+    const spliced = plays(voices + '&rest ~@16\n&fill step=16n &rest ~@13 &sd:0:.2 &sd:0:.3 &sd:0:.4\n&out map=sample [&fill]');
+    expect(spliced).toEqual(plays(voices + '&fill step=16n ~@29 &sd:0:.2 &sd:0:.3 &sd:0:.4\n&out map=sample [&fill]'));
+    expect(spliced.every((e) => e.startsWith('sd '))).toBe(true);
+    // (and through the drummer's gate, on its MIDI card: three snares at their levels, where it played the kit's 36, 37 and 38)
+    const notes = (fill: string) => {
+      const text = [
+        '&bar meter("4/4") step=120bpm',
+        '&key scale(aeolian, A)',
+        ...fill.split('\n'),
+        '&drumlines [&fill]',
+        '* from drums_performer &drumlines',
+        '&out map=midi ~!9 &drumsOut',
+      ].join('\n');
+      const p = planOf(text, undefined, { resolve: resolveSeed });
+      const route = router(p.result, channelTable(p.result));
+      return windowAt(p, 0, 3.99).events.flatMap((e) => routesOf(route(e)).flatMap((m) => (midiNote(e, m) ? [`${midiNote(e, m)!.note}/${midiNote(e, m)!.velocity}`] : [])));
+    };
+    expect(notes('&rest ~@16\n&fill step=16n &rest ~@13 &sd:0:.2 &sd:0:.3 &sd:0:.4')).toEqual(['38/57', '38/70', '38/80']);
+    expect(notes('&rest ~@16\n&fill step=16n &rest ~@13 &sd:0:.2 &sd:0:.3 &sd:0:.4')).toEqual(notes('&fill step=16n ~@29 &sd:0:.2 &sd:0:.3 &sd:0:.4'));
+    // (a stepped line of rests alone is no groove: a line of nothing, as before)
+    expect(compileSource(voices + '&quiet step=16n ~ ~ ~ ~\n&out map=sample [&quiet * &bd]').cells.get('quiet')!.over).toBeNull();
   });
   it('a braid of voices read with over= stays a kit, read by number', () => {
     const r = compileSource(voices + '&kit &bd &hh\n&d over=&kit step=4n 1 0\n&g step=4n &hh &bd\n&out map=sample [&d, &g]');
